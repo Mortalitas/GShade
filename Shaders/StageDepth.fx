@@ -2,6 +2,13 @@
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
 // Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
 // for the latest GShade package updates!
+//
+// This shader was designed in the same vein as GreenScreen.fx, but instead of applying a
+// green screen with adjustable distance, it applies a PNG texture with adjustable opacity.
+//
+// PNG transparency is fully supported, so you could for example add another moon to the sky
+// just as readily as create a "green screen" stage like in real life.
+//
 // Copyright (c) 2019, Marot Satil
 // All rights reserved.
 //
