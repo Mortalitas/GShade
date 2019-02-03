@@ -3,7 +3,7 @@
 // Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
 // for the latest GShade package updates!
 //
-// This shader was designed in the same vein as GreenScreen.fx, but instead of applying a
+// This shader was designed in the same vein as GreenScreenDepth.fx, but instead of applying a
 // green screen with adjustable distance, it applies a PNG texture with adjustable opacity.
 //
 // PNG transparency is fully supported, so you could for example add another moon to the sky
