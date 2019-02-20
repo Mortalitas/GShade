@@ -75,7 +75,7 @@ uniform int3 SBackground_Color <
     ui_tooltip = "If you enabled background color, use this to select the color.";
     ui_min = 0;
     ui_max = 255;
-> = int3(0, 0, 0);
+> = int3(255, 255, 255);
 
 uniform float SBackground_Stage_Opacity <
     ui_label = "Background Opacity";
