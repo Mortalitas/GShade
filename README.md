@@ -1,2 +1,2 @@
 # GShade-Shaders
-Shaders made for the GShade ReShade package and made available free for public use &amp; modification.
+Shaders made for the GShade ReShade package. Please refer to individual file licenses for questions about distribution and modification.
