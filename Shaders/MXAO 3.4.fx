@@ -33,7 +33,7 @@
 
 uniform float fMXAOAmbientOcclusionAmount <
 	ui_type = "slider";
-	ui_min = 0.00; ui_max = 3.00;
+	ui_min = 0.00; ui_max = 12.00;
         ui_label = "Ambient Occlusion Amount";
 	ui_tooltip = "Linearly increases AO intensity. Can cause pitch black clipping if set too high.";
 > = 2.00;
