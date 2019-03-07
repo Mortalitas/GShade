@@ -28,14 +28,12 @@ uniform bool RadialY <
 	ui_category = "Radial distance";
 > = false;
 
-uniform int FOV <
+uniform float FOV <
 	ui_label = "FOV (horizontal)";
-    ui_type = "slider";
+  ui_type = "slider";
 	ui_tooltip = "Field of view in degrees";
-	#if __RESHADE__ < 40000
-		ui_step = 1;
-	#endif
-	ui_min = 0; ui_max = 170;
+	ui_step = .01;
+	ui_min = 0.0; ui_max = 200.0;
 	ui_category = "Radial distance";
 > = 90;
 
@@ -75,7 +73,7 @@ float3 ChromakeyPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_T
 	// Convert to radial depth
 	float2 Size;
 	Size.x = tan(radians(FOV*0.5));
-	Size.y = Size.x / ReShade::AspectRatio;
+	Size.y = Size.x / ReShade::AspectRatio * 2;
 	if(RadialX) Depth *= length(float2((texcoord.x-0.5)*Size.x, 1.0));
 	if(RadialY) Depth *= length(float2((texcoord.y-0.5)*Size.y, 1.0));
 
