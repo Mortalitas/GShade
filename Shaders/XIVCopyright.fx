@@ -36,7 +36,7 @@ uniform int cLayer_Select <
     ui_label = "Layer Selection";
     ui_tooltip = "The image/texture you'd like to use.";
     ui_type = "combo";
-    ui_items= "Horizontal 1080p\0Vertical 1080p\0Horizontal 1440p\0Vertical 1440p\0Horizontal 4k\0Vertical 4k\0";
+    ui_items= "Horizontal 1080p\0Vertical 1080p\0Horizontal 1440p\0Vertical 1440p\0Horizontal 4k\0Vertical 4k\0Custom Horizontal 1080p\0Custom Horizontal 1440p\0Custom Horizontal 4k\0";
 > = 0;
 
 //TODO blend by alpha
@@ -64,6 +64,14 @@ texture Horiz_fourk_texture <source="Copyright4kH.png";> { Width = BUFFER_WIDTH;
 sampler Horiz_fourk_sampler { Texture = Horiz_fourk_texture; };
 texture Verti_fourk_texture <source="Copyright4kV.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 sampler Verti_fourk_sampler { Texture = Verti_fourk_texture; };
+
+texture Horiz_fancy_texture <source="CopyrightF1080pH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+sampler Horiz_fancy_sampler { Texture = Horiz_fancy_texture; };
+texture Horiz_fancy_four_texture <source="CopyrightF1440pH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+sampler Horiz_fancy_four_sampler { Texture = Horiz_fancy_four_texture; };
+texture Horiz_fancy_fourk_texture <source="CopyrightF4kH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+sampler Horiz_fancy_fourk_sampler { Texture = Horiz_fancy_fourk_texture; };
+
 
 float3 PS_cLayer(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target {
     float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -98,9 +106,27 @@ float3 PS_cLayer(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targ
       color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
       return color;
     }
-    else
+    else if (cLayer_Select == 5)
     {
       float4 layer = tex2D(Verti_fourk_sampler, texcoord).rgba;
+      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
+      return color;
+    }
+    else if (cLayer_Select == 6)
+    {
+      float4 layer = tex2D(Horiz_fancy_sampler, texcoord).rgba;
+      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
+      return color;
+    }
+    else if (cLayer_Select == 7)
+    {
+      float4 layer = tex2D(Horiz_fancy_four_sampler, texcoord).rgba;
+      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
+      return color;
+    }
+    else
+    {
+      float4 layer = tex2D(Horiz_fancy_fourk_sampler, texcoord).rgba;
       color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
       return color;
     }
