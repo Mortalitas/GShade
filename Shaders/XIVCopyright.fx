@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-	Layer (version 0.1)
+	Layer (version 0.2)
 
 	Author: CeeJay.dk
 	License: MIT
@@ -20,116 +20,80 @@
 	History:
 	(*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
 	
-	Version 0.1
-    *
+	Version 0.2 by Seri14 & Marot Satil
+    * Added the ability to scale and move the layer around on an x, y axis. 
 */
 
 #include "ReShade.fxh"
-
-#if LAYER_SINGLECHANNEL //I plan to have some option to let users set this for performance sake.
-    #define TEXFORMAT R8
-#else
-    #define TEXFORMAT RGBA8
-#endif
 
 uniform int cLayer_Select <
     ui_label = "Layer Selection";
     ui_tooltip = "The image/texture you'd like to use.";
     ui_type = "combo";
-    ui_items= "Horizontal 1080p\0Vertical 1080p\0Horizontal 1440p\0Vertical 1440p\0Horizontal 4k\0Vertical 4k\0Custom Horizontal 1080p\0Custom Horizontal 1440p\0Custom Horizontal 4k\0";
+    ui_items= "Horizontal Vanilla\0Vertical Vanilla\0Custom Horizontal\0";
 > = 0;
 
-//TODO blend by alpha
 uniform float cLayer_Blend <
     ui_label = "Opacity";
     ui_tooltip = "The transparency of the copyright notice.";
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
-    ui_step = 0.002;
+    ui_step = 0.001;
 > = 1.0;
 
+uniform float cLayer_Scale <
+    ui_type = "slider";
+  	ui_label = "Scale";
+	  ui_min = 0.01; ui_max = 3.0;
+	  ui_step = 0.001;
+> = 1.001;
 
-texture Horiz_texture <source="Copyright1080pH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Horiz_sampler { Texture = Horiz_texture; };
-texture Verti_texture <source="Copyright1080pV.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Verti_sampler { Texture = Verti_texture; };
+uniform float cLayer_PosX <
+    ui_type = "slider";
+  	ui_label = "Position X";
+  	ui_min = -4.0; ui_max = 4.0;
+  	ui_step = 0.001;
+> = 0.5;
 
-texture Horiz_four_texture <source="Copyright1440pH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Horiz_four_sampler { Texture = Horiz_four_texture; };
-texture Verti_four_texture <source="Copyright1440pV.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Verti_four_sampler { Texture = Verti_four_texture; };
+uniform float cLayer_PosY <
+    ui_type = "slider";
+  	ui_label = "Position Y";
+  	ui_min = -4.0; ui_max = 4.0;
+	  ui_step = 0.001;
+> = 0.5;
 
-texture Horiz_fourk_texture <source="Copyright4kH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Horiz_fourk_texture <source="Copyright4kH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_WIDTH; Format=RGBA8; };
 sampler Horiz_fourk_sampler { Texture = Horiz_fourk_texture; };
-texture Verti_fourk_texture <source="Copyright4kV.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Verti_fourk_texture <source="Copyright4kV.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Verti_fourk_sampler { Texture = Verti_fourk_texture; };
 
-texture Horiz_fancy_texture <source="CopyrightF1080pH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Horiz_fancy_sampler { Texture = Horiz_fancy_texture; };
-texture Horiz_fancy_four_texture <source="CopyrightF1440pH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Horiz_fancy_four_sampler { Texture = Horiz_fancy_four_texture; };
-texture Horiz_fancy_fourk_texture <source="CopyrightF4kH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Horiz_fancy_fourk_texture <source="CopyrightF4kH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Horiz_fancy_fourk_sampler { Texture = Horiz_fancy_fourk_texture; };
 
+void PS_cLayer(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
+    const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
+    const float2 cLayer_Pos = float2(cLayer_PosX, cLayer_PosY);
 
-float3 PS_cLayer(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target {
-    float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
     if (cLayer_Select == 0)
     {
-      float4 layer = tex2D(Horiz_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-      //return layer.aaa;
+      const float2 scale = 1.0 / (float2(411.0, 22.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float4 cLayer  = tex2D(Horiz_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
+  	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     else if (cLayer_Select == 1)
     {
-      float4 layer = tex2D(Verti_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-    }
-    else if (cLayer_Select == 2)
-    {
-      float4 layer = tex2D(Horiz_four_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-    }
-    else if (cLayer_Select == 3)
-    {
-      float4 layer = tex2D(Verti_four_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-    }
-    else if (cLayer_Select == 4)
-    {
-      float4 layer = tex2D(Horiz_fourk_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-    }
-    else if (cLayer_Select == 5)
-    {
-      float4 layer = tex2D(Verti_fourk_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-    }
-    else if (cLayer_Select == 6)
-    {
-      float4 layer = tex2D(Horiz_fancy_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
-    }
-    else if (cLayer_Select == 7)
-    {
-      float4 layer = tex2D(Horiz_fancy_four_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
+      const float2 scale = 1.0 / (float2(22.0, 412.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float4 cLayer  = tex2D(Verti_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
+  	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     else
     {
-      float4 layer = tex2D(Horiz_fancy_fourk_sampler, texcoord).rgba;
-      color = lerp(color, layer.rgb, layer.a * cLayer_Blend);
-      return color;
+      const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float4 cLayer  = tex2D(Horiz_fancy_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
+  	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
+    color.a = backbuffer.a;
 }
 
 technique XIVCopyright {

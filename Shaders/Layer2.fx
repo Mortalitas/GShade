@@ -2,11 +2,10 @@
 | :: Description :: |
 '-------------------/
 
-	Layer2 (version 0.1)
+	Layer (version 0.2)
 
 	Author: CeeJay.dk
 	License: MIT
-  Modified quickly by Marot
 
 	About:
 	Blends an image with the game.
@@ -21,46 +20,58 @@
 	History:
 	(*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
 	
-	Version 0.1
-    *
+	Version 0.2 by Seri14 & Marot Satil
+    * Added the ability to scale and move the layer around on an x, y axis. 
 */
 
 #include "ReShade.fxh"
 
-#if LAYER_SINGLECHANNEL //I plan to have some option to let users set this for performance sake.
-    #define TEXFORMAT R8
-#else
-    #define TEXFORMAT RGBA8
-#endif
-
 uniform float Layer_Two_Blend <
-    ui_label = "Layer Two Blend";
-    ui_tooltip = "How much to blend layer with the original image.";
+    ui_label = "Opacity";
+    ui_tooltip = "The transparency of the layer.";
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
-    ui_step = 0.002;
+    ui_step = 0.001;
 > = 1.0;
 
-//Second Layer
-texture Two_Layer_texture <source="Layer2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+uniform float Layer_Two_Scale <
+  ui_type = "slider";
+	ui_label = "Scale";
+	ui_min = 0.01; ui_max = 5.0;
+	ui_step = 0.001;
+> = 1.001;
 
-sampler Two_Layer_sampler { Texture = Two_Layer_texture; };
+uniform float Layer_Two_PosX <
+  ui_type = "slider";
+	ui_label = "Position X";
+	ui_min = -2.0; ui_max = 2.0;
+	ui_step = 0.001;
+> = 0.5;
 
-float3 Two_PS_Layer(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target {
-    float3 twocolor = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float4 twolayer = tex2D(Two_Layer_sampler, texcoord).rgba;
-    
-    twocolor = lerp(twocolor, twolayer.rgb, twolayer.a * Layer_Two_Blend);
+uniform float Layer_Two_PosY <
+  ui_type = "slider";
+	ui_label = "Position Y";
+	ui_min = -2.0; ui_max = 2.0;
+	ui_step = 0.001;
+> = 0.5;
 
-    return twocolor;    
-    //return layer.aaa;
+texture Layer_Two_texture <source="Layer2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+sampler Layer_Two_sampler { Texture = Layer_Two_texture; };
+
+void PS_Layer_Two(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
+    const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
+    const float2 Layer_Pos = float2(Layer_Two_PosX, Layer_Two_PosY);
+    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Two_Scale);
+    const float4 Layer  = tex2D(Layer_Two_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
+  	color = lerp(backbuffer, Layer, Layer.a * Layer_Two_Blend);
+  	color.a = backbuffer.a;
 }
 
 technique Layer2 {
     pass
     {
         VertexShader = PostProcessVS;
-        PixelShader  = Two_PS_Layer;
+        PixelShader  = PS_Layer_Two;
     }
 }
