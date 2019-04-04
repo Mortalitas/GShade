@@ -30,7 +30,7 @@ uniform int cLayer_Select <
     ui_label = "Layer Selection";
     ui_tooltip = "The image/texture you'd like to use.";
     ui_type = "combo";
-    ui_items= "Horizontal Vanilla\0Vertical Vanilla\0Custom Horizontal\0";
+    ui_items= "Horizontal Vanilla\0Vertical Vanilla\0Nalukai Horizontal\0Yomi Black Horizontal\0Yomi White Horizontal\0";
 > = 0;
 
 uniform float cLayer_Blend <
@@ -71,6 +71,12 @@ sampler Verti_fourk_sampler { Texture = Verti_fourk_texture; };
 texture Horiz_fancy_fourk_texture <source="CopyrightF4kH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Horiz_fancy_fourk_sampler { Texture = Horiz_fancy_fourk_texture; };
 
+texture Horiz_yomi_b_texture <source="CopyrightYBlH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+sampler Horiz_yomi_b_sampler { Texture = Horiz_yomi_b_texture; };
+
+texture Horiz_yomi_w_texture <source="CopyrightYWhH.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+sampler Horiz_yomi_w_sampler { Texture = Horiz_yomi_w_texture; };
+
 void PS_cLayer(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
     const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
     const float2 cLayer_Pos = float2(cLayer_PosX, cLayer_PosY);
@@ -87,10 +93,22 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
       const float4 cLayer  = tex2D(Verti_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
-    else
+    else if (cLayer_Select == 2)
     {
       const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
       const float4 cLayer  = tex2D(Horiz_fancy_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
+  	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
+    }
+    else if (cLayer_Select == 3)
+    {
+      const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float4 cLayer  = tex2D(Horiz_yomi_b_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
+  	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
+    }
+    else
+    {
+      const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float4 cLayer  = tex2D(Horiz_yomi_w_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     color.a = backbuffer.a;
