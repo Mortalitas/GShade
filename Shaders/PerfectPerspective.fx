@@ -9,7 +9,7 @@ http://creativecommons.org/licenses/by-nc-nd/4.0/
 For inquiries please contact jakubfober@gmail.com
 */
 
-// Perfect Perspective PS ver. 2.6.1
+// Perfect Perspective PS ver. 2.6.2
 
 
 	  ////////////
@@ -129,8 +129,9 @@ float Stereographic(float2 Coordinates)
 {
 	if(FOV==0.0) return 1.0; // Bypass
 	// Convert 1/4 FOV to radians and calc tangent squared
-	float SqrTanFOVq = pow(tan(radians(FOV * 0.25)),2);
-	return (1.0 - SqrTanFOVq) / (1.0 - SqrTanFOVq * dot(Coordinates, Coordinates));
+	float SqrTanFOVq = pow(tan(radians(FOV * 0.25)),2.0);
+	float R2 = dot(Coordinates, Coordinates);
+	return (1.0 - SqrTanFOVq) / (1.0 - SqrTanFOVq * R2);
 }
 // Equisolid
 float Equisolid(float2 Coordinates)
@@ -138,7 +139,7 @@ float Equisolid(float2 Coordinates)
 	if(FOV==0.0) return 1.0; // Bypass
 	float rFOV = radians(FOV);
 	float R = length(Coordinates);
-	return tan(asin(sin(rFOV*0.25)*R)*2)/(tan(rFOV*0.5)*R);
+	return tan(asin(sin(rFOV*0.25)*R)*2.0)/(tan(rFOV*0.5)*R);
 }
 // Equidistant
 float Equidistant(float2 Coordinates)
@@ -246,6 +247,11 @@ float3 PerfectPerspectivePS(float4 vois : SV_Position, float2 texcoord : TexCoor
 
 	return Display;
 }
+
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
 
 technique PerfectPerspective < ui_label = "Perfect Perspective"; ui_tooltip = "Correct fisheye distortion"; >
 {

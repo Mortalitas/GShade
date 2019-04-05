@@ -9,6 +9,12 @@ To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
+
+	  ////////////
+	 /// MENU ///
+	////////////
+
+
 uniform bool Line <
 	ui_label = "Show Center Line";
 > = false;
@@ -38,12 +44,13 @@ uniform float BlurMultiplier <
 > = 6.0;
 
 // First pass render target, to make sure Alpha channel exists
-#if !defined(ResolutionX) || !defined(ResolutionY)
-	texture TiltShiftTarget { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
-#else
-	texture TiltShiftTarget { Width = ResolutionX; Height = ResolutionY; Format = RGBA8; };
-#endif
+texture TiltShiftTarget { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 sampler TiltShiftSampler { Texture = TiltShiftTarget; };
+
+
+	  //////////////
+	 /// SHADER ///
+	//////////////
 
 #include "ReShade.fxh"
 
@@ -136,6 +143,11 @@ void TiltShiftPass2PS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out 
 	// Image IS Red IF (Line IS True AND Image.a < 0.01), ELSE Image IS Image
 	Image.rgb = (Line && Image.a < 0.01) ? float3(1.0, 0.0, 0.0) : Image.rgb;
 }
+
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
 
 technique TiltShift < ui_label = "Tilt Shift"; >
 {

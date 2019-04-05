@@ -121,6 +121,11 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 	}
 }
 
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
+
 technique ChromaticAberration < ui_label = "Chromatic Aberration"; >
 {
 	pass

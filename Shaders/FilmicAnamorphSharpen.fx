@@ -39,7 +39,8 @@ uniform float Offset <
 > = 0.1;
 
 uniform int Contrast <
-	ui_label = "Edges mask";
+	ui_label = "Enable edges masking";
+	ui_tooltip = "Depth high-pass mask switch";
 	ui_tooltip = "Depth high-pass mask amount";
 	ui_type = "slider";
 	ui_min = 0; ui_max = 2000; ui_step = 1;
@@ -183,6 +184,11 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		return Preview ? HighPassColor : Sharpen;
 	}
 }
+
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
 
 technique FilmicAnamorphSharpen < ui_label = "Filmic Anamorphic Sharpen"; >
 {

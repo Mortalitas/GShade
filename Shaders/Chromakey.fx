@@ -1,5 +1,5 @@
 /*
-Chromakey PS v1.1.1 (c) 2018 Jacob Maximilian Fober
+Chromakey PS v1.4.0 (c) 2018 Jacob Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
@@ -7,6 +7,7 @@ To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
+#include "ReShade.fxh"
 
 	  ////////////
 	 /// MENU ///
@@ -58,14 +59,18 @@ uniform float3 CustomColor <
 	ui_category = "Color settings";
 > = float3(1.0, 0.0, 0.0);
 
+uniform bool AntiAliased <
+	ui_label = "Anti-aliased mask";
+	ui_tooltip = "Disabling this option will reduce masking gaps";
+	ui_category = "Color settings";
+> = false;
 
-	  //////////////
-	 /// SHADER ///
-	//////////////
 
-#include "ReShade.fxh"
+	  /////////////////
+	 /// FUNCTIONS ///
+	/////////////////
 
-float3 ChromakeyPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_Target
+float MaskAA(float2 texcoord)
 {
 	// Sample depth image
 	float Depth = ReShade::GetLinearizedDepth(texcoord);
@@ -73,10 +78,26 @@ float3 ChromakeyPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_T
 	// Convert to radial depth
 	float2 Size;
 	Size.x = tan(radians(FOV*0.5));
-	Size.y = Size.x / ReShade::AspectRatio * 2;
+	Size.y = Size.x / ReShade::AspectRatio;
 	if(RadialX) Depth *= length(float2((texcoord.x-0.5)*Size.x, 1.0));
 	if(RadialY) Depth *= length(float2((texcoord.y-0.5)*Size.y, 1.0));
 
+	// Return jagged mask
+	if(!AntiAliased) return step(Threshold, Depth);
+
+	// Get half-pixel size in depth value
+	float hPixel = fwidth(Depth)*0.5;
+
+	return smoothstep(Threshold-hPixel, Threshold+hPixel, Depth);
+}
+
+
+	  //////////////
+	 /// SHADER ///
+	//////////////
+
+float3 ChromakeyPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_Target
+{
 	// Define chromakey color, Ultimatte(tm) Super Blue, Ultimatte(tm) Green, or user color
 	float3 Screen;
 	switch(Color)
@@ -86,13 +107,17 @@ float3 ChromakeyPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_T
 		case 2:{ Screen = CustomColor;              break; } // User defined color
 	}
 
-	// Paint the picture
-	bool IsItFront = !bool(Pass);
+	// Generate depth mask
+	float DepthMask = MaskAA(texcoord);
+	if(bool(Pass)) DepthMask = 1.0-DepthMask;
 
-	return (Threshold < Depth ? IsItFront : !IsItFront) ?
-	Screen :
-	tex2D(ReShade::BackBuffer, texcoord).rgb;
+	return lerp(tex2D(ReShade::BackBuffer, texcoord).rgb, Screen, DepthMask);
 }
+
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
 
 technique Chromakey < ui_tooltip = "Generate green-screen wall based of depth"; >
 {
