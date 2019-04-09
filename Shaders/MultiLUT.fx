@@ -24,9 +24,6 @@
 #ifndef fLUT_RESTextureName
 	#define fLUT_RESTextureName "MultiLut_atlas4.png"
 #endif
-#ifndef fLUT_RESOTextureName
-	#define fLUT_RESOTextureName "MultiLut_atlas3.png"
-#endif
 #ifndef fLUT_JOHTextureName
 	#define fLUT_JOHTextureName "MultiLut_Johto.png"
 #endif
@@ -95,9 +92,6 @@ sampler	SamplerGSMultiLUT { Texture = texGSMultiLUT; };
 texture texRESMultiLUT < source = fLUT_RESTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
 sampler	SamplerRESMultiLUT { Texture = texRESMultiLUT; };
 
-texture texRESOMultiLUT < source = fLUT_RESOTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
-sampler	SamplerRESOMultiLUT { Texture = texRESOMultiLUT; };
-
 texture texJOHMultiLUT < source = fLUT_JOHTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountEx; Format = RGBA8; };
 sampler	SamplerJOHMultiLUT { Texture = texJOHMultiLUT; };
 
@@ -132,8 +126,8 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
     res.w = 1.0;
 	}
 
-//ReShade 4 MultiLut_atlas4.png
-	else if (fLUT_MultiLUTSelector == 1)
+//ReShade 4/3 MultiLut_atlas4.png
+	else if (fLUT_MultiLUTSelector == 1 || 2)
 	{
     lutcoord.y /= fLUT_LutAmount;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
@@ -145,20 +139,6 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
     res.xyz = color.xyz;
     res.w = 1.0;
 	}
-
-//ReShade 3 MultiLut_atlas3.png
-	else if (fLUT_MultiLUTSelector == 2)
-	{
-    lutcoord.y /= fLUT_LutAmountLow;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
-    float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerRESOMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESOMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
 
 //Johto MultiLut_Johto.png
 	else if (fLUT_MultiLUTSelector == 3)
