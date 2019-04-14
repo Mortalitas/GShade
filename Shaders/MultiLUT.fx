@@ -62,7 +62,7 @@ uniform int fLUT_MultiLUTSelector <
 
 uniform int fLUT_LutSelector < 
 	ui_type = "combo";
-	ui_items="Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0\An Extra One for Johto lol\0";
+	ui_items="Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Sepia\0\B&W mid constrast\0\B&W high contrast\0\An Extra One for Johto lol\0";
 	ui_label = "LUT to use. Names may not be accurate.";
 	ui_tooltip = "LUT to use for color transformation. 'Neutral' doesn't do any color transformation.";
 > = 0;
