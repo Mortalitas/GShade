@@ -16,6 +16,9 @@
 //
 // FFXIVLUTAtlas.png was provided by Espresso Lalaqo'te from their Espresso Glow Build!
 // Follow them on Twitter here: https://twitter.com/espressolala
+//
+// MultiLut_ninjafadaGameplay.png was provided by ninjafada!
+// You can see their ReShade-related work here: http://sfx.thelazy.net/users/u/ninjafada/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifndef fLUT_GSTextureName
@@ -32,6 +35,9 @@
 #endif
 #ifndef fLUT_MSTextureName
 	#define fLUT_MSTextureName "TMP_MultiLUT.png"
+#endif
+#ifndef fLUT_NFGTextureName
+	#define fLUT_NFGTextureName "MultiLut_ninjafadaGameplay.png"
 #endif
 #ifndef fLUT_TileSizeXY
 	#define fLUT_TileSizeXY 32
@@ -55,7 +61,7 @@
 
 uniform int fLUT_MultiLUTSelector <
   ui_type = "combo";
-  ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0MS\0";
+  ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0MS\0ninjafada Gameplay\0";
   ui_label = "The MultiLUT file to use.";
   ui_tooltip = "Set this to whatever build your preset was made with!";
 > = 0;
@@ -100,6 +106,9 @@ sampler	SamplerEGMultiLUT { Texture = texEGMultiLUT; };
 
 texture texMSMultiLUT < source = fLUT_MSTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
 sampler	SamplerMSMultiLUT { Texture = texMSMultiLUT; };
+
+texture texNFGMultiLUT < source = fLUT_NFGTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
+sampler	SamplerNFGMultiLUT { Texture = texNFGMultiLUT; };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -169,13 +178,26 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	}
 
 //MS TMP_MultiLUT.png
-	else
+	else if (fLUT_MultiLUTSelector == 5)
 	{
     lutcoord.y /= fLUT_LutAmountLow;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
     float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
     float3 lutcolor = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerMSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
+    res.xyz = color.xyz;
+    res.w = 1.0;
+	}
+//ninjafada Gameplay MultiLut_ninjafadaGameplay.png
+	else
+	{
+    lutcoord.y /= fLUT_LutAmountLow;
+    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
+    float lerpfact = frac(lutcoord.z);
+    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+    float3 lutcolor = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerNFGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
     color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
     res.xyz = color.xyz;
