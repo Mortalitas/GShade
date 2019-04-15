@@ -135,8 +135,21 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
     res.w = 1.0;
 	}
 
-//ReShade 4/3 MultiLut_atlas4.png
-	else if (fLUT_MultiLUTSelector == 1 || 2)
+//ReShade 4 MultiLut_atlas4.png
+	else if (fLUT_MultiLUTSelector == 1)
+	{
+    lutcoord.y /= fLUT_LutAmount;
+    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
+    float lerpfact = frac(lutcoord.z);
+    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+    float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
+    res.xyz = color.xyz;
+    res.w = 1.0;
+	}
+//ReShade 3 MultiLut_atlas4.png
+	else if (fLUT_MultiLUTSelector == 2)
 	{
     lutcoord.y /= fLUT_LutAmount;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
