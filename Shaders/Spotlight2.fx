@@ -86,7 +86,7 @@ sampler2D s2Color {
 
 float4 PS_2Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	const float2 res = ReShade::ScreenSize;
-	const float2 uCenter = float2(u2XCenter, u2YCenter);
+	const float2 uCenter = float2(2 - u2XCenter, u2YCenter);
 	float2 coord = uv * res * uCenter;
 
 	float halo = distance(coord, res * 0.5);
