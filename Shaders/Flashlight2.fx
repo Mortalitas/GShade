@@ -9,21 +9,21 @@
 #ifndef FLASHLIGHT_NO_BLEND_FIX
 #define FLASHLIGHT_NO_BLEND_FIX 0
 #endif
-uniform float uXCenter <
+uniform float u2XCenter <
   ui_label = "X Position";
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 2.0;
 	ui_tooltip = "X coordinate of beam center. Axes start from upper left screen corner.";
 > = 1.0;
 
-uniform float uYCenter <
+uniform float u2YCenter <
   ui_label = "Y Position";
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 2.0;
 	ui_tooltip = "Y coordinate of beam center. Axes start from upper left screen corner.";
 > = 1.0;
 
-uniform float uBrightness <
+uniform float u2Brightness <
 	ui_label = "Brightness";
 	ui_tooltip =
 		"Flashlight halo brightness.\n"
@@ -34,7 +34,7 @@ uniform float uBrightness <
 	ui_step = 0.01;
 > = 10.0;
 
-uniform float uSize <
+uniform float u2Size <
 	ui_label = "Size";
 	ui_tooltip =
 		"Flashlight halo size in pixels.\n"
@@ -45,7 +45,7 @@ uniform float uSize <
 	ui_step = 1.0;
 > = 420.0;
 
-uniform float3 uColor <
+uniform float3 u2Color <
 	ui_label = "Color";
 	ui_tooltip =
 		"Flashlight halo color.\n"
@@ -53,7 +53,7 @@ uniform float3 uColor <
 	ui_type = "color";
 > = float3(255, 230, 200) / 255.0;
 
-uniform float uDistance <
+uniform float u2Distance <
 	ui_label = "Distance";
 	ui_tooltip =
 		"The distance that the flashlight can illuminate.\n"
@@ -65,17 +65,17 @@ uniform float uDistance <
 	ui_step = 0.001;
 > = 0.1;
 
-uniform bool uToggleTexture <
+uniform bool u2ToggleTexture <
 	ui_label = "Toggle Texture";
 	ui_tooltip = "Enable or disable the flashlight texture.";
 > = 1;
 
-uniform bool uToggleDepth <
+uniform bool u2ToggleDepth <
 	ui_label = "Toggle Depth";
 	ui_tooltip = "Enable or disable depth.";
 > = 1;
 
-sampler2D sColor {
+sampler2D s2Color {
 	Texture = ReShade::BackBufferTex;
 	SRGBTexture = true;
 	MinFilter = POINT;
@@ -84,18 +84,18 @@ sampler2D sColor {
 
 #define nsin(x) (sin(x) * 0.5 + 0.5)
 
-float4 PS_Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
+float4 PS_2Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	const float2 res = ReShade::ScreenSize;
-	const float2 uCenter = float2(uXCenter, uYCenter);
+	const float2 uCenter = float2(u2XCenter, u2YCenter);
 	float2 coord = uv * res * uCenter;
 
 	float halo = distance(coord, res * 0.5);
-	float flashlight = uSize - min(halo, uSize);
-	flashlight /= uSize;
+	float flashlight = u2Size - min(halo, u2Size);
+	flashlight /= u2Size;
 	
 	// Add some texture to the halo by using some sin lines + reduce intensity
 	// when nearing the center of the halo.
-	if (uToggleTexture == 0)
+	if (u2ToggleTexture == 0)
 	{
 		float defects = sin(flashlight * 30.0) * 0.5 + 0.5;
 		defects = lerp(defects, 1.0, flashlight * 2.0);
@@ -110,19 +110,19 @@ float4 PS_Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
     flashlight *= 2.0;
   }
 
-	if (uToggleDepth == 1)
+	if (u2ToggleDepth == 1)
   {
     float depth = 1.0 - ReShade::GetLinearizedDepth(uv);
-    depth = pow(abs(depth), 1.0 / uDistance);
+    depth = pow(abs(depth), 1.0 / u2Distance);
     flashlight *= depth;
   }
 
-	float3 colored_flashlight = flashlight * uColor;
+	float3 colored_flashlight = flashlight * u2Color;
 	colored_flashlight *= colored_flashlight * colored_flashlight;
 
-	float3 result = 1.0 + colored_flashlight * uBrightness;
+	float3 result = 1.0 + colored_flashlight * u2Brightness;
 
-	float3 color = tex2D(sColor, uv).rgb;
+	float3 color = tex2D(s2Color, uv).rgb;
 	color *= result;
 
 	#if !FLASHLIGHT_NO_BLEND_FIX
@@ -135,10 +135,10 @@ float4 PS_Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	return float4(color, 1.0);
 }
 
-technique Flashlight {
+technique Flashlight2 {
 	pass {
 		VertexShader = PostProcessVS;
-		PixelShader = PS_Flashlight;
+		PixelShader = PS_2Flashlight;
 		SRGBWriteEnable = true;
 	}
 }
