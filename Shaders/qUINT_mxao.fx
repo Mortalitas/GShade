@@ -223,7 +223,7 @@ qMXAO_VSOUT VS_qMXAO(in uint id : SV_VertexID)
 
 #if 0
     static const float FOV = 75; //vertical FoV
-    MXAO.uvtoviewADD = float3(-tan(radians(FOV * 0.5)).xx,1.0) * qUINT::ASPECT_RATIO.xyx;
+    MXAO.uvtoviewADD = float3(-tan(radians(FOV * 0.5)).xx,1.0) * qUINT::ASPECT_RATIO.yxx;
    	MXAO.uvtoviewMUL = float3(-2.0 * MXAO.uvtoviewADD.xy,0.0);
 #endif
 
