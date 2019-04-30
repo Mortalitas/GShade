@@ -26,7 +26,7 @@
 
 uniform bool bTroubleshootOpacityIssue <
 	ui_category = "Troubleshooting (Do not use)";
-	ui_label = "Enable Alpha Highlighting";
+	ui_label = "Enable UI Highlighting";
 	ui_tooltip = "If you notice invalid colors on objects, enable FXAA in Final Fantasy XIV's Graphics Settings.\n"
 	             "Open [System Configuration]\n"
 	             "  -> [Graphics Settings]\n"
@@ -37,7 +37,7 @@ uniform bool bTroubleshootOpacityIssue <
 uniform int iBlendSource <
 	ui_category = "Troubleshooting (Do not use)";
 	ui_label = "Blend Type"; ui_type = "combo";
-	ui_items = "Checkerboard\0Highlight UI\0";
+	ui_items = "Checkerboard\0Negative\0";
 > = 0;
 
 #include "ReShade.fxh"
@@ -56,14 +56,26 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	float4 back;
 
 	if (bTroubleshootOpacityIssue)
+	{
 		if (0 == iBlendSource)
-			back = step(1, pos.x / 32 % 2) == step(1, pos.y / 32 % 2) ? 0.45 : 0.55;
+		{
+			back    = step(1, pos.x / 32 % 2) == step(1, pos.y / 32 % 2) ? 0.45 : 0.55;
+			color   = lerp(back, keep, keep.a);
+			color.a = keep.a;
+		}
 		else
-			back = step(1.19209e-07, keep.a) ? 1 - keep : keep;
+		{
+			back    = step(1.19209e-07, keep.a) ? 1 - keep : keep;
+			color   = lerp(back, keep, 1 - keep.a);
+			color.a = keep.a;
+		}
+	}
 	else
-		back = tex2D(ReShade::BackBuffer, texcoord);
-
-	color = lerp(back, keep, keep.a);
+	{
+		back    = tex2D(ReShade::BackBuffer, texcoord);
+		color   = lerp(back, keep, keep.a);
+		color.a = keep.a;
+	}
 }
 
 technique FFKeepUI <
