@@ -12,16 +12,16 @@
 uniform float u5XCenter <
   ui_label = "X Position";
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
+	ui_min = -1.0; ui_max = 1.0;
 	ui_tooltip = "X coordinate of beam center. Axes start from upper left screen corner.";
-> = 1.0;
+> = 0;
 
 uniform float u5YCenter <
   ui_label = "Y Position";
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
+	ui_min = -1.0; ui_max = 1.0;
 	ui_tooltip = "Y coordinate of beam center. Axes start from upper left screen corner.";
-> = 1.0;
+> = 0;
 
 uniform float u5Brightness <
 	ui_label = "Brightness";
@@ -86,8 +86,8 @@ sampler2D s5Color {
 
 float4 PS_5Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	const float2 res = ReShade::ScreenSize;
-	const float2 uCenter = float2(2 - u5XCenter, u5YCenter);
-	float2 coord = uv * res * uCenter;
+	const float2 uCenter = uv - float2(u5XCenter, -u5YCenter);
+	float2 coord = res * uCenter;
 
 	float halo = distance(coord, res * 0.5);
 	float flashlight = u5Size - min(halo, u5Size);
