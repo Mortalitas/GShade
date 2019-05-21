@@ -158,39 +158,6 @@ uniform float pLensdirtCurve <
     ui_step = 0.1;
 > = 1.2;
 
-/*
- * +++++++++++++++++++++++++		DOCS		+++++++++++++++++++++++++
- * --------------------
- * __RESHADE__ (version of the injector)
- * __VENDOR__ (vendor id)
- * __DEVICE__ (device id)
- * __RENDERER__ (Direct3D9: 0xD3D9 / Direct3D10: 0xD3D10 / Direct3D11: 0xD3D11 / OpenGL: 0x061)
- *
- * __DATE_YEAR__ (current year)
- * __DATE_MONTH__ (current month)
- * __DATE_DAY__ (current day in month)
- *
- * BUFFER_WIDTH (screen width)
- * BUFFER_HEIGHT (screen height)
- * BUFFER_RCP_WIDTH (reciprocal screen width)
- * BUFFER_RCP_HEIGHT (reciprocal screen height)
- 
- * texture imageTex < source = "path/to/image.bmp"; > { ... };
- * uniform float frametime < source = "frametime"; >; // Time in milliseconds it took for the last frame to complete.
- * uniform int framecount < source = "framecount"; >; // Total amount of frames since the game started.
- * uniform float4 date < source = "date"; >; // float4(year, month (1 - 12), day of month (1 - 31), time in seconds)
- * uniform float timer < source = "timer"; >; // Timer counting time in milliseconds since game start.
- * uniform float timeleft < source = "timeleft"; >; // Time in milliseconds that is left until the current technique timeout is reached.
- * uniform float2 pingpong < source = "pingpong"; min = 0; max = 10; step = 1; >; // Counter that counts up and down between min and max using step as increase value. The second component is either +1 or -1 depending on the direction it currently goes.
- * uniform int random < source = "random"; min = 0; max = 10; >; // Gets a new random value between min and max every pass.
- * uniform bool keydown < source = "key"; keycode = 0x20; >; // True if specified keycode (in this case the spacebar) is pressed and false otherwise.
- *
- * technique tech1 < enabled = true; > { ... } // Enable this technique by default.
- * technique tech2 < timeout = 1000; > { ... } // Auto-toggle this technique off 1000 milliseconds after it was enabled.
- * technique tech3 < toggle = 0x20; > { ... } // Toggle this technique when the specified keycode (in this case the spacebar) is pressed.
- * technique tech3 < toggleTime = 100; > { ... } // Toggle this technique at the specified time (in seconds after midnight).
- */
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // +++++   TEXTURES   +++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -500,7 +467,7 @@ float4 PS_ImageFX(VS_OUTPUT_POST IN) : COLOR
 // +++++   TECHNIQUES   +++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-technique PPFXBloom < ui_label = "PPFX Bloom"; >
+technique PPFXBloom < ui_label = "PPFX Bloom"; ui_tooltip = "Bloom | This effect lets bright pixels bleed their light into their surroundings. It is fast, highly customizable and fits to many games."; >
 {
 	pass setOriginal
 	{
