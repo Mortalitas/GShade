@@ -16,8 +16,59 @@
 
 // ** HDR **
 uniform bool pEnableHDR <
-   ui_label = "Enable HDR";
+   ui_category = "HDR & Tonemap";
+   ui_label = "Enable HDR & Tonemap";
+   ui_tooltip = "As brightness-increasing effects like bloom will push colors above the maximum brightness of standard displays and thus oversaturate colors and lead to ugly white 'patches' in bright areas, the colors have to be 'remapped' into the displays range.\nSeveral techniques exist for that, actually it's a whole scientific field. Configurable of course.";
 > = 0;
+
+// ** TONEMAP **
+uniform int pTonemapMode <
+    ui_category = "HDR & Tonemap";
+    ui_label = "Tonemap Mode";
+    ui_tooltip = "Choose a tonemapping algorithm fitting your personal taste.";
+    ui_type = "combo";
+    ui_items="Linear, recommended for really low bloomIntensity-values\0Square\0Log10-logarithmic + exposure correction)\0";
+> = 0;
+
+uniform float pTonemapCurve <
+    ui_category = "HDR & Tonemap";
+    ui_label = "Tonemap Curve";
+    ui_tooltip = "How 'aggressive' bright colors are compressed. High values may darken the shadows and mid-tones while preserving details in bright regions (almost-bright skies, for instance).";
+    ui_type = "slider";
+    ui_min = 1.0;
+    ui_max = 100.0;
+    ui_step = 0.5;
+> = 3.0;
+
+uniform float pTonemapExposure <
+    ui_category = "HDR & Tonemap";
+    ui_label = "Tonemap Exposure Adjustment";
+    ui_tooltip = "Every pixel is multiplied by this value before being tonemapped. You can use this as a brightness control or to specify a mid-gray value for Tonemap Contrast.";
+    ui_type = "slider";
+    ui_min = 0.001;
+    ui_max = 10.0;
+    ui_step = 0.001;
+> = 1.2;
+
+uniform float pTonemapContrast <
+    ui_category = "HDR & Tonemap";
+    ui_label = "Tonemap Contrast Intensity";
+    ui_tooltip = "Pixels darker than 1 are darkened, pixels above are exposed by this option. Combine with higher (2 - 7) tonemapExposure-values to create get a desirable look.";
+    ui_type = "slider";
+    ui_min = 0.01;
+    ui_max = 1.0;
+    ui_step = 0.001;
+> = 0.0;
+
+uniform float pTonemapSaturateBlacks <
+    ui_category = "HDR & Tonemap";
+    ui_label = "Tonemap Black Saturation";
+    ui_tooltip = "Some tonemapping algorithms may desaturate your shadows - this option corrects this issue. Dont's use too high values, it is purposed to be a subtle correction.";
+    ui_type = "slider";
+    ui_min = 0.01;
+    ui_max = 1.0;
+    ui_step = 0.001;
+> = 0.0;
 
 // ** BLOOM **
 #ifndef   pBloomRadius
@@ -33,6 +84,7 @@ uniform bool pEnableHDR <
 #endif
 
 uniform float pBloomIntensity <
+    ui_category = "Bloom";
     ui_label = "Bloom Overall-Intensity";
     ui_tooltip = "The bloom's exposure, I strongly suggest combining this with a tonemap if you choose a high value here.";
     ui_type = "slider";
@@ -42,6 +94,7 @@ uniform float pBloomIntensity <
 > = 0.5;
 
 uniform int pBloomBlendMode <
+    ui_category = "Bloom";
     ui_label = "Bloom Blend Mode";
     ui_tooltip = "Controls how the bloom is mixed with the original frame.";
     ui_type = "combo";
@@ -49,6 +102,7 @@ uniform int pBloomBlendMode <
 > = 0;
 
 uniform float pBloomThreshold <
+    ui_category = "Bloom";
     ui_label = "Bloom Threshold";
     ui_tooltip = "Pixels darker than this value won't cast bloom.";
     ui_type = "slider";
@@ -58,6 +112,7 @@ uniform float pBloomThreshold <
 > = 0.4;
 
 uniform float pBloomCurve <
+    ui_category = "Bloom";
     ui_label = "Bloom Curve";
     ui_tooltip = "The effect's gamma curve - the higher, the more will bloom be damped in dark areas - and vice versa.";
     ui_type = "slider";
@@ -67,6 +122,7 @@ uniform float pBloomCurve <
 > = 1.5;
 
 uniform float pBloomSaturation <
+    ui_category = "Bloom";
     ui_label = "Bloom Saturation";
     ui_tooltip = "The effect's color saturation. 0 means white, uncolored bloom, 1.500-3.000 yields a vibrant effect while everything above should make your eyes bleed.";
     ui_type = "slider";
@@ -77,11 +133,13 @@ uniform float pBloomSaturation <
 
 // ** LENSDIRT **
 uniform bool pEnableLensdirt <
-   ui_label = "Enable Lensdirt";
-   ui_tooltip = "Simulates a dirty lens. This effect was introduced in Battlefield 3 back in 2011 and since then was used by many further gamestudios.\nIf enabled, the bloom texture will be used for brightness check, thus scaling the intensity with the local luma instead of the current pixels' one.";
+    ui_category = "Lensdirt";
+    ui_label = "Enable Lensdirt";
+    ui_tooltip = "Simulates a dirty lens. This effect was introduced in Battlefield 3 back in 2011 and since then was used by many further gamestudios.\nIf enabled, the bloom texture will be used for brightness check, thus scaling the intensity with the local luma instead of the current pixels' one.";
 > = 0;
 
 uniform float pLensdirtIntensity <
+    ui_category = "Lensdirt";
     ui_label = "Lensdirt Intensity";
     ui_tooltip = "The dirt texture's maximum intensity.";
     ui_type = "slider";
@@ -91,6 +149,7 @@ uniform float pLensdirtIntensity <
 > = 1.0;
 
 uniform float pLensdirtCurve <
+    ui_category = "Lensdirt";
     ui_label = "Lensdirt Curve";
     ui_tooltip = "The curve which the dirt texture's intensity scales with - try higher values to limit visibility solely to bright/almost-white scenes.";
     ui_type = "slider";
@@ -343,6 +402,24 @@ float3 threshold(float3 pxInput, float colThreshold)
 			return float4(pxInput,pBloomIntensity);
 		}
 	}
+	
+// *** Custom Tonemapping ***
+	float3 FX_Tonemap( float3 pxInput, float whitePoint )
+	{
+		pxInput = pow(abs(pxInput*pTonemapExposure),pTonemapContrast);
+		whitePoint = pow(abs(whitePoint*pTonemapExposure),pTonemapContrast);
+		
+		if (pTonemapMode == 1)
+			return saturate(pxInput.xyz/(whitePoint*pTonemapCurve));
+		else if (pTonemapMode == 2)
+			return saturate(lerp(pxInput,pow(pxInput.xyz/whitePoint,whitePoint-pxInput),dot(pxInput/whitePoint,lumaCoeff)));
+		else
+		{
+			float exposureDiv = log10(whitePoint+1.0)/log10(whitePoint+1.0+pTonemapCurve);
+			pxInput.xyz = (log10(pxInput+1.0)/log10(pxInput+1.0+pTonemapCurve))/exposureDiv;
+			return saturate(lerp(pow(abs(pxInput.xyz), 1.0 + pTonemapSaturateBlacks), pxInput.xyz, sqrt( pxInput.xyz ) ) );
+		}
+	}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // +++++   VERTEX-SHADERS   +++++
@@ -396,6 +473,9 @@ float4 PS_LightFX(VS_OUTPUT_POST IN) : COLOR
 {
 	float2 pxCoord = IN.txcoord.xy;
 	float4 res = tex2D(SamplerColorHDRB,pxCoord);
+	
+	if (pEnableHDR == 1)
+    res.xyz = FX_Tonemap(res.xyz,res.w);
 	
 	return res;
 }
