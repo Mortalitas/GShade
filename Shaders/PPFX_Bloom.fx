@@ -55,8 +55,8 @@ uniform float pTonemapContrast <
     ui_label = "Tonemap Contrast Intensity";
     ui_tooltip = "Pixels darker than 1 are darkened, pixels above are exposed by this option. Combine with higher (2 - 7) tonemapExposure-values to create get a desirable look.";
     ui_type = "slider";
-    ui_min = 0.01;
-    ui_max = 1.0;
+    ui_min = 0.1;
+    ui_max = 10.0;
     ui_step = 0.001;
 > = 1.020;
 
@@ -500,7 +500,7 @@ float4 PS_ImageFX(VS_OUTPUT_POST IN) : COLOR
 // +++++   TECHNIQUES   +++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-technique BloomPPFX < ui_label = "Bloom PPFX"; >
+technique PPFXBloom < ui_label = "PPFX Bloom"; >
 {
 	pass setOriginal
 	{
