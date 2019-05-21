@@ -58,7 +58,7 @@ uniform float pTonemapContrast <
     ui_min = 0.01;
     ui_max = 1.0;
     ui_step = 0.001;
-> = 0.0;
+> = 1.020;
 
 uniform float pTonemapSaturateBlacks <
     ui_category = "HDR & Tonemap";
@@ -442,7 +442,7 @@ VS_OUTPUT_POST VS_PostProcess(VS_INPUT_POST IN)
 float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
 {
   if (pEnableHDR == 0)
-    return float4(tex2D(ReShade::BackBuffer,IN.txcoord.xy).xyz,1.0);
+    return tex2D(ReShade::BackBuffer,IN.txcoord.xy);
   else
     return float4(tex2D(SamplerColor,IN.txcoord.xy).xyz,1.0);
 }
