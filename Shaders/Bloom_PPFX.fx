@@ -1,0 +1,476 @@
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// *** PPFX Bloom from the Post-Processing Suite 1.03.29 for ReShade
+// *** SHADER AUTHOR: Pascal Matthäus ( Euda )
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//+++++++++++++++++++++++++++++
+// DEV_NOTES
+//+++++++++++++++++++++++++++++
+// Updated for compatibility with ReShade 4 and isolated by Marot Satil.
+
+#include "ReShade.fxh"
+
+//+++++++++++++++++++++++++++++
+// CUSTOM PARAMETERS
+//+++++++++++++++++++++++++++++
+
+// ** HDR **
+uniform bool pEnableHDR <
+   ui_label = "Enable HDR";
+> = 0;
+
+// ** BLOOM **
+#ifndef   pBloomRadius
+#define		pBloomRadius				64		// Bloom Sample Radius - Maximum distance within pixels affect each other - directly affetcs performance: Combine with bloomDownsampling to increase your effective radius while keeping a high framerate | 2 - 250
+#endif
+
+#ifndef   pBloomDownsampling
+#define		pBloomDownsampling		4		// Bloom Downsampling Factor - Downscales the image before calculating the bloom, thus drastically increasing performance. '1' is fullscreen which doesn't really make sense. I suggest 2-4. High values will cause temporal aliasing | 1 - 16
+#endif
+
+#ifndef   pBloomPrecision
+#define		pBloomPrecision			RGBA16	// Bloom Sampling Precision - Options: RGBA8 (low quality, high performance) / RGBA16 (high quality, slightly slower depending on your system) / RGBA32F (overkill)
+#endif
+
+uniform float pBloomIntensity <
+    ui_label = "Bloom Overall-Intensity";
+    ui_tooltip = "The bloom's exposure, I strongly suggest combining this with a tonemap if you choose a high value here.";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 10.0;
+    ui_step = 0.2;
+> = 0.5;
+
+uniform int pBloomBlendMode <
+    ui_label = "Bloom Blend Mode";
+    ui_tooltip = "Controls how the bloom is mixed with the original frame.";
+    ui_type = "combo";
+    ui_items="Additive (recommended with tonemaps)\0Lighten (great for night scenes)\0Cover (for configuring/debugging)\0";
+> = 0;
+
+uniform float pBloomThreshold <
+    ui_label = "Bloom Threshold";
+    ui_tooltip = "Pixels darker than this value won't cast bloom.";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    ui_step = 0.001;
+> = 0.4;
+
+uniform float pBloomCurve <
+    ui_label = "Bloom Curve";
+    ui_tooltip = "The effect's gamma curve - the higher, the more will bloom be damped in dark areas - and vice versa.";
+    ui_type = "slider";
+    ui_min = 0.1;
+    ui_max = 4.0;
+    ui_step = 0.01;
+> = 1.5;
+
+uniform float pBloomSaturation <
+    ui_label = "Bloom Saturation";
+    ui_tooltip = "The effect's color saturation. 0 means white, uncolored bloom, 1.500-3.000 yields a vibrant effect while everything above should make your eyes bleed.";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 10.0;
+    ui_step = 0.001;
+> = 2.0;
+
+// ** LENSDIRT **
+uniform bool pEnableLensdirt <
+   ui_label = "Enable Lensdirt";
+   ui_tooltip = "Simulates a dirty lens. This effect was introduced in Battlefield 3 back in 2011 and since then was used by many further gamestudios.\nIf enabled, the bloom texture will be used for brightness check, thus scaling the intensity with the local luma instead of the current pixels' one.";
+> = 0;
+
+uniform float pLensdirtIntensity <
+    ui_label = "Lensdirt Intensity";
+    ui_tooltip = "The dirt texture's maximum intensity.";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    ui_step = 0.01;
+> = 1.0;
+
+uniform float pLensdirtCurve <
+    ui_label = "Lensdirt Curve";
+    ui_tooltip = "The curve which the dirt texture's intensity scales with - try higher values to limit visibility solely to bright/almost-white scenes.";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 10.0;
+    ui_step = 0.1;
+> = 1.2;
+
+/*
+ * +++++++++++++++++++++++++		DOCS		+++++++++++++++++++++++++
+ * --------------------
+ * __RESHADE__ (version of the injector)
+ * __VENDOR__ (vendor id)
+ * __DEVICE__ (device id)
+ * __RENDERER__ (Direct3D9: 0xD3D9 / Direct3D10: 0xD3D10 / Direct3D11: 0xD3D11 / OpenGL: 0x061)
+ *
+ * __DATE_YEAR__ (current year)
+ * __DATE_MONTH__ (current month)
+ * __DATE_DAY__ (current day in month)
+ *
+ * BUFFER_WIDTH (screen width)
+ * BUFFER_HEIGHT (screen height)
+ * BUFFER_RCP_WIDTH (reciprocal screen width)
+ * BUFFER_RCP_HEIGHT (reciprocal screen height)
+ 
+ * texture imageTex < source = "path/to/image.bmp"; > { ... };
+ * uniform float frametime < source = "frametime"; >; // Time in milliseconds it took for the last frame to complete.
+ * uniform int framecount < source = "framecount"; >; // Total amount of frames since the game started.
+ * uniform float4 date < source = "date"; >; // float4(year, month (1 - 12), day of month (1 - 31), time in seconds)
+ * uniform float timer < source = "timer"; >; // Timer counting time in milliseconds since game start.
+ * uniform float timeleft < source = "timeleft"; >; // Time in milliseconds that is left until the current technique timeout is reached.
+ * uniform float2 pingpong < source = "pingpong"; min = 0; max = 10; step = 1; >; // Counter that counts up and down between min and max using step as increase value. The second component is either +1 or -1 depending on the direction it currently goes.
+ * uniform int random < source = "random"; min = 0; max = 10; >; // Gets a new random value between min and max every pass.
+ * uniform bool keydown < source = "key"; keycode = 0x20; >; // True if specified keycode (in this case the spacebar) is pressed and false otherwise.
+ *
+ * technique tech1 < enabled = true; > { ... } // Enable this technique by default.
+ * technique tech2 < timeout = 1000; > { ... } // Auto-toggle this technique off 1000 milliseconds after it was enabled.
+ * technique tech3 < toggle = 0x20; > { ... } // Toggle this technique when the specified keycode (in this case the spacebar) is pressed.
+ * technique tech3 < toggleTime = 100; > { ... } // Toggle this technique at the specified time (in seconds after midnight).
+ */
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   TEXTURES   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// *** ESSENTIALS ***
+texture2D texColor : COLOR;
+texture texColorHDRA { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+texture texColorHDRB { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+texture texDepth : DEPTH;
+
+// *** FX RTs ***
+texture texBloomA
+{
+	Width = BUFFER_WIDTH/pBloomDownsampling;
+	Height = BUFFER_HEIGHT/pBloomDownsampling;
+	// Available formats: R8, R32F, RG8, RGBA8, RGBA16, RGBA16F, RGBA32F --- Available compressed formats: DXT1 or BC1, DXT3 or BC2, DXT5 or BC3, LATC1 or BC4, LATC2 or BC5
+	Format = pBloomPrecision;
+};
+texture texBloomB
+{
+	Width = BUFFER_WIDTH/pBloomDownsampling;
+	Height = BUFFER_HEIGHT/pBloomDownsampling;
+	Format = pBloomPrecision;
+};
+
+// *** EXTERNAL TEXTURES ***
+texture texBDirt < source = "DirtA.png"; >
+{
+	Width = 1920;
+	Height = 1080;
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   SAMPLERS   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// *** ESSENTIALS ***
+sampler2D SamplerColor
+{
+	Texture = texColor;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	SRGBTexture = TRUE;
+};
+
+sampler SamplerColorHDRA
+{
+	Texture = texColorHDRA;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+};
+
+sampler SamplerColorHDRB
+{
+	Texture = texColorHDRB;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+};
+
+sampler2D SamplerDepth
+{
+	Texture = texDepth;
+};
+
+// *** FX RTs ***
+sampler SamplerBloomA
+{
+	Texture = texBloomA;
+};
+sampler SamplerBloomB
+{
+	Texture = texBloomB;
+};
+
+// *** EXTERNAL TEXTURES ***
+sampler SamplerDirt
+{
+	Texture = texBDirt;
+	SRGBTexture = TRUE;
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   VARIABLES   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static const float2 pxSize = float2(BUFFER_RCP_WIDTH,BUFFER_RCP_HEIGHT);
+static const float3 lumaCoeff = float3(0.2126f,0.7152f,0.0722f);
+#define ZNEAR 0.3
+#define ZFAR 50.0
+uniform float timer < source = "timer"; >;
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   STRUCTS   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+struct VS_OUTPUT_POST
+{
+	float4 vpos : SV_Position;
+	float2 txcoord : TEXCOORD0;
+};
+
+struct VS_INPUT_POST
+{
+	uint id : SV_VertexID;
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   HELPERS   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+float3 threshold(float3 pxInput, float colThreshold)
+{
+	return pxInput*max(0.0,sign(max(pxInput.x,max(pxInput.y,pxInput.z))-colThreshold));
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   EFFECTS   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// *** Gaussian Blur ***
+
+	// Gaussian Blur - Horizontal
+	float3 FX_BlurH( float3 pxInput, sampler source, float2 txCoords, float radius, float downsampling )
+	{
+		float	texelSize = pxSize.x*downsampling;
+		float2	fetchCoords = txCoords;
+		float	weight;
+		float	weightDiv = 1.0+5.0/radius;
+		float	sampleSum = 0.5;
+		
+		pxInput+=tex2D(source,txCoords).xyz*0.5;
+		
+		[loop]
+		for (float hOffs=1.5; hOffs<radius; hOffs+=2.0)
+		{
+			weight = 1.0/pow(weightDiv,hOffs*hOffs/radius);
+			fetchCoords = txCoords;
+			fetchCoords.x += texelSize * hOffs;
+			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			fetchCoords = txCoords;
+			fetchCoords.x -= texelSize * hOffs;
+			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			sampleSum += 2.0 * weight;
+		}
+		pxInput /= sampleSum;
+		
+		return pxInput;
+	}
+	
+	// Gaussian Blur - Vertical
+	float3 FX_BlurV( float3 pxInput, sampler source, float2 txCoords, float radius, float downsampling )
+	{
+		float	texelSize = pxSize.y*downsampling;
+		float2	fetchCoords = txCoords;
+		float	weight;
+		float	weightDiv = 1.0+5.0/radius;
+		float	sampleSum = 0.5;
+		
+		pxInput+=tex2D(source,txCoords).xyz*0.5;
+		
+		[loop]
+		for (float vOffs=1.5; vOffs<radius; vOffs+=2.0)
+		{
+			weight = 1.0/pow(weightDiv,vOffs*vOffs/radius);
+			fetchCoords = txCoords;
+			fetchCoords.y += texelSize * vOffs;
+			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			fetchCoords = txCoords;
+			fetchCoords.y -= texelSize * vOffs;
+			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			sampleSum += 2.0 * weight;
+		}
+		pxInput /= sampleSum;
+		
+		return pxInput;
+	}
+
+	
+// *** Bloom ***
+	// Bloom - Mix-pass
+	float4 FX_BloomMix( float3 pxInput, float2 txCoords )
+	{
+		float3 blurTexture = tex2D(SamplerBloomA,txCoords).xyz;
+
+		if (pEnableLensdirt)
+			pxInput += tex2D(SamplerDirt, txCoords).xyz*pow(dot(abs(blurTexture),lumaCoeff),pLensdirtCurve)*pLensdirtIntensity; 
+		blurTexture = pow(abs(blurTexture),pBloomCurve);
+		blurTexture = lerp(dot(blurTexture.xyz,lumaCoeff.xyz),blurTexture,pBloomSaturation);
+		blurTexture /= max(1.0,max(blurTexture.x,max(blurTexture.y,blurTexture.z)));
+		if (pBloomBlendMode == 0)
+		{
+			pxInput = pxInput+blurTexture*pBloomIntensity;
+			return float4(pxInput,1.0+pBloomIntensity);
+		}
+		else if (pBloomBlendMode == 1)
+		{
+			pxInput = max(pxInput,blurTexture*pBloomIntensity);
+			return float4(pxInput,max(1.0,pBloomIntensity));
+		}
+    else
+    {
+			pxInput = blurTexture;
+			return float4(pxInput,pBloomIntensity);
+		}
+	}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   VERTEX-SHADERS   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+VS_OUTPUT_POST VS_PostProcess(VS_INPUT_POST IN)
+{
+	VS_OUTPUT_POST OUT;
+	OUT.txcoord.x = (IN.id == 2) ? 2.0 : 0.0;
+	OUT.txcoord.y = (IN.id == 1) ? 2.0 : 0.0;
+	OUT.vpos = float4(OUT.txcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
+	return OUT;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   PIXEL-SHADERS   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// *** Shader Structure ***
+float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
+{
+  if (pEnableHDR == 0)
+    return float4(tex2D(ReShade::BackBuffer,IN.txcoord.xy).xyz,1.0);
+  else
+    return float4(tex2D(SamplerColor,IN.txcoord.xy).xyz,1.0);
+}
+
+// *** Bloom ***
+	float4 PS_BloomThreshold(VS_OUTPUT_POST IN) : COLOR
+	{
+		return float4(threshold(tex2D(SamplerColorHDRA,IN.txcoord.xy).xyz,pBloomThreshold),1.0);
+	}
+
+	float4 PS_BloomH_RadA(VS_OUTPUT_POST IN) : COLOR
+	{
+		return float4(FX_BlurH(0.0,SamplerBloomA,IN.txcoord.xy,pBloomRadius,pBloomDownsampling),1.0);
+	}
+
+	float4 PS_BloomV_RadA(VS_OUTPUT_POST IN) : COLOR
+	{
+		return float4(FX_BlurV(0.0,SamplerBloomB,IN.txcoord.xy,pBloomRadius,pBloomDownsampling),1.0);
+	}
+
+	float4 PS_BloomMix(VS_OUTPUT_POST IN) : COLOR
+	{
+		return FX_BloomMix(tex2D(SamplerColorHDRA,IN.txcoord.xy).xyz,IN.txcoord.xy);
+	}
+
+// *** Further FX ***
+float4 PS_LightFX(VS_OUTPUT_POST IN) : COLOR
+{
+	float2 pxCoord = IN.txcoord.xy;
+	float4 res = tex2D(SamplerColorHDRB,pxCoord);
+	
+	return res;
+}
+
+float4 PS_ColorFX(VS_OUTPUT_POST IN) : COLOR
+{
+	float2 pxCoord = IN.txcoord.xy;
+	float4 res = tex2D(SamplerColorHDRA,pxCoord);
+	
+	return float4(res.xyz,1.0);
+}
+
+float4 PS_ImageFX(VS_OUTPUT_POST IN) : COLOR
+{
+	float2 pxCoord = IN.txcoord.xy;
+	float4 res = tex2D(SamplerColorHDRB,pxCoord);
+	
+	return float4(res.xyz,1.0);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++   TECHNIQUES   +++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+technique BloomPPFX < ui_label = "Bloom PPFX"; >
+{
+	pass setOriginal
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SetOriginal;
+		RenderTarget0 = texColorHDRA;
+	}
+		pass bloomThresh
+		{
+			VertexShader = VS_PostProcess;
+			PixelShader = PS_BloomThreshold;
+			RenderTarget0 = texBloomA;
+		}
+		
+		pass bloomH_RadA
+		{
+			VertexShader = VS_PostProcess;
+			PixelShader = PS_BloomH_RadA;
+			RenderTarget0 = texBloomB;
+		}
+		
+		pass bloomV_RadA
+		{
+			VertexShader = VS_PostProcess;
+			PixelShader = PS_BloomV_RadA;
+			RenderTarget0 = texBloomA;
+		}
+		
+		pass bloomMix
+		{
+			VertexShader = VS_PostProcess;
+			PixelShader = PS_BloomMix;
+			RenderTarget0 = texColorHDRB;
+		}
+	pass lightFX
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_LightFX;
+		RenderTarget0 = texColorHDRA;
+	}
+	pass colorFX
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_ColorFX;
+		RenderTarget0 = texColorHDRB;
+	}
+	
+	pass imageFX
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_ImageFX;
+	}
+}
