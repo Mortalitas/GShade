@@ -19,8 +19,8 @@
 #define		pSDDOSamplePrecision		RGBA16F // SSDO Sample Precision - The texture format of the source texture used to calculate the effect. RGBA8 is generally too low, RGBA16F should be the sweet-spot. RGBA32F is overkill and heavily kills your FPS.
 #endif
 
-#ifndef pSSDOFLOD
-#define		pSSDOFLOD					1		// SSDO LOD - The resolution which the effect is calculated in. 1 = full-screen, 2 = half, 4 = quarter, 8 = one-eighth
+#ifndef pSSDOLOD
+#define		pSSDOLOD					1		// SSDO LOD - The resolution which the effect is calculated in. 1 = full-screen, 2 = half, 4 = quarter, 8 = one-eighth
 #endif
 
 #ifndef pSSDOFilterScale
@@ -178,8 +178,8 @@ texture texViewSpace
 };
 texture texSSDOA
 {
-	Width = BUFFER_WIDTH/2.0*pSSDOFLOD;
-	Height = BUFFER_HEIGHT/2.0*pSSDOFLOD;
+	Width = BUFFER_WIDTH/2.0*pSSDOLOD;
+	Height = BUFFER_HEIGHT/2.0*pSSDOLOD;
 	Format = qSSDOFilterPrecision;
 };
 texture texSSDOB
@@ -200,7 +200,7 @@ texture texNoise < source = "hd_noise.png"; >
 {
 	Width = 256;
 	Height = 256;
-	#define NOISE_SCREENSCALE float2((BUFFER_WIDTH/pow(2.0,pSSDOFLOD))/256.0,(BUFFER_HEIGHT/pow(2.0,pSSDOFLOD))/256.0)
+	#define NOISE_SCREENSCALE float2((BUFFER_WIDTH/pow(2.0,pSSDOLOD))/256.0,(BUFFER_HEIGHT/pow(2.0,pSSDOLOD))/256.0)
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
