@@ -251,9 +251,6 @@ sampler SamplerDirt
 
 static const float2 pxSize = float2(BUFFER_RCP_WIDTH,BUFFER_RCP_HEIGHT);
 static const float3 lumaCoeff = float3(0.2126f,0.7152f,0.0722f);
-#define ZNEAR 0.3
-#define ZFAR 50.0
-uniform float timer < source = "timer"; >;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // +++++   STRUCTS   +++++
