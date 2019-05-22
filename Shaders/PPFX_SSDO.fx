@@ -196,11 +196,11 @@ texture texSSDOC
 };
 
 // *** EXTERNAL TEXTURES ***
-texture texNoise < source = "hd_noise.png"; >
+texture texNoise < source = "mcnoise.png"; >
 {
-	Width = 256;
-	Height = 256;
-	#define NOISE_SCREENSCALE float2((BUFFER_WIDTH/pow(2.0,pSSDOLOD))/256.0,(BUFFER_HEIGHT/pow(2.0,pSSDOLOD))/256.0)
+	Width = 1920;
+	Height = 1080;
+	#define NOISE_SCREENSCALE float2((BUFFER_WIDTH/pow(2.0,pSSDOLOD))/1920.0,(BUFFER_HEIGHT/pow(2.0,pSSDOLOD))/1080.0)
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
