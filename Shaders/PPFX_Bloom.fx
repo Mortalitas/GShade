@@ -299,10 +299,10 @@ float3 threshold(float3 pxInput, float colThreshold)
 			weight = 1.0/pow(abs(weightDiv),hOffs*hOffs/radius);
 			fetchCoords = txCoords;
 			fetchCoords.x += texelSize * hOffs;
-			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			pxInput+=tex2Dlod(source, float4(fetchCoords, 0.0, 0.0)).xyz * weight;
 			fetchCoords = txCoords;
 			fetchCoords.x -= texelSize * hOffs;
-			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			pxInput+=tex2Dlod(source, float4(fetchCoords, 0.0, 0.0)).xyz * weight;
 			sampleSum += 2.0 * weight;
 		}
 		pxInput /= sampleSum;
@@ -327,10 +327,10 @@ float3 threshold(float3 pxInput, float colThreshold)
 			weight = 1.0/pow(abs(weightDiv),vOffs*vOffs/radius);
 			fetchCoords = txCoords;
 			fetchCoords.y += texelSize * vOffs;
-			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			pxInput+=tex2Dlod(source, float4(fetchCoords, 0.0, 0.0)).xyz * weight;
 			fetchCoords = txCoords;
 			fetchCoords.y -= texelSize * vOffs;
-			pxInput+=tex2D(source, fetchCoords).xyz * weight;
+			pxInput+=tex2Dlod(source, float4(fetchCoords, 0.0, 0.0)).xyz * weight;
 			sampleSum += 2.0 * weight;
 		}
 		pxInput /= sampleSum;
@@ -376,7 +376,7 @@ float3 threshold(float3 pxInput, float colThreshold)
 		if (pTonemapMode == 1)
 			return saturate(pxInput.xyz/(whitePoint*pTonemapCurve));
 		else if (pTonemapMode == 2)
-			return saturate(lerp(pxInput,pow(pxInput.xyz/whitePoint,whitePoint-pxInput),dot(pxInput/whitePoint,lumaCoeff)));
+			return saturate(lerp(pxInput,pow(abs(pxInput.xyz/whitePoint),whitePoint-pxInput),dot(pxInput/whitePoint,lumaCoeff)));
 		else
 		{
 			float exposureDiv = log10(whitePoint+1.0)/log10(whitePoint+1.0+pTonemapCurve);
