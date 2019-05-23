@@ -15,8 +15,8 @@
 //+++++++++++++++++++++++++++++
 
 // ** SSDO **
-#ifndef pSDDOSamplePrecision
-#define		pSDDOSamplePrecision		RGBA16F // SSDO Sample Precision - The texture format of the source texture used to calculate the effect. RGBA8 is generally too low, RGBA16F should be the sweet-spot. RGBA32F is overkill and heavily kills your FPS.
+#ifndef pSSDOSamplePrecision
+#define		pSSDOSamplePrecision		RGBA16F // SSDO Sample Precision - The texture format of the source texture used to calculate the effect. RGBA8 is generally too low, RGBA16F should be the sweet-spot. RGBA32F is overkill and heavily kills your FPS.
 #endif
 
 #ifndef pSSDOLOD
@@ -173,7 +173,7 @@ texture texViewSpace
 {
 	Width = BUFFER_WIDTH;
 	Height = BUFFER_HEIGHT;
-	Format = pSDDOSamplePrecision;
+	Format = pSSDOSamplePrecision;
 	MipLevels = 4;
 };
 texture texSSDOA
@@ -254,7 +254,6 @@ static const float2 pxSize = float2(BUFFER_RCP_WIDTH,BUFFER_RCP_HEIGHT);
 static const float3 lumaCoeff = float3(0.2126f,0.7152f,0.0722f);
 #define ZNEAR 0.3
 #define ZFAR 50.0
-uniform float timer < source = "timer"; >;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // +++++   STRUCTS   +++++
@@ -274,11 +273,6 @@ struct VS_INPUT_POST
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // +++++   HELPERS   +++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-float3 threshold(float3 pxInput, float colThreshold)
-{
-	return pxInput*max(0.0,sign(max(pxInput.x,max(pxInput.y,pxInput.z))-colThreshold));
-}
 
 float linearDepth(float2 txCoords)
 {
