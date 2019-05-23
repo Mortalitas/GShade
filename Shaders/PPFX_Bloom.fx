@@ -296,7 +296,7 @@ float3 threshold(float3 pxInput, float colThreshold)
 		[loop]
 		for (float hOffs=1.5; hOffs<radius; hOffs+=2.0)
 		{
-			weight = 1.0/pow(weightDiv,hOffs*hOffs/radius);
+			weight = 1.0/pow(abs(weightDiv),hOffs*hOffs/radius);
 			fetchCoords = txCoords;
 			fetchCoords.x += texelSize * hOffs;
 			pxInput+=tex2D(source, fetchCoords).xyz * weight;
@@ -324,7 +324,7 @@ float3 threshold(float3 pxInput, float colThreshold)
 		[loop]
 		for (float vOffs=1.5; vOffs<radius; vOffs+=2.0)
 		{
-			weight = 1.0/pow(weightDiv,vOffs*vOffs/radius);
+			weight = 1.0/pow(abs(weightDiv),vOffs*vOffs/radius);
 			fetchCoords = txCoords;
 			fetchCoords.y += texelSize * vOffs;
 			pxInput+=tex2D(source, fetchCoords).xyz * weight;
