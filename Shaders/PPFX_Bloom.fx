@@ -71,10 +71,6 @@ uniform float pTonemapSaturateBlacks <
 > = 0.0;
 
 // ** BLOOM **
-#ifndef   pBloomRadius
-#define		pBloomRadius				64		// Bloom Sample Radius - Maximum distance within pixels affect each other - directly affetcs performance: Combine with bloomDownsampling to increase your effective radius while keeping a high framerate | 2 - 250
-#endif
-
 #ifndef   pBloomDownsampling
 #define		pBloomDownsampling		4		// Bloom Downsampling Factor - Downscales the image before calculating the bloom, thus drastically increasing performance. '1' is fullscreen which doesn't really make sense. I suggest 2-4. High values will cause temporal aliasing | 1 - 16
 #endif
@@ -82,6 +78,16 @@ uniform float pTonemapSaturateBlacks <
 #ifndef   pBloomPrecision
 #define		pBloomPrecision			RGBA16	// Bloom Sampling Precision - Options: RGBA8 (low quality, high performance) / RGBA16 (high quality, slightly slower depending on your system) / RGBA32F (overkill)
 #endif
+
+uniform float pBloomRadius <
+    ui_category = "Bloom";
+    ui_label = "Bloom Sample Radius";
+    ui_tooltip = "Maximum distance within pixels affect each other - directly affetcs performance: Combine with bloomDownsampling to increase your effective radius while keeping a high framerate.";
+    ui_type = "slider";
+    ui_min = 2.0;
+    ui_max = 250.0;
+    ui_step = 1.0;
+> = 64.0;
 
 uniform float pBloomIntensity <
     ui_category = "Bloom";
@@ -166,7 +172,6 @@ uniform float pLensdirtCurve <
 texture2D texColor : COLOR;
 texture texColorHDRA { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 texture texColorHDRB { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
-texture texDepth : DEPTH;
 
 // *** FX RTs ***
 texture texBloomA
@@ -221,11 +226,6 @@ sampler SamplerColorHDRB
 	AddressV = BORDER;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-};
-
-sampler2D SamplerDepth
-{
-	Texture = texDepth;
 };
 
 // *** FX RTs ***
