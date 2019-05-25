@@ -6,8 +6,8 @@
 
 #include "ReShade.fxh"
 
-#ifndef FLASHLIGHT_NO_BLEND_FIX
-#define FLASHLIGHT_NO_BLEND_FIX 0
+#ifndef SPOTLIGHT_NO_BLEND_FIX
+#define SPOTLIGHT_NO_BLEND_FIX 0
 #endif
 uniform float u3XCenter <
   ui_label = "X Position";
@@ -125,7 +125,7 @@ float4 PS_3Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET 
 	float3 color = tex2D(s3Color, uv).rgb;
 	color *= result;
 
-	#if !FLASHLIGHT_NO_BLEND_FIX
+	#if !SPOTLIGHT_NO_BLEND_FIX
 
 	// Add some minimum amount of light to very dark pixels.	
 	color = max(color, (result - 1.0) * 0.001);
