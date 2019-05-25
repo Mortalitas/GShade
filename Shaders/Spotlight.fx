@@ -2,13 +2,12 @@
 	Spotlight shader based on the Flashlight shader by luluco250
 
 	MIT Licensed.
+
+  Modifications by ninjafada and Marot Satil
 */
 
 #include "ReShade.fxh"
 
-#ifndef SPOTLIGHT_NO_BLEND_FIX
-#define SPOTLIGHT_NO_BLEND_FIX 0
-#endif
 uniform float uXCenter <
   ui_label = "X Position";
 	ui_type = "slider";
@@ -26,7 +25,7 @@ uniform float uYCenter <
 uniform float uBrightness <
 	ui_label = "Brightness";
 	ui_tooltip =
-		"Flashlight halo brightness.\n"
+		"Spotlight halo brightness.\n"
 		"\nDefault: 10.0";
 	ui_type = "slider";
 	ui_min = 0.0;
@@ -37,7 +36,7 @@ uniform float uBrightness <
 uniform float uSize <
 	ui_label = "Size";
 	ui_tooltip =
-		"Flashlight halo size in pixels.\n"
+		"Spotlight halo size in pixels.\n"
 		"\nDefault: 420.0";
 	ui_type = "slider";
 	ui_min = 10.0;
@@ -48,7 +47,7 @@ uniform float uSize <
 uniform float3 uColor <
 	ui_label = "Color";
 	ui_tooltip =
-		"Flashlight halo color.\n"
+		"Spotlight halo color.\n"
 		"\nDefault: R:255 G:230 B:200";
 	ui_type = "color";
 > = float3(255, 230, 200) / 255.0;
@@ -56,7 +55,7 @@ uniform float3 uColor <
 uniform float uDistance <
 	ui_label = "Distance";
 	ui_tooltip =
-		"The distance that the flashlight can illuminate.\n"
+		"The distance that the spotlight can illuminate.\n"
 		"Only works if the game has depth buffer access.\n"
 		"\nDefault: 0.1";
 	ui_type = "slider";
@@ -65,9 +64,14 @@ uniform float uDistance <
 	ui_step = 0.001;
 > = 0.1;
 
+uniform bool uBlendFix <
+  ui_label = "Toggle Blend Fix";
+	ui_tooltip = "Enable to use the original blending mode.";
+> = 0;
+
 uniform bool uToggleTexture <
 	ui_label = "Toggle Texture";
-	ui_tooltip = "Enable or disable the flashlight texture.";
+	ui_tooltip = "Enable or disable the spotlight texture.";
 > = 1;
 
 uniform bool uToggleDepth <
@@ -84,53 +88,50 @@ sampler2D sColor {
 
 #define nsin(x) (sin(x) * 0.5 + 0.5)
 
-float4 PS_Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
+float4 PS_Spotlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	const float2 res = ReShade::ScreenSize;
 	const float2 uCenter = uv - float2(uXCenter, -uYCenter);
 	float2 coord = res * uCenter;
 
 	float halo = distance(coord, res * 0.5);
-	float flashlight = uSize - min(halo, uSize);
-	flashlight /= uSize;
+	float spotlight = uSize - min(halo, uSize);
+	spotlight /= uSize;
 	
 	// Add some texture to the halo by using some sin lines + reduce intensity
 	// when nearing the center of the halo.
 	if (uToggleTexture == 0)
 	{
-		float defects = sin(flashlight * 30.0) * 0.5 + 0.5;
-		defects = lerp(defects, 1.0, flashlight * 2.0);
+		float defects = sin(spotlight * 30.0) * 0.5 + 0.5;
+		defects = lerp(defects, 1.0, spotlight * 2.0);
 
 		static const float contrast = 0.125;
 
 		defects = 0.5 * (1.0 - contrast) + defects * contrast;
-		flashlight *= defects * 4.0;
+		spotlight *= defects * 4.0;
 	}
 	else
 	{
-    flashlight *= 2.0;
+    spotlight *= 2.0;
   }
 
 	if (uToggleDepth == 1)
   {
     float depth = 1.0 - ReShade::GetLinearizedDepth(uv);
     depth = pow(abs(depth), 1.0 / uDistance);
-    flashlight *= depth;
+    spotlight *= depth;
   }
 
-	float3 colored_flashlight = flashlight * uColor;
-	colored_flashlight *= colored_flashlight * colored_flashlight;
+	float3 colored_spotlight = spotlight * uColor;
+	colored_spotlight *= colored_spotlight * colored_spotlight;
 
-	float3 result = 1.0 + colored_flashlight * uBrightness;
+	float3 result = 1.0 + colored_spotlight * uBrightness;
 
 	float3 color = tex2D(sColor, uv).rgb;
 	color *= result;
 
-	#if !SPOTLIGHT_NO_BLEND_FIX
-
-	// Add some minimum amount of light to very dark pixels.	
-	color = max(color, (result - 1.0) * 0.001);
-	
-	#endif
+	if (!uBlendFix)
+    // Add some minimum amount of light to very dark pixels.	
+    color = max(color, (result - 1.0) * 0.001);
 
 	return float4(color, 1.0);
 }
@@ -138,7 +139,7 @@ float4 PS_Flashlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 technique Spotlight {
 	pass {
 		VertexShader = PostProcessVS;
-		PixelShader = PS_Flashlight;
+		PixelShader = PS_Spotlight;
 		SRGBWriteEnable = true;
 	}
 }
