@@ -300,7 +300,7 @@ float4 viewSpace(float2 txCoords)
 	#define SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER 0.05
 	
 	// SSDO - Scatter Illumination
-	float4 FX_ssdoScatter( float2 txCoords )
+	float4 FX_SSDOScatter( float2 txCoords )
 	{
 		float	sourceAxisDiv = pow(2.0,pSSDOSourceLOD);
 		float2	texelSize = pxSize*pow(2.0,pSSDOSourceLOD);
@@ -415,32 +415,32 @@ float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
 }
 
 // *** SSDO ***
-	float4 PS_ssdoViewSpace(VS_OUTPUT_POST IN) : COLOR
+	float4 PS_SSDOViewSpace(VS_OUTPUT_POST IN) : COLOR
 	{
 		return viewSpace(IN.txcoord.xy);
 	}
 
-	float4 PS_ssdoScatter(VS_OUTPUT_POST IN) : COLOR
+	float4 PS_SSDOScatter(VS_OUTPUT_POST IN) : COLOR
 	{
-		return FX_ssdoScatter(IN.txcoord.xy);
+		return FX_SSDOScatter(IN.txcoord.xy);
 	}
 	
-	float4 PS_ssdoBlurScale(VS_OUTPUT_POST IN) : COLOR
+	float4 PS_SSDOBlurScale(VS_OUTPUT_POST IN) : COLOR
 	{
 		return tex2D(SamplerSSDOA,IN.txcoord.xy);
 	}
 
-	float4 PS_ssdoBlurH(VS_OUTPUT_POST IN) : COLOR
+	float4 PS_SSDOBlurH(VS_OUTPUT_POST IN) : COLOR
 	{
 		return FX_BlurBilatH(IN.txcoord.xy,pSSDOFilterRadius/pSSDOFilterStep*pSSDOFilterScale);
 	}
 
-	float4 PS_ssdoBlurV(VS_OUTPUT_POST IN) : COLOR
+	float4 PS_SSDOBlurV(VS_OUTPUT_POST IN) : COLOR
 	{
 		return float4(FX_BlurBilatV(IN.txcoord.xy,pSSDOFilterRadius/pSSDOFilterStep*pSSDOFilterScale).xyz,1.0);
 	}
 	
-	float4 PS_ssdoMix(VS_OUTPUT_POST IN) : COLOR
+	float4 PS_SSDOMix(VS_OUTPUT_POST IN) : COLOR
 	{
     float3 SSDO_MIX_MODE;
 		if (pSSDOMixMode == 1)
@@ -469,44 +469,44 @@ technique PPFXSSDO < ui_label = "PPFX SSDO"; ui_tooltip = "Screen Space Directio
 		RenderTarget0 = texColorLOD;
 	}
 	
-		pass ssdoViewSpace
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_ssdoViewSpace;
-			RenderTarget0 = texViewSpace;
-		}
+	pass ssdoViewSpace
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SSDOViewSpace;
+		RenderTarget0 = texViewSpace;
+	}
 		
-		pass ssdoScatter
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_ssdoScatter;
-			RenderTarget0 = texSSDOA;
-		}
+	pass ssdoScatter
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SSDOScatter;
+		RenderTarget0 = texSSDOA;
+	}
 		
-		pass ssdoBlurScale
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_ssdoBlurScale;
-			RenderTarget0 = texSSDOB;
-		}
+	pass ssdoBlurScale
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SSDOBlurScale;
+		RenderTarget0 = texSSDOB;
+	}
 		
-		pass ssdoBlurH
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_ssdoBlurH;
-			RenderTarget0 = texSSDOC;
-		}
+	pass ssdoBlurH
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SSDOBlurH;
+		RenderTarget0 = texSSDOC;
+	}
 		
-		pass ssdoBlurV
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_ssdoBlurV;
-			RenderTarget0 = texSSDOB;
-		}
+	pass ssdoBlurV
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SSDOBlurV;
+		RenderTarget0 = texSSDOB;
+	}
 		
-		pass ssdoMix
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_ssdoMix;
-		}
+	pass ssdoMix
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_SSDOMix;
+	}
 }

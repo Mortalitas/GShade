@@ -472,33 +472,33 @@ technique PPFXBloom < ui_label = "PPFX Bloom"; ui_tooltip = "Bloom | This effect
 		PixelShader = PS_SetOriginal;
 		RenderTarget0 = texColorHDRA;
 	}
-		pass bloomThresh
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_BloomThreshold;
-			RenderTarget0 = texBloomA;
-		}
+	pass bloomThresh
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_BloomThreshold;
+		RenderTarget0 = texBloomA;
+	}
 		
-		pass bloomH_RadA
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_BloomH_RadA;
-			RenderTarget0 = texBloomB;
-		}
+	pass bloomH_RadA
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_BloomH_RadA;
+		RenderTarget0 = texBloomB;
+	}
 		
-		pass bloomV_RadA
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_BloomV_RadA;
-			RenderTarget0 = texBloomA;
-		}
+	pass bloomV_RadA
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_BloomV_RadA;
+		RenderTarget0 = texBloomA;
+	}
 		
-		pass bloomMix
-		{
-			VertexShader = VS_PostProcess;
-			PixelShader = PS_BloomMix;
-			RenderTarget0 = texColorHDRB;
-		}
+	pass bloomMix
+	{
+		VertexShader = VS_PostProcess;
+		PixelShader = PS_BloomMix;
+		RenderTarget0 = texColorHDRB;
+	}
 	pass lightFX
 	{
 		VertexShader = VS_PostProcess;
