@@ -1,10 +1,10 @@
 /*
-	PandaFX version 2.2.1 for ReShade 4.1.1
+	PandaFX version 2.2.1 for ReShade 4
 	by Jukka Korhonen aka Loadus ~ twitter.com/thatbonsaipanda
 	November 2018
 	jukka.korhonen@gmail.com
 	
-	Modified by Marot for ReShade 4.0 compatibility.
+	Modified by Marot Satil for ReShade 4.0 compatibility.
 	
 	Applies cinematic lens effects and color grading.
 	Free licence to copy, modify, tweak and publish but

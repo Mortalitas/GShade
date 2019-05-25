@@ -20,7 +20,7 @@
 	History:
 	(*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
 	
-	Version 0.2 by Seri14 & Marot Satil
+	Version 0.2 by seri14 & Marot Satil
     * Added the ability to scale and move the layer around on an x, y axis. 
 */
 
