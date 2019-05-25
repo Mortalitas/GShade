@@ -321,11 +321,12 @@ float4 BlurH (sampler input, float2 uv, float radius, float sampling) {
 	float width = 1.0 / BUFFER_WIDTH * sampling;					
 	float divisor = 0.000001; 
 
+    [loop]
 		for (float x = -radius; x <= radius; x++)
 		{
 			coordinate = uv + float2(x * width, 0.0);
 			coordinate = clamp(coordinate, 0.0, 1.0); 
-			A = tex2D(input, coordinate);		
+			A = tex2Dlod(input, float4(coordinate, 0.0, 0.0));		
 				weight = SigmoidCurve(1.0 - (abs(x) / radius));		
 				C += A * weight; 		
 			divisor += weight;
@@ -342,12 +343,13 @@ float4 BlurV (sampler input, float2 uv, float radius, float sampling) {
 	float weight = 1.0; 	
 	float height = 1.0 / BUFFER_HEIGHT * sampling;					
 	float divisor = 0.000001; 
-	
+
+    [loop]
 		for (float y = -radius; y <= radius; y++)
 		{
 			coordinate = uv + float2(0.0, y * height);
 			coordinate = clamp(coordinate, 0.0, 1.0);		
-			A = tex2D(input, coordinate);	
+			A = tex2Dlod(input, float4(coordinate, 0.0, 0.0));	
 				weight = SigmoidCurve(1.0 - (abs(y) / radius)); 		
 				C += A * weight; 		
 			divisor += weight;
