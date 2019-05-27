@@ -607,9 +607,9 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	blurcolor.xyz *= lerp(1.0, 0.0, saturate(fGPDOFBias));
 	blurcolor.w = 1.0;
 
-	int sampleCycle = 0;
-	int sampleCycleCounter = 0;
-	int sampleCounterInCycle = 0;
+	float sampleCycle = 0;
+	float sampleCycleCounter = 0;
+	float sampleCounterInCycle = 0;
 	float basedAngle = 360.0 / iGPDOFPolygonCount;
 	float2 currentVertex, nextVertex;
 
@@ -843,7 +843,7 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[unroll]
+	[loop]
 	for (int z = 0; z <= iADOF_ShapeVertices; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
@@ -925,7 +925,7 @@ float3 BokehBlurP(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[unroll]
+	[loop]
 	for (int z = 0; z <= iADOF_ShapeVerticesP; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVerticesP)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
@@ -1007,7 +1007,7 @@ float3 BokehBlurD(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[unroll]
+	[loop]
 	for (int z = 0; z <= iADOF_ShapeVerticesD; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVerticesD)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
@@ -1089,7 +1089,7 @@ float3 BokehBlurT(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[unroll]
+	[loop]
 	for (int z = 0; z <= iADOF_ShapeVerticesT; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVerticesT)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
