@@ -3,7 +3,6 @@
  * by Christian Cann Schuldt Jensen ~ CeeJay.dk
  */
 
-#include "ReShadeUI.fxh"
 uniform float Power <
 	ui_type = "slider";
 	ui_min = 0.1; ui_max = 10.0;

@@ -8,7 +8,6 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #include "ReShade.fxh"
-#include "ReShadeUI.fxh"
 
 //effect parameters
 uniform float fAdp_Delay <
