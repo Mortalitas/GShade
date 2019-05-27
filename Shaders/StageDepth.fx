@@ -50,8 +50,8 @@ uniform float Stage_Opacity <
 uniform float Stage_depth <
 	ui_type = "slider";
 	ui_min = 0.0;
-	ui_max = .987;
-	ui_label = "Depth Slider";
+	ui_max = 1.0;
+	ui_label = "Depth";
 > = 0.97;
 
 texture Stage_texture <source="Stage.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };

@@ -48,8 +48,8 @@ void PixelatePass(in float4 position : SV_Position, in float2 texcoord : TEXCOOR
 
 	if(stats)
 	{
-		DrawText_Digit(float2(ReShade::ScreenSize.x - 256, 128), 64, 1, texcoord, -1, (ReShade::ScreenSize.x / cell_size), color);
-		DrawText_Digit(float2(ReShade::ScreenSize.x - 256, 192), 64, 1, texcoord, -1, (ReShade::ScreenSize.y / cell_size), color);
+		DrawText_Digit(float2(ReShade::ScreenSize.x - 256, 128), 64, 1, texcoord, -1, (ReShade::ScreenSize.x / cell_size), color.x);
+		DrawText_Digit(float2(ReShade::ScreenSize.x - 256, 192), 64, 1, texcoord, -1, (ReShade::ScreenSize.y / cell_size), color.x);
 	}
 }
 

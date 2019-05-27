@@ -268,7 +268,6 @@ float3 blur(sampler sp, float2 uv, float scale) {
     float gaussian_weight = 0.0;
     float3 col = 0.0;
     
-    [unroll]
     for (int x = -iBlurSamples; x <= iBlurSamples; ++x) {
         for (int y = -iBlurSamples; y <= iBlurSamples; ++y) {
             #if MAGICBLOOM_BLUR_PRECALCULATED
