@@ -843,7 +843,6 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[loop]
 	for (int z = 0; z <= iADOF_ShapeVertices; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
@@ -925,7 +924,6 @@ float3 BokehBlurP(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[loop]
 	for (int z = 0; z <= iADOF_ShapeVerticesP; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVerticesP)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
@@ -1007,7 +1005,6 @@ float3 BokehBlurD(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[loop]
 	for (int z = 0; z <= iADOF_ShapeVerticesD; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVerticesD)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
@@ -1089,7 +1086,6 @@ float3 BokehBlurT(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
-	[loop]
 	for (int z = 0; z <= iADOF_ShapeVerticesT; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVerticesT)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
