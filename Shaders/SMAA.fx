@@ -9,7 +9,7 @@
  *                               E N H A N C E D
  *       S U B P I X E L   M O R P H O L O G I C A L   A N T I A L I A S I N G
  *
- *                      Modified by Marot for ReShade 4.0
+ *                      Modified by Marot Satil for ReShade 4.0
  */
 
 //------------------- Preprocessor Settings -------------------
@@ -32,10 +32,17 @@ uniform int EdgeDetectionType <
 #ifdef SMAA_PRESET_CUSTOM
 uniform float EdgeDetectionThreshold <
 	ui_type = "slider";
-	ui_min = 0.05; ui_max = 0.20; ui_step = 0.01;
+	ui_min = 0.05; ui_max = 0.20; ui_step = 0.001;
 	ui_tooltip = "Edge detection threshold. If SMAA misses some edges try lowering this slightly.";
 	ui_label = "Edge Detection Threshold";
 > = 0.10;
+
+uniform float DepthEdgeDetectionThreshold <
+	ui_type = "slider";
+	ui_min = 0.001; ui_max = 0.10; ui_step = 0.001;
+	ui_tooltip = "Depth Edge detection threshold. If SMAA misses some edges try lowering this slightly.";
+	ui_label = "Depth Edge Detection Threshold";
+> = 0.01;
 
 uniform int MaxSearchSteps <
 	ui_type = "slider";
@@ -90,6 +97,7 @@ uniform int DebugOutput <
 
 #ifdef SMAA_PRESET_CUSTOM
 	#define SMAA_THRESHOLD EdgeDetectionThreshold
+	#define SMAA_DEPTH_THRESHOLD DepthEdgeDetectionThreshold
 	#define SMAA_MAX_SEARCH_STEPS MaxSearchSteps
 	#define SMAA_MAX_SEARCH_STEPS_DIAG MaxSearchStepsDiagonal
 	#define SMAA_CORNER_ROUNDING CornerRounding
