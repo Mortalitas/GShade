@@ -27,6 +27,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 
 uniform bool alDebug <
@@ -144,7 +145,7 @@ void PS_AL_DetectLow(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 	[loop]
 	for (float i = 0.0; i <= 1; i += 0.03125)
 	{
-		[unroll]
+		[loop]
 		for (float j = 0.0; j <= 1; j += 0.03125)
 		{
 			detectLow.xyz += tex2D(detectIntColor, float2(i, j)).xyz;
@@ -156,7 +157,7 @@ void PS_AL_DetectLow(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 void PS_AL_DetectHigh(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 x : SV_Target)
 {
 	x = tex2D(ReShade::BackBuffer, texcoord);
-	x = float4(x.rgb * pow(abs(max(x.r, max(x.g, x.b))), 2.0), 1.0f);
+	x = float4(x.rgb * ((abs(max(x.r, max(x.g, x.b)))) * 2.0), 1.0f);
 
 	float base = (x.r + x.g + x.b); base /= 3;
 	
@@ -218,7 +219,7 @@ void PS_AL_HGB(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 
 	hgb = tex2D(alInColor, texcoord) * sampleWeights[0];
 	hgb = float4(max(hgb.rgb - alThreshold, 0.0), hgb.a);
-	float step = 1.08 + (AL_t.x / 100) * 0.02;
+	const float step = 1.08 + (AL_t.x / 100) * 0.02;
 
 	[flatten]
 	if ((texcoord.x + sampleOffsets[1] * GEMFX_PIXEL_SIZE.x) < 1.05)
@@ -255,7 +256,7 @@ void PS_AL_VGB(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 
 	vgb = tex2D(alOutColor, texcoord) * sampleWeights[0];
 	vgb = float4(max(vgb.rgb - alThreshold, 0.0), vgb.a);
-	float step = 1.08 + (AL_t.x / 100) * 0.02;
+	const float step = 1.08 + (AL_t.x / 100) * 0.02;
 	
 	[flatten]
 	if ((texcoord.y + sampleOffsets[1] * GEMFX_PIXEL_SIZE.y) < 1.05)
@@ -298,7 +299,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	if (AL_Adaptation)
 	{
 		//DetectLow	
-		float4 detectLow = tex2D(detectLowColor, 0.5) / 4.215;
+		const float4 detectLow = tex2D(detectLowColor, 0.5) / 4.215;
 		float low = sqrt(0.241 * detectLow.r * detectLow.r + 0.691 * detectLow.g * detectLow.g + 0.068 * detectLow.b * detectLow.b);
 		//.DetectLow
 
@@ -321,7 +322,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	high = min(0.0325f, high) * 1.15f;
 	float4 highOrig = high;
 
-	float2 flipcoord = 1.0f - texcoord;
+	const float2 flipcoord = 1.0f - texcoord;
 	float4 highFlipOrig = tex2D(alInColor, flipcoord);
 	highFlipOrig = min(0.03f, highFlipOrig) * 1.15f;
 
@@ -333,12 +334,12 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 #endif
 	if (AL_Dirt)
 	{
-		float4 dirt = tex2D(dirtSampler, texcoord);
-		float4 dirtOVR = tex2D(dirtOVRSampler, texcoord);
-		float4 dirtOVB = tex2D(dirtOVBSampler, texcoord);
+		const float4 dirt = tex2D(dirtSampler, texcoord);
+		const float4 dirtOVR = tex2D(dirtOVRSampler, texcoord);
+		const float4 dirtOVB = tex2D(dirtOVBSampler, texcoord);
 
-		float maxhigh = max(high.r, max(high.g, high.b));
-		float threshDiff = maxhigh - 3.2f;
+		const float maxhigh = max(high.r, max(high.g, high.b));
+		const float threshDiff = maxhigh - 3.2f;
 
 		[flatten]
 		if (threshDiff > 0)
@@ -355,10 +356,10 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 			highDirt *= 1.0f + 0.5f * sin(AL_t.x);
 		}
 
-		float highMix = highOrig.r + highOrig.g + highOrig.b;
-		float red = highOrig.r / highMix;
-		float green = highOrig.g / highMix;
-		float blue = highOrig.b / highMix;
+		const float highMix = highOrig.r + highOrig.g + highOrig.b;
+		const float red = highOrig.r / highMix;
+		const float green = highOrig.g / highMix;
+		const float blue = highOrig.b / highMix;
 		highOrig = highOrig + highDirt;
 
 		if (AL_Adaptive == 2)
@@ -379,11 +380,11 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 			high = high + highOrig * dirtOVR * alDirtOVInt;
 		}
 
-		highLensSrc = high * 85f * pow(1.25f - (abs(texcoord.x - 0.5f) + abs(texcoord.y - 0.5f)), 2);
+		highLensSrc = high * 85f * ((1.25f - (abs(texcoord.x - 0.5f) + abs(texcoord.y - 0.5f))) * 2);
 	}
 
-	float origBright = max(highLensSrc.r, max(highLensSrc.g, highLensSrc.b));
-	float maxOrig = max((1.8f * alLensThresh) - pow(origBright * (0.5f - abs(texcoord.x - 0.5f)), 4), 0.0f);
+	const float origBright = max(highLensSrc.r, max(highLensSrc.g, highLensSrc.b));
+	const float maxOrig = max((1.8f * alLensThresh) - pow(origBright * (0.5f - abs(texcoord.x - 0.5f)), 4), 0.0f);
 	float smartWeight = maxOrig * max(abs(flipcoord.x - 0.5f), 0.3f * abs(flipcoord.y - 0.5f)) * (2.2 - 1.2 * (abs(flipcoord.x - 0.5f))) * alLensInt;
 	smartWeight = min(0.85f, max(0, AL_Adaptation ? smartWeight - adapt : smartWeight));
 
@@ -392,10 +393,10 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 #endif
 	if (AL_Lens)
 	{
-		float4 lensDB = tex2D(lensDBSampler, texcoord);
-		float4 lensDB2 = tex2D(lensDB2Sampler, texcoord);
-		float4 lensDOV = tex2D(lensDOVSampler, texcoord);
-		float4 lensDUV = tex2D(lensDUVSampler, texcoord);
+		const float4 lensDB = tex2D(lensDBSampler, texcoord);
+		const float4 lensDB2 = tex2D(lensDB2Sampler, texcoord);
+		const float4 lensDOV = tex2D(lensDOVSampler, texcoord);
+		const float4 lensDUV = tex2D(lensDUVSampler, texcoord);
 
 		float4 highLens = highFlip * lensDB * 0.7f * smartWeight;
 		high += highLens;
@@ -427,16 +428,16 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	if (AL_Adaptation)
 	{
 		base.xyz *= max(0.0f, (1.0f - adapt * 0.75f * alAdaptBaseMult * pow(abs(1.0f - (base.x + base.y + base.z) / 3), alAdaptBaseBlackLvL)));
-		float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither;
-		float4 baseSample = lerp(base, highSampleMix, max(0.0f, alInt - adapt));
-		float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
+		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither;
+		const float4 baseSample = lerp(base, highSampleMix, max(0.0f, alInt - adapt));
+		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, max(0.0f, (alInt - adapt) * 0.85f) * baseSampleMix);
 	}
 	else
 	{
-		float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither + adapt;
-		float4 baseSample = lerp(base, highSampleMix, alInt);
-		float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
+		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither + adapt;
+		const float4 baseSample = lerp(base, highSampleMix, alInt);
+		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, max(0.0f, alInt * 0.85f) * baseSampleMix);
 	}
 }

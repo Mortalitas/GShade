@@ -3,6 +3,7 @@
  * Original by Prod80
  * Optimized by CeeJay.dk
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float3 ColorStrength <
 	ui_type = "color";
@@ -48,9 +49,8 @@ float3 TechnicolorPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 	temp2 = temp - target2;
 
 	color = lerp(color, temp2, Strength);
-	color = lerp(dot(color, 0.333), color, Saturation);
 
-	return color;
+	return lerp(dot(color, 0.333), color, Saturation);
 }
 
 technique Technicolor2

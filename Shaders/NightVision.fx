@@ -11,10 +11,10 @@ float mod(float x, float y)
 
 float3 PS_Nightvision(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target
 {	
-	float2 p = uv;
+	const float2 p = uv;
 	
-	float2 u = p * 2. - 1.;
-	float2 n = u * float2(ReShade::ScreenSize.x / ReShade::ScreenSize.y, 1.0);
+	const float2 u = p * 2. - 1.;
+	const float2 n = u * float2(ReShade::ScreenSize.x / ReShade::ScreenSize.y, 1.0);
 	float3 c = tex2D(ReShade::BackBuffer, uv).xyz;
 
 	// flicker, grain, vignette, fade in
@@ -23,10 +23,8 @@ float3 PS_Nightvision(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Targ
 	c *= smoothstep(length(n * n * n * float2(0.0, 0.0)), 1.0, 0.4);
     c *= smoothstep(0.001, 3.5, iGlobalTime*0.001) * 1.5;
 	
-	c = dot(c, float3(0.2126, 0.7152, 0.0722)) 
+	return dot(c, float3(0.2126, 0.7152, 0.0722)) 
 	  * float3(0.2, 1.5 - hash(iGlobalTime*0.001) * 0.1,0.4);
-	
-	return c;
 }
 
 technique Nightvision {

@@ -1,3 +1,4 @@
+// Lightly optimized by Marot Satil for the GShade project.
 #include "ReShade.fxh"
 
 //Macros//////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,17 +46,17 @@ float3 get_normals(float2 uv) {
 //Shaders/////////////////////////////////////////////////////////////////////////////////////////////
 
 float4 PS_Outlines(
-	float4 pos : SV_POSITION,
-	float2 uv : TEXCOORD
+	const float4 pos : SV_POSITION,
+	const float2 uv : TEXCOORD
 ) : SV_TARGET {
 	float3 col = tex2D(ReShade::BackBuffer, uv).rgb;
-	float3 normals = GET_NORMALS(uv);
+	const float3 normals = GET_NORMALS(uv);
 	
 	float outlines = dot(normals, float3(0.0, 0.0, 1.0));
 	outlines *= fOutlinesCorrection;
 	outlines = saturate(outlines);
 	
-	float gs = (col.r + col.g + col.b) / 3.0;
+	const float gs = (col.r + col.g + col.b) / 3.0;
 
 	col = bDisplayOutlines ? outlines : col * outlines;
 
@@ -65,17 +66,17 @@ float4 PS_Outlines(
 }
 
 float4 PS_Experimental(
-	float4 pos : SV_POSITION,
-	float2 uv : TEXCOORD
+	const float4 pos : SV_POSITION,
+	const float2 uv : TEXCOORD
 ) : SV_TARGET {
-	float3 normals = GET_NORMALS(uv);
+	const float3 normals = GET_NORMALS(uv);
 	float3 col = tex2D(ReShade::BackBuffer, uv).rgb;
 	
 	//float fresnel = pow(length(normals.xy), 10.0) * normals.y;
-	float fresnel = length(normals.xy) * normals.y;
+	const float fresnel = length(normals.xy) * normals.y;
 	
 	//float3 sky_color = float3(0.0, 0.5, 1.0);
-	float3 sky_color = (tex2D(ReShade::BackBuffer, float2(0.0, 1.0)).rgb
+	const float3 sky_color = (tex2D(ReShade::BackBuffer, float2(0.0, 1.0)).rgb
 	                 +  tex2D(ReShade::BackBuffer, float2(0.5, 1.0)).rgb
 					 +  tex2D(ReShade::BackBuffer, float2(1.0, 1.0)).rgb) / 3.0;
 
@@ -86,8 +87,8 @@ float4 PS_Experimental(
 	//col = col + col * col * saturate(fresnel);
 	//col 
 
-	float3 light  = col + col * col;
-	float3 shadow = col * col;
+	const float3 light  = col + col * col;
+	const float3 shadow = col * col;
 
 	//col = lerp(shadow, light, saturate(fresnel));
 

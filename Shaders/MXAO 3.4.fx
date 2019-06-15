@@ -4,7 +4,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Ambient Obscurance with Indirect Lighting "MXAO" 2.0 by Marty McFly
 // CC BY-NC-ND 3.0 licensed.
-// Modified by Marot for ReShade 4.0 compatibility.
+// Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -47,7 +47,8 @@ uniform float fMXAOSampleRadius <
 
 uniform float iMXAOSampleCount <
 	ui_type = "slider";
-	ui_min = 8; ui_max = 255;
+	ui_min = 8.0; ui_max = 255.0;
+	ui_step = 1.0;
         ui_label = "Sample Count";
 	ui_tooltip = "Amount of MXAO samples. Higher means more accurate and less noisy AO at the cost of fps.";
 > = 24;
@@ -154,13 +155,13 @@ float3 GetPositionLOD(float2 coords, int mipLevel)
    inaccurate normals.*/
 float3 GetNormalFromDepth(float2 coords)
 {
-	float3 offs = float3(ReShade::PixelSize.xy,0);
+	const float3 offs = float3(ReShade::PixelSize.xy,0);
 
-	float3 f 	 =       GetPosition(coords.xy);
+	const float3 f 	 =       GetPosition(coords.xy);
 	float3 d_dx1 	 = - f + GetPosition(coords.xy + offs.xz);
-	float3 d_dx2 	 =   f - GetPosition(coords.xy - offs.xz);
+	const float3 d_dx2 	 =   f - GetPosition(coords.xy - offs.xz);
 	float3 d_dy1 	 = - f + GetPosition(coords.xy + offs.zy);
-	float3 d_dy2 	 =   f - GetPosition(coords.xy - offs.zy);
+	const float3 d_dy2 	 =   f - GetPosition(coords.xy - offs.zy);
 
 	d_dx1 = lerp(d_dx1, d_dx2, abs(d_dx1.z) > abs(d_dx2.z));
 	d_dy1 = lerp(d_dy1, d_dy2, abs(d_dy1.z) > abs(d_dy2.z));
@@ -181,9 +182,9 @@ float3 GetSmoothedNormals(float2 texcoord, float3 ScreenSpaceNormals, float3 Scr
 		[loop]
 		for(float y = -3; y <= 3; y++)
 		{
-			float2 offsetcoord 	= texcoord.xy + float2(x,y) * ReShade::PixelSize.xy * 3.5;
-			float3 samplenormal 	= normalize(tex2Dlod(SamplerSurfaceNormal,float4(offsetcoord,0,2)).xyz * 2.0 - 1.0);
-			float3 sampleposition	= GetPositionLOD(offsetcoord.xy,2);
+			const float2 offsetcoord 	= texcoord.xy + float2(x,y) * ReShade::PixelSize.xy * 3.5;
+			const float3 samplenormal 	= normalize(tex2Dlod(SamplerSurfaceNormal,float4(offsetcoord,0,2)).xyz * 2.0 - 1.0);
+			const float3 sampleposition	= GetPositionLOD(offsetcoord.xy,2);
 			float weight 		= saturate(1.0 - distance(ScreenSpacePosition.xyz,sampleposition.xyz)*1.2);
 			weight 		       *= smoothstep(0.5,1.0,dot(samplenormal,ScreenSpaceNormals));
 			blurnormal.xyz += samplenormal * weight;
@@ -211,11 +212,11 @@ float4 GetBlurFactors(float2 coords)
    account greatly helps to reduce these problems. */
 float GetBlurWeight(float4 tempKey, float4 centerKey, float surfacealignment)
 {
-	float depthdiff = abs(tempKey.w-centerKey.w);
-	float normaldiff = 1.0-saturate(dot(normalize(tempKey.xyz),normalize(centerKey.xyz)));
+	const float depthdiff = abs(tempKey.w-centerKey.w);
+	const float normaldiff = 1.0-saturate(dot(normalize(tempKey.xyz),normalize(centerKey.xyz)));
 
-	float depthweight = saturate(rcp(fMXAOBlurSharpness*depthdiff*5.0*surfacealignment));
-	float normalweight = saturate(rcp(fMXAOBlurSharpness*normaldiff*10.0));
+	const float depthweight = saturate(rcp(fMXAOBlurSharpness*depthdiff*5.0*surfacealignment));
+	const float normalweight = saturate(rcp(fMXAOBlurSharpness*normaldiff*10.0));
 
 	return min(normalweight,depthweight);
 }
@@ -313,13 +314,13 @@ float GetBayerFromCoordLevel(float2 pixelpos, int maxLevel)
 
 	for(float i = 1-maxLevel; i<= 0; i++)
 	{
-		float bayerSize = exp2(i);
-	        float2 bayerCoord = floor(pixelpos * bayerSize) % 2.0;
-		float bayer = 2.0 * bayerCoord.x - 4.0 * bayerCoord.x * bayerCoord.y + 3.0 * bayerCoord.y;
+		const float bayerSize = exp2(i);
+	        const float2 bayerCoord = floor(pixelpos * bayerSize) % 2.0;
+		const float bayer = 2.0 * bayerCoord.x - 4.0 * bayerCoord.x * bayerCoord.y + 3.0 * bayerCoord.y;
 		finalBayer += exp2(2.0*(i+maxLevel))* bayer;
 	}
 
-	float finalDivisor = 4.0 * exp2(2.0 * maxLevel)- 4.0;
+	const float finalDivisor = 4.0 * exp2(2.0 * maxLevel)- 4.0;
 	//raising all values by increment is false but in AO pass it makes sense. Can you see it?
 	return finalBayer/ finalDivisor + 1.0/exp2(2.0 * maxLevel);
 }
@@ -348,19 +349,19 @@ float4 GetMXAO(float2 texcoord, float3 normal, float3 position, float nSamples, 
 		currentVector = mul(currentVector.xy, float2x2(0.575,0.81815,-0.81815,0.575));
 		currentOffset = texcoord.xy + currentVector.xy * float2(1.0,ReShade::AspectRatio) * (iSample + radiusJitter);
 
-		float mipLevel = saturate(log2(mipFactor*iSample)*0.2 - 0.6) * 5.0;
+		const float mipLevel = saturate(log2(mipFactor*iSample)*0.2 - 0.6) * 5.0;
 
-		float3 occlVec 		= -position + GetPositionLOD(currentOffset.xy, mipLevel);
-		float  occlDistanceRcp 	= rsqrt(dot(occlVec,occlVec));
-		float  occlAngle 	= dot(occlVec, normal)*occlDistanceRcp;
+		const float3 occlVec 		= -position + GetPositionLOD(currentOffset.xy, mipLevel);
+		const float  occlDistanceRcp 	= rsqrt(dot(occlVec,occlVec));
+		const float  occlAngle 	= dot(occlVec, normal)*occlDistanceRcp;
 
-		float fAO = saturate(1.0 + fNegInvR2/occlDistanceRcp)  * saturate(occlAngle - fMXAONormalBias);
+		const float fAO = saturate(1.0 + fNegInvR2/occlDistanceRcp)  * saturate(occlAngle - fMXAONormalBias);
 
 		#if(MXAO_ENABLE_IL != 0)
 			float3 fIL = tex2Dlod(SamplerColorBypass, float4(currentOffset,0,mipLevel + MXAO_MIPLEVEL_IL)).xyz;
 			#if(MXAO_ENABLE_BACKFACE != 0)
-				float3 offsetNormals = normalize(tex2Dlod(SamplerSurfaceNormal, float4(currentOffset,0,mipLevel + MXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0);
-				float facingtoSource = dot(occlVec,offsetNormals)*occlDistanceRcp;
+				const float3 offsetNormals = normalize(tex2Dlod(SamplerSurfaceNormal, float4(currentOffset,0,mipLevel + MXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0);
+				const float facingtoSource = dot(occlVec,offsetNormals)*occlDistanceRcp;
 				fIL = fIL - fIL*saturate(facingtoSource*2.0);
 			#endif
 			AO_IL.w += fAO - fAO * saturate(dot(fIL,float3(0.299,0.587,0.114)));
@@ -389,7 +390,7 @@ void PS_AO_Pre(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 
 void PS_AO_Gen(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
 {
-	float4 normalSample = tex2D(SamplerSurfaceNormal, texcoord.xy);
+	const float4 normalSample = tex2D(SamplerSurfaceNormal, texcoord.xy);
 
 	float3 ScreenSpaceNormals = normalSample.xyz * 2.0 - 1.0;
 	float3 ScreenSpacePosition = GetPositionLOD(texcoord.xy, 0);
@@ -400,15 +401,15 @@ void PS_AO_Gen(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 		ScreenSpaceNormals = GetSmoothedNormals(texcoord, ScreenSpaceNormals, ScreenSpacePosition);
 	}
 
-	float scenedepth = ScreenSpacePosition.z / RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
+	const float scenedepth = ScreenSpacePosition.z / RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
 	ScreenSpacePosition += ScreenSpaceNormals * scenedepth;
 
-	float SampleRadiusScaled  = 0.2*fMXAOSampleRadius*fMXAOSampleRadius / (iMXAOSampleCount * ScreenSpacePosition.z);
-	float mipFactor = SampleRadiusScaled * 3200.0;
+	const float SampleRadiusScaled  = 0.2*fMXAOSampleRadius*fMXAOSampleRadius / (iMXAOSampleCount * ScreenSpacePosition.z);
+	const float mipFactor = SampleRadiusScaled * 3200.0;
 
 	float2 currentVector;
 	sincos(2.0*3.14159274*normalSample.w, currentVector.y, currentVector.x);
-	static const float fNegInvR2 = -1.0/(fMXAOSampleRadius*fMXAOSampleRadius);
+	const float fNegInvR2 = -1.0/(fMXAOSampleRadius*fMXAOSampleRadius);
 	currentVector *= SampleRadiusScaled;
 
 	res = GetMXAO(texcoord,
@@ -456,9 +457,9 @@ void PS_AO_Blur2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 		MXAOFFXIV.w = pow(saturate(MXAOFFXIV.w),AO_BLUR_GAMMA);
 	#endif
 
-	float scenedepth = GetLinearDepth(texcoord.xy);
+	const float scenedepth = GetLinearDepth(texcoord.xy);
 	float4 color = max(0.0,tex2D(SamplerColorBypass, texcoord.xy));
-	float colorgray = dot(color.xyz,float3(0.299,0.587,0.114));
+	const float colorgray = dot(color.xyz,float3(0.299,0.587,0.114));
 
 	
 	MXAOFFXIV.w    = 1.0-pow(1.0-MXAOFFXIV.w, fMXAOAmbientOcclusionAmount*4.0);

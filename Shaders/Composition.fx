@@ -1,7 +1,7 @@
 /*******************************************************
 	ReShade Shader: Composition
 	https://github.com/Daodan317081/reshade-shaders
-	Modified by Marot for ReShade 4.0 compatibility.
+	Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 *******************************************************/
 
 #include "ReShade.fxh"
@@ -139,28 +139,28 @@ float3 DrawDiagonals(float3 background, float3 gridColor, float lineWidth, float
 }
 
 float3 CenterLines_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 result = DrawCenterLines(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
+    const float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 result = DrawCenterLines(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
     return lerp(background, result, UIGridColor.w);
 }
 float3 Thirds_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 result = DrawThirds(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
+    const float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 result = DrawThirds(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
     return lerp(background, result, UIGridColor.w);
 }
 float3 Fifths_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 result = DrawFifths(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
+    const float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 result = DrawFifths(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
     return lerp(background, result, UIGridColor.w);
 }
 float3 GoldenRatio_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 result = DrawGoldenRatio(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
+    const float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 result = DrawGoldenRatio(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
     return lerp(background, result, UIGridColor.w);
 }
 float3 Diagonals_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 result = DrawDiagonals(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
+    const float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 result = DrawDiagonals(background, UIGridColor.rgb, UIGridLineWidth, texcoord);
     return lerp(background, result, UIGridColor.w);
 }
 

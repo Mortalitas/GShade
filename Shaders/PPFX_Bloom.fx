@@ -1,4 +1,4 @@
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // *** PPFX Bloom from the Post-Processing Suite 1.03.29 for ReShade
 // *** SHADER AUTHOR: Pascal Matthäus ( Euda )
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -82,7 +82,7 @@ uniform float pTonemapSaturateBlacks <
 uniform float pBloomRadius <
     ui_category = "Bloom";
     ui_label = "Bloom Sample Radius";
-    ui_tooltip = "Maximum distance within pixels affect each other - directly affetcs performance: Combine with pBloomDownsampling to increase your effective radius while keeping a high framerate.";
+    ui_tooltip = "Maximum distance within pixels affect each other - directly affects performance: Combine with pBloomDownsampling to increase your effective radius while keeping a high framerate.";
     ui_type = "slider";
     ui_min = 2.0;
     ui_max = 250.0;
@@ -285,10 +285,10 @@ float3 threshold(float3 pxInput, float colThreshold)
 	// Gaussian Blur - Horizontal
 	float3 FX_BlurH( float3 pxInput, sampler source, float2 txCoords, float radius, float downsampling )
 	{
-		float	texelSize = pxSize.x*downsampling;
+		const float	texelSize = pxSize.x*downsampling;
 		float2	fetchCoords = txCoords;
 		float	weight;
-		float	weightDiv = 1.0+5.0/radius;
+		const float	weightDiv = 1.0+5.0/radius;
 		float	sampleSum = 0.5;
 		
 		pxInput+=tex2D(source,txCoords).xyz*0.5;
@@ -313,10 +313,10 @@ float3 threshold(float3 pxInput, float colThreshold)
 	// Gaussian Blur - Vertical
 	float3 FX_BlurV( float3 pxInput, sampler source, float2 txCoords, float radius, float downsampling )
 	{
-		float	texelSize = pxSize.y*downsampling;
+		const float	texelSize = pxSize.y*downsampling;
 		float2	fetchCoords = txCoords;
 		float	weight;
-		float	weightDiv = 1.0+5.0/radius;
+		const float	weightDiv = 1.0+5.0/radius;
 		float	sampleSum = 0.5;
 		
 		pxInput+=tex2D(source,txCoords).xyz*0.5;
@@ -379,7 +379,7 @@ float3 threshold(float3 pxInput, float colThreshold)
 			return saturate(lerp(pxInput,pow(abs(pxInput.xyz/whitePoint),whitePoint-pxInput),dot(pxInput/whitePoint,lumaCoeff)));
 		else
 		{
-			float exposureDiv = log10(whitePoint+1.0)/log10(whitePoint+1.0+pTonemapCurve);
+			const float exposureDiv = log10(whitePoint+1.0)/log10(whitePoint+1.0+pTonemapCurve);
 			pxInput.xyz = (log10(pxInput+1.0)/log10(pxInput+1.0+pTonemapCurve))/exposureDiv;
 			return saturate(lerp(pow(abs(pxInput.xyz), 1.0 + pTonemapSaturateBlacks), pxInput.xyz, sqrt( pxInput.xyz ) ) );
 		}
@@ -435,7 +435,7 @@ float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
 // *** Further FX ***
 float4 PS_LightFX(VS_OUTPUT_POST IN) : COLOR
 {
-	float2 pxCoord = IN.txcoord.xy;
+	const float2 pxCoord = IN.txcoord.xy;
 	float4 res = tex2D(SamplerColorHDRB,pxCoord);
 	
 	if (pEnableHDR == 1)
@@ -446,16 +446,16 @@ float4 PS_LightFX(VS_OUTPUT_POST IN) : COLOR
 
 float4 PS_ColorFX(VS_OUTPUT_POST IN) : COLOR
 {
-	float2 pxCoord = IN.txcoord.xy;
-	float4 res = tex2D(SamplerColorHDRA,pxCoord);
+	const float2 pxCoord = IN.txcoord.xy;
+	const float4 res = tex2D(SamplerColorHDRA,pxCoord);
 	
 	return float4(res.xyz,1.0);
 }
 
 float4 PS_ImageFX(VS_OUTPUT_POST IN) : COLOR
 {
-	float2 pxCoord = IN.txcoord.xy;
-	float4 res = tex2D(SamplerColorHDRB,pxCoord);
+	const float2 pxCoord = IN.txcoord.xy;
+	const float4 res = tex2D(SamplerColorHDRB,pxCoord);
 	
 	return float4(res.xyz,1.0);
 }

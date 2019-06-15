@@ -31,6 +31,7 @@
 	! Made settings backwards compatible with SweetFX
 
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 
 /*---------------.
@@ -84,11 +85,11 @@ uniform float Monochrome_color_saturation <
 
 float3 MonochromePass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	float3 Coefficients = float3(0.21, 0.72, 0.07);
 
-	float3 Coefficients_array[18] = 
+	const float3 Coefficients_array[18] = 
 	{
 		Monochrome_conversion_values, //Custom
 		float3(0.21, 0.72, 0.07), //sRGB monitor
@@ -113,13 +114,10 @@ float3 MonochromePass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
 	Coefficients = Coefficients_array[Monochrome_preset];
 
 	// Calculate monochrome
-	float3 grey = dot(Coefficients, color);
+	const float3 grey = dot(Coefficients, color);
 
-	// Adjust the remaining saturation
-	color = lerp(grey, color, Monochrome_color_saturation);
-
-	// Return the result
-	return saturate(color);
+	// Adjust the remaining saturation & return the result
+	return saturate(lerp(grey, color, Monochrome_color_saturation));
 }
 
 technique Monochrome

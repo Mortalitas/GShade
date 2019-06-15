@@ -2,6 +2,7 @@
 // HSL Processing Shader                          //
 // Author: kingeric1992                           //
 ////////////////////////////////////////////////////
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -128,8 +129,8 @@
   float3 RGB_to_HSL(float3 color)
   {
       float3 HSL   = 0.0f;
-      float  M     = max(color.r, max(color.g, color.b));
-      float  C     = M - min(color.r, min(color.g, color.b));
+      const float  M     = max(color.r, max(color.g, color.b));
+      const float  C     = M - min(color.r, min(color.g, color.b));
              HSL.z = M - 0.5 * C;
 
       if (C != 0.0f)
@@ -162,7 +163,7 @@
 
   float3 HSLShift(float3 color)
   {
-      float3 hsl = RGB_to_HSL(color);
+      const float3 hsl = RGB_to_HSL(color);
       static const float4 node[9]=
       {
           float4(HUERed, 0.0),//red
@@ -181,7 +182,7 @@
 
       float w = saturate((hsl.r*360.0-node[base].a)/(node[base+1].a-node[base].a));
 
-      float3 H0 = RGB_to_HSL(node[base].rgb);
+      const float3 H0 = RGB_to_HSL(node[base].rgb);
       float3 H1 = RGB_to_HSL(node[base+1].rgb);
 
       H1.x += (H1.x < H0.x)? 1.0:0.0;

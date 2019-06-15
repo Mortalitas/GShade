@@ -60,6 +60,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -244,9 +245,9 @@ sampler sMagicBloom_Dirt { Texture = tMagicBloom_Dirt; };
 
 #if !MAGICBLOOM_BLUR_PRECALCULATED
 float gaussian_function(float2 i) {
-    static const float first_part = 1.0 / (double_pi * pow(sigma, 2.0));
-    static const float second_part_a = 1.0 / (2.0 * pow(sigma, 2.0));
-    float second_part_b = (pow(i.x, 2.0) + pow(i.y, 2.0)) * second_part_a;
+    static const float first_part = 1.0 / (double_pi * (sigma * 2.0);
+    static const float second_part_a = 1.0 / (2.0 * (sigma * 2.0));
+    static const float second_part_b = ((i.x * 2.0) + (i.y * 2.0)) * second_part_a;
     return first_part * exp(-second_part_b);
 }
 #endif
@@ -420,7 +421,7 @@ float PS_GetAdapt(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
     float curr = tex2Dlod(sMagicBloom_Small, float4(0.5, 0.5, 0, lowest_mip - iAdapt_Precision)).x;
     curr *= fAdapt_Sensitivity;
     curr = clamp(curr, f2Adapt_Clip.x, f2Adapt_Clip.y);
-    float last = tex2D(sMagicBloom_LastAdapt, 0.0).x;
+    const float last = tex2D(sMagicBloom_LastAdapt, 0.0).x;
     //Using the frametime/delta here would actually scale adaptation with the framerate.
     //We don't want that, so we don't even bother with it.
     return lerp(last, curr, fAdapt_Speed);

@@ -20,6 +20,7 @@
 // MultiLut_ninjafadaGameplay.png was provided by ninjafada!
 // You can see their ReShade-related work here: http://sfx.thelazy.net/users/u/ninjafada/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_GSTextureName
 	#define fLUT_GSTextureName "MultiLut_GShade.png"
@@ -116,7 +117,7 @@ sampler	SamplerNFGMultiLUT { Texture = texNFGMultiLUT; };
 
 void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
 {
-	float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
+	const float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
 	float2 texelsize = 1.0 / fLUT_TileSizeXY;
 	texelsize.x /= fLUT_TileAmount;
 	float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
@@ -126,12 +127,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmount;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerGSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerGSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerGSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerGSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 
@@ -140,12 +140,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmount;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 //ReShade 3 MultiLut_atlas4.png
@@ -153,12 +152,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmount;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 
@@ -167,12 +165,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmountEx;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountEx);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerJOHMultiLUT, lutcoord.xy).xyz, tex2D(SamplerJOHMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerJOHMultiLUT, lutcoord.xy).xyz, tex2D(SamplerJOHMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 
@@ -181,12 +178,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmount;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerEGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerEGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerEGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerEGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 
@@ -195,12 +191,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmountLow;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerMSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerMSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 //ninjafada Gameplay MultiLut_ninjafadaGameplay.png
@@ -208,12 +203,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	{
     lutcoord.y /= fLUT_LutAmountLow;
     lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
-    float lerpfact = frac(lutcoord.z);
+    const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    float3 lutcolor = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerNFGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+    const float3 lutcolor = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerNFGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.xyz = color.xyz;
     res.w = 1.0;
 	}
 }

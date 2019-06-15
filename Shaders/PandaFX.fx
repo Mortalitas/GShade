@@ -4,7 +4,7 @@
 	November 2018
 	jukka.korhonen@gmail.com
 	
-	Modified by Marot Satil for ReShade 4.0 compatibility.
+	Modified by Marot Satil for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 	
 	Applies cinematic lens effects and color grading.
 	Free licence to copy, modify, tweak and publish but
@@ -287,12 +287,11 @@ float AdjustableSigmoidCurve (float value, float amount) {
 }
 
 float Randomize (float2 coord) {
-	float noise = (frac(sin(dot(coord, float2(12.9898, 78.233))) * 43758.5453));
-	return clamp(noise, 0.0, 1.0);
+	return clamp((frac(sin(dot(coord, float2(12.9898, 78.233))) * 43758.5453)), 0.0, 1.0);
 }
 
 float SigmoidCurve (float value) {
-	value = value * 2.0 - 1.0;
+	const value = value * 2.0 - 1.0;
 	return -value * abs(value) * 0.5 + value + 0.5;	
 }
 
@@ -305,7 +304,7 @@ float SoftLightBlend (float A, float B) {
 
 	else
 	{
-		return (2 * A - 1) * (B - pow(B , 2)) + B; 
+		return (2 * A - 1) * (B - (B * 2)) + B; 
 	}	
 
 	return 0;
@@ -318,7 +317,7 @@ float4 BlurH (sampler input, float2 uv, float radius, float sampling) {
 	float4 A = float4(0.0, 0.0, 0.0, 1.0); 
 	float4 C = float4(0.0, 0.0, 0.0, 1.0);
 	float weight = 1.0; 
-	float width = 1.0 / BUFFER_WIDTH * sampling;					
+	const float width = 1.0 / BUFFER_WIDTH * sampling;					
 	float divisor = 0.000001; 
 
     [loop]
@@ -341,7 +340,7 @@ float4 BlurV (sampler input, float2 uv, float radius, float sampling) {
 	float4 A = float4(0.0, 0.0, 0.0, 1.0); 
 	float4 C = float4(0.0, 0.0, 0.0, 1.0); 
 	float weight = 1.0; 	
-	float height = 1.0 / BUFFER_HEIGHT * sampling;					
+	const float height = 1.0 / BUFFER_HEIGHT * sampling;					
 	float divisor = 0.000001; 
 
     [loop]
@@ -553,9 +552,7 @@ float4 PandaComposition (float4 vpos : SV_Position,
 		
 		// A = A * 0.9373 + 0.0627;
 
-		A = lerp(O, A, Blend_Amount);
-
-	return A;
+	return lerp(O, A, Blend_Amount);
 }
 
 technique PandaFX 

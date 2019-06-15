@@ -198,7 +198,7 @@ texture texSSDOC
 // *** EXTERNAL TEXTURES ***
 texture texNoise < source = "mcnoise.png"; >
 {
-	Width = 1080;
+	Width = 1920;
 	Height = 1080;
 	#define NOISE_SCREENSCALE float2((BUFFER_WIDTH/pow(2.0,pSSDOLOD))/1920.0,(BUFFER_HEIGHT/pow(2.0,pSSDOLOD))/1080.0)
 };
@@ -444,27 +444,16 @@ float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
 	{
     float3 SSDO_MIX_MODE;
 		if (pSSDOMixMode == 1)
-			SSDO_MIX_MODE = pow(abs(tex2D(SamplerSSDOB,IN.txcoord.xy).xyz*2.0),pSSDOIntensity)-1.0;
+			SSDO_MIX_MODE = +pow(abs(tex2D(SamplerSSDOB,IN.txcoord.xy).xyz*2.0),pSSDOIntensity)-1.0;
 		else
 			SSDO_MIX_MODE = pow(abs(tex2D(SamplerSSDOB,IN.txcoord.xy).xyz*2.0),pSSDOIntensity);
 		
 		if (pSSDODebugMode == 1)
-		{
-      if (pSSDOMixMode == 1)
-        return float4(saturate(0.5 + SSDO_MIX_MODE),1.0);
-      else
-        return float4(saturate(0.5 * SSDO_MIX_MODE),1.0);
 			return float4(saturate(0.5 * SSDO_MIX_MODE),1.0);
-		}
 		else if (pSSDODebugMode == 2)
 			return float4(tex2D(SamplerSSDOA,IN.txcoord.xy).xyz,1.0);
 		else
-		{
-      if (pSSDOMixMode == 1)
-        return float4(saturate(tex2D(ReShade::BackBuffer,IN.txcoord.xy).xyz + SSDO_MIX_MODE),1.0);
-      else
-        return float4(saturate(tex2D(ReShade::BackBuffer,IN.txcoord.xy).xyz * SSDO_MIX_MODE),1.0);
-    }
+      return float4(saturate(tex2D(ReShade::BackBuffer,IN.txcoord.xy).xyz * SSDO_MIX_MODE),1.0);
 	}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -542,10 +542,10 @@ float3 PS_Nostalgia(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_
 		{
 		
 			//Calculate grid position
-			float grid_position = frac(dot(texcoord, ReShade::ScreenSize * 0.5) + 0.25); //returns 0.25 and 0.75
+			const float grid_position = frac(dot(texcoord, ReShade::ScreenSize * 0.5) + 0.25); //returns 0.25 and 0.75
 	
 			//Calculate how big the shift should be
-			float dither_shift = (0.25) * (1.0 / (pow(2,2.0) - 1.0)); // 0.25 seems good both when using math and when eyeballing it. So does 0.75 btw.
+			const float dither_shift = (0.25) * (1.0 / 3.0); // 0.25 seems good both when using math and when eyeballing it. So does 0.75 btw.
 	
 			//Shift the individual colors differently, thus making it even harder to see the dithering pattern
 			float3 dither_shift_RGB = float3(dither_shift, dither_shift, dither_shift); //dithering

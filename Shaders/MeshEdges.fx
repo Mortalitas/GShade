@@ -33,6 +33,7 @@
 //OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////////////
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -65,8 +66,8 @@ uniform float fUIStrength <
 #define MIN4(v) min(v.x, min(v.y, min(v.z, v.w)))
 
 float3 MeshEdges_PS(float4 vpos:SV_Position, float2 texcoord:TexCoord):SV_Target {
-    float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float4 pix = float4(ReShade::PixelSize, -ReShade::PixelSize);
+    const float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float4 pix = float4(ReShade::PixelSize, -ReShade::PixelSize);
 
     //Get depth of center pixel
     float c = ReShade::GetLinearizedDepth(texcoord);
@@ -82,20 +83,20 @@ float3 MeshEdges_PS(float4 vpos:SV_Position, float2 texcoord:TexCoord):SV_Target
                                 ReShade::GetLinearizedDepth(texcoord + float2(pix.z, pix.w)) );
     
     //Normalize values
-    float2 mind = float2(MIN4(depthEven), MIN4(depthOdd));
-    float2 maxd = float2(MAX4(depthEven), MAX4(depthOdd));
-    float span = MAX2(maxd) - MIN2(mind) + 0.00001;
+    const float2 mind = float2(MIN4(depthEven), MIN4(depthOdd));
+    const float2 maxd = float2(MAX4(depthEven), MAX4(depthOdd));
+    const float span = MAX2(maxd) - MIN2(mind) + 0.00001;
     c /= span;
     depthEven /= span;
     depthOdd /= span;
     //Calculate the distance of the surrounding pixels to the center
-    float4 diffsEven = abs(depthEven - c);
-    float4 diffsOdd = abs(depthOdd - c);
+    const float4 diffsEven = abs(depthEven - c);
+    const float4 diffsOdd = abs(depthOdd - c);
     //Calculate the difference of the (opposing) distances
-    float2 retVal = float2( max(abs(diffsEven.x - diffsEven.y), abs(diffsEven.z - diffsEven.w)),
+    const float2 retVal = float2( max(abs(diffsEven.x - diffsEven.y), abs(diffsEven.z - diffsEven.w)),
                             max(abs(diffsOdd.x - diffsOdd.y), abs(diffsOdd.z - diffsOdd.w))     );
 
-    float lineWeight = MAX2(retVal);
+    const float lineWeight = MAX2(retVal);
 
     return lerp(iUIBackground == 0 ? backbuffer : fUIColorBackground, fUIColorLines, lineWeight * fUIStrength);
 }

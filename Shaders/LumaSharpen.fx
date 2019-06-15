@@ -9,6 +9,7 @@
    Version 1.5.1
   - UI improvements for Reshade 3.x
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float sharp_strength <
 	ui_type = "slider";
@@ -63,7 +64,7 @@ uniform bool show_sharpen <
 float3 LumaSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : SV_Target
 {
 	// -- Get the original pixel --
-	float3 ori = tex2D(ReShade::BackBuffer, tex).rgb; // ori = original pixel
+	const float3 ori = tex2D(ReShade::BackBuffer, tex).rgb; // ori = original pixel
 
 	// -- Combining the strength and luma multipliers --
 	float3 sharp_strength_luma = (CoefLuma * sharp_strength); //I'll be combining even more multipliers with it later on
@@ -157,7 +158,7 @@ float3 LumaSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : 
 	'-----------------------------------------------------------*/
 
 	// -- Calculate the sharpening --
-	float3 sharp = ori - blur_ori;  //Subtracting the blurred image from the original image
+	const float3 sharp = ori - blur_ori;  //Subtracting the blurred image from the original image
 
 #if 0 //older CeeJay 1.4 code (included here because the new code while faster can be difficult to understand)
 	// -- Adjust strength of the sharpening --
@@ -168,7 +169,7 @@ float3 LumaSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : 
 
 #else //new code
 	// -- Adjust strength of the sharpening and clamp it--
-	float4 sharp_strength_luma_clamp = float4(sharp_strength_luma * (0.5 / sharp_clamp),0.5); //Roll part of the clamp into the dot
+	const float4 sharp_strength_luma_clamp = float4(sharp_strength_luma * (0.5 / sharp_clamp),0.5); //Roll part of the clamp into the dot
 
 	//sharp_luma = saturate((0.5 / sharp_clamp) * sharp_luma + 0.5); //scale up and clamp
 	float sharp_luma = saturate(dot(float4(sharp,1.0), sharp_strength_luma_clamp)); //Calculate the luma, adjust the strength, scale up and clamp

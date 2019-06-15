@@ -12,7 +12,7 @@ uniform float Timer < source = "timer"; >;
 // FUNCTIONS /////////////////////////////////////
     float rand21(float2 uv)
     {
-        float2 noise = frac(sin(dot(uv, float2(12.9898, 78.233) * 2.0)) * 43758.5453);
+        const float2 noise = frac(sin(dot(uv, float2(12.9898, 78.233) * 2.0)) * 43758.5453);
         return (noise.x + noise.y) * 0.5;
     }
     float rand11(float x) { return frac(x * 0.024390243); }
@@ -20,12 +20,12 @@ uniform float Timer < source = "timer"; >;
 
     float3 triDither(float3 color, float2 uv, float timer)
     {
-        static const float bitstep = pow(2.0, 8) - 1.0;
+        static const float bitstep = 255.0;
         static const float lsb = 1.0 / bitstep;
         static const float lobit = 0.5 / bitstep;
         static const float hibit = (bitstep - 0.5) / bitstep;
 
-        float3 m = float3(uv, rand21(uv + timer)) + 1.0;
+        const float3 m = float3(uv, rand21(uv + timer)) + 1.0;
         float h = permute(permute(permute(m.x) + m.y) + m.z);
 
         float3 noise1, noise2;
@@ -36,10 +36,10 @@ uniform float Timer < source = "timer"; >;
         noise1.z = rand11(h); h = permute(h);
         noise2.z = rand11(h);
 
-        float3 lo = saturate(remap(color.xyz, 0.0, lobit));
-        float3 hi = saturate(remap(color.xyz, 1.0, hibit));
-        float3 uni = noise1 - 0.5;
-        float3 tri = noise1 - noise2;
+        const float3 lo = saturate(remap(color.xyz, 0.0, lobit));
+        const float3 hi = saturate(remap(color.xyz, 1.0, hibit));
+        const float3 uni = noise1 - 0.5;
+        const float3 tri = noise1 - noise2;
    	 return lerp(uni, tri, min(lo, hi)) * lsb;
     }
 

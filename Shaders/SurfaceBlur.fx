@@ -2,6 +2,7 @@
 //Surface Blur by Ioxa
 //Version 1.1 for ReShade 3.0
 //Based on the  filter by mrharicot at https://www.shadertoy.com/view/4dfGDH
+// Lightly optimized by Marot Satil for the GShade project.
 
 //Settings
 #if !defined SurfaceBlurIterations
@@ -78,18 +79,18 @@ float4 SurfaceBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOO
 	#if SurfaceBlurIterations == 2 
 		#define SurfaceBlurFinalSampler SurfaceBlurSampler
 		
-		float3 color = tex2D(SurfaceBlurFinalSampler, texcoord).rgb;
-		float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
+		const float3 color = tex2D(SurfaceBlurFinalSampler, texcoord).rgb;
+		const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	#elif SurfaceBlurIterations == 3
 		#define SurfaceBlurFinalSampler SurfaceBlurSampler2
 		
-		float3 color = tex2D(SurfaceBlurFinalSampler, texcoord).rgb;
-		float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
+		const float3 color = tex2D(SurfaceBlurFinalSampler, texcoord).rgb;
+		const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	#else
 		#define SurfaceBlurFinalSampler ReShade::BackBuffer
 		
-		float3 color = tex2D(SurfaceBlurFinalSampler, texcoord).rgb;
-		float3 orig = color;
+		const float3 color = tex2D(SurfaceBlurFinalSampler, texcoord).rgb;
+		const float3 orig = color;
 	#endif
 	
 	float Z;
@@ -107,16 +108,16 @@ float4 SurfaceBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOO
 		[unroll]
 		for(int i = 1; i < 5; ++i) {
 			
-			float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+			const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-			float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-			float3 diffA = (orig-colorA);
+			const float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+			const float3 diffA = (orig-colorA);
 			float factorA = (dot(diffA,diffA));
 			factorA = 1+(factorA/((BlurEdge)));
 			factorA = sampleWeights[i]*rcp(factorA*factorA*factorA*factorA*factorA);
 			
-			float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-			float3 diffB = (orig-colorB);
+			const float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+			const float3 diffB = (orig-colorB);
 			float factorB = (dot(diffB,diffB));
 			factorB = 1+(factorB/((BlurEdge)));
 			factorB = sampleWeights[i]*rcp(factorB*factorB*factorB*factorB*factorB);
@@ -138,19 +139,19 @@ float4 SurfaceBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOO
 			final_color = color * 0.1509985387665926499;
 			Z = 0.1509985387665926499;
 		
-			[unroll]
+			[loop]
 			for(int i = 1; i < 13; ++i) {
 				
-				float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+				const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-				float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-				float3 diffA = (orig-colorA);
+				const float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+				const float3 diffA = (orig-colorA);
 				float factorA = dot(diffA,diffA);
 				factorA = 1+(factorA/((BlurEdge)));
 				factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-				float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-				float3 diffB = (orig-colorB);
+				const float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+				const float3 diffB = (orig-colorB);
 				float factorB = dot(diffB,diffB);
 				factorB = 1+(factorB/((BlurEdge)));
 				factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -172,18 +173,18 @@ float4 SurfaceBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOO
 				final_color = color * 0.0957733978977875942;
 				Z = 0.0957733978977875942;
 		
-				[unroll]
+				[loop]
 				for(int i = 1; i < 13; ++i) {
-					float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+					const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-					float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-					float3 diffA = (orig-colorA);
+					const float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+					const float3 diffA = (orig-colorA);
 					float factorA = dot(diffA,diffA);
 					factorA = 1+(factorA/((BlurEdge)));
 					factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-					float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-					float3 diffB = (orig-colorB);
+					const float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+					const float3 diffB = (orig-colorB);
 					float factorB = dot(diffB,diffB);
 					factorB = 1+(factorB/((BlurEdge)));
 					factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -205,18 +206,18 @@ float4 SurfaceBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOO
 					final_color = color * 0.05299184990795840687999609498603;
 					Z = 0.05299184990795840687999609498603;
 		
-					[unroll]
+					[loop]
 					for(int i = 1; i < 25; ++i) {
-						float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+						const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-						float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-						float3 diffA = (orig-colorA);
+						const float3 colorA = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+						const float3 diffA = (orig-colorA);
 						float factorA = dot(diffA,diffA);
 						factorA = 1+(factorA/((BlurEdge)));
 						factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-						float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-						float3 diffB = (orig-colorB);
+						const float3 colorB = tex2Dlod(SurfaceBlurFinalSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+						const float3 diffB = (orig-colorB);
 						float factorB = dot(diffB,diffB);
 						factorB = 1+(factorB/((BlurEdge)));
 						factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -247,7 +248,7 @@ if(DebugMode == 2)
 #if SurfaceBlurIterations >= 2
 float3 SurfaceBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
-	float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	float Z;
 	float3 final_color;
@@ -261,19 +262,19 @@ float3 SurfaceBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 		final_color = orig * 0.225806;
 		Z = 0.225806;
 		
-		[unroll]
+		[loop]
 		for(int i = 1; i < 5; ++i) {
 			
-			float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+			const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-			float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
-			float3 diffA = (orig-colorA);
+			const float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
+			const float3 diffA = (orig-colorA);
 			float factorA = dot(diffA,diffA);
 			factorA = 1+(factorA/((BlurEdge)));
 			factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-			float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
-			float3 diffB = (orig-colorB);
+			const float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
+			const float3 diffB = (orig-colorB);
 			float factorB = dot(diffB,diffB);
 			factorB = 1+(factorB/((BlurEdge)));
 			factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -295,19 +296,19 @@ float3 SurfaceBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 			final_color = orig * 0.1509985387665926499;
 			Z = 0.1509985387665926499;
 		
-			[unroll]
+			[loop]
 			for(int i = 1; i < 13; ++i) {
 				
-				float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+				const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-				float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
-				float3 diffA = (orig-colorA);
+				const float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
+				const float3 diffA = (orig-colorA);
 				float factorA = dot(diffA,diffA);
 				factorA = 1+(factorA/((BlurEdge)));
 				factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-				float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
-				float3 diffB = (orig-colorB);
+				const float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
+				const float3 diffB = (orig-colorB);
 				float factorB = dot(diffB,diffB);
 				factorB = 1+(factorB/((BlurEdge)));
 				factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -329,18 +330,18 @@ float3 SurfaceBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 				final_color = orig * 0.0957733978977875942;
 				Z = 0.0957733978977875942;
 		
-				[unroll]
+				[loop]
 				for(int i = 1; i < 13; ++i) {
-					float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+					const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-					float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
-					float3 diffA = (orig-colorA);
+					const float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
+					const float3 diffA = (orig-colorA);
 					float factorA = dot(diffA,diffA);
 					factorA = 1+(factorA/((BlurEdge)));
 					factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-					float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
-					float3 diffB = (orig-colorB);
+					const float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
+					const float3 diffB = (orig-colorB);
 					float factorB = dot(diffB,diffB);
 					factorB = 1+(factorB/((BlurEdge)));
 					factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -362,18 +363,18 @@ float3 SurfaceBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 					final_color = orig * 0.05299184990795840687999609498603;
 					Z = 0.05299184990795840687999609498603;
 		
-					[unroll]
+					[loop]
 					for(int i = 1; i < 25; ++i) {
-						float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+						const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-						float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
-						float3 diffA = (orig-colorA);
+						const float3 colorA = tex2Dlod(ReShade::BackBuffer, float4(texcoord + coord, 0.0, 0.0)).rgb;
+						const float3 diffA = (orig-colorA);
 						float factorA = dot(diffA,diffA);
 						factorA = 1+(factorA/((BlurEdge)));
 						factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-						float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
-						float3 diffB = (orig-colorB);
+						const float3 colorB = tex2Dlod(ReShade::BackBuffer, float4(texcoord - coord, 0.0, 0.0)).rgb;
+						const float3 diffB = (orig-colorB);
 						float factorB = dot(diffB,diffB);
 						factorB = 1+(factorB/((BlurEdge)));
 						factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -396,8 +397,8 @@ float3 SurfaceBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 float3 SurfaceBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
 
-	float3 color = tex2D(SurfaceBlurSampler, texcoord).rgb;
-	float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 color = tex2D(SurfaceBlurSampler, texcoord).rgb;
+	const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	
 	float Z;
 	float3 final_color;
@@ -411,19 +412,19 @@ float3 SurfaceBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 		final_color = color * 0.225806;
 		Z = 0.225806;
 		
-		[unroll]
+		[loop]
 		for(int i = 1; i < 5; ++i) {
 			
-			float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+			const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-			float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-			float3 diffA = (orig-colorA);
+			const float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+			const float3 diffA = (orig-colorA);
 			float factorA = dot(diffA,diffA);
 			factorA = 1+(factorA/((BlurEdge)));
 			factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-			float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-			float3 diffB = (orig-colorB);
+			const float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+			const float3 diffB = (orig-colorB);
 			float factorB = dot(diffB,diffB);
 			factorB = 1+(factorB/((BlurEdge)));
 			factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -445,19 +446,19 @@ float3 SurfaceBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 			final_color = color * 0.1509985387665926499;
 			Z = 0.1509985387665926499;
 		
-			[unroll]
+			[loop]
 			for(int i = 1; i < 13; ++i) {
 				
-				float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+				const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-				float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-				float3 diffA = (orig-colorA);
+				const float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+				const float3 diffA = (orig-colorA);
 				float factorA = dot(diffA,diffA);
 				factorA = 1+(factorA/((BlurEdge)));
 				factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-				float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-				float3 diffB = (orig-colorB);
+				const float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+				const float3 diffB = (orig-colorB);
 				float factorB = dot(diffB,diffB);
 				factorB = 1+(factorB/((BlurEdge)));
 				factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -479,18 +480,18 @@ float3 SurfaceBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 				final_color = color * 0.0957733978977875942;
 				Z = 0.0957733978977875942;
 		
-				[unroll]
+				[loop]
 				for(int i = 1; i < 13; ++i) {
-					float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+					const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-					float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-					float3 diffA = (orig-colorA);
+					const float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+					const float3 diffA = (orig-colorA);
 					float factorA = dot(diffA,diffA);
 					factorA = 1+(factorA/((BlurEdge)));
 					factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-					float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-					float3 diffB = (orig-colorB);
+					const float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+					const float3 diffB = (orig-colorB);
 					float factorB = dot(diffB,diffB);
 					factorB = 1+(factorB/((BlurEdge)));
 					factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));
@@ -512,18 +513,18 @@ float3 SurfaceBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) 
 					final_color = color * 0.05299184990795840687999609498603;
 					Z = 0.05299184990795840687999609498603;
 		
-					[unroll]
+					[loop]
 					for(int i = 1; i < 25; ++i) {
-						float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
+						const float2 coord = float2(sampleOffsetsX[i], sampleOffsetsY[i]) * BlurOffset;
 			
-						float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
-						float3 diffA = (orig-colorA);
+						const float3 colorA = tex2Dlod(SurfaceBlurSampler, float4(texcoord + coord, 0.0, 0.0)).rgb;
+						const float3 diffA = (orig-colorA);
 						float factorA = dot(diffA,diffA);
 						factorA = 1+(factorA/((BlurEdge)));
 						factorA = (sampleWeights[i]/(factorA*factorA*factorA*factorA*factorA));
 			
-						float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
-						float3 diffB = (orig-colorB);
+						const float3 colorB = tex2Dlod(SurfaceBlurSampler, float4(texcoord - coord, 0.0, 0.0)).rgb;
+						const float3 diffB = (orig-colorB);
 						float factorB = dot(diffB,diffB);
 						factorB = 1+(factorB/((BlurEdge)));
 						factorB = (sampleWeights[i]/(factorB*factorB*factorB*factorB*factorB));

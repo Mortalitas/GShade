@@ -37,6 +37,7 @@
 // Version History:
 // 15-nov-2018:     v1.0.0
 //
+// Lightly optimized by Marot Satil for the GShade project.
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "ReShade.fxh"
@@ -57,7 +58,7 @@ uniform float fUIOverlayScale <
 
 float3 HotsamplingHelperPS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 
-    float2 overlayPos = fUIOverlayPos * (1.0 - fUIOverlayScale) * ReShade::ScreenSize;
+    const float2 overlayPos = fUIOverlayPos * (1.0 - fUIOverlayScale) * ReShade::ScreenSize;
 
     if(all(vpos.xy >= overlayPos) && all(vpos.xy < overlayPos + ReShade::ScreenSize * fUIOverlayScale))
     {

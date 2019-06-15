@@ -9,6 +9,7 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
 // Rim Light PS v0.1.3 a
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "Reshade.fxh"
 
@@ -43,8 +44,8 @@ uniform float FarPlane <
 // Overlay blending mode
 float Overlay(float Layer)
 {
-	float MinLayer = min(Layer, 0.5);
-	float MaxLayer = max(Layer, 0.5);
+	const float MinLayer = min(Layer, 0.5);
+	const float MaxLayer = max(Layer, 0.5);
 	return 2 * (MinLayer * MinLayer + 2 * MaxLayer - MaxLayer * MaxLayer) - 1.5;
 }
 
@@ -80,14 +81,14 @@ float GetDepth(float2 TexCoord)
 // Normal pass from depth function
 float3 NormalVector(float2 TexCoord)
 {
-	float3 offset = float3(ReShade::PixelSize.xy, 0.0);
-	float2 posCenter = TexCoord.xy;
-	float2 posNorth = posCenter - offset.zy;
-	float2 posEast = posCenter + offset.xz;
+	const float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+	const float2 posCenter = TexCoord.xy;
+	const float2 posNorth = posCenter - offset.zy;
+	const float2 posEast = posCenter + offset.xz;
 
-	float3 vertCenter = float3(posCenter, 1) * GetDepth(posCenter);
-	float3 vertNorth = float3(posNorth, 1) * GetDepth(posNorth);
-	float3 vertEast = float3(posEast, 1) * GetDepth(posEast);
+	const float3 vertCenter = float3(posCenter, 1) * GetDepth(posCenter);
+	const float3 vertNorth = float3(posNorth, 1) * GetDepth(posNorth);
+	const float3 vertEast = float3(posEast, 1) * GetDepth(posEast);
 
 	return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast)) * 0.5 + 0.5;
 }
@@ -95,13 +96,13 @@ float3 NormalVector(float2 TexCoord)
 
 void RimLightPS(in float4 position : SV_Position, in float2 TexCoord : TEXCOORD0, out float3 color : SV_Target)
 {
-	float3 NormalPass = NormalVector(TexCoord);
+	const float3 NormalPass = NormalVector(TexCoord);
 
 	if(Debug) color = NormalPass;
 	else
 	{
 		color = cross(NormalPass, float3(0.5, 0.5, 1.0));
-		float rim = max(max(color.x, color.y), color.z);
+		const float rim = max(max(color.x, color.y), color.z);
 		color = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 		color += Color * Overlay(rim);
 	}

@@ -6,6 +6,7 @@
  * 
  * Updated for Reshade 4.0
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float HDRPower <
 	ui_type = "slider";
@@ -28,7 +29,7 @@ uniform float radius2 <
 
 float3 HDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	float3 bloom_sum1 = tex2D(ReShade::BackBuffer, texcoord + float2(1.5, -1.5) * radius1).rgb;
 	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2(-1.5, -1.5) * radius1).rgb;
@@ -52,12 +53,12 @@ float3 HDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 
 	bloom_sum2 *= 0.010;
 
-	float dist = radius2 - radius1;
-	float3 HDR = (color + (bloom_sum2 - bloom_sum1)) * dist;
-	float3 blend = HDR + color;
-	color = pow(abs(blend), abs(HDRPower)) + HDR; // pow - don't use fractions for HDRpower
-	
-	return saturate(color);
+	const float dist = radius2 - radius1;
+	const float3 HDR = (color + (bloom_sum2 - bloom_sum1)) * dist;
+	const float3 blend = HDR + color;
+	 
+	// pow - don't use fractions for HDRpower
+	return saturate(pow(abs(blend), HDRPower) + HDR);
 }
 
 technique HDR

@@ -6,6 +6,7 @@ Attribution-ShareAlike 4.0 International License.
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 uniform float3 ColorA <
 	ui_label = "Colour (A)";
@@ -52,8 +53,8 @@ uniform float Offset <
 // Overlay blending mode
 float Overlay(float Layer)
 {
-	float Min = min(Layer, 0.5);
-	float Max = max(Layer, 0.5);
+	const float Min = min(Layer, 0.5);
+	const float Max = max(Layer, 0.5);
 	return 2 * (Min * Min + 2 * Max - Max * Max) - 1.5;
 }
 
@@ -74,8 +75,8 @@ void SunsetFilterPS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out fl
 	UvCoordAspect *= Scale;
 
 	// Tilt vector
-	float Angle = radians(-Axis);
-	float2 TiltVector = float2(sin(Angle), cos(Angle));
+	const float Angle = radians(-Axis);
+	const float2 TiltVector = float2(sin(Angle), cos(Angle));
 
 	// Blend Mask
 	float BlendMask = dot(TiltVector, UvCoordAspect) + Offset;

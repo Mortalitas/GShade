@@ -3,8 +3,6 @@
 //ReShade Shader: ColorfulPoster
 //https://github.com/Daodan317081/reshade-shaders
 //
-//Modified by Marot for ReShade 4.0 compatibility.
-//
 //BSD 3-Clause License
 //
 //Copyright (c) 2018-2019, Alexander Federwisch
@@ -35,6 +33,7 @@
 //OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////////////
+//Modified by Marot Satil for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -108,10 +107,10 @@ uniform float fUIStrength <
 #define MAX_VALUE(v) max(v.x, max(v.y, v.z))
 
 float Posterize(float x, int numLevels, float continuity, float slope, int type) {
-    float stepheight = 1.0 / numLevels;
-    float stepnum = floor(x * numLevels);
-    float frc = frac(x * numLevels);
-    float step1 = floor(frc) * stepheight;
+    const float stepheight = 1.0 / numLevels;
+    const float stepnum = floor(x * numLevels);
+    const float frc = frac(x * numLevels);
+    const float step1 = floor(frc) * stepheight;
     float step2;
 
     if(type == 1)
@@ -127,10 +126,8 @@ float Posterize(float x, int numLevels, float continuity, float slope, int type)
 }
 
 float4 RGBtoCMYK(float3 color) {
-    float3 CMY;
-    float K;
-    K = 1.0 - max(color.r, max(color.g, color.b));
-    CMY = (1.0 - color - K) / (1.0 - K);
+    const float K = 1.0 - max(color.r, max(color.g, color.b));
+    const float3 CMY = (1.0 - color - K) / (1.0 - K);
     return float4(CMY, K);
 }
 
@@ -139,7 +136,7 @@ float3 CMYKtoRGB(float4 cmyk) {
 }
 
 float3 DrawDebugCurve(float3 background, float2 texcoord, float value, float3 color, float curveDiv) {
-    float p = exp(-(BUFFER_HEIGHT/curveDiv) * length(texcoord - float2(texcoord.x, 1.0 - value)));
+    const float p = exp(-(BUFFER_HEIGHT/curveDiv) * length(texcoord - float2(texcoord.x, 1.0 - value)));
     return lerp(background, color, saturate(p));
 }
 
@@ -151,14 +148,14 @@ float3 ColorfulPoster_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
     /*******************************************************
         Get BackBuffer
     *******************************************************/
-    float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
     /*******************************************************
         Calculate chroma and luma; posterize luma
     *******************************************************/
-    float luma = dot(backbuffer, LumaCoeff);
-    float3 chroma = backbuffer - luma;
-    float3 lumaPoster = Posterize(luma, iUILumaLevels, fUIStepContinuity, fUISlope, iUIStepType).rrr;
+    const float luma = dot(backbuffer, LumaCoeff);
+    const float3 chroma = backbuffer - luma;
+    const float3 lumaPoster = Posterize(luma, iUILumaLevels, fUIStepContinuity, fUISlope, iUIStepType).rrr;
 
     /*******************************************************
         Color
@@ -171,10 +168,10 @@ float3 ColorfulPoster_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
     backbufferCMYK.w = 0.0;
 
     //Convert back to RGB
-    mask = CMYKtoRGB(saturate(backbufferCMYK));
+    const mask = CMYKtoRGB(saturate(backbufferCMYK));
     
     //add luma to chroma
-    image = chroma + lumaPoster;
+    const image = chroma + lumaPoster;
 
     //Blend with 'hard light'
     colorLayer = lerp(2*image*mask, 1.0 - 2.0 * (1.0 - image) * (1.0 - mask), step(0.5, luma.r));
@@ -186,7 +183,7 @@ float3 ColorfulPoster_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
     float3 result = lerp(backbuffer, colorLayer, fUIStrength);
 
     if(iUIDebugOverlayPosterizeLevels == 1) {
-        float value = Posterize(texcoord.x, iUILumaLevels, fUIStepContinuity, fUISlope, iUIStepType);
+        const float value = Posterize(texcoord.x, iUILumaLevels, fUIStepContinuity, fUISlope, iUIStepType);
         result = DrawDebugCurve(result, texcoord, value, float3(1.0, 0.0, 1.0), 1.0);        
     }
         

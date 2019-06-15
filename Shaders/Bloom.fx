@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2015 Gilcher Pascal aka Marty McFly
-// Modified by Marot for ReShade 4.0 compatibility.
+// Modified by Marot Satil for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 
 uniform int iBloomMixmode <
 	ui_type = "combo";
@@ -247,7 +247,7 @@ sampler SamplerLensFlare2 { Texture = texLensFlare2; };
 float4 GaussBlur22(float2 coord, sampler tex, float mult, float lodlevel, bool isBlurVert)
 {
 	float4 sum = 0;
-	float2 axis = isBlurVert ? float2(0, 1) : float2(1, 0);
+	const float2 axis = isBlurVert ? float2(0, 1) : float2(1, 0);
 
 	const float weight[11] = {
 		0.082607,
@@ -265,7 +265,7 @@ float4 GaussBlur22(float2 coord, sampler tex, float mult, float lodlevel, bool i
 
 	for (int i = -10; i < 11; i++)
 	{
-		float currweight = weight[abs(i)];
+		const float currweight = weight[abs(i)];
 		sum += tex2Dlod(tex, float4(coord.xy + axis.xy * (float)i * ReShade::PixelSize * mult, 0, lodlevel)) * currweight;
 	}
 
@@ -283,7 +283,7 @@ float3 GetDnB(sampler tex, float2 coords)
 }
 float3 GetDistortedTex(sampler tex, float2 sample_center, float2 sample_vector, float3 distortion)
 {
-	float2 final_vector = sample_center + sample_vector * min(min(distortion.r, distortion.g), distortion.b);
+	const float2 final_vector = sample_center + sample_vector * min(min(distortion.r, distortion.g), distortion.b);
 
 	if (final_vector.x > 1.0 || final_vector.y > 1.0 || final_vector.x < -1.0 || final_vector.y < -1.0)
 		return float3(0, 0, 0);
@@ -296,13 +296,13 @@ float3 GetDistortedTex(sampler tex, float2 sample_center, float2 sample_vector, 
 
 float3 GetBrightPass(float2 coords)
 {
-	float3 c = tex2D(ReShade::BackBuffer, coords).rgb;
-	float3 bC = max(c - fFlareLuminance.xxx, 0.0);
+	const float3 c = tex2D(ReShade::BackBuffer, coords).rgb;
+	const float3 bC = max(c - fFlareLuminance.xxx, 0.0);
 	float bright = dot(bC, 1.0);
 	bright = smoothstep(0.0f, 0.5, bright);
 	float3 result = lerp(0.0, c, bright);
 #if FLARE_DEPTH_CHECK
-	float checkdepth = tex2D(ReShade::DepthBuffer, coords).x;
+	const float checkdepth = tex2D(ReShade::DepthBuffer, coords).x;
 	if (checkdepth < 0.99999)
 		result = 0;
 #endif
@@ -312,8 +312,7 @@ float3 GetAnamorphicSample(int axis, float2 coords, float blur)
 {
 	coords = 2.0 * coords - 1.0;
 	coords.x /= -blur;
-	coords = 0.5 * coords + 0.5;
-	return GetBrightPass(coords);
+	return GetBrightPass(0.5 * coords + 0.5);
 }
 
 void BloomPass0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 bloom : SV_Target)
@@ -460,8 +459,8 @@ void LensFlarePass0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out f
 			lfcoord.xy *= pow(2.0 * length(distfact), lfoffset[i].y * 3.5);
 			lfcoord.xy *= lfoffset[i].z;
 			lfcoord.xy = 0.5 - lfcoord.xy;
-			float2 tempfact = (lfcoord.xy - 0.5) * 2;
-			float templensmult = clamp(1.0 - dot(tempfact, tempfact), 0, 1);
+			const float2 tempfact = (lfcoord.xy - 0.5) * 2;
+			const float templensmult = clamp(1.0 - dot(tempfact, tempfact), 0, 1);
 			float3 lenstemp1 = dot(tex2Dlod(ReShade::BackBuffer, float4(lfcoord.xy, 0, 1)).rgb, 0.333);
 
 #if LENZ_DEPTH_CHECK
@@ -482,14 +481,14 @@ void LensFlarePass0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out f
 	// Chapman Lens
 	if (bChapFlareEnable)
 	{
-		float2 sample_vector = (float2(0.5, 0.5) - texcoord.xy) * fChapFlareDispersal;
-		float2 halo_vector = normalize(sample_vector) * fChapFlareSize;
+		const float2 sample_vector = (float2(0.5, 0.5) - texcoord.xy) * fChapFlareDispersal;
+		const float2 halo_vector = normalize(sample_vector) * fChapFlareSize;
 
 		float3 chaplens = GetDistortedTex(ReShade::BackBuffer, texcoord.xy + halo_vector, halo_vector, fChapFlareCA * 2.5f).rgb;
 
 		for (int j = 0; j < iChapFlareCount; ++j)
 		{
-			float2 foffset = sample_vector * float(j);
+			const float2 foffset = sample_vector * float(j);
 			chaplens += GetDistortedTex(ReShade::BackBuffer, texcoord.xy + foffset, foffset, fChapFlareCA).rgb;
 		}
 
@@ -560,7 +559,7 @@ void LightingCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 	colorbloom += tex2D(SamplerBloom5, texcoord).rgb * 9.0;
 	colorbloom *= 0.1;
 	colorbloom = saturate(colorbloom);
-	float colorbloomgray = dot(colorbloom, 0.333);
+	const float colorbloomgray = dot(colorbloom, 0.333);
 	colorbloom = lerp(colorbloomgray, colorbloom, fBloomSaturation);
 	colorbloom *= fBloomTint;
 
@@ -584,8 +583,8 @@ void LightingCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 	// Lens dirt
 	if (bLensdirtEnable)
 	{
-		float lensdirtmult = dot(tex2D(SamplerBloom5, texcoord).rgb, 0.333);
-		float3 dirttex = tex2D(SamplerDirt, texcoord).rgb;
+		const float lensdirtmult = dot(tex2D(SamplerBloom5, texcoord).rgb, 0.333);
+		const float3 dirttex = tex2D(SamplerDirt, texcoord).rgb;
 		float3 lensdirt = dirttex * lensdirtmult * fLensdirtIntensity;
 
 		lensdirt = lerp(dot(lensdirt.xyz, 0.333), lensdirt.xyz, fLensdirtSaturation);

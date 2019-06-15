@@ -1,6 +1,6 @@
 // Implementation based on the article "Efficient Gaussian blur with linear sampling"
 // http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
-// Updated and Modified by Marot Satil for ReShade 4.0
+// Updated and Modified by Marot Satil for ReShade 4.0 and lightly optimized for the GShade project.
 
  /*-----------------------------------------------------------.
 /                  Gaussian Blur settings                     /
@@ -141,18 +141,18 @@ sampler origframeSampler
 
 float4 BrightPassFilterPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
-	float4 color = tex2D(ReShade::BackBuffer, texcoord);
+	const float4 color = tex2D(ReShade::BackBuffer, texcoord);
 	return float4 (color.rgb * pow (abs (max (color.r, max (color.g, color.b))), 2.0), 2.0f)*gBloomIntensity;
 }
 
 float4 HGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
 	#if (gGaussQuality == 0)
-	float sampleOffsets[5] = { 0.0, 1.4347826, 3.3478260, 5.2608695, 7.1739130 };
-	float sampleWeights[5] = { 0.16818994, 0.27276957, 0.11690125, 0.024067905, 0.0021112196 };
+	const float sampleOffsets[5] = { 0.0, 1.4347826, 3.3478260, 5.2608695, 7.1739130 };
+	const float sampleWeights[5] = { 0.16818994, 0.27276957, 0.11690125, 0.024067905, 0.0021112196 };
 	#else
-	float sampleOffsets[9] = { 0.0, 1.43*.50, 1.43, 2, 3.35, 4, 5.26, 6, 7.17 };
-	float sampleWeights[9] = { 0.168, 0.273, 0.273, 0.117, 0.117, 0.024, 0.024, 0.002, 0.002};
+	const float sampleOffsets[9] = { 0.0, 1.43*.50, 1.43, 2, 3.35, 4, 5.26, 6, 7.17 };
+	const float sampleWeights[9] = { 0.168, 0.273, 0.273, 0.117, 0.117, 0.024, 0.024, 0.002, 0.002};
 	#endif
 	
 	float4 color = tex2D(ReShade::BackBuffer, texcoord) * sampleWeights[0];
@@ -166,11 +166,11 @@ float4 HGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 float4 VGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
 	#if (gGaussQuality == 0)
-	float sampleOffsets[5] = { 0.0, 1.4347826, 3.3478260, 5.2608695, 7.1739130 };
-	float sampleWeights[5] = { 0.16818994, 0.27276957, 0.11690125, 0.024067905, 0.0021112196 };
+	const float sampleOffsets[5] = { 0.0, 1.4347826, 3.3478260, 5.2608695, 7.1739130 };
+	const float sampleWeights[5] = { 0.16818994, 0.27276957, 0.11690125, 0.024067905, 0.0021112196 };
 	#else 
-	float sampleOffsets[9] = { 0.0, 1.4347826*.50, 1.4347826, 2, 3.3478260, 4, 5.2608695, 6, 7.1739130 };
-	float sampleWeights[9] = { 0.16818994, 0.27276957, 0.27276957, 0.11690125, 0.11690125, 0.024067905, 0.024067905, 0.0021112196 , 0.0021112196};
+	const float sampleOffsets[9] = { 0.0, 1.4347826*.50, 1.4347826, 2, 3.3478260, 4, 5.2608695, 6, 7.1739130 };
+	const float sampleWeights[9] = { 0.16818994, 0.27276957, 0.27276957, 0.11690125, 0.11690125, 0.024067905, 0.024067905, 0.0021112196 , 0.0021112196};
 	#endif
 
 	float4 color = tex2D(ReShade::BackBuffer, texcoord) * sampleWeights[0];
@@ -184,11 +184,11 @@ float4 VGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 float4 SGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
 	#if (gGaussQuality == 0)
-	float sampleOffsets[5] = { 0.0, 1.4347826, 3.3478260, 5.2608695, 7.1739130 };
-	float sampleWeights[5] = { 0.16818994, 0.27276957, 0.11690125, 0.024067905, 0.0021112196 };
+	const float sampleOffsets[5] = { 0.0, 1.4347826, 3.3478260, 5.2608695, 7.1739130 };
+	const float sampleWeights[5] = { 0.16818994, 0.27276957, 0.11690125, 0.024067905, 0.0021112196 };
 	#else 
-	float sampleOffsets[9] = { 0.0, 1.4347826*.50, 1.4347826, 2, 3.3478260, 4, 5.2608695, 6, 7.1739130 };
-	float sampleWeights[9] = { 0.16818994, 0.27276957, 0.27276957, 0.11690125, 0.11690125, 0.024067905, 0.024067905, 0.0021112196 , 0.0021112196};
+	const float sampleOffsets[9] = { 0.0, 1.4347826*.50, 1.4347826, 2, 3.3478260, 4, 5.2608695, 6, 7.1739130 };
+	const float sampleWeights[9] = { 0.16818994, 0.27276957, 0.27276957, 0.11690125, 0.11690125, 0.024067905, 0.024067905, 0.0021112196 , 0.0021112196};
 	#endif
 
 	float4 color = tex2D(ReShade::BackBuffer, texcoord) * sampleWeights[0];
@@ -208,7 +208,7 @@ float4 CombinePS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : C
 	// return tex2D(ReShade::BackBuffer, texcoord);     // Blurred image
 
 	float4 orig = tex2D(origframeSampler, texcoord);
-	float4 blur = tex2D(ReShade::BackBuffer, texcoord);
+	const float4 blur = tex2D(ReShade::BackBuffer, texcoord);
 	float3 sharp;
 	if (gGaussEffect == 0)
 		orig = orig;

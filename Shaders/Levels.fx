@@ -17,6 +17,7 @@
  * -- Version 1.2 --
  * Added the ability to highlight clipping regions of the image with #define HighlightClipping 1
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform int BlackPoint <
 	ui_type = "slider";
@@ -43,8 +44,8 @@ uniform bool HighlightClipping <
 
 float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float black_point_float = BlackPoint / 255.0;
-	float white_point_float = WhitePoint == BlackPoint ? (255.0 / 0.00025) : (255.0 / (WhitePoint - BlackPoint)); // Avoid division by zero if the white and black point are the same
+	const float black_point_float = BlackPoint / 255.0;
+	const float white_point_float = WhitePoint == BlackPoint ? (255.0 / 0.00025) : (255.0 / (WhitePoint - BlackPoint)); // Avoid division by zero if the white and black point are the same
 
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	color = color * white_point_float - (black_point_float *  white_point_float);

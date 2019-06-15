@@ -3,10 +3,6 @@
 //ReShade Shader: ColorIsolation2
 //https://github.com/Daodan317081/reshade-shaders
 //
-//Modified by Marot for ReShade 4.0 compatibility.
-//
-//Note that this shader is identical to ColorIsolation and is intended to allow a second pass.
-//
 //BSD 3-Clause License
 //
 //Copyright (c) 2018-2019, Alexander Federwisch
@@ -37,6 +33,9 @@
 //OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////////////
+//Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
+//
+//Note that this shader is identical to ColorIsolation and is intended to allow a second pass.
 
 #include "ReShade.fxh"
 
@@ -120,23 +119,23 @@ uniform float fUIOverlayOpacityTwo <
 //These RGB/HSV conversion functions are based on the blogpost from:
 //http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 float3 RGBtoHSVTwo(float3 c) {
-    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
-    float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
+    const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    const float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
+    const float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
 
-    float d = q.x - min(q.w, q.y);
-    float e = 1.0e-10;
+    const float d = q.x - min(q.w, q.y);
+    const float e = 1.0e-10;
     return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
 }
 
 float3 HSVtoRGBTwo(float3 c) {
-    float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
+    const float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    const float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
 }
 
 float MapTwo(float value, float2 span_old, float2 span_new) {
-    float span_old_diff = abs(span_old.y - span_old.x) < 1e-6 ? 1e-6 : span_old.y - span_old.x;
+    const float span_old_diff = abs(span_old.y - span_old.x) < 1e-6 ? 1e-6 : span_old.y - span_old.x;
     return lerp(span_new.x, span_new.y, (clamp(value, span_old.x, span_old.y)-span_old.x)/(span_old_diff));
 }
 
@@ -166,7 +165,7 @@ float3 DrawDebugOverlayTwo(float3 background, float3 param, float2 pos, int2 siz
     float x, y, value, luma;
     float3 overlay, hsvStrip;
 
-	float2 overlayPos = pos * (ReShade::ScreenSize - size);
+	const float2 overlayPos = pos * (ReShade::ScreenSize - size);
 
     if(all(vpos.xy >= overlayPos) && all(vpos.xy < overlayPos + size))
     {
@@ -184,10 +183,10 @@ float3 DrawDebugOverlayTwo(float3 background, float3 param, float2 pos, int2 siz
 }
 
 float3 ColorIsolationTwoPS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 luma = dot(color, float3(0.2126, 0.7151, 0.0721)).rrr;
-    float3 param = float3(fUITargetHueTwo / 360.0, fUIOverlapTwo, fUIWindowHeightTwo);
-    float value = CalculateValueTwo(RGBtoHSVTwo(color).x, param.z, param.x, 1.0 - param.y);
+    const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 luma = dot(color, float3(0.2126, 0.7151, 0.0721)).rrr;
+    const float3 param = float3(fUITargetHueTwo / 360.0, fUIOverlapTwo, fUIWindowHeightTwo);
+    const float value = CalculateValueTwo(RGBtoHSVTwo(color).x, param.z, param.x, 1.0 - param.y);
     float3 retVal = lerp(luma, color, value);
 
     if(bUIShowDiffTwo)

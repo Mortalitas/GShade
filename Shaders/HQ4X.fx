@@ -1,4 +1,5 @@
 // hq4x filter from https://www.shadertoy.com/view/MslGRS
+// Lightly optimized by Marot Satil for the GShade project.
 
 uniform float s <
 	ui_type = "slider";
@@ -36,19 +37,19 @@ uniform float lum_add <
 
 float3 PS_HQ4X(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {
-	float x = s * ReShade::PixelSize.x;
-	float y = s * ReShade::PixelSize.y;
+	const float x = s * ReShade::PixelSize.x;
+	const float y = s * ReShade::PixelSize.y;
 
 	const float3 dt = 1.0 * float3(1.0, 1.0, 1.0);
 
-	float2 dg1 = float2( x, y);
-	float2 dg2 = float2(-x, y);
+	const float2 dg1 = float2( x, y);
+	const float2 dg2 = float2(-x, y);
 
-	float2 sd1 = dg1 * 0.5;
-	float2 sd2 = dg2 * 0.5;
+	const float2 sd1 = dg1 * 0.5;
+	const float2 sd2 = dg2 * 0.5;
 
-	float2 ddx = float2(x, 0.0);
-	float2 ddy = float2(0.0, y);
+	const float2 ddx = float2(x, 0.0);
+	const float2 ddy = float2(0.0, y);
 
 	float4 t1 = float4(uv - sd1, uv - ddy);
 	float4 t2 = float4(uv - sd2, uv + ddx);
@@ -59,28 +60,28 @@ float3 PS_HQ4X(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 
 	float3 c  = tex2D(ReShade::BackBuffer, uv).rgb;
 
-	float3 i1 = tex2D(ReShade::BackBuffer, t1.xy).rgb;
-	float3 i2 = tex2D(ReShade::BackBuffer, t2.xy).rgb;
-	float3 i3 = tex2D(ReShade::BackBuffer, t3.xy).rgb;
-	float3 i4 = tex2D(ReShade::BackBuffer, t4.xy).rgb;
+	const float3 i1 = tex2D(ReShade::BackBuffer, t1.xy).rgb;
+	const float3 i2 = tex2D(ReShade::BackBuffer, t2.xy).rgb;
+	const float3 i3 = tex2D(ReShade::BackBuffer, t3.xy).rgb;
+	const float3 i4 = tex2D(ReShade::BackBuffer, t4.xy).rgb;
 
-	float3 o1 = tex2D(ReShade::BackBuffer, t5.xy).rgb;
-	float3 o3 = tex2D(ReShade::BackBuffer, t6.xy).rgb;
-	float3 o2 = tex2D(ReShade::BackBuffer, t5.zw).rgb;
-	float3 o4 = tex2D(ReShade::BackBuffer, t6.zw).rgb;
+	const float3 o1 = tex2D(ReShade::BackBuffer, t5.xy).rgb;
+	const float3 o3 = tex2D(ReShade::BackBuffer, t6.xy).rgb;
+	const float3 o2 = tex2D(ReShade::BackBuffer, t5.zw).rgb;
+	const float3 o4 = tex2D(ReShade::BackBuffer, t6.zw).rgb;
 
-	float3 s1 = tex2D(ReShade::BackBuffer, t1.zw).rgb;
-	float3 s2 = tex2D(ReShade::BackBuffer, t2.zw).rgb;
-	float3 s3 = tex2D(ReShade::BackBuffer, t3.zw).rgb;
-	float3 s4 = tex2D(ReShade::BackBuffer, t4.zw).rgb;
+	const float3 s1 = tex2D(ReShade::BackBuffer, t1.zw).rgb;
+	const float3 s2 = tex2D(ReShade::BackBuffer, t2.zw).rgb;
+	const float3 s3 = tex2D(ReShade::BackBuffer, t3.zw).rgb;
+	const float3 s4 = tex2D(ReShade::BackBuffer, t4.zw).rgb;
 
-	float ko1 = dot(abs(o1 - c), dt);
-	float ko2 = dot(abs(o2 - c), dt);
-	float ko3 = dot(abs(o3 - c), dt);
-	float ko4 = dot(abs(o4 - c), dt);
+	const float ko1 = dot(abs(o1 - c), dt);
+	const float ko2 = dot(abs(o2 - c), dt);
+	const float ko3 = dot(abs(o3 - c), dt);
+	const float ko4 = dot(abs(o4 - c), dt);
 
-	float k1=min(dot(abs(i1 - i3), dt), max(ko1, ko3));
-	float k2=min(dot(abs(i2 - i4), dt), max(ko2, ko4));
+	const float k1=min(dot(abs(i1 - i3), dt), max(ko1, ko3));
+	const float k2=min(dot(abs(i2 - i4), dt), max(ko2, ko4));
 
 	float w1 = k2; if (ko3 < ko1) w1 *= ko3 / ko1;
 	float w2 = k1; if (ko4 < ko2) w2 *= ko4 / ko2;

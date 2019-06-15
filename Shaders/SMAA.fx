@@ -9,7 +9,7 @@
  *                               E N H A N C E D
  *       S U B P I X E L   M O R P H O L O G I C A L   A N T I A L I A S I N G
  *
- *                      Modified by Marot Satil for ReShade 4.0
+ *                      Modified by Marot Satil for ReShade 4.0 and lightly optimized for the GShade project.
  */
 
 //------------------- Preprocessor Settings -------------------

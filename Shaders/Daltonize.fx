@@ -3,6 +3,7 @@
  * http://www.daltonize.org/2010/05/lms-daltonization-algorithm.html
  * Originally ported to ReShade by IDDQD, modified for ReShade 3.0 by crosire
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform int Type <
 	ui_type = "combo";
@@ -13,12 +14,12 @@ uniform int Type <
 
 float3 PS_DaltonizeFXmain(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	// RGB to LMS matrix conversion
-	float OnizeL = (17.8824f * input.r) + (43.5161f * input.g) + (4.11935f * input.b);
-	float OnizeM = (3.45565f * input.r) + (27.1554f * input.g) + (3.86714f * input.b);
-	float OnizeS = (0.0299566f * input.r) + (0.184309f * input.g) + (1.46709f * input.b);
+	const float OnizeL = (17.8824f * input.r) + (43.5161f * input.g) + (4.11935f * input.b);
+	const float OnizeM = (3.45565f * input.r) + (27.1554f * input.g) + (3.86714f * input.b);
+	const float OnizeS = (0.0299566f * input.r) + (0.184309f * input.g) + (1.46709f * input.b);
 	
 	// Simulate color blindness
 	float Daltl, Daltm, Dalts;

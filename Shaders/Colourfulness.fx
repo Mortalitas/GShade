@@ -22,7 +22,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Colourfulness - version 2019-01-22 - Modified by Marot for ReShade 4.0 compatibility.
+// Colourfulness - version 2019-01-22 - Modified by Marot for ReShade 4.0 compatibility and optimized slightly for the GShade project.
 // EXPECTS FULL RANGE GAMMA LIGHT
 
 uniform float colourfulness <
@@ -75,7 +75,7 @@ uniform float backbuffer_bits <
 #define soft_lim(v,s)  ( (v*s)*rcp(sqrt(s*s + v*v)) )
 
 // Weighted power mean, p = 0.5
-#define wpmean(a,b,w)  ( pow(abs(w)*sqrt(abs(a)) + abs(1-w)*sqrt(abs(b)), 2) )
+#define wpmean(a,b,w)  ( ((abs(w)*sqrt(abs(a)) + abs(1-w)*sqrt(abs(b)))*2) )
 
 // Max/Min RGB components
 #define maxRGB(c)      ( max((c).r, max((c).g, (c).b)) )
@@ -88,27 +88,27 @@ float3 Colourfulness(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_Targ
 {
 	#if (fast_luma == 1)
 		float3 c0  = tex2D(ReShade::BackBuffer, tex).rgb;
-		float luma = sqrt(dot(saturate(c0*abs(c0)), lumacoeff));
+		const float luma = sqrt(dot(saturate(c0*abs(c0)), lumacoeff));
 		c0 = saturate(c0);
 	#else // Better approx of sRGB gamma
-		float3 c0  = saturate(tex2D(ReShade::BackBuffer, tex).rgb);
-		float luma = pow(dot(pow(c0 + 0.06, 2.4), lumacoeff), 1.0/2.4) - 0.06;
+		const float3 c0  = saturate(tex2D(ReShade::BackBuffer, tex).rgb);
+		const float luma = pow(dot(pow(c0 + 0.06, 2.4), lumacoeff), 1.0/2.4) - 0.06;
 	#endif
 
 	// Calc colour saturation change
-	float3 diff_luma = c0 - luma;
+	const float3 diff_luma = c0 - luma;
 	float3 c_diff = diff_luma*(colourfulness + 1) - diff_luma;
 
 	if (colourfulness > 0.0)
 	{
 		// 120% of c_diff clamped to max visible range + overshoot
-		float3 rlc_diff = clamp((c_diff*1.2) + c0, -0.0001, 1.0001) - c0;
+		const float3 rlc_diff = clamp((c_diff*1.2) + c0, -0.0001, 1.0001) - c0;
 
 		// Calc max saturation-increase without altering RGB ratios
-		float poslim = (1.0002 - luma)/(abs(maxRGB(diff_luma)) + 0.0001);
-		float neglim = (luma + 0.0002)/(abs(minRGB(diff_luma)) + 0.0001);
+		const float poslim = (1.0002 - luma)/(abs(maxRGB(diff_luma)) + 0.0001);
+		const float neglim = (luma + 0.0002)/(abs(minRGB(diff_luma)) + 0.0001);
 
-		float3 diffmax = diff_luma*min(min(poslim, neglim), 32) - diff_luma;
+		const float3 diffmax = diff_luma*min(min(poslim, neglim), 32) - diff_luma;
 
 		// Soft limit diff
 		c_diff = soft_lim( c_diff, max(wpmean(diffmax, rlc_diff, lim_luma), 1e-6) );
@@ -119,11 +119,11 @@ float3 Colourfulness(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_Targ
 		// Interleaved gradient noise by Jorge Jimenez
 		const float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
 		#if (temporal_dither == 1)
-			float xy_magic = (vpos.x + rnd)*magic.x + (vpos.y + rnd)*magic.y;
+			const float xy_magic = (vpos.x + rnd)*magic.x + (vpos.y + rnd)*magic.y;
 		#else
-			float xy_magic = vpos.x*magic.x + vpos.y*magic.y;
+			const float xy_magic = vpos.x*magic.x + vpos.y*magic.y;
 		#endif
-		float noise = (frac(magic.z*frac(xy_magic)) - 0.5)/(exp2(backbuffer_bits) - 1);
+		const float noise = (frac(magic.z*frac(xy_magic)) - 0.5)/(exp2(backbuffer_bits) - 1);
 		c_diff += col_noise == true ? float3(-noise, noise, -noise) : noise;
 	}
 

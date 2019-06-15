@@ -1,5 +1,6 @@
 #include "ArcaneBloom.fxh"
 //#include "ReShade.fxh"
+// Lightly optimized by Marot Satil for the GShade project.
 
 // Would be unenecessary if we had "using namespace".
 namespace ArcaneBloom { namespace _ {
@@ -85,11 +86,11 @@ MAKE_PASS(DownSample_##SOURCE, DEST)
 
 #define DEF_BLUR_SHADER(A, B, DIV) \
 MAKE_SHADER(BlurX_##A) { \
-	float2 dir = float2(BUFFER_RCP_WIDTH * DIV, 0.0); \
+	const float2 dir = float2(BUFFER_RCP_WIDTH * DIV, 0.0); \
 	return float4(gaussian_blur(s##A, uv, dir), 1.0); \
 } \
 MAKE_SHADER(BlurY_##B) { \
-	float2 dir = float2(0.0, BUFFER_RCP_HEIGHT * DIV); \
+	const float2 dir = float2(0.0, BUFFER_RCP_HEIGHT * DIV); \
 	return float4(gaussian_blur(s##B, uv, dir), 1.0); \
 }
 
@@ -441,7 +442,7 @@ float get_bloom_weight(int i) {
 }
 
 float3 blend_overlay(float3 a, float3 b, float w) {
-	float3 c = lerp(
+	const float3 c = lerp(
 		2.0 * a * b,
 		1.0 - 2.0 * (1.0 - a) * (1.0 - b),
 		step(0.5, a)
@@ -519,7 +520,7 @@ MAKE_SHADER(SaveTemporal) {
 #if ARCANE_BLOOM_USE_ADAPTATION
 
 MAKE_SHADER(GetSmall) {
-	float3 color = tex2D(sBloom0Alt, uv).rgb;
+	const float3 color = tex2D(sBloom0Alt, uv).rgb;
 	return float4(get_luma_linear(color), 0.0, 0.0, 1.0);
 }
 
@@ -595,19 +596,19 @@ MAKE_SHADER(Blend) {
 
 	#if ARCANE_BLOOM_USE_ADAPTATION
 	//float adapt = tex2Dfetch(sAdapt, (int4)0).x;
-	float adapt = tex2D(sAdapt, 0).x;
-	float exposure = uExposure / max(adapt, 0.001);
+	const float adapt = tex2D(sAdapt, 0).x;
+	const float exposure = uExposure / max(adapt, 0.001);
 
 	color *= lerp(1.0, exposure, uAdapt_Intensity);
 	
 	#if ARCANE_BLOOM_WHITE_POINT_FIX
-	float white = uWhitePoint * lerp(1.0, exposure, uAdapt_Intensity);
+	const float white = uWhitePoint * lerp(1.0, exposure, uAdapt_Intensity);
 	#endif
 
 	#else
 
 	#if ARCANE_BLOOM_WHITE_POINT_FIX
-	float white = uWhitePoint * uExposure;
+	const float white = uWhitePoint * uExposure;
 	#endif
 
 	color *= uExposure;

@@ -1,7 +1,7 @@
 /*******************************************************
 	ReShade Shader: Adaptive Tint
 	https://github.com/Daodan317081/reshade-shaders
-	Modified by Marot for ReShade 4.0 compatibility.
+	Modified by Marot for ReShade 4.0 compatibility and optimized for the GShade project.
 *******************************************************/
 
 #include "ReShade.fxh"
@@ -124,14 +124,14 @@ float2 CalculateLevels(float avgLuma) {
 	if(iUIBlackLevelFormula == 2)
 		level.x = f3UICurveBlackParam.x * pow(avgLuma - f3UICurveBlackParam.y, 3) + f3UICurveBlackParam.z;
 	else if(iUIBlackLevelFormula == 1)
-		level.x = f3UICurveBlackParam.x * pow(avgLuma - f3UICurveBlackParam.y, 2) + f3UICurveBlackParam.z;
+		level.x = f3UICurveBlackParam.x * ((avgLuma - f3UICurveBlackParam.y) * 2) + f3UICurveBlackParam.z;
 	else
 		level.x = f3UICurveBlackParam.x * (avgLuma - f3UICurveBlackParam.y) + f3UICurveBlackParam.z;
 	
 	if(iUIWhiteLevelFormula == 2)
 		level.y = f3UICurveWhiteParam.x * pow(avgLuma - f3UICurveWhiteParam.y, 3) + f3UICurveWhiteParam.z;
 	else if(iUIWhiteLevelFormula == 1)
-		level.y = f3UICurveWhiteParam.x * pow(avgLuma - f3UICurveWhiteParam.y, 2) + f3UICurveWhiteParam.z;
+		level.y = f3UICurveWhiteParam.x * ((avgLuma - f3UICurveWhiteParam.y) * 2) + f3UICurveWhiteParam.z;
 	else
 		level.y = f3UICurveWhiteParam.x * (avgLuma - f3UICurveWhiteParam.y) + f3UICurveWhiteParam.z;
 
@@ -139,7 +139,7 @@ float2 CalculateLevels(float avgLuma) {
 }
 
 float GetColorTemp(float2 texcoord) {
-	float colorTemp = Stats::AverageColorTemp();
+	const float colorTemp = Stats::AverageColorTemp();
 	return Tools::Functions::Map(colorTemp * fUIColorTempScaling, YIQ_I_RANGE, FLOAT_RANGE);
 }
 
@@ -151,23 +151,23 @@ float3 AdaptiveTint_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 	/*******************************************************
 		Get BackBuffer and both LUTs
 	*******************************************************/
-	float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	float3 lutWarm = fUITintWarm * backbuffer;
-	float3 lutCold = fUITintCold * backbuffer;
+	const float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 lutWarm = fUITintWarm * backbuffer;
+	const float3 lutCold = fUITintCold * backbuffer;
 
 	/*******************************************************
 		Interpolate between both LUTs
 	*******************************************************/
-	float colorTemp = GetColorTemp(texcoord);
-	float3 tint = lerp(lutCold, lutWarm, colorTemp);
+	const float colorTemp = GetColorTemp(texcoord);
+	const float3 tint = lerp(lutCold, lutWarm, colorTemp);
 
 	/*******************************************************
 		Apply black and white levels to luma, desaturate
 	*******************************************************/
-	float3 luma   = dot(backbuffer, LumaCoeff).rrr;
-	float2 levels = CalculateLevels(Stats::AverageLuma());
-	float3 factor = Tools::Functions::Level(luma.r, levels.x, levels.y).rrr;
-	float3 result = lerp(tint, lerp(luma, backbuffer, fUISaturation + 1.0), factor);
+	const float3 luma   = dot(backbuffer, LumaCoeff).rrr;
+	const float2 levels = CalculateLevels(Stats::AverageLuma());
+	const float3 factor = Tools::Functions::Level(luma.r, levels.x, levels.y).rrr;
+	const float3 result = lerp(tint, lerp(luma, backbuffer, fUISaturation + 1.0), factor);
 
 	/*******************************************************
 		Debug
@@ -185,13 +185,13 @@ float3 AdaptiveTint_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 *******************************************************/
 
 CANVAS_DRAW_BEGIN(AdaptiveTintDebug, 0.0.rrr;);
-	float3 originalBackBuffer = Stats::OriginalBackBuffer(texcoord);
-	float3 originalLuma = dot(originalBackBuffer, LumaCoeff).xxx;
-	float avgLuma = Stats::AverageLuma();
-	float3 avgColor = Stats::AverageColor();
-	float2 curves = CalculateLevels(texcoord.x);
-	float2 levels = CalculateLevels(avgLuma);
-	float3 localFactor = saturate(Tools::Functions::Level(originalLuma.r, levels.x, levels.y).rrr);
+	const float3 originalBackBuffer = Stats::OriginalBackBuffer(texcoord);
+	const float3 originalLuma = dot(originalBackBuffer, LumaCoeff).xxx;
+	const float avgLuma = Stats::AverageLuma();
+	const float3 avgColor = Stats::AverageColor();
+	const float2 curves = CalculateLevels(texcoord.x);
+	const float2 levels = CalculateLevels(avgLuma);
+	const float3 localFactor = saturate(Tools::Functions::Level(originalLuma.r, levels.x, levels.y).rrr);
 
     CANVAS_DRAW_BACKGROUND(AdaptiveTintDebug, localFactor);
 	CANVAS_DRAW_SCALE(AdaptiveTintDebug, RED, BLUE, int2(0, 10), int2(10, BUFFER_HEIGHT/4-10), GetColorTemp(texcoord), BLACK);

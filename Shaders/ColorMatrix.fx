@@ -4,6 +4,7 @@
  *
  * ColorMatrix allow the user to transform the colors using a color matrix
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float3 ColorMatrix_Red <
 	ui_type = "slider";
@@ -33,12 +34,11 @@ uniform float Strength <
 
 float3 ColorMatrixPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	const float3x3 ColorMatrix = float3x3(ColorMatrix_Red, ColorMatrix_Green, ColorMatrix_Blue);
-	color = lerp(color, mul(ColorMatrix, color), Strength);
 
-	return saturate(color);
+	return saturate(lerp(color, mul(ColorMatrix, color), Strength));
 }
 
 technique ColorMatrix

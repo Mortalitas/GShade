@@ -4,6 +4,7 @@
  *
  * Curves, uses S-curves to increase contrast, without clipping highlights and shadows.
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform int Mode <
 	ui_type = "combo";
@@ -27,7 +28,7 @@ uniform float Contrast <
 float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float4 colorInput = tex2D(ReShade::BackBuffer, texcoord);
-	float3 lumCoeff = float3(0.2126, 0.7152, 0.0722);  //Values to calculate luma with
+	const float3 lumCoeff = float3(0.2126, 0.7152, 0.0722);  //Values to calculate luma with
 	float Contrast_blend = Contrast; 
 	const float PI = 3.1415927;
 
@@ -37,9 +38,9 @@ float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 
 	// -- Calculate Luma and Chroma if needed --
 	//calculate luma (grey)
-	float luma = dot(lumCoeff, colorInput.rgb);
+	const float luma = dot(lumCoeff, colorInput.rgb);
 	//calculate chroma
-	float3 chroma = colorInput.rgb - luma;
+	const float3 chroma = colorInput.rgb - luma;
 
 	// -- Which value to put through the contrast formula? --
 	// I name it x because makes it easier to copy-paste to Graphtoy or Wolfram Alpha or another graphing program
@@ -129,9 +130,9 @@ float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	// -- Curve 10 --
 	if (Formula == 9)
 	{
-		float3 xstep = step(x, 0.5); //tenary might be faster here
-		float3 xstep_shift = (xstep - 0.5);
-		float3 shifted_x = x + xstep_shift;
+		const float3 xstep = step(x, 0.5); //tenary might be faster here
+		const float3 xstep_shift = (xstep - 0.5);
+		const float3 shifted_x = x + xstep_shift;
 
 		x = abs(xstep - sqrt(-shifted_x * shifted_x + shifted_x)) - xstep_shift;
 
@@ -176,12 +177,12 @@ float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	else if (Mode == 1) // Only Chroma
 	{
 		x = x * 2.0 - 1.0; //adjust the Chroma range back to -1 -> 1
-		float3 color = luma + x; //Luma + Chroma
+		const float3 color = luma + x; //Luma + Chroma
 		colorInput.rgb = lerp(colorInput.rgb, color, Contrast_blend); //Blend by Contrast
 	}
 	else // Both Luma and Chroma
 	{
-		float3 color = x;  //if the curve should be applied to both Luma and Chroma
+		const float3 color = x;  //if the curve should be applied to both Luma and Chroma
 		colorInput.rgb = lerp(colorInput.rgb, color, Contrast_blend); //Blend by Contrast
 	}
 

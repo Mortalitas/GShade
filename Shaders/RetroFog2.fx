@@ -21,6 +21,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -133,8 +134,8 @@ float dither_two(float x, float2 uv) {
     if (fQuantizeTwo > 0.0)
         x = round(x * fQuantizeTwo) / fQuantizeTwo;
     
-    float2 index = float2(uv * ReShade::ScreenSize) % 8;
-    float limit = (index.x < 8) ? float(get_bayer_two(index) + 1) / 64.0
+    const float2 index = float2(uv * ReShade::ScreenSize) % 8;
+    const float limit = (index.x < 8) ? float(get_bayer_two(index) + 1) / 64.0
                                 : 0.0;
 
     if (x < limit)
@@ -180,7 +181,7 @@ void PS_RetroFogTwo(
     else
         fog *= fOpacityTwo;
 
-    float3 fog_color = f3ColorTwo;
+    const float3 fog_color = f3ColorTwo;
 
     color.rgb = lerp(color.rgb, fog_color, fog);
 }

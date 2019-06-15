@@ -32,6 +32,7 @@
 	No additional restrictions — You may not apply legal terms or technological measures 
 	that legally restrict others from doing anything the license permits.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -141,7 +142,7 @@ float getFocus(float2 coord, bool farOrNear) {
 
 //helper function for poisson-disk blur
 float2 rot2D(float2 pos, float angle) {
-	float2 source = float2(sin(angle), cos(angle));
+	const float2 source = float2(sin(angle), cos(angle));
 	return float2(dot(pos, float2(source.y, -source.x)), dot(pos, source));
 }
 
@@ -162,9 +163,9 @@ float3 poisson(sampler sp, float2 uv, float farOrNear, float CA) {
 	poisson[11] = float2(-.792,-.598);
 	
 	float3 col = 0;
-	float random = frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
-	float4 basis = float4(rot2D(float2(1, 0), random), rot2D(float2(0, 1), random));
-	[unroll]
+	const float random = frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+	const float4 basis = float4(rot2D(float2(1, 0), random), rot2D(float2(0, 1), random));
+	[loop]
 	for (int i = 0; i < 12; ++i) {
 		float2 offset = poisson[i];
 		offset = float2(dot(offset, basis.xz), dot(offset, basis.yw));
@@ -208,8 +209,8 @@ float3 Near(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target {
 
 //shader to get the focus, kinda like center of confusion but less complicated
 float GetFocus(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target {
-	float2 linearMouse = f2LightDoF_MouseCoord * ReShade::PixelSize; //linearize the mouse position
-	float2 focus = bLightDoF_UseMouseFocus ? linearMouse : f2Bokeh_AutoFocusCenter;
+	const float2 linearMouse = f2LightDoF_MouseCoord * ReShade::PixelSize; //linearize the mouse position
+	const float2 focus = bLightDoF_UseMouseFocus ? linearMouse : f2Bokeh_AutoFocusCenter;
 	return lerp(tex2D(sLastFocus, 0).x, ReShade::GetLinearizedDepth(focus), fLightDoF_AutoFocusSpeed);
 }
 

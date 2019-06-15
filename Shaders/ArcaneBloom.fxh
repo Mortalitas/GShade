@@ -6,6 +6,7 @@
 	by using '#include "ArcaneBloom.fxh"' at the
 	top of the shader source file.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 #pragma once
 
@@ -95,7 +96,7 @@ namespace ArcaneBloom {
 	}
 
 	float3 inv_reinhard_lum(float3 color, float inv_max) {
-		float lum = max(color.r, max(color.g, color.b));
+		const float lum = max(color.r, max(color.g, color.b));
 		return color * (lum / max(1.0 - lum, inv_max));
 	}
 
@@ -150,8 +151,8 @@ namespace ArcaneBloom {
 	}
 
 	float normal_distribution(float x, float mean, float variance) {
-		float sigma = variance * variance;
-		float a = 1.0 / sqrt(2.0 * cPI * sigma);
+		const float sigma = variance * variance;
+		const float a = 1.0 / sqrt(2.0 * cPI * sigma);
 		float b = x - mean;
 		b *= b;
 		b /= 2.0 * sigma;

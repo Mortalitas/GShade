@@ -146,7 +146,7 @@ float linearDepth(float2 txCoords)
 // *** Godrays ***
 	float4 FX_Godrays( float4 pxInput, float2 txCoords )
 	{
-		float2	stepSize = (txCoords-pGodraysSource) / (pGodraysSampleAmount*pGodraysFreq);
+		const float2	stepSize = (txCoords-pGodraysSource) / (pGodraysSampleAmount*pGodraysFreq);
 		float3	rayMask = 0.0;
 		float	rayWeight = 1.0;
 		float	finalWhitePoint = pxInput.w;
@@ -185,26 +185,24 @@ VS_OUTPUT_POST VS_PostProcess(VS_INPUT_POST IN)
 // *** Further FX ***
 float4 PS_LightFX(VS_OUTPUT_POST IN) : COLOR
 {
-	float2 pxCoord = IN.txcoord.xy;
-	float4 res = tex2D(ReShade::BackBuffer,pxCoord);
+	const float2 pxCoord = IN.txcoord.xy;
+	const float4 res = tex2D(ReShade::BackBuffer,pxCoord);
 	
-	res = FX_Godrays(res,pxCoord.xy);
-	
-	return res;
+	return FX_Godrays(res,pxCoord.xy);
 }
 
 float4 PS_ColorFX(VS_OUTPUT_POST IN) : COLOR
 {
-	float2 pxCoord = IN.txcoord.xy;
-	float4 res = tex2D(SamplerColorGRA,pxCoord);
+	const float2 pxCoord = IN.txcoord.xy;
+	const float4 res = tex2D(SamplerColorGRA,pxCoord);
 
 	return float4(res.xyz,1.0);
 }
 
 float4 PS_ImageFX(VS_OUTPUT_POST IN) : COLOR
 {
-	float2 pxCoord = IN.txcoord.xy;
-	float4 res = tex2D(SamplerColorGRB,pxCoord);
+	const float2 pxCoord = IN.txcoord.xy;
+	const float4 res = tex2D(SamplerColorGRB,pxCoord);
 	
 	return float4(res.xyz,1.0);
 }

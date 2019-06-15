@@ -3,6 +3,7 @@
  * Original by DKT70
  * Optimized by CeeJay.dk
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float Power <
 	ui_type = "slider";
@@ -28,14 +29,14 @@ float3 TechnicolorPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 	const float2 greenfilter = float2(0.30, 1.0);       // RG_
 	const float2 magentafilter2 = magentafilter.rb;     // R_B
 
-	float3 tcol = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 tcol = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	
-	float2 negative_mul_r = tcol.rg * (1.0 / (RGBNegativeAmount.r * Power));
-	float2 negative_mul_g = tcol.rg * (1.0 / (RGBNegativeAmount.g * Power));
-	float2 negative_mul_b = tcol.rb * (1.0 / (RGBNegativeAmount.b * Power));
-	float3 output_r = dot(redorangefilter, negative_mul_r).xxx + cyanfilter;
-	float3 output_g = dot(greenfilter, negative_mul_g).xxx + magentafilter;
-	float3 output_b = dot(magentafilter2, negative_mul_b).xxx + yellowfilter;
+	const float2 negative_mul_r = tcol.rg * (1.0 / (RGBNegativeAmount.r * Power));
+	const float2 negative_mul_g = tcol.rg * (1.0 / (RGBNegativeAmount.g * Power));
+	const float2 negative_mul_b = tcol.rb * (1.0 / (RGBNegativeAmount.b * Power));
+	const float3 output_r = dot(redorangefilter, negative_mul_r).xxx + cyanfilter;
+	const float3 output_g = dot(greenfilter, negative_mul_g).xxx + magentafilter;
+	const float3 output_b = dot(magentafilter2, negative_mul_b).xxx + yellowfilter;
 
 	return lerp(tcol, output_r * output_g * output_b, Strength);
 }

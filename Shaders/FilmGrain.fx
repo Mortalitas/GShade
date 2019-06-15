@@ -32,7 +32,7 @@ float3 FilmGrainPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
   
 	//float inv_luma = dot(color, float3(-0.2126, -0.7152, -0.0722)) + 1.0;
-	float inv_luma = dot(color, float3(-1.0/3.0, -1.0/3.0, -1.0/3.0)) + 1.0; //Calculate the inverted luma so it can be used later to control the variance of the grain
+	const float inv_luma = dot(color, float3(-1.0/3.0, -1.0/3.0, -1.0/3.0)) + 1.0; //Calculate the inverted luma so it can be used later to control the variance of the grain
   
 	/*---------------------.
 	| :: Generate Grain :: |
@@ -41,28 +41,28 @@ float3 FilmGrainPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV
 	const float PI = 3.1415927;
 	
 	//time counter using requested counter from ReShade
-	float t = Timer * 0.0022337;
+	const float t = Timer * 0.0022337;
 	
 	//PRNG 2D - create two uniform noise values and save one DP2ADD
-	float seed = dot(texcoord, float2(12.9898, 78.233));// + t;
-	float sine = sin(seed);
-	float cosine = cos(seed);
+	const float seed = dot(texcoord, float2(12.9898, 78.233));// + t;
+	const float sine = sin(seed);
+	const float cosine = cos(seed);
 	float uniform_noise1 = frac(sine * 43758.5453 + t); //I just salt with t because I can
-	float uniform_noise2 = frac(cosine * 53758.5453 - t); // and it doesn't cost any extra ASM
+	const float uniform_noise2 = frac(cosine * 53758.5453 - t); // and it doesn't cost any extra ASM
 
 	//Get settings
-	float stn = SignalToNoiseRatio != 0 ? pow(abs(inv_luma), (float)SignalToNoiseRatio) : 1.0; // Signal to noise feature - Brighter pixels get less noise.
-	float variance = (Variance*Variance) * stn;
-	float mean = Mean;
+	const float stn = SignalToNoiseRatio != 0 ? pow(abs(inv_luma), (float)SignalToNoiseRatio) : 1.0; // Signal to noise feature - Brighter pixels get less noise.
+	const float variance = (Variance*Variance) * stn;
+	const float mean = Mean;
 
 	//Box-Muller transform
 	uniform_noise1 = (uniform_noise1 < 0.0001) ? 0.0001 : uniform_noise1; //fix log(0)
 		
 	float r = sqrt(-log(uniform_noise1));
 	r = (uniform_noise1 < 0.0001) ? PI : r; //fix log(0) - PI happened to be the right answer for uniform_noise == ~ 0.0000517.. Close enough and we can reuse a constant.
-	float theta = (2.0 * PI) * uniform_noise2;
+	const float theta = (2.0 * PI) * uniform_noise2;
 	
-	float gauss_noise1 = variance * r * cos(theta) + mean;
+	const float gauss_noise1 = variance * r * cos(theta) + mean;
 	//float gauss_noise2 = variance * r * sin(theta) + mean; //we can get two gaussians out of it :)
 
 	//gauss_noise1 = (ddx(gauss_noise1) - ddy(gauss_noise1)) * 0.50  + gauss_noise2;
@@ -70,7 +70,7 @@ float3 FilmGrainPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV
 
 	//Calculate how big the shift should be
 	//float grain = lerp(1.0 - Intensity,  1.0 + Intensity, gauss_noise1);
-	float grain = lerp(1.0 + Intensity,  1.0 - Intensity, gauss_noise1);
+	const float grain = lerp(1.0 + Intensity,  1.0 - Intensity, gauss_noise1);
   
 	//float grain2 = (2.0 * Intensity) * gauss_noise1 + (1.0 - Intensity);
 	 

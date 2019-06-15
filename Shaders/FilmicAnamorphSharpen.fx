@@ -6,6 +6,7 @@ Attribution-ShareAlike 4.0 International License.
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 
 	  ////////////
@@ -69,10 +70,10 @@ static const float3 Luma601 = float3(0.299, 0.587, 0.114);
 // Overlay blending mode
 float Overlay(float LayerA, float LayerB)
 {
-	float MinA = min(LayerA, 0.5);
-	float MinB = min(LayerB, 0.5);
-	float MaxA = max(LayerA, 0.5);
-	float MaxB = max(LayerB, 0.5);
+	const float MinA = min(LayerA, 0.5);
+	const float MinB = min(LayerB, 0.5);
+	const float MaxA = max(LayerA, 0.5);
+	const float MaxB = max(LayerB, 0.5);
 	return 2.0 * (MinA * MinB + MaxA + MaxB - MaxA * MaxB) - 1.5;
 }
 
@@ -82,25 +83,25 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 	float2 Pixel = ReShade::PixelSize;
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
-	float3 LumaCoefficient = bool(Coefficient) ? Luma601 : Luma709;
+	const float3 LumaCoefficient = bool(Coefficient) ? Luma601 : Luma709;
 
 	if(Contrast)
 	{
 		float2 DepthPixel = Pixel * Offset + Pixel;
 		Pixel *= Offset;
 		// Sample display image
-		float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+		const float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
 		// Sample display depth image
-		float SourceDepth = ReShade::GetLinearizedDepth(UvCoord);
+		const float SourceDepth = ReShade::GetLinearizedDepth(UvCoord);
 
-		float2 NorSouWesEst[4] = {
+		const float2 NorSouWesEst[4] = {
 			float2(UvCoord.x, UvCoord.y + Pixel.y),
 			float2(UvCoord.x, UvCoord.y - Pixel.y),
 			float2(UvCoord.x + Pixel.x, UvCoord.y),
 			float2(UvCoord.x - Pixel.x, UvCoord.y)
 		};
 
-		float2 DepthNorSouWesEst[4] = {
+		const float2 DepthNorSouWesEst[4] = {
 			float2(UvCoord.x, UvCoord.y + DepthPixel.y),
 			float2(UvCoord.x, UvCoord.y - DepthPixel.y),
 			float2(UvCoord.x + DepthPixel.x, UvCoord.y),
@@ -111,7 +112,8 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		// Luma high-pass depth
 		float HighPassColor = 0.0, Contrast = 0.0;
 	
-		[unroll]for(int s = 0; s < 4; s++)
+		[loop]
+		for(int s = 0; s < 4; s++)
 		{
 			HighPassColor += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
 			Contrast += ReShade::GetLinearizedDepth(NorSouWesEst[s])
@@ -130,7 +132,7 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		// Clamping sharpen
 		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
 
-		float3 Sharpen = float3(
+		const float3 Sharpen = float3(
 			Overlay(Source.r, HighPassColor),
 			Overlay(Source.g, HighPassColor),
 			Overlay(Source.b, HighPassColor)
@@ -138,7 +140,7 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 
 		if(Preview) // Preview mode ON
 		{
-			float PreviewChannel = lerp(HighPassColor, HighPassColor * Contrast, 0.5);
+			const float PreviewChannel = lerp(HighPassColor, HighPassColor * Contrast, 0.5);
 			return float3(
 				1.0 - Contrast * (1.0 - HighPassColor), 
 				PreviewChannel, 
@@ -153,9 +155,9 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		Pixel *= Offset;
 
 		// Sample display image
-		float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+		const float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
 	
-		float2 NorSouWesEst[4] = {
+		const float2 NorSouWesEst[4] = {
 			float2(UvCoord.x, UvCoord.y + Pixel.y),
 			float2(UvCoord.x, UvCoord.y - Pixel.y),
 			float2(UvCoord.x + Pixel.x, UvCoord.y),
@@ -164,7 +166,7 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 
 		// Luma high-pass color
 		float HighPassColor = 0.0;
-		[unroll]
+		[loop]
 		for(int s = 0; s < 4; s++) HighPassColor += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
 		HighPassColor = 0.5 - 0.5 * (HighPassColor * 0.25 - dot(Source, LumaCoefficient));
 
@@ -174,7 +176,7 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		// Clamping sharpen
 		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
 
-		float3 Sharpen = float3(
+		const float3 Sharpen = float3(
 			Overlay(Source.r, HighPassColor),
 			Overlay(Source.g, HighPassColor),
 			Overlay(Source.b, HighPassColor)

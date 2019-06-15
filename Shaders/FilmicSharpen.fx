@@ -6,6 +6,7 @@ Attribution-ShareAlike 4.0 International License.
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
   ////////////////////
  /////// MENU ///////
@@ -58,21 +59,21 @@ static const float3 ToYUV601 = float3(0.299, 0.587, 0.114);
 // Overlay blending mode
 float Overlay(float LayerA, float LayerB)
 {
-	float MinA = min(LayerA, 0.5);
-	float MinB = min(LayerB, 0.5);
-	float MaxA = max(LayerA, 0.5);
-	float MaxB = max(LayerB, 0.5);
+	static float MinA = min(LayerA, 0.5);
+	static float MinB = min(LayerB, 0.5);
+	static float MaxA = max(LayerA, 0.5);
+	static float MaxB = max(LayerB, 0.5);
 	return 2 * (MinA * MinB + MaxA + MaxB - MaxA * MaxB) - 1.5;
 }
 
 // Sharpen pass
 float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : SV_Target
 {
-	float2 Pixel = ReShade::PixelSize * Offset;
+	static float2 Pixel = ReShade::PixelSize * Offset;
 	// Sample display image
-	float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+	static float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
 
-	float2 NorSouWesEst[4] = {
+	static float2 NorSouWesEst[4] = {
 		float2(UvCoord.x, UvCoord.y + Pixel.y),
 		float2(UvCoord.x, UvCoord.y - Pixel.y),
 		float2(UvCoord.x + Pixel.x, UvCoord.y),
@@ -80,7 +81,7 @@ float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : S
 	};
 
 	// Choose luma coefficient, if True BT.709 Luma, else BT.601 Luma
-	float3 LumaCoefficient = bool(Coefficient) ? ToYUV709 : ToYUV601;
+	static float3 LumaCoefficient = bool(Coefficient) ? ToYUV709 : ToYUV601;
 
 	// Luma high-pass
 	float HighPass = 0;
@@ -93,7 +94,7 @@ float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : S
 	// Clamping sharpen
 	HighPass = (Clamp != 1) ? max(min(HighPass, Clamp), 1 - Clamp) : HighPass;
 
-	float3 Sharpen = float3(
+	static float3 Sharpen = float3(
 		Overlay(Source.r, HighPass),
 		Overlay(Source.g, HighPass),
 		Overlay(Source.b, HighPass)

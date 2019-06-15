@@ -126,42 +126,39 @@ sampler SamplerAvgLumaLast { Texture = TexAvgLumaLast; };
 //pixel shaders
 float PS_Luma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-    float4 color = tex2Dlod(ReShade::BackBuffer, float4(texcoord, 0, 0));
-    float luma = dot(color.xyz, LumCoeff);
-    return luma;
+    const float4 color = tex2Dlod(ReShade::BackBuffer, float4(texcoord, 0, 0));
+    return dot(color.xyz, LumCoeff);
 }
 
 float PS_AvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-    float avgLumaCurrFrame = tex2Dlod(SamplerLuma, float4(0.5.xx, 0, fAdp_TriggerRadius)).x;
-    float avgLumaLastFrame = tex2Dlod(SamplerAvgLumaLast, float4(0.0.xx, 0, 0)).x;
-    float delay = sign(fAdp_Delay) * saturate(0.815 + fAdp_Delay / 10.0 - Frametime / 1000.0);
-    float avgLuma = lerp(avgLumaCurrFrame, avgLumaLastFrame, delay);
-    return avgLuma;
+    const float avgLumaCurrFrame = tex2Dlod(SamplerLuma, float4(0.5.xx, 0, fAdp_TriggerRadius)).x;
+    const float avgLumaLastFrame = tex2Dlod(SamplerAvgLumaLast, float4(0.0.xx, 0, 0)).x;
+    const float delay = sign(fAdp_Delay) * saturate(0.815 + fAdp_Delay / 10.0 - Frametime / 1000.0);
+    return lerp(avgLumaCurrFrame, avgLumaLastFrame, delay);
 }
 
 float AdaptionDelta(float luma, float strengthMidtones, float strengthShadows, float strengthHighlights)
 {
-    float midtones = (4.0 * strengthMidtones - strengthHighlights - strengthShadows) * luma * (1.0 - luma);
-    float shadows = strengthShadows * (1.0 - luma);
-    float highlights = strengthHighlights * luma;
-    float delta = midtones + shadows + highlights;
-    return delta;
+    const float midtones = (4.0 * strengthMidtones - strengthHighlights - strengthShadows) * luma * (1.0 - luma);
+    const float shadows = strengthShadows * (1.0 - luma);
+    const float highlights = strengthHighlights * luma;
+    return midtones + shadows + highlights;
 }
 
 float4 PS_Adaption(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
     float4 color = tex2Dlod(ReShade::BackBuffer, float4(texcoord, 0, 0));
-    float avgLuma = tex2Dlod(SamplerAvgLuma, float4(0.0.xx, 0, 0)).x;
+    const float avgLuma = tex2Dlod(SamplerAvgLuma, float4(0.0.xx, 0, 0)).x;
 
     color.xyz = pow(abs(color.xyz), 1.0/2.2);
     float luma = dot(color.xyz, LumCoeff);
-    float3 chroma = color.xyz - luma;
+    const float3 chroma = color.xyz - luma;
 
-    float avgLumaAdjusted = lerp (avgLuma, 1.4 * avgLuma / (0.4 + avgLuma), fAdp_Equilibrium);
+    const float avgLumaAdjusted = lerp (avgLuma, 1.4 * avgLuma / (0.4 + avgLuma), fAdp_Equilibrium);
     float delta = 0;
 
-    float curve = fAdp_Strength * 10.0 * pow(abs(avgLumaAdjusted - 0.5), 4.0);
+    const float curve = fAdp_Strength * 10.0 * pow(abs(avgLumaAdjusted - 0.5), 4.0);
     if (avgLumaAdjusted < 0.5) {
         delta = AdaptionDelta(luma, fAdp_BrightenMidtones, fAdp_BrightenShadows, fAdp_BrightenHighlights);
     } else {
@@ -178,8 +175,7 @@ float4 PS_Adaption(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Ta
 
 float PS_StoreAvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-    float avgLuma = tex2Dlod(SamplerAvgLuma, float4(0.0.xx, 0, 0)).x;
-    return avgLuma;
+    return tex2Dlod(SamplerAvgLuma, float4(0.0.xx, 0, 0)).x;
 }
 
 //techniques

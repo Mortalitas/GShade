@@ -110,43 +110,43 @@ uniform bool Oversample <
 
 float intersect(float2 xy)
 {
-	float A = dot(xy,xy) + (ViewerDistance * ViewerDistance);
-	float B = 2.0 * (CurvatureRadius * (dot(xy, sinangle) - ViewerDistance * cosangle.x * cosangle.y) - ViewerDistance * ViewerDistance);
-	float C = ViewerDistance * ViewerDistance + 2.0 * CurvatureRadius * ViewerDistance * cosangle.x * cosangle.y; //all constants
+	const float A = dot(xy,xy) + (ViewerDistance * ViewerDistance);
+	const float B = 2.0 * (CurvatureRadius * (dot(xy, sinangle) - ViewerDistance * cosangle.x * cosangle.y) - ViewerDistance * ViewerDistance);
+	const float C = ViewerDistance * ViewerDistance + 2.0 * CurvatureRadius * ViewerDistance * cosangle.x * cosangle.y; //all constants
 	return (-B - sqrt(B * B -4.0 * A * C)) / (2.0 * A);
 }
 
 float2 bkwtrans(float2 xy)
 {
-	float c = intersect(xy);
+	const float c = intersect(xy);
 	float2 _point = float2(c, c) * xy;
 	_point -= float2(-CurvatureRadius, -CurvatureRadius) * sinangle;
 	_point /= float2(CurvatureRadius, CurvatureRadius);
-	float2 tang = sinangle / cosangle;
-	float2 poc = _point / cosangle;
-	float A = dot(tang, tang) + 1.0;
-	float B = -2.0 * dot(poc, tang);
-	float C = dot(poc, poc) - 1.0;
-	float a = (-B + sqrt(B * B -4.0 * A * C)) / (2.0 * A);
-	float2 uv = (_point - a * sinangle) / cosangle;
-	float r = CurvatureRadius * acos(a);
+	const float2 tang = sinangle / cosangle;
+	const float2 poc = _point / cosangle;
+	const float A = dot(tang, tang) + 1.0;
+	const float B = -2.0 * dot(poc, tang);
+	const float C = dot(poc, poc) - 1.0;
+	const float a = (-B + sqrt(B * B -4.0 * A * C)) / (2.0 * A);
+	const float2 uv = (_point - a * sinangle) / cosangle;
+	const float r = CurvatureRadius * acos(a);
 	return uv * r / sin(r / CurvatureRadius);
 }
 float2 fwtrans(float2 uv)
 {
-	float r = FIX(sqrt(dot(uv, uv)));
+	const float r = FIX(sqrt(dot(uv, uv)));
 	uv *= sin(r / CurvatureRadius) / r;
-	float x = 1.0 - cos(r / CurvatureRadius);
-	float D = ViewerDistance / CurvatureRadius + x * cosangle.x * cosangle.y + dot(uv, sinangle);
+	const float x = 1.0 - cos(r / CurvatureRadius);
+	const float D = ViewerDistance / CurvatureRadius + x * cosangle.x * cosangle.y + dot(uv, sinangle);
 	return ViewerDistance * (uv * cosangle - x * sinangle) / D;
 }
 
 float3 maxscale()
 {
-	float2 c = bkwtrans(-CurvatureRadius * sinangle / (1.0 + CurvatureRadius / ViewerDistance * cosangle.x * cosangle.y));
-	float2 a = float2(0.5, 0.5) * CeeJay_aspect;
-	float2 lo = float2(fwtrans(float2(-a.x, c.y)).x, fwtrans(float2(c.x,-a.y)).y) / CeeJay_aspect;
-	float2 hi = float2(fwtrans(float2(+a.x, c.y)).x, fwtrans(float2(c.x, +a.y)).y) / CeeJay_aspect;
+	const float2 c = bkwtrans(-CurvatureRadius * sinangle / (1.0 + CurvatureRadius / ViewerDistance * cosangle.x * cosangle.y));
+	const float2 a = float2(0.5, 0.5) * CeeJay_aspect;
+	const float2 lo = float2(fwtrans(float2(-a.x, c.y)).x, fwtrans(float2(c.x,-a.y)).y) / CeeJay_aspect;
+	const float2 hi = float2(fwtrans(float2(+a.x, c.y)).x, fwtrans(float2(c.x, +a.y)).y) / CeeJay_aspect;
 	return float3((hi + lo) * CeeJay_aspect * 0.5, max(hi.x - lo.x, hi.y - lo.y));
 }
 
@@ -162,9 +162,9 @@ float corner(float2 coord, float2 textureSize, float2 inputSize)
 	coord *= textureSize / inputSize;
 	coord = (coord - 0.5) * float2(Overscan, Overscan) + 0.5;
 	coord = min(coord, 1.0 - coord) * CeeJay_aspect;
-	float2 cdist = float2(CornerSize, CornerSize);
+	const float2 cdist = float2(CornerSize, CornerSize);
 	coord = (cdist - min(coord, cdist));
-	float dist = sqrt(dot(coord, coord));
+	const float dist = sqrt(dot(coord, coord));
 	return clamp((cdist.x-dist) * 1000.0, 0.0, 1.0);
 }
 
@@ -188,14 +188,14 @@ float4 scanlineWeights(float distance, float4 color)
 	// scanline than for a wider beam.
 	if (!ScanlineGaussian)
 	{
-		float4 wid = 0.3 + 0.1 * pow(abs(color), 3.0);
-		float4 weights = float4(distance / wid);
+		const float4 wid = 0.3 + 0.1 * (color * color * color);
+		const float4 weights = float4(distance / wid);
 		return 0.4 * exp(-weights * weights) / wid;
 	}
 	else
 	{
-		float4 wid = 2.0 * pow(abs(color), 4.0) + 2.0;
-		float4 weights = (distance / 0.3).xxxx;
+		const float4 wid = 2.0 * pow(abs(color), 4.0) + 2.0;
+		const float4 weights = (distance / 0.3).xxxx;
 		return 1.4 * exp(-pow(abs(weights * rsqrt(0.5 * wid)), abs(wid))) / (0.2 * wid + 0.6);
 	}
 }
@@ -223,24 +223,24 @@ float3 AdvancedCRTPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : 
 	// of the next scanline). The grid of lines represents the
 	// edges of the texels of the underlying texture.
 
-	float  Input_ratio = ceil(256 * Resolution);
-	float2 Resolution = float2(Input_ratio, Input_ratio);
-	float2 rubyTextureSize = Resolution;
-	float2 rubyInputSize = Resolution;
-	float2 rubyOutputSize = ReShade::ScreenSize;
+	const float  Input_ratio = ceil(256 * Resolution);
+	const float2 Resolution = float2(Input_ratio, Input_ratio);
+	const float2 rubyTextureSize = Resolution;
+	const float2 rubyInputSize = Resolution;
+	const float2 rubyOutputSize = ReShade::ScreenSize;
 
-	float2 orig_xy = Curvature ? transform(tex, rubyTextureSize, rubyInputSize) : tex;
-	float cval = corner(orig_xy, rubyTextureSize, rubyInputSize);
+	const float2 orig_xy = Curvature ? transform(tex, rubyTextureSize, rubyInputSize) : tex;
+	const float cval = corner(orig_xy, rubyTextureSize, rubyInputSize);
 
 	// Of all the pixels that are mapped onto the texel we are
 	// currently rendering, which pixel are we currently rendering?
-	float2 ratio_scale = orig_xy * rubyTextureSize - 0.5;
+	const float2 ratio_scale = orig_xy * rubyTextureSize - 0.5;
 
-	float filter = fwidth(ratio_scale.y);
+	const float filter = fwidth(ratio_scale.y);
 	float2 uv_ratio = frac(ratio_scale);
 
 	// Snap to the center of the underlying texel.
-	float2 xy = (floor(ratio_scale) + 0.5) / rubyTextureSize;
+	const float2 xy = (floor(ratio_scale) + 0.5) / rubyTextureSize;
 
 	// Calculate Lanczos scaling coefficients describing the effect
 	// of various neighbour texels in a scanline on the current
@@ -299,16 +299,15 @@ float3 AdvancedCRTPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : 
 
 	// dot-mask emulation:
 	// Output pixels are alternately tinted green and magenta.
-	float3 dotMaskWeights = lerp(float3(1.0, 0.7, 1.0), float3(0.7, 1.0, 0.7), floor(mod_factor % ScanlineIntensity));
+	const float3 dotMaskWeights = lerp(float3(1.0, 0.7, 1.0), float3(0.7, 1.0, 0.7), floor(mod_factor % ScanlineIntensity));
 	mul_res *= dotMaskWeights * float3(0.83, 0.83, 1.0) * Brightness;
 
 	// Convert the image gamma for display on our output device.
 	mul_res = pow(abs(mul_res), 1.0 / MonitorGamma);
 
-	float3 color = TEX2D(orig_xy).rgb * cval.xxx;
-	color = lerp(color, mul_res, Amount);
+	const float3 color = TEX2D(orig_xy).rgb * cval.xxx;
 
-	return saturate(color);
+	return saturate(lerp(color, mul_res, Amount));
 }
 
 technique AdvancedCRT

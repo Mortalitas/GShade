@@ -5,6 +5,7 @@
 // Ambient Obscurance with Indirect Lighting "MXAO" 3.4.3 by Marty McFly
 // CC BY-NC-ND 3.0 licensed.
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Lightly optimized by Marot Satil for the GShade project.
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Preprocessor Settings
@@ -82,6 +83,19 @@ uniform float MXAO_SSAO_AMOUNT <
         	ui_min = 0.00; ui_max = 3.00;
                 ui_label = "Indirect Lighting Saturation";
         	ui_tooltip = "Controls color saturation of IL effect.";
+
+        uniform float MXAO_SSIL_SATURATION_FILTER <
+				ui_type = "slider";
+                ui_min = 0.00; ui_max = 1.00;
+                ui_label = "Indirect Lighting Saturation Filter";
+                ui_tooltip = "Controls how much unsaturated colors should be excluded from IL. Or in other words how much saturation should control the amount of light bounced. Physically inaccurate but helps reducing ugly bright corners while keeping nicer color bleeding intact.";
+        > = 0.00;
+        
+        uniform float MXAO_SSIL_GAMMA <
+				ui_type = "slider";
+                ui_min = 1.00; ui_max = 3.00;
+                ui_label = "Indirect Lighting Gamma";
+                ui_tooltip = "Exponent for IL result. ( pow(<IL>, gamma) )";
         > = 1.00;
 #endif
 
@@ -108,6 +122,12 @@ uniform float MXAO_SSAO_AMOUNT <
         > = 1.0;
 #endif
 
+uniform float MXAO_GAMMA <
+		ui_type = "slider";
+        ui_min = 1.00; ui_max = 3.00;
+        ui_label = "AO Gamma";
+        ui_tooltip = "Exponent for the AO result. ( pow(<AO>, gamma) )";
+> = 1.00;
 uniform int MXAO_DEBUG_VIEW_ENABLE <
 	ui_type = "combo";
         ui_label = "Enable Debug View";
@@ -225,8 +245,8 @@ float3 GetPositionLOD(in float2 coords, in MXAO_VSOUT MXAO, in int mipLevel)
 
 void GetBlurWeight(in float4 tempKey, in float4 centerKey, in float surfacealignment, inout float weight)
 {
-        float depthdiff = abs(tempKey.w - centerKey.w);
-        float normaldiff = saturate(1.0 - dot(tempKey.xyz,centerKey.xyz));
+        const float depthdiff = abs(tempKey.w - centerKey.w);
+        const float normaldiff = saturate(1.0 - dot(tempKey.xyz,centerKey.xyz));
 
         weight = saturate(0.15 / surfacealignment - depthdiff) * saturate(0.65 - normaldiff); 
         weight = saturate(weight * 4.0) * 2.0;
@@ -236,7 +256,7 @@ void GetBlurWeight(in float4 tempKey, in float4 centerKey, in float surfacealign
 
 void GetBlurKeyAndSample(in float2 texcoord, in float inputscale, in sampler inputsampler, inout float4 tempsample, inout float4 key)
 {
-        float4 lodcoord = float4(texcoord.xy,0,0);
+        const float4 lodcoord = float4(texcoord.xy,0,0);
         tempsample = tex2Dlod(inputsampler,lodcoord * inputscale);
         key = float4(tex2Dlod(sMXAO_NormalTex,lodcoord).xyz*2-1, tex2Dlod(sMXAO_DepthTex,lodcoord).x);
 }
@@ -260,12 +280,12 @@ float4 BlurFilter(in MXAO_VSOUT MXAO, in sampler inputsampler, in float inputsca
         #endif
 
         float4 blurSum = tempsample.BLUR_COMP_SWIZZLE;
-        float2 blurOffsets[8] = {float2(1.5,0.5),float2(-1.5,-0.5),float2(-0.5,1.5),float2(0.5,-1.5),float2(1.5,2.5),float2(-1.5,-2.5),float2(-2.5,1.5),float2(2.5,-1.5)};
+        const float2 blurOffsets[8] = {float2(1.5,0.5),float2(-1.5,-0.5),float2(-0.5,1.5),float2(0.5,-1.5),float2(1.5,2.5),float2(-1.5,-2.5),float2(-2.5,1.5),float2(2.5,-1.5)};
 
         [loop]
         for(int iStep = 0; iStep < blursteps; iStep++)
         {
-                float2 sampleCoord = MXAO.texcoord.xy + blurOffsets[iStep] * ReShade::PixelSize * radius / inputscale; 
+                const float2 sampleCoord = MXAO.texcoord.xy + blurOffsets[iStep] * ReShade::PixelSize * radius / inputscale; 
 
                 GetBlurKeyAndSample(sampleCoord, inputscale, inputsampler, tempsample, tempkey);
                 GetBlurWeight(tempkey, centerkey, surfacealignment, tempweight);
@@ -300,7 +320,7 @@ void SetupAOParameters(in MXAO_VSOUT MXAO, in float3 P, in float layerID, out fl
 
 void TesselateNormals(inout float3 N, in float3 P, in MXAO_VSOUT MXAO)
 {
-        float2 searchRadiusScaled = 0.018 / P.z * float2(1.0,ReShade::AspectRatio);
+        const float2 searchRadiusScaled = 0.018 / P.z * float2(1.0,ReShade::AspectRatio);
         float3 likelyFace[4] = {N,N,N,N};
 
         for(int iDirection=0; iDirection < 4; iDirection++)
@@ -309,18 +329,18 @@ void TesselateNormals(inout float3 N, in float3 P, in MXAO_VSOUT MXAO)
                 sincos(6.28318548 * 0.25 * iDirection,cdir.y,cdir.x);
                 for(int i=1; i<=5; i++)
                 {
-                        float cSearchRadius = exp2(i);
-                        float2 cOffset = MXAO.scaledcoord.xy + cdir * cSearchRadius * searchRadiusScaled;
+                        const float cSearchRadius = exp2(i);
+                        const float2 cOffset = MXAO.scaledcoord.xy + cdir * cSearchRadius * searchRadiusScaled;
 
-                        float3 cN = tex2Dlod(sMXAO_NormalTex,float4(cOffset,0,0)).xyz * 2.0 - 1.0;
-                        float3 cP = GetPositionLOD(cOffset.xy,MXAO,0);
+                        const float3 cN = tex2Dlod(sMXAO_NormalTex,float4(cOffset,0,0)).xyz * 2.0 - 1.0;
+                        const float3 cP = GetPositionLOD(cOffset.xy,MXAO,0);
 
-                        float3 cDelta = cP - P;
-                        float validWeightDistance = saturate(1.0 - dot(cDelta,cDelta) * 20.0 / cSearchRadius);
-                        float Angle = dot(N.xyz,cN.xyz);
-                        float validWeightAngle = smoothstep(0.3,0.98,Angle) * smoothstep(1.0,0.98,Angle); //only take normals into account that are NOT equal to the current normal.
+                        const float3 cDelta = cP - P;
+                        const float validWeightDistance = saturate(1.0 - dot(cDelta,cDelta) * 20.0 / cSearchRadius);
+                        const float Angle = dot(N.xyz,cN.xyz);
+                        const float validWeightAngle = smoothstep(0.3,0.98,Angle) * smoothstep(1.0,0.98,Angle); //only take normals into account that are NOT equal to the current normal.
 
-                        float validWeight = saturate(3.0 * validWeightDistance * validWeightAngle / cSearchRadius);
+                        const float validWeight = saturate(3.0 * validWeightDistance * validWeightAngle / cSearchRadius);
 
                         likelyFace[iDirection] = lerp(likelyFace[iDirection],cN.xyz, validWeight);
                 }
@@ -333,7 +353,7 @@ void TesselateNormals(inout float3 N, in float3 P, in MXAO_VSOUT MXAO)
 
 bool GetCullingMask(in MXAO_VSOUT MXAO)
 {
-        float4 cOffsets = float4(ReShade::PixelSize.xy,-ReShade::PixelSize.xy) * 8;
+        const float4 cOffsets = float4(ReShade::PixelSize.xy,-ReShade::PixelSize.xy) * 8;
         float cullingArea = tex2D(sMXAO_CullingTex, MXAO.scaledcoord.xy + cOffsets.xy).x;
         cullingArea      += tex2D(sMXAO_CullingTex, MXAO.scaledcoord.xy + cOffsets.zy).x;
         cullingArea      += tex2D(sMXAO_CullingTex, MXAO.scaledcoord.xy + cOffsets.xw).x;
@@ -342,18 +362,38 @@ bool GetCullingMask(in MXAO_VSOUT MXAO)
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+float3 RGBtoHSV(in float3 RGB){
+	float3 HSV = 0;
+	HSV.z = max(RGB.r, max(RGB.g, RGB.b));
+	const float M = min(RGB.r, min(RGB.g, RGB.b));
+	const float C = HSV.z - M;
+	if (C != 0){
+		const float4 RGB0 = float4(RGB, 0);
+		float4 Delta = (HSV.z - RGB0) / C;
+		Delta.rgb -= Delta.brg;
+		Delta.rgb += float3(2,4,6);
+		Delta.brg = step(HSV.z, RGB) * Delta.brg;
+		HSV.x = max(Delta.r, max(Delta.g, Delta.b));
+		HSV.x = frac(HSV.x / 6);
+		HSV.y = 1 / Delta.w;
+	}
+	return HSV;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Pixel Shaders
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void PS_InputBufferSetup(in MXAO_VSOUT MXAO, out float4 color : SV_Target0, out float4 depth : SV_Target1, out float4 normal : SV_Target2)
 {
-        float3 offs = float3(ReShade::PixelSize.xy,0);
+        const float3 offs = float3(ReShade::PixelSize.xy,0);
 
-	float3 f 	 =       GetPosition(MXAO.texcoord.xy, MXAO);
+	const float3 f 	 =       GetPosition(MXAO.texcoord.xy, MXAO);
 	float3 gradx1 	 = - f + GetPosition(MXAO.texcoord.xy + offs.xz, MXAO);
-	float3 gradx2 	 =   f - GetPosition(MXAO.texcoord.xy - offs.xz, MXAO);
+	const float3 gradx2 	 =   f - GetPosition(MXAO.texcoord.xy - offs.xz, MXAO);
 	float3 grady1 	 = - f + GetPosition(MXAO.texcoord.xy + offs.zy, MXAO);
-	float3 grady2 	 =   f - GetPosition(MXAO.texcoord.xy - offs.zy, MXAO);
+	const float3 grady2 	 =   f - GetPosition(MXAO.texcoord.xy - offs.zy, MXAO);
 
 	gradx1 = lerp(gradx1, gradx2, abs(gradx1.z) > abs(gradx2.z));
 	grady1 = lerp(grady1, grady2, abs(grady1.z) > abs(grady2.z));
@@ -394,13 +434,13 @@ void PS_Culling(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
                 sampleUV = MXAO.scaledcoord.xy + Dir.xy * float2(1.0, ReShade::AspectRatio) * (iSample + randStep);   
                 Dir.xy = mul(Dir.xy, float2x2(0.76465,-0.64444,0.64444,0.76465));             
 
-                float sampleMIP = saturate(scaledRadius * iSample * 20.0) * 3.0;
+                const float sampleMIP = saturate(scaledRadius * iSample * 20.0) * 3.0;
 
-        	float3 V 		= -P + GetPositionLOD(sampleUV, MXAO, sampleMIP + MXAO_MIPLEVEL_AO);
-                float  VdotV            = dot(V, V);
-                float  VdotN            = dot(V, N) * rsqrt(VdotV);
+        	const float3 V 		= -P + GetPositionLOD(sampleUV, MXAO, sampleMIP + MXAO_MIPLEVEL_AO);
+                const float  VdotV            = dot(V, V);
+                const float  VdotN            = dot(V, N) * rsqrt(VdotV);
 
-                float fAO = saturate(1.0 + falloffFactor * VdotV) * saturate(VdotN - MXAO_SAMPLE_NORMAL_BIAS * 0.5);
+                const float fAO = saturate(1.0 + falloffFactor * VdotV) * saturate(VdotN - MXAO_SAMPLE_NORMAL_BIAS * 0.5);
 		color.w += fAO;
         }
 
@@ -428,8 +468,8 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
         color = 0.0;
 
 	float3 P             = GetPositionLOD(MXAO.scaledcoord.xy, MXAO, 0);
-        float3 N             = tex2D(sMXAO_NormalTex, MXAO.scaledcoord.xy).xyz * 2.0 - 1.0;
-        float  layerID       = (MXAO.position.x + MXAO.position.y) % 2.0;
+        const float3 N             = tex2D(sMXAO_NormalTex, MXAO.scaledcoord.xy).xyz * 2.0 - 1.0;
+        const float  layerID       = (MXAO.position.x + MXAO.position.y) % 2.0;
 
         #if(MXAO_SMOOTHNORMALS != 0)
                 TesselateNormals(N, P, MXAO);
@@ -455,19 +495,20 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
                 sampleUV = MXAO.scaledcoord.xy + Dir.xy * float2(1.0, ReShade::AspectRatio) * (iSample + randStep);   
                 Dir.xy = mul(Dir.xy, float2x2(0.76465,-0.64444,0.64444,0.76465));             
 
-                float sampleMIP = saturate(scaledRadius * iSample * 20.0) * 3.0;
+                const float sampleMIP = saturate(scaledRadius * iSample * 20.0) * 3.0;
 
-        	float3 V 		= -P + GetPositionLOD(sampleUV, MXAO, sampleMIP + MXAO_MIPLEVEL_AO);
-                float  VdotV            = dot(V, V);
-                float  VdotN            = dot(V, N) * rsqrt(VdotV);
+        	const float3 V 		= -P + GetPositionLOD(sampleUV, MXAO, sampleMIP + MXAO_MIPLEVEL_AO);
+                const float  VdotV            = dot(V, V);
+                const float  VdotN            = dot(V, N) * rsqrt(VdotV);
 
-                float fAO = saturate(1.0 + falloffFactor * VdotV) * saturate(VdotN - MXAO_SAMPLE_NORMAL_BIAS);
+                const float fAO = saturate(1.0 + falloffFactor * VdotV) * saturate(VdotN - MXAO_SAMPLE_NORMAL_BIAS);
 
         	#if(MXAO_ENABLE_IL != 0)
                         if(fAO > 0.1)
                         {
         			float3 fIL = tex2Dlod(sMXAO_ColorTex, float4(sampleUV,0,sampleMIP + MXAO_MIPLEVEL_IL)).xyz;
-        			float3 tN = tex2Dlod(sMXAO_NormalTex, float4(sampleUV,0,sampleMIP + MXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0;
+			        fIL *= lerp(1, RGBtoHSV(fIL).y, MXAO_SSIL_SATURATION_FILTER);
+        			const float3 tN = tex2Dlod(sMXAO_NormalTex, float4(sampleUV,0,sampleMIP + MXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0;
         			fIL = fIL - fIL*saturate(dot(V,tN)*rsqrt(VdotV)*2.0);
                                 color += float4(fIL*fAO,fAO - fAO * dot(fIL,0.333));
                         }
@@ -482,6 +523,11 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
         #if(MXAO_TWO_LAYER != 0)
                 color = pow(color,1.0 / lerp(MXAO_AMOUNT_COARSE, MXAO_AMOUNT_FINE, layerID));
         #endif
+
+        #if(MXAO_ENABLE_IL)
+                color.xyz = pow(color.xyz, MXAO_SSIL_GAMMA) * MXAO_SSIL_GAMMA;
+        #endif
+        color.w = pow(color.w, MXAO_GAMMA) * MXAO_GAMMA;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -498,10 +544,10 @@ void PS_BlurYandCombine(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 
 	color                   = tex2D(sMXAO_ColorTex, MXAO.texcoord.xy);
 
-        float scenedepth        = GetLinearDepth(MXAO.texcoord.xy);
-        float3 lumcoeff         = float3(0.2126, 0.7152, 0.0722);
-        float colorgray         = dot(color.rgb,lumcoeff);
-        float blendfact         = 1.0 - colorgray;
+        const float scenedepth        = GetLinearDepth(MXAO.texcoord.xy);
+        const float3 lumcoeff         = float3(0.2126, 0.7152, 0.0722);
+        const float colorgray         = dot(color.rgb,lumcoeff);
+        const float blendfact         = 1.0 - colorgray;
 
         #if(MXAO_ENABLE_IL != 0)
 	        aoil.xyz  = lerp(dot(aoil.xyz,lumcoeff),aoil.xyz, MXAO_SSIL_SATURATION) * MXAO_SSIL_AMOUNT * 4.0;
@@ -522,7 +568,7 @@ void PS_BlurYandCombine(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
         }
         else if(MXAO_BLEND_TYPE == 2)
         {
-                float colordiff = saturate(2.0 * distance(normalize(color.rgb + 1e-6),normalize(aoil.rgb + 1e-6)));
+                const float colordiff = saturate(2.0 * distance(normalize(color.rgb + 1e-6),normalize(aoil.rgb + 1e-6)));
                 color.rgb = color.rgb + aoil.rgb * lerp(color.rgb, dot(color.rgb, 0.3333), colordiff) * blendfact * blendfact * 4.0;
                 color.rgb = color.rgb * (1.0 - aoil.www * (1.0 - dot(color.rgb, lumcoeff)));
         }

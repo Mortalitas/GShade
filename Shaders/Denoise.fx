@@ -86,6 +86,8 @@
  DEVELOPER TO NVIDIA FOR THE SOFTWARE OR ANY OTHER MATERIALS
 
  Modified and optimized for ReShade by JPulowski
+ 
+ Lightly optimized by Marot Satil for the GShade project.
 
  Do not distribute without giving credit to the original author(s).
 
@@ -142,7 +144,7 @@ uniform float GaussianSigma <
 #include "ReShade.fxh"
 
 float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD0) : SV_TARGET {
-	float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	float3 texIJ;
 	float weight;
 	float3 result = 0.0;
@@ -167,10 +169,9 @@ float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD0) : 
 	}
             
 	result /= sum;
-	float lerpQ = (counter > (CounterThreshold * iWindowArea)) ? 1.0 - LerpCoefficeint : LerpCoefficeint;
-	result = lerp(result, orig, lerpQ);
-	
-	return result;
+	const float lerpQ = (counter > (CounterThreshold * iWindowArea)) ? 1.0 - LerpCoefficeint : LerpCoefficeint;
+
+	return lerp(result, orig, lerpQ);
 }
 
 float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD0) : SV_TARGET {
@@ -212,13 +213,11 @@ float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD0) : 
 	float iWindowArea = 2.0 * WindowRadius + 1.0;
 	iWindowArea *= iWindowArea;
 
-	float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
     result /= sum;
-	float lerpQ = (counter > (CounterThreshold * iWindowArea)) ? 1.0 - LerpCoefficeint : LerpCoefficeint;
-	result = lerp(result, orig, lerpQ);
-    
-	return result;
+
+	return lerp(result, orig, (counter > (CounterThreshold * iWindowArea)) ? 1.0 - LerpCoefficeint : LerpCoefficeint);
 }
 
 technique KNearestNeighbors

@@ -137,24 +137,24 @@ float Stereographic(float2 Coordinates)
 {
 	if(FOV==0.0) return 1.0; // Bypass
 	// Convert 1/4 FOV to radians and calc tangent squared
-	float SqrTanFOVq = pow(tan(radians(FOV * 0.25)),2.0);
-	float R2 = dot(Coordinates, Coordinates);
+	const float SqrTanFOVq = pow(tan(radians(FOV * 0.25)),2.0);
+	const float R2 = dot(Coordinates, Coordinates);
 	return (1.0 - SqrTanFOVq) / (1.0 - SqrTanFOVq * R2);
 }
 // Equisolid
 float Equisolid(float2 Coordinates)
 {
 	if(FOV==0.0) return 1.0; // Bypass
-	float rFOV = radians(FOV);
-	float R = length(Coordinates);
+	const float rFOV = radians(FOV);
+	const float R = length(Coordinates);
 	return tan(asin(sin(rFOV*0.25)*R)*2.0)/(tan(rFOV*0.5)*R);
 }
 // Equidistant
 float Equidistant(float2 Coordinates)
 {
 	if(FOV==0.0) return 1.0; // Bypass
-	float rFOVh = radians(FOV*0.5);
-	float R = length(Coordinates);
+	const float rFOVh = radians(FOV*0.5);
+	const float R = length(Coordinates);
 	return tan(R*rFOVh)/(tan(rFOVh)*R);
 }
 
@@ -163,9 +163,9 @@ float Equidistant(float2 Coordinates)
 float3 PerfectPerspectivePS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	// Get Aspect Ratio
-	float AspectR = 1.0 / ReShade::AspectRatio;
+	const float AspectR = 1.0 / ReShade::AspectRatio;
 	// Get Screen Pixel Size
-	float2 ScrPixelSize = ReShade::PixelSize;
+	const float2 ScrPixelSize = ReShade::PixelSize;
 
 	// Convert FOV type..
 	float FovType; switch(Type)
@@ -197,10 +197,10 @@ float3 PerfectPerspectivePS(float4 vois : SV_Position, float2 texcoord : TexCoor
 	if(VerticalScale != 1.0) SphCoord.y /= lerp(VerticalScale, 1.0, Vertical);
 
 	// Get Pixel Size in stereographic coordinates
-	float2 PixelSize = fwidth(SphCoord);
+	const float2 PixelSize = fwidth(SphCoord);
 
 	// Outside borders check with Anti-Aliasing
-	float2 AtBorders = smoothstep( 1.0 - PixelSize, 1.0 + PixelSize, abs(SphCoord) );
+	const float2 AtBorders = smoothstep( 1.0 - PixelSize, 1.0 + PixelSize, abs(SphCoord) );
 
 	// Back to UV Coordinates
 	SphCoord = SphCoord * 0.5 + 0.5;

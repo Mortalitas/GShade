@@ -2,6 +2,7 @@
  * Tonemap version 1.1
  * by Christian Cann Schuldt Jensen ~ CeeJay.dk
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float Gamma <
 	ui_type = "slider";
@@ -49,21 +50,20 @@ float3 TonemapPass(float4 position : SV_Position, float2 texcoord : TexCoord) : 
 	const float3 coefLuma = float3(0.2126, 0.7152, 0.0722);
 	float lum = dot(coefLuma, color);
 	
-	float L = saturate(10.0 * (lum - 0.45));
-	float3 A2 = Bleach * color;
+	const float L = saturate(10.0 * (lum - 0.45));
+	const float3 A2 = Bleach * color;
 
-	float3 result1 = 2.0f * color * lum;
-	float3 result2 = 1.0f - 2.0f * (1.0f - lum) * (1.0f - color);
+	const float3 result1 = 2.0f * color * lum;
+	const float3 result2 = 1.0f - 2.0f * (1.0f - lum) * (1.0f - color);
 	
-	float3 newColor = lerp(result1, result2, L);
-	float3 mixRGB = A2 * newColor;
+	const float3 newColor = lerp(result1, result2, L);
+	const float3 mixRGB = A2 * newColor;
 	color += ((1.0f - A2) * mixRGB);
 	
-	float3 middlegray = dot(color, (1.0 / 3.0));
-	float3 diffcolor = color - middlegray;
-	color = (color + diffcolor * Saturation) / (1 + (diffcolor * Saturation)); // Saturation
+	const float3 middlegray = dot(color, (1.0 / 3.0));
+	const float3 diffcolor = color - middlegray;
 	
-	return color;
+	return (color + diffcolor * Saturation) / (1 + (diffcolor * Saturation)); // Saturation
 }
 
 technique Tonemap

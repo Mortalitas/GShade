@@ -51,6 +51,7 @@
  * Previous version features was broken when i was sleepy, than i did not touch this shader for months and forgot what i did there.
  * So, i commented messed up code in hope to fix it later, and reintroduced ACES in useful way.
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 
 #include "ReShade.fxh"
@@ -157,13 +158,8 @@ uniform bool HighlightClipping <
 
 float3 ACESFilmRec2020( float3 x )
 {
-    float a = 15.8f;
-    float b = 2.12f;
-    float c = 1.2f;
-    float d = 5.92f;
-    float e = 1.9f;
     x = x * ACESLuminancePercentage * 0.005f; // Restores luminance
-    return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
+    return ( x * ( 15.8f * x + 2.12f ) ) / ( x * ( 1.2f * x + 5.92f ) + 1.9f );
 }
 
 /*
@@ -227,7 +223,7 @@ float  Outputlevel(float color, float outputwhitepoint, float outputblackpoint)
 
 float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-  float3 InputColor = tex2D(ReShade::BackBuffer, texcoord).rgb;
+  const float3 InputColor = tex2D(ReShade::BackBuffer, texcoord).rgb;
   float3 OutputColor = InputColor;
 
   // outPixel = (pow(((inPixel * 255.0) - inBlack) / (inWhite - inBlack), inGamma) * (outWhite - outBlack) + outBlack) / 255.0; // Nvidia reference formula

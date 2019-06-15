@@ -14,7 +14,7 @@
   Version 1.1.1
   - Minor UI improvements for Reshade 3.x
   Version 1.1.2
-  - Modified by Marot for ReShade 4.0 compatibility.
+  - Modified by Marot for ReShade 4.0 compatibility and lightly optimized for GShade.
  */
 
 uniform float Vibrance <
@@ -42,28 +42,21 @@ uniform int Vibrance_Luma <
 
 float3 VibrancePass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	static float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
   
-	float3 coefLuma = float3(0.212656, 0.715158, 0.072186);
-	
-	/*
-	if (Vibrance_Luma)
-		coefLuma = float3(0.333333, 0.333334, 0.333333);
-	*/
-	
-	float luma = dot(coefLuma, color);
+	static float3 coefLuma = float3(0.212656, 0.715158, 0.072186);
+		
+	const float luma = dot(coefLuma, color);
 
+	const float max_color = max(color.r, max(color.g, color.b)); // Find the strongest color
+	const float min_color = min(color.r, min(color.g, color.b)); // Find the weakest color
 
-	float max_color = max(color.r, max(color.g, color.b)); // Find the strongest color
-	float min_color = min(color.r, min(color.g, color.b)); // Find the weakest color
-
-	float color_saturation = max_color - min_color; // The difference between the two is the saturation
+	const float color_saturation = max_color - min_color; // The difference between the two is the saturation
 
 	// Extrapolate between luma and original by 1 + (1-saturation) - current
-	float3 coeffVibrance = float3(VibranceRGBBalance * Vibrance);
-	color = lerp(luma, color, 1.0 + (coeffVibrance * (1.0 - (sign(coeffVibrance) * color_saturation))));
+	const float3 coeffVibrance = float3(VibranceRGBBalance * Vibrance);
 
-	return color;
+	return lerp(luma, color, 1.0 + (coeffVibrance * (1.0 - (sign(coeffVibrance) * color_saturation))));
 }
 
 technique Vibrance

@@ -7,7 +7,7 @@
  *
  * Modified and optimized for ReShade by JPulowski
  *
- * Modified by Marot for ReShade 4.0 compatibility.
+ * Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
  *
  * Do not distribute without giving credit to the original author(s).
  *
@@ -72,7 +72,7 @@ float3x3 YUVtoRGB(float Kb, float Kr) {
 }
 
 void sort(inout float a1, inout float a2) {
-	float t = min(a1, a2);
+	static const float t = min(a1, a2);
 	a2 = max(a1, a2);
 	a1 = t;
 }
@@ -151,14 +151,14 @@ void sort9_partial2(inout float a1, inout float a2, inout float a3, inout float 
 
 
 float SharpDiff(float4 c) {
-	float t = c.a - c.x;
+	const float t = c.a - c.x;
 	return sign(t) * (sstr / 255.0) * pow(abs(t) / (abs(lstr / 255.0)), 1.0 / pstr) * ((t * t) / mad(t, t, ldmp / 65025.0));
 }
 
 // Main
 
 float4 PS_FineSharp_P0(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-	float3 yuv = mul(RGBtoYUV(0.0722, 0.2126), Src(0.0, 0.0, texcoord).rgb ) + float3(0.0, 0.5, 0.5);
+	const float3 yuv = mul(RGBtoYUV(0.0722, 0.2126), Src(0.0, 0.0, texcoord).rgb ) + float3(0.0, 0.5, 0.5);
 	return float4(yuv, yuv.x);
 }
 
@@ -177,15 +177,15 @@ float4 PS_FineSharp_P1(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 float4 PS_FineSharp_P2(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 	float4 o = Src(0.0, 0.0, texcoord);
 
-	float t1 = Src(-1.0, -1.0, texcoord).x;
-	float t2 = Src( 0.0, -1.0, texcoord).x;
-	float t3 = Src( 1.0, -1.0, texcoord).x;
-	float t4 = Src(-1.0,  0.0, texcoord).x;
-	float t5 = o.x;
-	float t6 = Src( 1.0,  0.0, texcoord).x;
-	float t7 = Src(-1.0,  1.0, texcoord).x;
-	float t8 = Src( 0.0,  1.0, texcoord).x;
-	float t9 = Src( 1.0,  1.0, texcoord).x;
+	const float t1 = Src(-1.0, -1.0, texcoord).x;
+	const float t2 = Src( 0.0, -1.0, texcoord).x;
+	const float t3 = Src( 1.0, -1.0, texcoord).x;
+	const float t4 = Src(-1.0,  0.0, texcoord).x;
+	const float t5 = o.x;
+	const float t6 = Src( 1.0,  0.0, texcoord).x;
+	const float t7 = Src(-1.0,  1.0, texcoord).x;
+	const float t8 = Src( 0.0,  1.0, texcoord).x;
+	const float t9 = Src( 1.0,  1.0, texcoord).x;
 	o.x = median9(t1,t2,t3,t4,t5,t6,t7,t8,t9);
 	
 	return o;
@@ -210,15 +210,15 @@ float4 PS_FineSharp_P3(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 float4 PS_FineSharp_P4(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 	float4 o = Src(0.0, 0.0, texcoord);
 
-	float t1 = Src(-1.0, -1.0, texcoord).a;
-	float t2 = Src( 0.0, -1.0, texcoord).a;
-	float t3 = Src( 1.0, -1.0, texcoord).a;
-	float t4 = Src(-1.0,  0.0, texcoord).a;
-	float t5 = o.a;
-	float t6 = Src( 1.0,  0.0, texcoord).a;
-	float t7 = Src(-1.0,  1.0, texcoord).a;
-	float t8 = Src( 0.0,  1.0, texcoord).a;
-	float t9 = Src( 1.0,  1.0, texcoord).a;
+	const float t1 = Src(-1.0, -1.0, texcoord).a;
+	const float t2 = Src( 0.0, -1.0, texcoord).a;
+	const float t3 = Src( 1.0, -1.0, texcoord).a;
+	const float t4 = Src(-1.0,  0.0, texcoord).a;
+	const float t5 = o.a;
+	const float t6 = Src( 1.0,  0.0, texcoord).a;
+	const float t7 = Src(-1.0,  1.0, texcoord).a;
+	const float t8 = Src( 0.0,  1.0, texcoord).a;
+	const float t9 = Src( 1.0,  1.0, texcoord).a;
 
 	o.x += t1 + t2 + t3 + t4 + t6 + t7 + t8 + t9;
 	o.x /= 9.0;
@@ -234,7 +234,7 @@ float4 PS_FineSharp_P4(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 float4 PS_FineSharp_P5(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 	float4 o = Src(0.0, 0.0, texcoord);
 
-	float edge = abs(Src(0.0, -1.0, texcoord).x + Src(-1.0, 0.0, texcoord).x + Src(1.0, 0.0, texcoord).x + Src(0.0, 1.0, texcoord).x - 4 * o.x);
+	const float edge = abs(Src(0.0, -1.0, texcoord).x + Src(-1.0, 0.0, texcoord).x + Src(1.0, 0.0, texcoord).x + Src(0.0, 1.0, texcoord).x - 4 * o.x);
 	o.x = lerp(o.a, o.x, xstr * (1.0 - saturate(edge * xrep)));
 
 	return o;

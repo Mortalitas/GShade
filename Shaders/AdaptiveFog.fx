@@ -9,7 +9,7 @@
 ///////////////////////////////////////////////////////////////////
 // By Otis / Infuse Project
 ///////////////////////////////////////////////////////////////////
-
+// Lightly optimized by Marot Satil for the GShade project.
 
 uniform float3 FogColor <
 	ui_type= "color";
@@ -75,10 +75,10 @@ void PS_Otis_AFG_PerformBloom(float4 position : SV_Position, float2 texcoord : T
 	float4 color = tex2D(ReShade::BackBuffer, texcoord);
 	float3 BlurColor2 = 0;
 	float3 Blurtemp = 0;
-	float MaxDistance = 8*BloomWidth;
+	const float MaxDistance = 8*BloomWidth;
 	float CurDistance = 0;
-	float Samplecount = 25.0;
-	float2 blurtempvalue = texcoord * ReShade::PixelSize * BloomWidth;
+	const float Samplecount = 25.0;
+	const float2 blurtempvalue = texcoord * ReShade::PixelSize * BloomWidth;
 	float2 BloomSample = float2(2.5,-2.5);
 	float2 BloomSampleValue;
 	
@@ -97,8 +97,8 @@ void PS_Otis_AFG_PerformBloom(float4 position : SV_Position, float2 texcoord : T
 		}
 	}
 	BlurColor2.rgb = (BlurColor2.rgb / (Samplecount - (BloomPower - BloomThreshold*5)));
-	float Bloomamount = (dot(color.rgb,float3(0.299f, 0.587f, 0.114f)));
-	float3 BlurColor = BlurColor2.rgb * (BloomPower + 4.0);
+	const float Bloomamount = (dot(color.rgb,float3(0.299f, 0.587f, 0.114f)));
+	const float3 BlurColor = BlurColor2.rgb * (BloomPower + 4.0);
 	color.rgb = lerp(color.rgb,BlurColor.rgb, Bloomamount);	
 	fragment = saturate(color);
 }
@@ -106,8 +106,8 @@ void PS_Otis_AFG_PerformBloom(float4 position : SV_Position, float2 texcoord : T
 
 void PS_Otis_AFG_BlendFogWithNormalBuffer(float4 vpos: SV_Position, float2 texcoord: TEXCOORD, out float4 fragment: SV_Target0)
 {
-	float depth = ReShade::GetLinearizedDepth(texcoord).r;
-	float fogFactor = clamp(saturate(depth - FogStart) * FogCurve, 0.0, MaxFogFactor); 
+	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+	const float fogFactor = clamp(saturate(depth - FogStart) * FogCurve, 0.0, MaxFogFactor); 
 	fragment = lerp(tex2D(ReShade::BackBuffer, texcoord), lerp(tex2D(Otis_BloomSampler, texcoord), float4(FogColor, 1.0), fogFactor), fogFactor);
 }
 

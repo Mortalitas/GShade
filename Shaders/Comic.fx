@@ -49,6 +49,7 @@
 // 01-nov-2018:     v1.0.0    Feature complete beta.
 //
 ///////////////////////////////////////////////////////////////////////////////
+// Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
 
@@ -339,12 +340,12 @@ namespace Comic {
             the kernel used is a linear interpolation between the Sobel- and Scharr-Operator.
             Gives the image some sort of embossed look.
         ******************************************************************************/
-        float4 cX1 = values1 * lerp(Sobel_X1, Scharr_X1, detail);
-        float4 cX2 = values2 * lerp(Sobel_X2, Scharr_X2, detail);
-        float  cX  = cX1.x + cX1.y + cX1.z + cX1.w + cX2.x + cX2.y + cX2.z + cX2.w;
-        float4 cY1 = values1 * lerp(Sobel_Y1, Scharr_Y1, detail);
-        float4 cY2 = values2 * lerp(Sobel_Y2, Scharr_Y2, detail);
-        float  cY  = cY1.x + cY1.y + cY1.z + cY1.w + cY2.x + cY2.y + cY2.z + cY2.w;
+        const float4 cX1 = values1 * lerp(Sobel_X1, Scharr_X1, detail);
+        const float4 cX2 = values2 * lerp(Sobel_X2, Scharr_X2, detail);
+        const float  cX  = cX1.x + cX1.y + cX1.z + cX1.w + cX2.x + cX2.y + cX2.z + cX2.w;
+        const float4 cY1 = values1 * lerp(Sobel_Y1, Scharr_Y1, detail);
+        const float4 cY2 = values2 * lerp(Sobel_Y2, Scharr_Y2, detail);
+        const float  cY  = cY1.x + cY1.y + cY1.z + cY1.w + cY2.x + cY2.y + cY2.z + cY2.w;
         retVal = max(cX, cY);
         if(type == 3)
         {
@@ -353,12 +354,12 @@ namespace Comic {
                 Same as above but the kernels are flipped.
                 Adds more edges.
             ******************************************************************************/
-            float4 cX1 = values1 * lerp(Sobel_X_M1, Scharr_X_M1, detail);
-            float4 cX2 = values2 * lerp(Sobel_X_M2, Scharr_X_M2, detail);
-            float  cX  = cX1.x + cX1.y + cX1.z + cX1.w + cX2.x + cX2.y + cX2.z + cX2.w;
-            float4 cY1 = values1 * lerp(Sobel_Y_M1, Scharr_Y_M1, detail);
-            float4 cY2 = values2 * lerp(Sobel_Y_M2, Scharr_Y_M2, detail);
-            float  cY  = cY1.x + cY1.y + cY1.z + cY1.w + cY2.x + cY2.y + cY2.z + cY2.w;
+            const float4 cX1 = values1 * lerp(Sobel_X_M1, Scharr_X_M1, detail);
+            const float4 cX2 = values2 * lerp(Sobel_X_M2, Scharr_X_M2, detail);
+            const float  cX  = cX1.x + cX1.y + cX1.z + cX1.w + cX2.x + cX2.y + cX2.z + cX2.w;
+            const float4 cY1 = values1 * lerp(Sobel_Y_M1, Scharr_Y_M1, detail);
+            const float4 cY2 = values2 * lerp(Sobel_Y_M2, Scharr_Y_M2, detail);
+            const float  cY  = cY1.x + cY1.y + cY1.z + cY1.w + cY2.x + cY2.y + cY2.z + cY2.w;
             retVal = max(retVal, max(cX, cY));
         }
         return retVal;
@@ -374,30 +375,33 @@ namespace Comic {
             float4 depthCardinal = float4(depth1.x, depth2.x, depth1.z, depth2.z);
             float4 depthInterCardinal = float4(depth1.y, depth2.y, depth1.w, depth2.w);
             //Calculate the min and max depths
-            float2 mind = float2(MIN4(depthCardinal), MIN4(depthInterCardinal));
-            float2 maxd = float2(MAX4(depthCardinal), MAX4(depthInterCardinal));
-            float span = MAX2(maxd) - MIN2(mind) + 0.00001;
+            const float2 mind = float2(MIN4(depthCardinal), MIN4(depthInterCardinal));
+            const float2 maxd = float2(MAX4(depthCardinal), MAX4(depthInterCardinal));
+            const float span = MAX2(maxd) - MIN2(mind) + 0.00001;
 
             //Normalize values
             depthCenter /= span;
             depthCardinal /= span;
             depthInterCardinal /= span;
             //Calculate the (depth-wise) distance of the surrounding pixels to the center
-            float4 diffsCardinal = abs(depthCardinal - depthCenter);
-            float4 diffsInterCardinal = abs(depthInterCardinal - depthCenter);
+            const float4 diffsCardinal = abs(depthCardinal - depthCenter);
+            const float4 diffsInterCardinal = abs(depthInterCardinal - depthCenter);
             //Calculate the difference of the (opposing) distances
-            float2 meshEdge = float2(
+            const float2 meshEdge = float2(
                 max(abs(diffsCardinal.x - diffsCardinal.y), abs(diffsCardinal.z - diffsCardinal.w)),
                 max(abs(diffsInterCardinal.x - diffsInterCardinal.y), abs(diffsInterCardinal.z - diffsInterCardinal.w))
             );
 
-            return MAX2(meshEdge);
+            return MAX2(float2(
+                max(abs(diffsCardinal.x - diffsCardinal.y), abs(diffsCardinal.z - diffsCardinal.w)),
+                max(abs(diffsInterCardinal.x - diffsInterCardinal.y), abs(diffsInterCardinal.z - diffsInterCardinal.w)))
+                );
     }
 
     float4 EdgeDetection(sampler s, int2 vpos, float2 texcoord,
-                         int luma_type, float luma_detail,
-                         int chroma_type, float chroma_detail,
-                         int outlines_enable, int mesh_edges_enable) {
+                         const int luma_type, float luma_detail,
+                         const int chroma_type, float chroma_detail,
+                         const int outlines_enable, int mesh_edges_enable) {
         float4 retVal;
 
         /******************************************************************************
@@ -406,55 +410,55 @@ namespace Comic {
             3. Calculate the chroma of all nine pixels and save that colors value
             4. Get all nine depth values
         ******************************************************************************/
-        float3 colorC = tex2Dfetch(s, int4(vpos, 0, 0)).rgb;//C
-        float3 color1[4] = {
+        const float3 colorC = tex2Dfetch(s, int4(vpos, 0, 0)).rgb;//C
+        const float3 color1[4] = {
             tex2Dfetch(s, int4(vpos + int2( 0, -1), 0, 0)).rgb,//N
             tex2Dfetch(s, int4(vpos + int2( 1, -1), 0, 0)).rgb,//NE
             tex2Dfetch(s, int4(vpos + int2( 1,  0), 0, 0)).rgb,//E
             tex2Dfetch(s, int4(vpos + int2( 1,  1), 0, 0)).rgb,//SE
         };
-        float3 color2[4] = {    
+        const float3 color2[4] = {    
             tex2Dfetch(s, int4(vpos + int2( 0,  1), 0, 0)).rgb,//S
             tex2Dfetch(s, int4(vpos + int2(-1,  1), 0, 0)).rgb,//SW
             tex2Dfetch(s, int4(vpos + int2(-1,  0), 0, 0)).rgb,//W
             tex2Dfetch(s, int4(vpos + int2(-1, -1), 0, 0)).rgb //NW
         };
 
-        float lumaC = dot(colorC, LumaCoeff);
-        float4 luma1 = float4(
+        const float lumaC = dot(colorC, LumaCoeff);
+        const float4 luma1 = float4(
             dot(color1[0], LumaCoeff),
             dot(color1[1], LumaCoeff),
             dot(color1[2], LumaCoeff),
             dot(color1[3], LumaCoeff)
         );
-        float4 luma2 = float4(
+        const float4 luma2 = float4(
             dot(color2[0], LumaCoeff),
             dot(color2[1], LumaCoeff),
             dot(color2[2], LumaCoeff),
             dot(color2[3], LumaCoeff)
         );
 
-        float chromaVC = dot(colorC - lumaC.xxx, LumaCoeff);
-        float4 chromaV1 = float4(
+        const float chromaVC = dot(colorC - lumaC.xxx, LumaCoeff);
+        const float4 chromaV1 = float4(
             MAX3((color1[0] - luma1.xxx)),
             MAX3((color1[1] - luma1.yyy)),
             MAX3((color1[2] - luma1.zzz)),
             MAX3((color1[3] - luma1.www))
         );
-        float4 chromaV2 = float4(
+        const float4 chromaV2 = float4(
             MAX3((color2[0] - luma2.xxx)),
             MAX3((color2[1] - luma2.yyy)),
             MAX3((color2[2] - luma2.zzz)),
             MAX3((color2[3] - luma2.www))
         );
 
-        float2 pix = ReShade::PixelSize;
-        float depthC = ReShade::GetLinearizedDepth(texcoord);//C
+        const float2 pix = ReShade::PixelSize;
+        const float depthC = ReShade::GetLinearizedDepth(texcoord);//C
         float4 depth1[COMIC_MESHEDGES_ITERATIONS_MAX];
         float4 depth2[COMIC_MESHEDGES_ITERATIONS_MAX];
 
-        int iterations = clamp(iUIMeshEdgesIterations, 1, COMIC_MESHEDGES_ITERATIONS_MAX);
-        [unroll]
+        const int iterations = clamp(iUIMeshEdgesIterations, 1, COMIC_MESHEDGES_ITERATIONS_MAX);
+        [loop]
         for(int i = 0; i < iterations; i++)
         {
             depth1[i] = float4(
@@ -479,7 +483,7 @@ namespace Comic {
             //       (e.g. Difference of the pixel north and south of the center)
             //    2. Add all diffs together and weight the result with the center pixel
             //******************************************************************************
-            float4 diffsLuma = abs(luma1 - luma2);
+            const float4 diffsLuma = abs(luma1 - luma2);
             retVal.x = (diffsLuma.x + diffsLuma.y + diffsLuma.z + diffsLuma.w) * (1.0 - lumaC);
         }
         else if(luma_type > 1)
@@ -490,7 +494,7 @@ namespace Comic {
         //Same as above but with the value of the croma as source
         if(chroma_type == 1)
         {
-            float4 diffsChromaLuma = abs(chromaV1 - chromaV2);
+            const float4 diffsChromaLuma = abs(chromaV1 - chromaV2);
             retVal.y = (diffsChromaLuma.x + diffsChromaLuma.y + diffsChromaLuma.z + diffsChromaLuma.w) * (1.0 - chromaVC);
         }
         else if(chroma_type > 1)
@@ -505,14 +509,14 @@ namespace Comic {
                 1. Calculate the normal vector of the current pixel
                 2. Calculate how much the normal vector differs from the view direction.
             ******************************************************************************/
-            float3 vertCenter = float3(texcoord, depthC);
-            float3 vertNorth = float3(texcoord + float2(0.0, -pix.y), depth1[0].x);
-            float3 vertEast = float3(texcoord + float2(pix.x, 0.0), depth1[0].z);
+            const float3 vertCenter = float3(texcoord, depthC);
+            const float3 vertNorth = float3(texcoord + float2(0.0, -pix.y), depth1[0].x);
+            const float3 vertEast = float3(texcoord + float2(pix.x, 0.0), depth1[0].z);
             retVal.z = (1.0 - saturate(normalize(cross(vertCenter - vertNorth, vertCenter - vertEast)) * 0.5 + 0.5)).z;
         }
         else if(outlines_enable == 2)
         {
-            float maxDiff = max(MAX4((depth1[0])), MAX4((depth2[0]))) - min(MIN4((depth1[0])), MIN4((depth2[0])));
+            const float maxDiff = max(MAX4((depth1[0])), MAX4((depth2[0]))) - min(MIN4((depth1[0])), MIN4((depth2[0])));
             retVal.z = maxDiff < fUIOutlinesThreshold / RESHADE_DEPTH_LINEARIZATION_FAR_PLANE ? 0.0 : 1.0;
         }
 
@@ -528,17 +532,15 @@ namespace Comic {
     }
 
     float StrengthCurve(float3 fade, float depth) {
-        float curveMin = smoothstep(0.0, 1.0 - fade.z, depth + (0.2 - 1.2 * fade.x));
-        float curveMax = smoothstep(0.0, 1.0 - fade.z, 1.0 - depth + (1.2 * fade.y - 1.0));
-        return curveMin * curveMax;
+        return smoothstep(0.0, 1.0 - fade.z, depth + (0.2 - 1.2 * fade.x)) * smoothstep(0.0, 1.0 - fade.z, 1.0 - depth + (1.2 * fade.y - 1.0));
     }
 
     /******************************************************************************
         Pixel Shader
     ******************************************************************************/
     float3 Sketch_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-        float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-        float currentDepth = ReShade::GetLinearizedDepth(texcoord);
+        const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+        const float currentDepth = ReShade::GetLinearizedDepth(texcoord);
         float4 edges = EdgeDetection(ReShade::BackBuffer, 
                                      vpos.xy,
                                      texcoord,
@@ -556,12 +558,12 @@ namespace Comic {
             pow(edges.w, fUIMeshEdgesStrength.x) * fUIMeshEdgesStrength.y
         );
 
-        float2 fadeAll =  float2(   
+        const float2 fadeAll =  float2(   
             StrengthCurve(fUIEdgesLumaWeight, dot(color, LumaCoeff)),
             StrengthCurve(fUIEdgesSaturationWeight, MAX3(color) - MIN3(color))
         );
 
-        float4 fadeDist = float4(
+        const float4 fadeDist = float4(
             StrengthCurve(fUIColorEdgesDistanceFading, currentDepth),
             StrengthCurve(fUIChromaEdgesDistanceFading, currentDepth),
             StrengthCurve(fUIOutlinesDistanceFading, currentDepth),
@@ -569,15 +571,13 @@ namespace Comic {
         );
 
         edges *= fadeDist * MIN2(fadeAll);
-        
-        float3 result = saturate(lerp(color, fUIColor, MAX4(edges) * fUIStrength));
 
         /******************************************************************************
             Debug Output
         ******************************************************************************/
         float3 edgeDebugLayer = 0.0.rrr;
         if(bUIEnableDebugLayer) {
-            int4 enabled = int4(bUIColorEdgesDebugLayer,bUIChromaEdgesDebugLayer,bUIOutlinesDebugLayer,bUIMeshEdgesDebugLayer);
+            const int4 enabled = int4(bUIColorEdgesDebugLayer,bUIChromaEdgesDebugLayer,bUIOutlinesDebugLayer,bUIMeshEdgesDebugLayer);
             edgeDebugLayer = MAX4((edges * enabled));
 
             if(iUIShowFadingOverlay != 0) {
@@ -596,7 +596,7 @@ namespace Comic {
             }
             return edgeDebugLayer;
         }
-        return result;
+        return saturate(lerp(color, fUIColor, MAX4(edges) * fUIStrength));
     }
 }
 

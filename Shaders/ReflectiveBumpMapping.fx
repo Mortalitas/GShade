@@ -5,7 +5,7 @@
 // Reflective Bumpmapping "RBM" 3.0.1 beta by Marty McFly. 
 // For ReShade 4.X only!
 // Copyright © 2008-2016 Marty McFly
-// Modified by Marot for ReShade 4.0
+// Modified by Marot for ReShade 4.0 and lightly optimized for the GShade project.
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 uniform float fRBM_BlurWidthPixels <
@@ -115,41 +115,39 @@ float3 GetPosition(float2 coords)
 
 float3 GetNormalFromDepth(float2 coords) 
 {
-	float3 centerPos = GetPosition(coords.xy);
-	float2 offs = ReShade::PixelSize.xy*1.0;
+	const float3 centerPos = GetPosition(coords.xy);
+	const float2 offs = ReShade::PixelSize.xy*1.0;
 	float3 ddx1 = GetPosition(coords.xy + float2(offs.x, 0)) - centerPos;
-	float3 ddx2 = centerPos - GetPosition(coords.xy + float2(-offs.x, 0));
+	const float3 ddx2 = centerPos - GetPosition(coords.xy + float2(-offs.x, 0));
 
 	float3 ddy1 = GetPosition(coords.xy + float2(0, offs.y)) - centerPos;
-	float3 ddy2 = centerPos - GetPosition(coords.xy + float2(0, -offs.y));
+	const float3 ddy2 = centerPos - GetPosition(coords.xy + float2(0, -offs.y));
 
 	ddx1 = lerp(ddx1, ddx2, abs(ddx1.z) > abs(ddx2.z));
 	ddy1 = lerp(ddy1, ddy2, abs(ddy1.z) > abs(ddy2.z));
-
-	float3 normal = cross(ddy1, ddx1);
 	
-	return normalize(normal);
+	return normalize(cross(ddy1, ddx1));
 }
 
 float3 GetNormalFromColor(float2 coords, float2 offset, float scale, float sharpness)
 {
 	const float3 lumCoeff = float3(0.299,0.587,0.114);
 
-    	float hpx = dot(tex2Dlod(ReShade::BackBuffer, float4(coords + float2(offset.x,0.0),0,0)).xyz,lumCoeff) * scale;
-    	float hmx = dot(tex2Dlod(ReShade::BackBuffer, float4(coords - float2(offset.x,0.0),0,0)).xyz,lumCoeff) * scale;
-    	float hpy = dot(tex2Dlod(ReShade::BackBuffer, float4(coords + float2(0.0,offset.y),0,0)).xyz,lumCoeff) * scale;
-    	float hmy = dot(tex2Dlod(ReShade::BackBuffer, float4(coords - float2(0.0,offset.y),0,0)).xyz,lumCoeff) * scale;
+    	const float hpx = dot(tex2Dlod(ReShade::BackBuffer, float4(coords + float2(offset.x,0.0),0,0)).xyz,lumCoeff) * scale;
+    	const float hmx = dot(tex2Dlod(ReShade::BackBuffer, float4(coords - float2(offset.x,0.0),0,0)).xyz,lumCoeff) * scale;
+    	const float hpy = dot(tex2Dlod(ReShade::BackBuffer, float4(coords + float2(0.0,offset.y),0,0)).xyz,lumCoeff) * scale;
+    	const float hmy = dot(tex2Dlod(ReShade::BackBuffer, float4(coords - float2(0.0,offset.y),0,0)).xyz,lumCoeff) * scale;
 
-    	float dpx = GetLinearDepth(coords + float2(offset.x,0.0));
-    	float dmx = GetLinearDepth(coords - float2(offset.x,0.0));
-    	float dpy = GetLinearDepth(coords + float2(0.0,offset.y));
-    	float dmy = GetLinearDepth(coords - float2(0.0,offset.y));
+    	const float dpx = GetLinearDepth(coords + float2(offset.x,0.0));
+    	const float dmx = GetLinearDepth(coords - float2(offset.x,0.0));
+    	const float dpy = GetLinearDepth(coords + float2(0.0,offset.y));
+    	const float dmy = GetLinearDepth(coords - float2(0.0,offset.y));
 
 	float2 xymult = float2(abs(dmx - dpx), abs(dmy - dpy)) * sharpness; 
 	xymult = max(0.0, 1.0 - xymult);
     	
-    	float ddx = (hmx - hpx) / (2.0 * offset.x) * xymult.x;
-    	float ddy = (hmy - hpy) / (2.0 * offset.y) * xymult.y;
+    	const float ddx = (hmx - hpx) / (2.0 * offset.x) * xymult.x;
+    	const float ddy = (hmy - hpy) / (2.0 * offset.y) * xymult.y;
     
     	return normalize(float3(ddx, ddy, 1.0));
 }
@@ -161,19 +159,19 @@ float3 GetBlendedNormals(float3 n1, float3 n2)
 
 float3 RGB2HSV(float3 RGB)
 {
-    	float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    	float4 p = RGB.g < RGB.b ? float4(RGB.bg, K.wz) : float4(RGB.gb, K.xy);
-    	float4 q = RGB.r < p.x ? float4(p.xyw, RGB.r) : float4(RGB.r, p.yzx);
+    	const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    	const float4 p = RGB.g < RGB.b ? float4(RGB.bg, K.wz) : float4(RGB.gb, K.xy);
+    	const float4 q = RGB.r < p.x ? float4(p.xyw, RGB.r) : float4(RGB.r, p.yzx);
 
-    	float d = q.x - min(q.w, q.y);
-    	float e = 1.0e-10;
+    	const float d = q.x - min(q.w, q.y);
+    	const float e = 1.0e-10;
     	return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
 }
 
 float3 HSV2RGB(float3 HSV)
 {
-    	float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    	float3 p = abs(frac(HSV.xxx + K.xyz) * 6.0 - K.www);
+    	const float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    	const float3 p = abs(frac(HSV.xxx + K.xyz) * 6.0 - K.www);
     	return HSV.z * lerp(K.xxx, saturate(p - K.xxx), HSV.y); //HDR capable
 }
 
@@ -197,35 +195,35 @@ float GetHueMask(in float H)
 
 void PS_RBM_Gen(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
 {
-	float scenedepth 		= GetLinearDepth(texcoord.xy);
+	const float scenedepth 		= GetLinearDepth(texcoord.xy);
 	float3 SurfaceNormals 		= GetNormalFromDepth(texcoord.xy).xyz;
-	float3 TextureNormals 		= GetNormalFromColor(texcoord.xy, 0.01 * ReShade::PixelSize.xy / scenedepth, 0.0002 / scenedepth + 0.1, 1000.0);
+	const float3 TextureNormals 		= GetNormalFromColor(texcoord.xy, 0.01 * ReShade::PixelSize.xy / scenedepth, 0.0002 / scenedepth + 0.1, 1000.0);
 	float3 SceneNormals		= GetBlendedNormals(SurfaceNormals, TextureNormals);
 	SceneNormals 			= normalize(lerp(SurfaceNormals,SceneNormals,fRBM_ReliefHeight));
-	float3 ScreenSpacePosition 	= GetPosition(texcoord.xy);
-	float3 ViewDirection 		= normalize(ScreenSpacePosition.xyz);
+	const float3 ScreenSpacePosition 	= GetPosition(texcoord.xy);
+	const float3 ViewDirection 		= normalize(ScreenSpacePosition.xyz);
 
 	float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
 	float3 bump = 0.0;
 
 	for(float i=1; i<=iRBM_SampleCount; i++)
 	{
-		float2 currentOffset 	= texcoord.xy + SceneNormals.xy * ReShade::PixelSize.xy * i/(float)iRBM_SampleCount * fRBM_BlurWidthPixels;
-		float4 texelSample 	= tex2Dlod(ReShade::BackBuffer, float4(currentOffset,0,0));	
+		const float2 currentOffset 	= texcoord.xy + SceneNormals.xy * ReShade::PixelSize.xy * i/(float)iRBM_SampleCount * fRBM_BlurWidthPixels;
+		const float4 texelSample 	= tex2Dlod(ReShade::BackBuffer, float4(currentOffset,0,0));	
 		
-		float depthDiff 	= smoothstep(0.005,0.0,scenedepth-GetLinearDepth(currentOffset));
-		float colorWeight 	= smoothstep(fRBM_LowerThreshold,fRBM_UpperThreshold+0.00001,dot(texelSample.xyz,float3(0.299,0.587,0.114)));
+		const float depthDiff 	= smoothstep(0.005,0.0,scenedepth-GetLinearDepth(currentOffset));
+		const float colorWeight 	= smoothstep(fRBM_LowerThreshold,fRBM_UpperThreshold+0.00001,dot(texelSample.xyz,float3(0.299,0.587,0.114)));
 		bump += lerp(color.xyz,texelSample.xyz,depthDiff*colorWeight);
 	}
 
 	bump /= iRBM_SampleCount;
 
-	float cosphi = dot(-ViewDirection, SceneNormals);
+	const float cosphi = dot(-ViewDirection, SceneNormals);
 	//R0 + (1.0 - R0)*(1.0-cosphi)^5;
 	float SchlickReflectance = lerp(pow(1.0-cosphi,5.0), 1.0, fRBM_FresnelReflectance);
 	SchlickReflectance = saturate(SchlickReflectance)*fRBM_FresnelMult; // *should* be 0~1 but isn't for some pixels.
 
-	float3 hsvcol = RGB2HSV(color.xyz);
+	const float3 hsvcol = RGB2HSV(color.xyz);
 	float colorMask = GetHueMask(hsvcol.x);
 	colorMask = lerp(1.0,colorMask, smoothstep(0.0,0.2,hsvcol.y) * smoothstep(0.0,0.1,hsvcol.z));
 	color.xyz = lerp(color.xyz,bump.xyz,SchlickReflectance*colorMask);

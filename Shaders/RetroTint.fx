@@ -1,3 +1,4 @@
+// Lightly optimized by Marot Satil for the GShade project.
 #include "ReShade.fxh"
 
 uniform float3 fUIColor<
@@ -13,7 +14,7 @@ uniform float fUIStrength<
 > = 1.0;
 
 float3 RetroTintPS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
-    float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
     //Blend mode: Screen
     return lerp(color, 1.0 - (1.0 - color) * (1.0 - fUIColor), fUIStrength);
 }

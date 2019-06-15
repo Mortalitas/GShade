@@ -8,6 +8,7 @@
 		Updated and additional warning cleaning up for ReShade 4.0 by Marot
 
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
 
 #include "ReShade.fxh"
@@ -27,7 +28,7 @@ uniform float LinearWhite <
 	
 float3 ColorFilmicToneMappingPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float4 x = tex2D(ReShade::BackBuffer, texcoord);
+	const float4 x = tex2D(ReShade::BackBuffer, texcoord);
 	// Filmic tone mapping
 	const float3 A = float3(0.55f, 0.50f, 0.45f);	// Shoulder strength
 	const float3 B = float3(0.30f, 0.27f, 0.22f);	// Linear strength
@@ -37,7 +38,7 @@ float3 ColorFilmicToneMappingPass(float4 position : SV_Position, float2 texcoord
 	const float3 F = float3(0.30f, 0.30f, 0.30f);	// Toe Denominator
 	const float3 W = float3(2.80f, 2.90f, 3.10f);	// Linear White Point Value
 	const float3 F_linearWhite = ((W*(A*W+C*B)+D*E)/(W*(A*W+B)+D*F))-(E/F);
-	float3 F_linearColor = ((x.xyz*(A*x.xyz+C*B)+D*E)/(x.xyz*(A*x.xyz+B)+D*F))-(E/F);
+	const float3 F_linearColor = ((x.xyz*(A*x.xyz+C*B)+D*E)/(x.xyz*(A*x.xyz+B)+D*F))-(E/F);
 
     // gamma space or not?
 	//return pow(saturate(F_linearColor * 1.25 / F_linearWhite),1.25);

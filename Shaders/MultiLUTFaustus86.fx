@@ -59,7 +59,7 @@ sampler	SamplerMultiLUT { Texture = texMultiLUT; };
 
 void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
 {
-	float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
+	const float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
 	float2 texelsize = 1.0 / faLUT_TileSizeXY;
 	texelsize.x /= faLUT_TileAmount;
 
@@ -71,10 +71,9 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 
 	const float3 lutcolor = lerp(tex2D(SamplerMultiLUT, lutcoord.xy).xyz, tex2D(SamplerMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
 
-	color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), faLUT_AmountChroma) * 
+	res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), faLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    faLUT_AmountLuma);
 
-	res.xyz = color.xyz;
 	res.w = 1.0;
 }
 

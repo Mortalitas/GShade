@@ -1,5 +1,5 @@
 /**
- * DepthSharpenStaticDof v1.11
+ * DepthSharpenconstDof v1.11
  * by OVNI
  *
  * Based on :
@@ -12,9 +12,10 @@
  *
  * OVNI modifications :
  * - depth test for sharpening so it doesn't generate too much aliasing
- * - reuse blur do implement poor man's static DoF
+ * - reuse blur do implement poor man's const DoF
  * - reuse blur do implement poor man's antialiasing between objects (trees) and sky
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float sharp_strength <
 	ui_type = "slider";
@@ -82,7 +83,7 @@ uniform float contourDepthExponent <
 
 
 //Used to avoid bluring the sky (espetially stars/moon) and some UI parts, This should be as high as possible.
-static const float maxDepth = 0.999;
+uniform float maxDepth = 0.999;
 
 
 #include "ReShade.fxh"
@@ -98,32 +99,32 @@ static const float maxDepth = 0.999;
   /                          Main code                          /
   '-----------------------------------------------------------*/
 
-float3 DepthSharpenStaticDofPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : SV_Target
+float3 DepthSharpenconstDofPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : SV_Target
 {
 	// -- Get the original pixel --
-	static float3 ori = tex2D(ReShade::BackBuffer, tex).rgb;
+	const float3 ori = tex2D(ReShade::BackBuffer, tex).rgb;
 
 	/*-----------------------------------------------------------.
 	/      Determine if we should sharpen / blur
 	'-----------------------------------------------------------*/
 
-	static float depth = ReShade::GetLinearizedDepth(tex).r;
+	const float depth = ReShade::GetLinearizedDepth(tex).r;
 
 	if( depth > maxDepth )
 		return ori;
 
-	static float depthTL = ReShade::GetLinearizedDepth( tex + float2(-ReShade::PixelSize.x, -ReShade::PixelSize.y) ).r;
-	static float depthTR = ReShade::GetLinearizedDepth( tex + float2(ReShade::PixelSize.x, -ReShade::PixelSize.y) ).r;
-	static float deltaA = abs(depth-depthTL);
-	static float deltaB = abs(depth-depthTR);
+	const float depthTL = ReShade::GetLinearizedDepth( tex + float2(-ReShade::PixelSize.x, -ReShade::PixelSize.y) ).r;
+	const float depthTR = ReShade::GetLinearizedDepth( tex + float2(ReShade::PixelSize.x, -ReShade::PixelSize.y) ).r;
+	const float deltaA = abs(depth-depthTL);
+	const float deltaB = abs(depth-depthTR);
 	float blurPercent = 0;
 	bool bluredEdge = false;
-	static bool shouldSharpen = depth < sharpenEndDepth && deltaA <= sharpenMaxDeltaDepth && deltaB <= sharpenMaxDeltaDepth;
+	const bool shouldSharpen = depth < sharpenEndDepth && deltaA <= sharpenMaxDeltaDepth && deltaB <= sharpenMaxDeltaDepth;
 
 
 	if( deltaA >= contourBlurMinDeltaDepth || deltaB >= contourBlurMinDeltaDepth )
 	{
-		blurPercent = saturate( (deltaA+deltaB)/2.0 * 10 ) * pow(depth, contourDepthExponent);
+		blurPercent = saturate( (deltaA+deltaB)/2.0 * 10 ) * pow(abs(depth), contourDepthExponent);
 		bluredEdge = true;
 	}
 	else 
@@ -238,10 +239,10 @@ float3 DepthSharpenStaticDofPass(float4 position : SV_Position, float2 tex : TEX
 	'-----------------------------------------------------------*/
 
 	// -- Calculate the sharpening --
-	static float3 sharp = ori - blur_ori;  //Subtracting the blurred image from the original image
+	const float3 sharp = ori - blur_ori;  //Subtracting the blurred image from the original image
 
 	// -- Adjust strength of the sharpening and clamp it--
-	static float4 sharp_strength_luma_clamp = float4(sharp_strength_luma * (0.5 / sharp_clamp),0.5); //Roll part of the clamp into the dot
+	const float4 sharp_strength_luma_clamp = float4(sharp_strength_luma * (0.5 / sharp_clamp),0.5); //Roll part of the clamp into the dot
 
 	float sharp_luma = saturate(dot(float4(sharp,1.0), sharp_strength_luma_clamp)); //Calculate the luma, adjust the strength, scale up and clamp
 	sharp_luma = (sharp_clamp * 2.0) * sharp_luma - sharp_clamp; //scale down
@@ -257,11 +258,11 @@ float3 DepthSharpenStaticDofPass(float4 position : SV_Position, float2 tex : TEX
 	return ori + sharp_luma;    // Add the sharpening to the the original.
 }
 
-technique DepthSharpenStaticDof
+technique DepthSharpenconstDof
 {
 	pass
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = DepthSharpenStaticDofPass;
+		PixelShader = DepthSharpenconstDofPass;
 	}
 }

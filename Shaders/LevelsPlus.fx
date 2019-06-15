@@ -62,6 +62,7 @@
  * Added Reshade 3 and 4 compatibility fix.
  *
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 
 #include "ReShade.fxh"
@@ -177,22 +178,22 @@ uniform int3 ACESLuminancePercentage <
 
 float3 ACESFilmRec2020old( float3 color )
 {
-    float Slope = 15.8f;
-    float Toe = 2.12f;
-    float Shoulder = 1.2f;
-    float BlackClip = 5.92f;
-    float WhiteClip = 1.9f;
+    const float Slope = 15.8f;
+    const float Toe = 2.12f;
+    const float Shoulder = 1.2f;
+    const float BlackClip = 5.92f;
+    const float WhiteClip = 1.9f;
     color = color * ACESLuminancePercentage * 0.005f; // Restores luminance
     return ( color * ( Slope * color + Toe ) ) / ( color * ( Shoulder * color + BlackClip ) + WhiteClip );
 }
 
 float3 ACESFilmRec2020( float3 color )
 {
-	float Slope = 0.98;
-	float Toe = 0.3;
-	float Shoulder = 0.22;
-	float BlackClip = 0;
-	float WhiteClip = 0.025;
+	const float Slope = 0.98;
+	const float Toe = 0.3;
+	const float Shoulder = 0.22;
+	const float BlackClip = 0;
+	const float WhiteClip = 0.025;
     color = color * ACESLuminancePercentage * 0.005f; // Restores luminance
     return ( color * ( Slope * color + Toe ) ) / ( color * ( Shoulder * color + BlackClip ) + WhiteClip );
 }
@@ -228,8 +229,8 @@ static const float3x3 ACESOutputMat = float3x3
 
 float3 RRTAndODTFit(float3 v)
 {
-    float3 a = v * (v + 0.0245786f) - 0.000090537f;
-    float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    const float3 a = v * (v + 0.0245786f) - 0.000090537f;
+    const float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
     return a / b;
 }
 
@@ -243,9 +244,7 @@ float3 ACESFitted(float3 color)
     color = mul(ACESOutputMat, color);
 
     // Clamp to [0, 1]
-    color = saturate(color);
-
-    return color;
+    return saturate(color);
 }
 
 
@@ -272,10 +271,10 @@ float Curve(float x, float centerX, float centerY)
     {
       if (x < 0.5)
       {
-        return 0-pow(sin(PI * ((0-x)/4*(0-centerX))),2)*2*(0-centerY);
+        return 0-((sin(PI * ((0-x)/4*(0-centerX))))*2)*2*(0-centerY);
       } else if (x > 0.5)
       {
-        return 1-pow(sin(PI * ((1-x)/4*(1-centerX))),2)*2*(1-centerY);
+        return 1-((sin(PI * ((1-x)/4*(1-centerX))))*2)*2*(1-centerY);
       } else
       {
         return x;
@@ -317,7 +316,7 @@ float  Outputlevel(float color, float outputwhitepoint, float outputblackpoint)
 
 float3 LevelsPlusPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-  float3 InputColor = tex2D(ReShade::BackBuffer, texcoord).rgb;
+  const float3 InputColor = tex2D(ReShade::BackBuffer, texcoord).rgb;
   float3 OutputColor = InputColor;
 
   // outPixel = (pow(((inPixel * 255.0) - inBlack) / (inWhite - inBlack), inGamma) * (outWhite - outBlack) + outBlack) / 255.0; // Nvidia reference formula

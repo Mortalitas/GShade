@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////////
 // By Otis / Infuse Project
 ///////////////////////////////////////////////////////////////////
+// Lightly optimized by Marot Satil for the GShade project.
 
 uniform float EffectStrength <
 	ui_type = "slider";
@@ -56,7 +57,7 @@ float CalculateWeight(float distanceFromSource, float sourceDepth, float neighbo
 void PS_Otis_DEH_BlockBlurHorizontal(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD, out float4 outFragment : SV_Target0)
 {
 	float4 color = tex2D(ReShade::BackBuffer, texcoord);
-	float colorDepth = ReShade::GetLinearizedDepth(texcoord).r;
+	const float colorDepth = ReShade::GetLinearizedDepth(texcoord).r;
 	float n = 1.0f;
 
 	[loop]
@@ -78,7 +79,7 @@ void PS_Otis_DEH_BlockBlurHorizontal(in float4 pos : SV_Position, in float2 texc
 void PS_Otis_DEH_BlockBlurVertical(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD, out float4 outFragment : SV_Target0)
 {
 	float4 color = tex2D(Otis_SamplerFragmentBuffer1, texcoord);
-	float colorDepth = ReShade::GetLinearizedDepth(texcoord).r;
+	const float colorDepth = ReShade::GetLinearizedDepth(texcoord).r;
 	float n=1.0f;
 	
 	[loop]
@@ -99,9 +100,9 @@ void PS_Otis_DEH_BlockBlurVertical(in float4 pos : SV_Position, in float2 texcoo
 
 void PS_Otis_DEH_BlendBlurWithNormalBuffer(float4 vpos: SV_Position, float2 texcoord: TEXCOORD, out float4 fragment: SV_Target0)
 {
-	float depth = ReShade::GetLinearizedDepth(texcoord).r;
-	float4 blendedFragment = lerp(tex2D(ReShade::BackBuffer, texcoord), tex2D(Otis_SamplerFragmentBuffer2, texcoord), clamp(depth  * EffectStrength, 0.0, 1.0)); 
-	float yFactor = clamp(texcoord.y > 0.5 ? 1-((texcoord.y-0.5)*2.0) : texcoord.y * 2.0, 0, 1);
+	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+	const float4 blendedFragment = lerp(tex2D(ReShade::BackBuffer, texcoord), tex2D(Otis_SamplerFragmentBuffer2, texcoord), clamp(depth  * EffectStrength, 0.0, 1.0)); 
+	const float yFactor = clamp(texcoord.y > 0.5 ? 1-((texcoord.y-0.5)*2.0) : texcoord.y * 2.0, 0, 1);
 	fragment = lerp(blendedFragment, float4(FogColor, blendedFragment.r), clamp((depth-FogStart) * yFactor * FogFactor, 0.0, 1.0));
 }
 

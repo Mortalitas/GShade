@@ -1,3 +1,4 @@
+// Lightly optimized by Marot Satil for the GShade project.
   //========//
  // Macros //
 //========//
@@ -194,7 +195,7 @@ float3 blur(sampler2D sp, float2 uv, float2 dir) {
 	dir *= HEX_LENS_FLARE_DOWNSCALE * uScale;
 	uv += dir * 0.5;
 
-	[unroll]
+	[loop]
 	for (int i = 0; i < HEX_LENS_FLARE_BLUR_SAMPLES; ++i)
 		color += float4(tex2D(sp, uv + dir * i).rgb, 1.0);
 
@@ -242,17 +243,16 @@ float4 PS_VerticalBlur(
 	float4 position : SV_POSITION,
 	float2 uv : TEXCOORD
 ) : SV_TARGET {
-	float2 dir = cPixelSize * float2(cos(c2PI / 2), sin(c2PI / 2));
-	float3 color = blur(sPrepare, uv, dir);
+	const float2 dir = cPixelSize * float2(cos(c2PI / 2), sin(c2PI / 2));
 
-	return float4(color, 1.0);
+	return float4(blur(sPrepare, uv, dir), 1.0);
 }
 
 float4 PS_DiagonalBlur(
 	float4 position : SV_POSITION,
 	float2 uv : TEXCOORD
 ) : SV_TARGET {
-	float2 dir = cPixelSize * float2(cos(-c2PI / 6), sin(-c2PI / 6));
+	const float2 dir = cPixelSize * float2(cos(-c2PI / 6), sin(-c2PI / 6));
 	float3 color = blur(sPrepare, uv, dir);
 	color += tex2D(sVerticalBlur, uv).rgb;
 
@@ -263,14 +263,13 @@ float4 PS_RhomboidBlur(
 	float4 position : SV_POSITION,
 	float2 uv : TEXCOORD
 ) : SV_TARGET {
-	float2 dir1 = cPixelSize * float2(cos(-c2PI / 6), sin(-c2PI / 6));
-	float3 color1 = blur(sVerticalBlur, uv, dir1);
+	const float2 dir1 = cPixelSize * float2(cos(-c2PI / 6), sin(-c2PI / 6));
+	const float3 color1 = blur(sVerticalBlur, uv, dir1);
 
-	float2 dir2 = cPixelSize * float2(cos(-5 * c2PI / 6), sin(-5 * c2PI / 6));
-	float3 color2 = blur(sDiagonalBlur, uv, dir2);
+	const float2 dir2 = cPixelSize * float2(cos(-5 * c2PI / 6), sin(-5 * c2PI / 6));
+	const float3 color2 = blur(sDiagonalBlur, uv, dir2);
 
-	float3 color = (color1 + color2) * 0.5;
-	return float4(color, 1.0);
+	return float4((color1 + color2) * 0.5, 1.0);
 }
 
 float4 PS_Blend(
@@ -278,7 +277,7 @@ float4 PS_Blend(
 	float2 uv : TEXCOORD
 ) : SV_TARGET {
 	float3 color = tex2D(sColor, uv).rgb;
-	float3 result = tex2D(sRhomboidBlur, uv).rgb;
+	const float3 result = tex2D(sRhomboidBlur, uv).rgb;
 
 	color = 1.0 - (1.0 - color) * (1.0 - result * uIntensity);
 

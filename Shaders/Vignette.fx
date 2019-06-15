@@ -5,6 +5,7 @@
  * Darkens the edges of the image to make it look more like it was shot with a camera lens.
  * May cause banding artifacts.
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform int Type <
 	ui_type = "combo";
@@ -52,7 +53,7 @@ float4 VignettePass(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Targe
 
 		// Calculate the distance
 		distance_xy /= Radius;
-		float distance = dot(distance_xy, distance_xy);
+		const float distance = dot(distance_xy, distance_xy);
 
 		// Apply the vignette
 		color.rgb *= (1.0 + pow(distance, Slope * 0.5) * Amount); //pow - multiply
@@ -101,7 +102,7 @@ float4 VignettePass(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Targe
 	if (Type == 6) // New round (-x*x+x) * (-y*y+y) method.
 	{
 		//tex.y /= float2((ReShade::PixelSize.y / ReShade::PixelSize.x), Ratio);
-		float tex_xy = dot(float4(tex, tex), float4(-tex, 1.0, 1.0)); //dot is actually slower
+		const float tex_xy = dot(float4(tex, tex), float4(-tex, 1.0, 1.0)); //dot is actually slower
 		color.rgb = saturate(tex_xy * 4.0) * color.rgb;
 	}
 

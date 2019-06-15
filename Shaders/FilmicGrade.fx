@@ -6,6 +6,7 @@ Attribution-ShareAlike 4.0 International License.
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
+// Lightly optimized by Marot Satil for the GShade project.
 
   ////////////////////
  /////// MENU ///////
@@ -65,8 +66,8 @@ static const float2 MaxUV = float2(0.492, 0.877);
 // Overlay blending mode
 float Overlay(float LayerAB)
 {
-	float MinAB = min(LayerAB, 0.5);
-	float MaxAB = max(LayerAB, 0.5);
+	static float MinAB = min(LayerAB, 0.5);
+	static float MaxAB = max(LayerAB, 0.5);
 	return 2 * (MinAB * MinAB + MaxAB + MaxAB - MaxAB * MaxAB) - 1.5;
 }
 

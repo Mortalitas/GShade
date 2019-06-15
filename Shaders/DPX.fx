@@ -1,6 +1,7 @@
 /**
  * DPX/Cineon shader by Loadus
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float3 RGB_Curve <
 	ui_type = "slider";
@@ -50,16 +51,16 @@ float3 DPXPass(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 
 	float3 B = input;
 	B = B * (1.0 - Contrast) + (0.5 * Contrast);
-	float3 Btemp = (1.0 / (1.0 + exp(RGB_Curve / 2.0)));
+	const float3 Btemp = (1.0 / (1.0 + exp(RGB_Curve / 2.0)));
 	B = ((1.0 / (1.0 + exp(-RGB_Curve * (B - RGB_C)))) / (-2.0 * Btemp + 1.0)) + (-Btemp / (-2.0 * Btemp + 1.0));
 
-	float value = max(max(B.r, B.g), B.b);
+	const float value = max(max(B.r, B.g), B.b);
 	float3 color = B / value;
 	color = pow(abs(color), 1.0 / Colorfulness);
 
 	float3 c0 = color * value;
 	c0 = mul(XYZ, c0);
-	float luma = dot(c0, float3(0.30, 0.59, 0.11));
+	const float luma = dot(c0, float3(0.30, 0.59, 0.11));
 	c0 = (1.0 - Saturation) * luma + Saturation * c0;
 	c0 = mul(RGB, c0);
 

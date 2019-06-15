@@ -6,7 +6,7 @@ Attribution-NonCommercial-ShareAlike 4.0 International License.
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-nc-sa/4.0/.
 
-Modified by Marot for ReShade 4.0 compatibility.
+Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 */
 
 // Chromatic Aberration PS (Prism) v1.2.4
@@ -57,7 +57,7 @@ uniform int SampleCount <
 // Special Hue generator by JMF
 float3 Spectrum(float Hue)
 {
-	float Hue4 = Hue * 4.0;
+	const float Hue4 = Hue * 4.0;
 	float3 HueColor = abs(Hue4 - float3(1.0, 2.0, 1.0));
 	HueColor = saturate(1.5 - HueColor);
 	HueColor.xz += saturate(Hue4 - 3.5);
@@ -76,9 +76,9 @@ sampler SamplerColor
 void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord, out float3 BluredImage : SV_Target)
 {
 	// Grab Aspect Ratio
-	float Aspect = ReShade::AspectRatio;
+	const float Aspect = ReShade::AspectRatio;
 	// Grab Pixel V size
-	float Pixel = ReShade::PixelSize.y;
+	const float Pixel = ReShade::PixelSize.y;
 
 	// Adjust number of samples
 	// IF Automatic IS True Ceil odd numbers to even with minimum 6, else Clamp odd numbers to even
@@ -86,16 +86,16 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 	// Clamp maximum sample count
 	Samples = min(Samples, PrismLimit);
 	// Calculate sample offset
-	float Sample = 1.0 / Samples;
+	const float Sample = 1.0 / Samples;
 
 	// Convert UVs to centered coordinates with correct Aspect Ratio
 	float2 RadialCoord = texcoord - 0.5;
 	RadialCoord.x *= Aspect;
 
 	// Generate radial mask from center (0) to the corner of the screen (1)
-	float Mask = pow(2.0 * length(RadialCoord) * rsqrt(Aspect * Aspect + 1.0), Curve);
+	const float Mask = pow(2.0 * length(RadialCoord) * rsqrt(Aspect * Aspect + 1.0), Curve);
 
-	float OffsetBase = Mask * Aberration * Pixel * 2.0;
+	const float OffsetBase = Mask * Aberration * Pixel * 2.0;
 	
 	// Each loop represents one pass
 	if(abs(OffsetBase) < Pixel) BluredImage = tex2D(SamplerColor, texcoord).rgb;
@@ -104,8 +104,8 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 		BluredImage = 0.0;
 		for (float P = 0.0; P < Samples; P++)
 		{
-			float Progress = P / Samples;
-			float Offset = OffsetBase * (Progress - 0.5) + 1.0;
+			const float Progress = P / Samples;
+			const float Offset = OffsetBase * (Progress - 0.5) + 1.0;
 	
 			// Scale UVs at center
 			float2 Position = RadialCoord / Offset;

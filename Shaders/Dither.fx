@@ -85,7 +85,7 @@ int get_bayer(int2 i) {
 
 //#define fmod(a, b) ((frac(abs(a / b)) * abs(b)) * ((step(a, 0) - 0.5) * 2.0))
 float2 fmod(float2 a, float2 b) {
-    float2 c = frac(abs(a / b)) * abs(b);
+    const float2 c = frac(abs(a / b)) * abs(b);
     return (a < 0) ? -c : c;
 }
 
@@ -93,13 +93,13 @@ float2 fmod(float2 a, float2 b) {
 float dither(float x, float2 uv) {
     #if (__RENDERER__ & 0x10000) // If OpenGL
     
-    float2 index = fmod(uv * ReShade::ScreenSize, 8.0);
-    float limit  = (float(get_bayer(int2(index)) + 1) / 64.0) * step(index.x, 8.0);
+    const float2 index = fmod(uv * ReShade::ScreenSize, 8.0);
+    const float limit  = (float(get_bayer(int2(index)) + 1) / 64.0) * step(index.x, 8.0);
     
     #else // DirectX
 
-    int2 index = int2(uv * ReShade::ScreenSize) % 8;
-    float limit = (float(get_bayer(index) + 1) / 64.0) * step(index.x, 8);
+    const int2 index = int2(uv * ReShade::ScreenSize) % 8;
+    const float limit = (float(get_bayer(index) + 1) / 64.0) * step(index.x, 8);
 
     #endif
     return step(limit, x);
@@ -110,9 +110,8 @@ float get_luma_linear(float3 color) {
 }
 
 float rand(float2 uv, float t) {
-    float seed = dot(uv, float2(12.9898, 78.233));
-    float noise = frac(sin(seed) * 43758.5453 + t);
-    return noise;
+    const float seed = dot(uv, float2(12.9898, 78.233));
+    return frac(sin(seed) * 43758.5453 + t);
 }
 
 //Shaders/////////////////////////////////////////////////////////////////////////////////
@@ -127,8 +126,8 @@ void PS_Dither(
     if (fQuantization > 0.0)
         color = round(color * fQuantization) / fQuantization;
 
-    float luma = get_luma_linear(color.rgb);
-    float pattern = dither(luma, uv);
+    const float luma = get_luma_linear(color.rgb);
+    const float pattern = dither(luma, uv);
     
     if (iDitherMode == 0) // Add
         color.rgb += color.rgb * pattern * fDithering;

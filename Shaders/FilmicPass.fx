@@ -3,6 +3,7 @@
  *
  * Applies some common color adjustments to mimic a more cinema-like look.
  */
+ // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float Strength <
 	ui_type = "slider";
@@ -80,8 +81,8 @@ uniform float3 LumCoeff <
 float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 B = tex2D(ReShade::BackBuffer, texcoord).rgb;	
-	float3 G = B;
-	float3 H = 0.01;
+	static float3 G = B;
+	static float3 H = 0.01;
  
 	B = saturate(B);
 	B = pow(B, Linearization);
@@ -92,15 +93,15 @@ float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
  
 	B = pow(abs(B), 1.0 / BaseGamma);
  
-	float a = RedCurve;
-	float b = GreenCurve;
-	float c = BlueCurve;
-	float d = BaseCurve;
+	static float a = RedCurve;
+	static float b = GreenCurve;
+	static float c = BlueCurve;
+	static float d = BaseCurve;
  
-	float y = 1.0 / (1.0 + exp(a / 2.0));
-	float z = 1.0 / (1.0 + exp(b / 2.0));
-	float w = 1.0 / (1.0 + exp(c / 2.0));
-	float v = 1.0 / (1.0 + exp(d / 2.0));
+	static float y = 1.0 / (1.0 + exp(a / 2.0));
+	static float z = 1.0 / (1.0 + exp(b / 2.0));
+	static float w = 1.0 / (1.0 + exp(c / 2.0));
+	static float v = 1.0 / (1.0 + exp(d / 2.0));
  
 	float3 C = B;
  
@@ -110,7 +111,7 @@ float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
  
 	D = pow(abs(D), 1.0 / EffectGamma);
  
-	float3 Di = 1.0 - D;
+	static float3 Di = 1.0 - D;
  
 	D = lerp(D, Di, Bleach);
  
@@ -137,26 +138,26 @@ float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
  
 	F = (1.0 / (1.0 + exp(-d * (F - 0.5))) - v) / (1.0 - 2.0 * v);
  
-	float r2R = 1.0 - Saturation;
-	float g2R = 0.0 + Saturation;
-	float b2R = 0.0 + Saturation;
+	static float r2R = 1.0 - Saturation;
+	static float g2R = 0.0 + Saturation;
+	static float b2R = 0.0 + Saturation;
  
-	float r2G = 0.0 + Saturation;
-	float g2G = (1.0 - Fade) - Saturation;
-	float b2G = (0.0 + Fade) + Saturation;
+	static float r2G = 0.0 + Saturation;
+	static float g2G = (1.0 - Fade) - Saturation;
+	static float b2G = (0.0 + Fade) + Saturation;
  
-	float r2B = 0.0 + Saturation;
-	float g2B = (0.0 + Fade) + Saturation;
-	float b2B = (1.0 - Fade) - Saturation;
+	static float r2B = 0.0 + Saturation;
+	static float g2B = (0.0 + Fade) + Saturation;
+	static float b2B = (1.0 - Fade) - Saturation;
  
-	float3 iF = F;
+	static float3 iF = F;
  
 	F.r = (iF.r * r2R + iF.g * g2R + iF.b * b2R);
 	F.g = (iF.r * r2G + iF.g * g2G + iF.b * b2G);
 	F.b = (iF.r * r2B + iF.g * g2B + iF.b * b2B);
  
 	float N = dot(F.rgb, LumCoeff);
-	float3 Cn = F;
+	static float3 Cn = F;
  
 	if (N < 0.5)
 		Cn = (2.0 * N - 1.0) * (F - F * F) + F;
@@ -165,8 +166,7 @@ float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
  
 	Cn = pow(max(Cn,0), 1.0 / Linearization);
  
-	float3 Fn = lerp(B, Cn, Strength);
-	return Fn;
+	return lerp(B, Cn, Strength);
 }
 
 technique FilmicPass
