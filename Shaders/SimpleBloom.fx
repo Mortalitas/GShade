@@ -13,14 +13,14 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 	 /// MENU ///
 	////////////
 
-#include "ReShadeUI.fxh"
-
-uniform float BlurMultiplier < __UNIFORM_SLIDER_FLOAT1
+uniform float BlurMultiplier <
+	ui_type = "slider";
 	ui_label = "Radius";
 	ui_min = 1; ui_max = 16; ui_step = 0.01;
 > = 1.23;
 
-uniform float2 Blend < __UNIFORM_SLIDER_FLOAT2
+uniform float2 Blend <
+	ui_type = "slider";
 	ui_min = 0; ui_max = 1; ui_step = 0.001;
 > = float2(0.0, 0.8);
 
