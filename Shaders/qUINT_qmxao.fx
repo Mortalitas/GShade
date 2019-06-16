@@ -7,9 +7,9 @@
    		paypal.me/mcflypg
    		patreon.com/mcflypg
 
-    Ambient Obscurance with Indirect Lighting "MXAO"
+    Ambient Obscurance with Indirect Lighting "qMXAO"
     by Marty McFly / P.Gilcher
-    part of qUINT shader library for ReShade 3
+    part of qUINT shader library for ReShade 4
 
     CC BY-NC-ND 3.0 licensed.
 
@@ -19,35 +19,35 @@
 	Preprocessor settings
 =============================================================================*/
 
-#ifndef MXAO_MIPLEVEL_AO
- #define MXAO_MIPLEVEL_AO		0	//[0 to 2]      Miplevel of AO texture. 0 = fullscreen, 1 = 1/2 screen width/height, 2 = 1/4 screen width/height and so forth. Best results: IL MipLevel = AO MipLevel + 2
+#ifndef qMXAO_MIPLEVEL_AO
+ #define qMXAO_MIPLEVEL_AO		0	//[0 to 2]      Miplevel of AO texture. 0 = fullscreen, 1 = 1/2 screen width/height, 2 = 1/4 screen width/height and so forth. Best results: IL MipLevel = AO MipLevel + 2
 #endif
 
-#ifndef MXAO_MIPLEVEL_IL
- #define MXAO_MIPLEVEL_IL		2	//[0 to 4]      Miplevel of IL texture. 0 = fullscreen, 1 = 1/2 screen width/height, 2 = 1/4 screen width/height and so forth.
+#ifndef qMXAO_MIPLEVEL_IL
+ #define qMXAO_MIPLEVEL_IL		2	//[0 to 4]      Miplevel of IL texture. 0 = fullscreen, 1 = 1/2 screen width/height, 2 = 1/4 screen width/height and so forth.
 #endif
 
-#ifndef MXAO_ENABLE_IL
- #define MXAO_ENABLE_IL			0	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.
+#ifndef qMXAO_ENABLE_IL
+ #define qMXAO_ENABLE_IL			0	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.
 #endif
 
-#ifndef MXAO_SMOOTHNORMALS
- #define MXAO_SMOOTHNORMALS     0   //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
+#ifndef qMXAO_SMOOTHNORMALS
+ #define qMXAO_SMOOTHNORMALS     1   //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
 #endif
 
-#ifndef MXAO_TWO_LAYER
- #define MXAO_TWO_LAYER         0   //[0 or 1]      Splits MXAO into two separate layers that allow for both large and fine AO.
+#ifndef qMXAO_TWO_LAYER
+ #define qMXAO_TWO_LAYER         1   //[0 or 1]      Splits MXAO into two separate layers that allow for both large and fine AO.
 #endif
 
-#ifndef MXAO_HQ
- #define MXAO_HQ                0   //[0 or 1]      Enables a different, more physically accurate but slower SSAO mode. Based on Ground Truth Ambient Occlusion by Activision. No IL yet.
+#ifndef qMXAO_HQ
+ #define qMXAO_HQ                0   //[0 or 1]      Enables a different, more physically accurate but slower SSAO mode. Based on Ground Truth Ambient Occlusion by Activision. No IL yet.
 #endif
 
 /*=============================================================================
 	UI Uniforms
 =============================================================================*/
 
-uniform int MXAO_GLOBAL_SAMPLE_QUALITY_PRESET <
+uniform int qMXAO_GLOBAL_SAMPLE_QUALITY_PRESET <
 	ui_type = "combo";
     ui_label = "Sample Quality";
 	ui_items = "Very Low  (4 samples)\0Low       (8 samples)\0Medium    (16 samples)\0High      (24 samples)\0Very High (32 samples)\0Ultra     (64 samples)\0Maximum   (255 samples)\0Auto      (variable)\0";
@@ -55,53 +55,53 @@ uniform int MXAO_GLOBAL_SAMPLE_QUALITY_PRESET <
     ui_category = "Global";
 > = 2;
 
-uniform float MXAO_SAMPLE_RADIUS <
-	ui_type = "drag";
+uniform float qMXAO_SAMPLE_RADIUS <
+	ui_type = "slider";
 	ui_min = 0.5; ui_max = 20.0;
     ui_label = "Sample Radius";
 	ui_tooltip = "Sample radius of MXAO, higher means more large-scale occlusion with less fine-scale details.";  
     ui_category = "Global";      
 > = 2.5;
 
-#if (MXAO_HQ==0)
-    uniform float MXAO_SAMPLE_NORMAL_BIAS <
-        ui_type = "drag";
+#if (qMXAO_HQ==0)
+    uniform float qMXAO_SAMPLE_NORMAL_BIAS <
+        ui_type = "slider";
         ui_min = 0.0; ui_max = 0.8;
         ui_label = "Normal Bias";
         ui_tooltip = "Occlusion Cone bias to reduce self-occlusion of surfaces that have a low angle to each other.";
         ui_category = "Global";
     > = 0.2;
 #else
-    #define MXAO_SAMPLE_NORMAL_BIAS 0       //don't break PS which needs this, cleaner this way
+    #define qMXAO_SAMPLE_NORMAL_BIAS 0       //don't break PS which needs this, cleaner this way
 #endif
 
-uniform float MXAO_GLOBAL_RENDER_SCALE <
-	ui_type = "drag";
+uniform float qMXAO_GLOBAL_RENDER_SCALE <
+	ui_type = "slider";
     ui_label = "Render Size Scale";
 	ui_min = 0.50; ui_max = 1.00;
     ui_tooltip = "Factor of MXAO resolution, lower values greatly reduce performance overhead but decrease quality.\n1.0 = MXAO is computed in original resolution\n0.5 = MXAO is computed in 1/2 width 1/2 height of original resolution\n...";
     ui_category = "Global";
 > = 1.0;
 
-uniform float MXAO_SSAO_AMOUNT <
-	ui_type = "drag";
+uniform float qMXAO_SSAO_AMOUNT <
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 4.00;
     ui_label = "Ambient Occlusion Amount";        
 	ui_tooltip = "Intensity of AO effect. Can cause pitch black clipping if set too high.";
     ui_category = "Ambient Occlusion";
 > = 1.00;
 
-#if(MXAO_ENABLE_IL != 0)
-uniform float MXAO_SSIL_AMOUNT <
-    ui_type = "drag";
+#if(qMXAO_ENABLE_IL != 0)
+uniform float qMXAO_SSIL_AMOUNT <
+    ui_type = "slider";
     ui_min = 0.00; ui_max = 12.00;
     ui_label = "Indirect Lighting Amount";
     ui_tooltip = "Intensity of IL effect. Can cause overexposured white spots if set too high.";
     ui_category = "Indirect Lighting";
 > = 4.00;
 
-uniform float MXAO_SSIL_SATURATION <
-    ui_type = "drag";
+uniform float qMXAO_SSIL_SATURATION <
+    ui_type = "slider";
     ui_min = 0.00; ui_max = 3.00;
     ui_label = "Indirect Lighting Saturation";
     ui_tooltip = "Controls color saturation of IL effect.";
@@ -109,25 +109,25 @@ uniform float MXAO_SSIL_SATURATION <
 > = 1.00;
 #endif
 
-#if (MXAO_TWO_LAYER != 0)
-    uniform float MXAO_SAMPLE_RADIUS_SECONDARY <
-        ui_type = "drag";
+#if (qMXAO_TWO_LAYER != 0)
+    uniform float qMXAO_SAMPLE_RADIUS_SECONDARY <
+        ui_type = "slider";
         ui_min = 0.1; ui_max = 1.00;
         ui_label = "Fine AO Scale";
         ui_tooltip = "Multiplier of Sample Radius for fine geometry. A setting of 0.5 scans the geometry at half the radius of the main AO.";
         ui_category = "Double Layer";
     > = 0.2;
 
-    uniform float MXAO_AMOUNT_FINE <
-        ui_type = "drag";
+    uniform float qMXAO_AMOUNT_FINE <
+        ui_type = "slider";
         ui_min = 0.00; ui_max = 1.00;
         ui_label = "Fine AO intensity multiplier";
         ui_tooltip = "Intensity of small scale AO / IL.";
         ui_category = "Double Layer";
     > = 1.0;
 
-    uniform float MXAO_AMOUNT_COARSE <
-        ui_type = "drag";
+    uniform float qMXAO_AMOUNT_COARSE <
+        ui_type = "slider";
         ui_min = 0.00; ui_max = 1.00;
         ui_label = "Coarse AO intensity multiplier";
         ui_tooltip = "Intensity of large scale AO / IL.";
@@ -135,7 +135,7 @@ uniform float MXAO_SSIL_SATURATION <
     > = 1.0;
 #endif
 
-uniform int MXAO_BLEND_TYPE <
+uniform int qMXAO_BLEND_TYPE <
 	ui_type = "slider";
 	ui_min = 0; ui_max = 3;
     ui_label = "Blending Mode";
@@ -143,23 +143,23 @@ uniform int MXAO_BLEND_TYPE <
     ui_category = "Blending";
 > = 0;
 
-uniform float MXAO_FADE_DEPTH_START <
-	ui_type = "drag";
+uniform float qMXAO_FADE_DEPTH_START <
+	ui_type = "slider";
     ui_label = "Fade Out Start";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_tooltip = "Distance where MXAO starts to fade out. 0.0 = camera, 1.0 = sky. Must be less than Fade Out End.";
     ui_category = "Blending";
 > = 0.05;
 
-uniform float MXAO_FADE_DEPTH_END <
-	ui_type = "drag";
+uniform float qMXAO_FADE_DEPTH_END <
+	ui_type = "slider";
     ui_label = "Fade Out End";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_tooltip = "Distance where MXAO completely fades out. 0.0 = camera, 1.0 = sky. Must be greater than Fade Out Start.";
     ui_category = "Blending";
 > = 0.4;
 
-uniform int MXAO_DEBUG_VIEW_ENABLE <
+uniform int qMXAO_DEBUG_VIEW_ENABLE <
 	ui_type = "combo";
     ui_label = "Enable Debug View";
 	ui_items = "None\0AO/IL channel\0Normal vectors\0";
@@ -173,15 +173,15 @@ uniform int MXAO_DEBUG_VIEW_ENABLE <
 
 #include "qUINT_common.fxh"
 
-texture2D MXAO_ColorTex 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 3+MXAO_MIPLEVEL_IL;};
-texture2D MXAO_DepthTex 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R16F;  MipLevels = 3+MXAO_MIPLEVEL_AO;};
-texture2D MXAO_NormalTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 3+MXAO_MIPLEVEL_IL;};
+texture2D qMXAO_ColorTex 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 3+qMXAO_MIPLEVEL_IL;};
+texture2D qMXAO_DepthTex 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R16F;  MipLevels = 3+qMXAO_MIPLEVEL_AO;};
+texture2D qMXAO_NormalTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 3+qMXAO_MIPLEVEL_IL;};
 
-sampler2D sMXAO_ColorTex	{ Texture = MXAO_ColorTex;	};
-sampler2D sMXAO_DepthTex	{ Texture = MXAO_DepthTex;	};
-sampler2D sMXAO_NormalTex	{ Texture = MXAO_NormalTex;	};
+sampler2D sMXAO_ColorTex	{ Texture = qMXAO_ColorTex;	};
+sampler2D sMXAO_DepthTex	{ Texture = qMXAO_DepthTex;	};
+sampler2D sMXAO_NormalTex	{ Texture = qMXAO_NormalTex;	};
 
-#if(MXAO_ENABLE_IL != 0)
+#if(qMXAO_ENABLE_IL != 0)
  #define BLUR_COMP_SWIZZLE xyzw
 #else
  #define BLUR_COMP_SWIZZLE w
@@ -191,7 +191,7 @@ sampler2D sMXAO_NormalTex	{ Texture = MXAO_NormalTex;	};
 	Vertex Shader
 =============================================================================*/
 
-struct MXAO_VSOUT
+struct qMXAO_VSOUT
 {
 	float4                  vpos        : SV_Position;
     float4                  uv          : TEXCOORD0;
@@ -206,17 +206,17 @@ struct BlurData
 	float4 mask;
 };
 
-MXAO_VSOUT VS_MXAO(in uint id : SV_VertexID)
+qMXAO_VSOUT VS_qMXAO(in uint id : SV_VertexID)
 {
-    MXAO_VSOUT MXAO;
+    qMXAO_VSOUT MXAO;
 
     MXAO.uv.x = (id == 2) ? 2.0 : 0.0;
     MXAO.uv.y = (id == 1) ? 2.0 : 0.0;
-    MXAO.uv.zw = MXAO.uv.xy / MXAO_GLOBAL_RENDER_SCALE;
+    MXAO.uv.zw = MXAO.uv.xy / qMXAO_GLOBAL_RENDER_SCALE;
     MXAO.vpos = float4(MXAO.uv.xy * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 
     static const int samples_per_preset[8] = {4, 8, 16, 24, 32, 64, 255, 8 /*overridden*/};
-    MXAO.samples   = samples_per_preset[MXAO_GLOBAL_SAMPLE_QUALITY_PRESET];
+    MXAO.samples   = samples_per_preset[qMXAO_GLOBAL_SAMPLE_QUALITY_PRESET];
     
     MXAO.uvtoviewADD = float3(-1.0,-1.0,1.0);
     MXAO.uvtoviewMUL = float3(2.0,2.0,0.0);
@@ -234,12 +234,12 @@ MXAO_VSOUT VS_MXAO(in uint id : SV_VertexID)
 	Functions
 =============================================================================*/
 
-float3 get_position_from_uv(in float2 uv, in MXAO_VSOUT MXAO)
+float3 get_position_from_uv(in float2 uv, in qMXAO_VSOUT MXAO)
 {
     return (uv.xyx * MXAO.uvtoviewMUL + MXAO.uvtoviewADD) * qUINT::linear_depth(uv) * RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
 }
 
-float3 get_position_from_uv_mipmapped(in float2 uv, in MXAO_VSOUT MXAO, in int miplevel)
+float3 get_position_from_uv_mipmapped(in float2 uv, in qMXAO_VSOUT MXAO, in int miplevel)
 {
     return (uv.xyx * MXAO.uvtoviewMUL + MXAO.uvtoviewADD) * tex2Dlod(sMXAO_DepthTex, float4(uv.xyx, miplevel)).x;
 }
@@ -258,7 +258,7 @@ float compute_spatial_tap_weight(in BlurData center, in BlurData tap)
 	return depth_term * normal_term;
 }
 
-float4 blur_filter(in MXAO_VSOUT MXAO, in sampler inputsampler, in float inputscale, in float radius, in int blursteps)
+float4 blur_filter(in qMXAO_VSOUT MXAO, in sampler inputsampler, in float inputscale, in float radius, in int blursteps)
 {
 	float4 blur_uv = float4(MXAO.uv.xy, 0, 0);
 
@@ -296,18 +296,18 @@ float4 blur_filter(in MXAO_VSOUT MXAO, in sampler inputsampler, in float inputsc
 	return lerp(blursum.BLUR_COMP_SWIZZLE, blursum_noweight.BLUR_COMP_SWIZZLE, blurweight < 2);
 }
 
-void sample_parameter_setup(in MXAO_VSOUT MXAO, in float scaled_depth, in float layer_id, out float scaled_radius, out float falloff_factor)
+void sample_parameter_setup(in qMXAO_VSOUT MXAO, in float scaled_depth, in float layer_id, out float scaled_radius, out float falloff_factor)
 {
-    scaled_radius  = 0.25 * MXAO_SAMPLE_RADIUS / (MXAO.samples * (scaled_depth + 2.0));
-    falloff_factor = -1.0/(MXAO_SAMPLE_RADIUS * MXAO_SAMPLE_RADIUS);
+    scaled_radius  = 0.25 * qMXAO_SAMPLE_RADIUS / (MXAO.samples * (scaled_depth + 2.0));
+    falloff_factor = -1.0/(qMXAO_SAMPLE_RADIUS * qMXAO_SAMPLE_RADIUS);
 
-    #if(MXAO_TWO_LAYER != 0)
-        scaled_radius  *= lerp(1.0, MXAO_SAMPLE_RADIUS_SECONDARY + 1e-6, layer_id);
-        falloff_factor *= lerp(1.0, 1.0 / (MXAO_SAMPLE_RADIUS_SECONDARY * MXAO_SAMPLE_RADIUS_SECONDARY + 1e-6), layer_id);
+    #if(qMXAO_TWO_LAYER != 0)
+        scaled_radius  *= lerp(1.0, qMXAO_SAMPLE_RADIUS_SECONDARY + 1e-6, layer_id);
+        falloff_factor *= lerp(1.0, 1.0 / (qMXAO_SAMPLE_RADIUS_SECONDARY * qMXAO_SAMPLE_RADIUS_SECONDARY + 1e-6), layer_id);
     #endif
 }
 
-void smooth_normals(inout float3 normal, in float3 position, in MXAO_VSOUT MXAO)
+void smooth_normals(inout float3 normal, in float3 position, in qMXAO_VSOUT MXAO)
 {
     float2 scaled_radius = 0.018 / position.z * qUINT::ASPECT_RATIO;
     float3 neighbour_normal[4] = {normal, normal, normal, normal};
@@ -345,7 +345,7 @@ void smooth_normals(inout float3 normal, in float3 position, in MXAO_VSOUT MXAO)
 	Pixel Shaders
 =============================================================================*/
 
-void PS_InputBufferSetup(in MXAO_VSOUT MXAO, out float4 color : SV_Target0, out float4 depth : SV_Target1, out float4 normal : SV_Target2)
+void PS_qInputBufferSetup(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0, out float4 depth : SV_Target1, out float4 normal : SV_Target2)
 {
     float3 single_pixel_offset = float3(qUINT::PIXEL_SIZE.xy, 0);
 
@@ -366,10 +366,10 @@ void PS_InputBufferSetup(in MXAO_VSOUT MXAO, out float4 color : SV_Target0, out 
 	depth 	= qUINT::linear_depth(MXAO.uv.xy) * RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;   
 }
 
-void PS_StencilSetup(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
+void PS_StencilSetup(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {        
-    if(    qUINT::linear_depth(MXAO.uv.zw) >= MXAO_FADE_DEPTH_END
-        || 0.25 * 0.5 * MXAO_SAMPLE_RADIUS / (tex2D(sMXAO_DepthTex, MXAO.uv.zw).x + 2.0) * BUFFER_HEIGHT < 1.0
+    if(    qUINT::linear_depth(MXAO.uv.zw) >= qMXAO_FADE_DEPTH_END
+        || 0.25 * 0.5 * qMXAO_SAMPLE_RADIUS / (tex2D(sMXAO_DepthTex, MXAO.uv.zw).x + 2.0) * BUFFER_HEIGHT < 1.0
         || MXAO.uv.z > 1.0
         || MXAO.uv.w > 1.0
         ) discard;
@@ -377,7 +377,7 @@ void PS_StencilSetup(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
     color = 1.0;
 }
 
-void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
+void PS_qAmbientObscurance(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {
 	float3 position = get_position_from_uv_mipmapped(MXAO.uv.zw, MXAO, 0);
     float3 normal = tex2D(sMXAO_NormalTex, MXAO.uv.zw).xyz * 2.0 - 1.0;
@@ -386,13 +386,13 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 
     float  layer_id = (MXAO.vpos.x + MXAO.vpos.y) % 2.0;
 
-#if(MXAO_SMOOTHNORMALS != 0)
+#if(qMXAO_SMOOTHNORMALS != 0)
     smooth_normals(normal, position, MXAO);
 #endif
     float linear_depth = position.z / RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;        
     position += normal * linear_depth;
 
-    if(MXAO_GLOBAL_SAMPLE_QUALITY_PRESET == 7) MXAO.samples = 2 + floor(0.05 * MXAO_SAMPLE_RADIUS / linear_depth);
+    if(qMXAO_GLOBAL_SAMPLE_QUALITY_PRESET == 7) MXAO.samples = 2 + floor(0.05 * qMXAO_SAMPLE_RADIUS / linear_depth);
 
     float scaled_radius;
     float falloff_factor;
@@ -412,17 +412,17 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 
         float sample_mip = saturate(scaled_radius * i * 20.0) * 3.0;
            
-    	float3 occlusion_vector = -position + get_position_from_uv_mipmapped(sample_uv, MXAO, sample_mip + MXAO_MIPLEVEL_AO);                
+    	float3 occlusion_vector = -position + get_position_from_uv_mipmapped(sample_uv, MXAO, sample_mip + qMXAO_MIPLEVEL_AO);                
         float  occlusion_distance_squared = dot(occlusion_vector, occlusion_vector);
         float  occlusion_normal_angle = dot(occlusion_vector, normal) * rsqrt(occlusion_distance_squared);
 
-        float sample_occlusion = saturate(1.0 + falloff_factor * occlusion_distance_squared) * saturate(occlusion_normal_angle - MXAO_SAMPLE_NORMAL_BIAS);
-#if(MXAO_ENABLE_IL != 0)
+        float sample_occlusion = saturate(1.0 + falloff_factor * occlusion_distance_squared) * saturate(occlusion_normal_angle - qMXAO_SAMPLE_NORMAL_BIAS);
+#if(qMXAO_ENABLE_IL != 0)
         [branch]
         if(sample_occlusion > 0.1)
         {
-                float3 sample_indirect_lighting = tex2Dlod(sMXAO_ColorTex, float4(sample_uv, 0, sample_mip + MXAO_MIPLEVEL_IL)).xyz;
-                float3 sample_normal = tex2Dlod(sMXAO_NormalTex, float4(sample_uv, 0, sample_mip + MXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0;
+                float3 sample_indirect_lighting = tex2Dlod(sMXAO_ColorTex, float4(sample_uv, 0, sample_mip + qMXAO_MIPLEVEL_IL)).xyz;
+                float3 sample_normal = tex2Dlod(sMXAO_NormalTex, float4(sample_uv, 0, sample_mip + qMXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0;
                 sample_indirect_lighting *= saturate(dot(-sample_normal, occlusion_vector) * rsqrt(occlusion_distance_squared) * 4.0) * saturate(1.0 + falloff_factor * occlusion_distance_squared * 0.25);
                 color += float4(sample_indirect_lighting, sample_occlusion);
         }
@@ -431,20 +431,20 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 #endif
     }
 
-    color = saturate(color / ((1.0 - MXAO_SAMPLE_NORMAL_BIAS) * MXAO.samples) * 2.0);
+    color = saturate(color / ((1.0 - qMXAO_SAMPLE_NORMAL_BIAS) * MXAO.samples) * 2.0);
     color = color.BLUR_COMP_SWIZZLE;
 
-#if(MXAO_TWO_LAYER != 0)
-    color *= lerp(MXAO_AMOUNT_COARSE, MXAO_AMOUNT_FINE, layer_id); 
+#if(qMXAO_TWO_LAYER != 0)
+    color *= lerp(qMXAO_AMOUNT_COARSE, qMXAO_AMOUNT_FINE, layer_id); 
 #endif
 }
 
-void PS_AmbientObscuranceHQ(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
+void PS_qAmbientObscuranceHQ(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {
 	float3 position = get_position_from_uv_mipmapped(MXAO.uv.zw, MXAO, 0);
 	float3 normal 	= tex2D(sMXAO_NormalTex, MXAO.uv.zw).xyz * 2.0 - 1.0;	
 
-#if(MXAO_SMOOTHNORMALS != 0)
+#if(qMXAO_SMOOTHNORMALS != 0)
     smooth_normals(normal, position, MXAO);
 #endif
 
@@ -454,8 +454,8 @@ void PS_AmbientObscuranceHQ(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 	int stepshalf = MXAO.samples / (directions * 2);
 	
 	float angle_correct = 1 - viewdir.z * viewdir.z; 
-	float scaled_radius = MXAO_SAMPLE_RADIUS / position.z / stepshalf * RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
-	float falloff_factor = 0.25 * rcp(MXAO_SAMPLE_RADIUS * MXAO_SAMPLE_RADIUS);	
+	float scaled_radius = qMXAO_SAMPLE_RADIUS / position.z / stepshalf * RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
+	float falloff_factor = 0.25 * rcp(qMXAO_SAMPLE_RADIUS * qMXAO_SAMPLE_RADIUS);	
 
 	float sample_jitter = dot(floor(MXAO.vpos.xy % 4 + 0.1), float2(0.0625, 0.25)) + 0.0625;
 
@@ -482,8 +482,8 @@ void PS_AmbientObscuranceHQ(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 			float sample_mip = saturate(scaled_radius * j * 0.01) * 3.0;
 
 			float3 occlusion_vector[2];
-			occlusion_vector[0] = -position + get_position_from_uv_mipmapped(sample_uv.xy, MXAO, sample_mip + MXAO_MIPLEVEL_AO);  
-			occlusion_vector[1] = -position + get_position_from_uv_mipmapped(sample_uv.zw, MXAO, sample_mip + MXAO_MIPLEVEL_AO); 
+			occlusion_vector[0] = -position + get_position_from_uv_mipmapped(sample_uv.xy, MXAO, sample_mip + qMXAO_MIPLEVEL_AO);  
+			occlusion_vector[1] = -position + get_position_from_uv_mipmapped(sample_uv.zw, MXAO, sample_mip + qMXAO_MIPLEVEL_AO); 
 
 			float2  occlusion_distance_squared = float2(dot(occlusion_vector[0], occlusion_vector[0]), 
 														dot(occlusion_vector[1], occlusion_vector[1]));
@@ -523,14 +523,14 @@ void PS_AmbientObscuranceHQ(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 	color = color.BLUR_COMP_SWIZZLE;
 }
 
-void PS_SpatialFilter1(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
+void PS_qSpatialFilter1(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {
-    color = blur_filter(MXAO, qUINT::sCommonTex0, MXAO_GLOBAL_RENDER_SCALE, 0.75, 4);
+    color = blur_filter(MXAO, qUINT::sCommonTex0, qMXAO_GLOBAL_RENDER_SCALE, 0.75, 4);
 }
 
-void PS_SpatialFilter2(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
+void PS_qSpatialFilter2(qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {
-    float4 ssil_ssao = blur_filter(MXAO, qUINT::sCommonTex1, 1, 1.0 / MXAO_GLOBAL_RENDER_SCALE, 8);
+    float4 ssil_ssao = blur_filter(MXAO, qUINT::sCommonTex1, 1, 1.0 / qMXAO_GLOBAL_RENDER_SCALE, 8);
 
 	color = tex2D(sMXAO_ColorTex, MXAO.uv.xy);
 
@@ -539,47 +539,47 @@ void PS_SpatialFilter2(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
     float colorgray = dot(color.rgb, lumcoeff);
     float blendfact = 1.0 - colorgray;
 
-#if(MXAO_ENABLE_IL != 0)
-	ssil_ssao.xyz  = lerp(dot(ssil_ssao.xyz, lumcoeff), ssil_ssao.xyz, MXAO_SSIL_SATURATION) * MXAO_SSIL_AMOUNT * 2.0;
+#if(qMXAO_ENABLE_IL != 0)
+	ssil_ssao.xyz  = lerp(dot(ssil_ssao.xyz, lumcoeff), ssil_ssao.xyz, qMXAO_SSIL_SATURATION) * qMXAO_SSIL_AMOUNT * 2.0;
 #else
     ssil_ssao.xyz = 0.0;
 #endif
 
 	ssil_ssao = saturate(ssil_ssao); //compiler..
 #if(MXAO_HQ == 0)
-	ssil_ssao.w  = 1.0 - pow(1.0 - ssil_ssao.w, MXAO_SSAO_AMOUNT * 2.0);
+	ssil_ssao.w  = 1.0 - pow(1.0 - ssil_ssao.w, qMXAO_SSAO_AMOUNT * 2.0);
 #else
-    ssil_ssao.w  = 1.0 - pow(1.0 - ssil_ssao.w, MXAO_SSAO_AMOUNT);
+    ssil_ssao.w  = 1.0 - pow(1.0 - ssil_ssao.w, qMXAO_SSAO_AMOUNT);
 #endif
-    ssil_ssao    *= 1.0 - smoothstep(MXAO_FADE_DEPTH_START, MXAO_FADE_DEPTH_END, scenedepth * float4(2.0, 2.0, 2.0, 1.0));
+    ssil_ssao    *= 1.0 - smoothstep(qMXAO_FADE_DEPTH_START, qMXAO_FADE_DEPTH_END, scenedepth * float4(2.0, 2.0, 2.0, 1.0));
 
-    if(MXAO_BLEND_TYPE == 0)
+    if(qMXAO_BLEND_TYPE == 0)
     {
         color.rgb -= (ssil_ssao.www - ssil_ssao.xyz) * blendfact * color.rgb;
     }
-    else if(MXAO_BLEND_TYPE == 1)
+    else if(qMXAO_BLEND_TYPE == 1)
     {
         color.rgb = color.rgb * saturate(1.0 - ssil_ssao.www * blendfact * 1.2) + ssil_ssao.xyz * blendfact * colorgray * 2.0;
     }
-    else if(MXAO_BLEND_TYPE == 2)
+    else if(qMXAO_BLEND_TYPE == 2)
     {
         float colordiff = saturate(2.0 * distance(normalize(color.rgb + 1e-6),normalize(ssil_ssao.rgb + 1e-6)));
         color.rgb = color.rgb + ssil_ssao.rgb * lerp(color.rgb, dot(color.rgb, 0.3333), colordiff) * blendfact * blendfact * 4.0;
         color.rgb = color.rgb * (1.0 - ssil_ssao.www * (1.0 - dot(color.rgb, lumcoeff)));
     }
-    else if(MXAO_BLEND_TYPE == 3)
+    else if(qMXAO_BLEND_TYPE == 3)
     {
         color.rgb *= color.rgb;
         color.rgb -= (ssil_ssao.www - ssil_ssao.xyz) * color.rgb;
         color.rgb = sqrt(color.rgb);
     }
 
-    if(MXAO_DEBUG_VIEW_ENABLE == 1)
+    if(qMXAO_DEBUG_VIEW_ENABLE == 1)
     {
         color.rgb = max(0.0, 1.0 - ssil_ssao.www + ssil_ssao.xyz);
-        color.rgb *= (MXAO_ENABLE_IL != 0) ? 0.5 : 1.0;
+        color.rgb *= (qMXAO_ENABLE_IL != 0) ? 0.5 : 1.0;
     }
-    else if(MXAO_DEBUG_VIEW_ENABLE == 2)
+    else if(qMXAO_DEBUG_VIEW_ENABLE == 2)
     {      
         color.rgb = tex2D(sMXAO_NormalTex, MXAO.uv.xy).xyz;
         color.b = 1-color.b; //looks nicer
@@ -592,27 +592,27 @@ void PS_SpatialFilter2(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 	Techniques
 =============================================================================*/
 
-technique MXAO 
-< ui_tooltip = "                     >> qUINT::MXAO <<\n\n"
-			   "MXAO is a screen-space ambient occlusion shader.\n"
+technique qMXAO 
+< ui_tooltip = "                     >> qUINT::qMXAO <<\n\n"
+			   "qMXAO is a screen-space ambient occlusion shader.\n"
                "It adds diffuse shading to object corners to give more depth\n"
                "and detail to the scene. Check out the preprocessor options to\n"
                "get access to more functionality.\n"
-               "\nMake sure to move MXAO to the very top of your shader list for\n"
+               "\nMake sure to move qMXAO to the very top of your shader list for\n"
                "maximum compatibility with other shaders.\n"
-               "\nMXAO is written by Marty McFly / Pascal Gilcher"; >
+               "\nqMXAO is written by Marty McFly / Pascal Gilcher"; >
 {
     pass
 	{
-		VertexShader = VS_MXAO;
-		PixelShader  = PS_InputBufferSetup;
-		RenderTarget0 = MXAO_ColorTex;
-		RenderTarget1 = MXAO_DepthTex;
-		RenderTarget2 = MXAO_NormalTex;
+		VertexShader = VS_qMXAO;
+		PixelShader  = PS_qInputBufferSetup;
+		RenderTarget0 = qMXAO_ColorTex;
+		RenderTarget1 = qMXAO_DepthTex;
+		RenderTarget2 = qMXAO_NormalTex;
 	}
     pass
     {
-        VertexShader = VS_MXAO;
+        VertexShader = VS_qMXAO;
 		PixelShader  = PS_StencilSetup;
         /*Render Target is Backbuffer*/
         ClearRenderTargets = true;
@@ -620,11 +620,11 @@ technique MXAO
 		StencilPass = REPLACE;
         StencilRef = 1;
     }
-#if(MXAO_HQ != 0)
+#if(qMXAO_HQ != 0)
     pass
     {
-        VertexShader = VS_MXAO;
-        PixelShader  = PS_AmbientObscuranceHQ;
+        VertexShader = VS_qMXAO;
+        PixelShader  = PS_qAmbientObscuranceHQ;
         RenderTarget = qUINT::CommonTex0;
         ClearRenderTargets = true;
         StencilEnable = true;
@@ -635,8 +635,8 @@ technique MXAO
 #else
     pass
     {
-        VertexShader = VS_MXAO;
-        PixelShader  = PS_AmbientObscurance;
+        VertexShader = VS_qMXAO;
+        PixelShader  = PS_qAmbientObscurance;
         RenderTarget = qUINT::CommonTex0;
         ClearRenderTargets = true;
         StencilEnable = true;
@@ -647,14 +647,14 @@ technique MXAO
 #endif
     pass
 	{
-		VertexShader = VS_MXAO;
-		PixelShader  = PS_SpatialFilter1;
+		VertexShader = VS_qMXAO;
+		PixelShader  = PS_qSpatialFilter1;
         RenderTarget = qUINT::CommonTex1;
 	}
 	pass
 	{
-		VertexShader = VS_MXAO;
-		PixelShader  = PS_SpatialFilter2;
+		VertexShader = VS_qMXAO;
+		PixelShader  = PS_qSpatialFilter2;
         /*Render Target is Backbuffer*/
 	}
 }
