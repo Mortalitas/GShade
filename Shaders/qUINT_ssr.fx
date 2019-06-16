@@ -9,8 +9,7 @@
 
     Screen-Space Reflections
     by Marty McFly / P.Gilcher
-    part of qUINT shader library for ReShade 4
-    Modified by Marot for ReShade 4.0 compatibility.
+    part of qUINT shader library for ReShade 3
 
     CC BY-NC-ND 3.0 licensed.
 
@@ -26,7 +25,7 @@
 =============================================================================*/
 
 uniform float SSR_FIELD_OF_VIEW <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 100.00;
 	ui_label = "Vertical Field of View";
 	ui_tooltip = "Vertical FoV, should match camera FoV but since ReShade's\ndepth linearization is not always precise, this value\nmight differ from the actual value. Just set to what looks best.";
@@ -34,7 +33,7 @@ uniform float SSR_FIELD_OF_VIEW <
 > = 50.0;
 
 uniform float SSR_REFLECTION_INTENSITY <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Reflection Intensity";
 	ui_tooltip = "Amount of reflection.";
@@ -42,7 +41,7 @@ uniform float SSR_REFLECTION_INTENSITY <
 > = 1.0;
 
 uniform float SSR_FRESNEL_EXP <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 1.00; ui_max = 10.00;
 	ui_label = "Reflection Exponent";
 	ui_tooltip = "qUINT uses Schlick's fresnel approximation.\nThis parameter represents the power of the angle falloff.\nHigher values restrict reflections to very flat angles.\nOriginal Schlick value: 5.\nThe Fresnel Coefficient is set to 0 to match most surfaces.";
@@ -50,7 +49,7 @@ uniform float SSR_FRESNEL_EXP <
 > = 5.0;
 
 uniform float SSR_FADE_DIST <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.001; ui_max = 1.00;
 	ui_label = "Fade Distance";
 	ui_tooltip = "Distance where reflection is completely faded out.\n1 means infinite distance.";
@@ -58,7 +57,7 @@ uniform float SSR_FADE_DIST <
 > = 0.8;
 
 uniform float SSR_RAY_INC <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 1.01; ui_max = 3.00;
 	ui_label = "Ray Increment";
 	ui_tooltip = "Rate of ray step size growth.\nA parameter of 1.0 means same sized steps,\n2.0 means the step size doubles each iteration.\nIncrease if not the entire scene is represented (e.g. sky missing) at the cost of precision.";
@@ -66,7 +65,7 @@ uniform float SSR_RAY_INC <
 > = 1.6;
 
 uniform float SSR_ACCEPT_RANGE <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.0; ui_max = 12.00;
 	ui_label = "Acceptance Range";
 	ui_tooltip = "Acceptable error for ray intersection. Larger values will cause more coherent but incorrect reflections.";
@@ -74,7 +73,7 @@ uniform float SSR_ACCEPT_RANGE <
 > = 2.5;
 
 uniform float SSR_JITTER_AMOUNT <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.0; ui_max = 1.00;
 	ui_label = "Ray Jitter Amount";
 	ui_tooltip = "Changes ray step size randomly per pixel to produce\na more coherent reflection at the cost of noise that needs to be filtered away.";
@@ -82,7 +81,7 @@ uniform float SSR_JITTER_AMOUNT <
 > = 0.25;
 
 uniform float SSR_FILTER_SIZE <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.0; ui_max = 5.00;
 	ui_label = "Filter Kernel Size";
 	ui_tooltip = "Size of spatial filter, higher values create more blurry reflections at the cost of detail.";
@@ -90,7 +89,7 @@ uniform float SSR_FILTER_SIZE <
 > = 0.5;
 
 uniform float SSR_RELIEF_AMOUNT <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.0; ui_max = 1.00;
 	ui_label = "Surface Relief Height";
 	ui_tooltip = "Strength of embossed texture relief. Higher values cause more bumpy surfaces.";
@@ -98,7 +97,7 @@ uniform float SSR_RELIEF_AMOUNT <
 > = 0.05;
 
 uniform float SSR_RELIEF_SCALE <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.1; ui_max = 1.00;
 	ui_label = "Surface Relief Scale";
 	ui_tooltip = "Scale of embossed texture relief, lower values cause more high frequency relief.";

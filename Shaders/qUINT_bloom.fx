@@ -9,8 +9,7 @@
 
     Simple Bloom
     by Marty McFly / P.Gilcher
-    part of qUINT shader library for ReShade 4
-    Modified by Marot for Reshade 4.0 compatibility.
+    part of qUINT shader library for ReShade 3
 
     CC BY-NC-ND 3.0 licensed.
 
@@ -21,7 +20,7 @@
 =============================================================================*/
 
 #ifndef SAMPLE_HQ
- #define SAMPLE_HQ 1
+ #define SAMPLE_HQ 0
 #endif
 
 /*=============================================================================
@@ -29,95 +28,95 @@
 =============================================================================*/
 
 uniform float BLOOM_INTENSITY <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 10.00;
 	ui_label = "Bloom Intensity";
 	ui_tooltip = "Scales bloom brightness.";
 > = 1.2;
 
 uniform float BLOOM_CURVE <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 10.00;
 	ui_label = "Bloom Curve";
 	ui_tooltip = "Higher values limit bloom to bright light sources only.";
 > = 1.5;
 
 uniform float BLOOM_SAT <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 5.00;
 	ui_label = "Bloom Saturation";
 	ui_tooltip = "Adjusts the color strength of the bloom effect";
 > = 2.0;
 /*
 uniform float BLOOM_DIRT <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 2.00;
 	ui_label = "Lens Dirt Amount";
 	ui_tooltip = "Applies a dirt mask on top of the original bloom.";
 > = 0.0;
 */
 uniform float BLOOM_LAYER_MULT_1 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 1 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.05;
 uniform float BLOOM_LAYER_MULT_2 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 2 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.05;
 uniform float BLOOM_LAYER_MULT_3 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 3 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.05;
 uniform float BLOOM_LAYER_MULT_4 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 4 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.1;
 uniform float BLOOM_LAYER_MULT_5 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 5 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.5;
 uniform float BLOOM_LAYER_MULT_6 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 6 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.01;
 uniform float BLOOM_LAYER_MULT_7 <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Layer 7 Intensity";
 	ui_tooltip = "Intensity of this bloom layer. 1 is sharpest layer, 7 the most blurry.";
 > = 0.01;
 uniform float BLOOM_ADAPT_STRENGTH <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Bloom Scene Adaptation Sensitivity";
 	ui_tooltip = "Amount of adaptation applied, 0 means same exposure for all scenes, 1 means complete autoexposure.";
 > = 0.5;
 uniform float BLOOM_ADAPT_EXPOSURE <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = -5.00; ui_max = 5.00;
 	ui_label = "Bloom Scene Exposure Bias";
 	ui_tooltip = "qUINT bloom employs eye adaptation to tune bloom intensity for scene differences.\nThis parameter adjusts the final scene exposure.";
 > = 0.0;
 uniform float BLOOM_ADAPT_SPEED <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.50; ui_max = 10.00;
 	ui_label = "Bloom Scene Adaptation Speed";
 	ui_tooltip = "Eye adaptation data is created by exponential moving average with last frame data.\nThis parameter controls the adjustment speed.\nHigher parameters let the image adjust more quickly.";
 > = 2.0;
 uniform float BLOOM_TONEMAP_COMPRESSION <
-	ui_type = "slider";
+	ui_type = "drag";
 	ui_min = 0.00; ui_max = 10.00;
 	ui_label = "Bloom Tonemap Compression";
 	ui_tooltip = "Lower values compress a larger color range.";
