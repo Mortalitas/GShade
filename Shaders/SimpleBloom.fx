@@ -1,30 +1,31 @@
 /* 
-Simple Bloom PS v0.2.1 (c) 2018 Jacob Maximilian Fober, 
+Simple Bloom PS v0.2.3 (c) 2018 Jacob Maximilian Fober, 
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
+
 // Lightly optimized by Marot Satil for the GShade project.
 
-#ifndef ShaderAnalyzer
+	  ////////////
+	 /// MENU ///
+	////////////
 
-uniform float BlurMultiplier <
+#include "ReShadeUI.fxh"
+
+uniform float BlurMultiplier < __UNIFORM_SLIDER_FLOAT1
 	ui_label = "Radius";
-	ui_type = "slider";
 	ui_min = 1; ui_max = 16; ui_step = 0.01;
 > = 1.23;
 
-uniform float2 Blend <
-	ui_type = "slider";
+uniform float2 Blend < __UNIFORM_SLIDER_FLOAT2
 	ui_min = 0; ui_max = 1; ui_step = 0.001;
 > = float2(0.0, 0.8);
 
 uniform bool Debug <
 > = false;
-
-#endif
 
 #if !defined(ResolutionX) || !defined(ResolutionY)
 	texture SimpleBloomTarget
@@ -45,6 +46,9 @@ uniform bool Debug <
 #endif
 sampler SimpleBloomSampler { Texture = SimpleBloomTarget; };
 
+	  //////////////
+	 /// SHADER ///
+	//////////////
 
 #include "ReShade.fxh"
 
@@ -132,7 +136,11 @@ out float3 Image : SV_Target)
 	Image = Debug ? Target : Image;
 }
 
-technique SimpleBloom
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
+
+technique SimpleBloom < ui_label = "Simple Bloom"; >
 {
 	pass
 	{
