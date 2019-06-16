@@ -9,7 +9,7 @@
 
     Lightroom 
     by Marty McFly / P.Gilcher
-    part of qUINT shader library for ReShade 3
+    part of qUINT shader library for ReShade 4
     Modified by Marot for 4.0 compatibility.
 
     CC BY-NC-ND 3.0 licensed.
