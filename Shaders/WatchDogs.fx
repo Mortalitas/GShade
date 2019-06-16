@@ -1,13 +1,14 @@
 /*
 
-									Watch Dogs Tonemap: 
-		Enables one of the numerous watch dogs tonemapping algorithms. No tweaking values.
+		Watch Dogs Tonemap:
+		Enables one of the numerous Watch Dogs' tonemapping algorithms. No tweaking values.
 		
 		Full credits to the ReShade team.
 		Ported by Insomnia
 		Updated and additional warning cleaning up for ReShade 4.0 by Marot
 
 */
+
 // Lightly optimized by Marot Satil for the GShade project.
 
 
