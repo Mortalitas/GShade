@@ -117,7 +117,7 @@ uniform float MXAO_SSAO_AMOUNT <
 
         uniform float MXAO_AMOUNT_COARSE <
                 ui_type = "slider";
-                ui_min = 0.00; ui_max = 1.00;
+                ui_min = 0.00; ui_max = 2.00;
                 ui_label = "Coarse AO intensity multiplier";
                 ui_tooltip = "Intensity of large scale AO / IL.";
         > = 1.0;
