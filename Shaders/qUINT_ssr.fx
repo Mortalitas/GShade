@@ -2,16 +2,16 @@
 
 	ReShade 4 effect file
     github.com/martymcmodding
-
+    
 	Support me:
    		paypal.me/mcflypg
    		patreon.com/mcflypg
-
+		
     Screen-Space Reflections
     by Marty McFly / P.Gilcher
     part of qUINT shader library for ReShade 4
     Modified by Marot for ReShade 4.0 compatibility.
-
+    
     CC BY-NC-ND 3.0 licensed.
 
 =============================================================================*/
