@@ -122,7 +122,7 @@ uniform float fADOF_ShapeRadius <
 uniform float fADOF_SmootheningAmount <
     ui_type = "slider";
     ui_min = 0.0;
-    ui_max = 20.0;
+    ui_max = 200.0;
     ui_label = "Gaussian blur width";
     ui_tooltip = "Width of gaussian blur after bokeh filter.";
     ui_category = "Blur & Quality";
