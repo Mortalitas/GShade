@@ -24,11 +24,11 @@
 #endif
 
 #ifndef MXAO_SMOOTHNORMALS
- #define MXAO_SMOOTHNORMALS             0       //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
+ #define MXAO_SMOOTHNORMALS             1       //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
 #endif
 
 #ifndef MXAO_TWO_LAYER
- #define MXAO_TWO_LAYER                 0       //[0 or 1]      Splits MXAO into two separate layers that allow for both large and fine AO.
+ #define MXAO_TWO_LAYER                 1       //[0 or 1]      Splits MXAO into two separate layers that allow for both large and fine AO.
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -38,33 +38,33 @@
 uniform int MXAO_GLOBAL_SAMPLE_QUALITY_PRESET <
         ui_type = "combo";
         ui_label = "Sample Quality";
-        ui_items = "Very Low\0Low\0Medium\0High\0Very High\0Ultra\0Maximum\0";
+        ui_items = "Very Low (4)\0Low (8)\0Medium (16)\0High (24)\0Very High (32)\0Ultra (64)\0Maximum (255)\0";
         ui_tooltip = "Global quality control, main performance knob. Higher radii might require higher quality.";
 > = 2;
 
 uniform float MXAO_SAMPLE_RADIUS <
-        ui-ui_type = "slider"
+        ui_type = "slider";
         ui_min = 0.5; ui_max = 20.0;
         ui_label = "Sample Radius";
         ui_tooltip = "Sample radius of MXAO, higher means more large-scale occlusion with less fine-scale details.";
 > = 2.5;
 
 uniform float MXAO_SAMPLE_NORMAL_BIAS <
-        ui-ui_type = "slider"
+        ui_type = "slider";
         ui_min = 0.0; ui_max = 0.8;
         ui_label = "Normal Bias";
         ui_tooltip = "Occlusion Cone bias to reduce self-occlusion of surfaces that have a low angle to each other.";
 > = 0.2;
 
 uniform float MXAO_GLOBAL_RENDER_SCALE <
-        ui-ui_type = "slider"
+        ui_type = "slider";
         ui_label = "Render Size Scale";
         ui_min = 0.50; ui_max = 1.00;
         ui_tooltip = "Factor of MXAO resolution, lower values greatly reduce performance overhead but decrease quality.\n1.0 = MXAO is computed in original resolution\n0.5 = MXAO is computed in 1/2 width 1/2 height of original resolution\n...";
 > = 1.0;
 
 uniform float MXAO_SSAO_AMOUNT <
-        ui-ui_type = "slider"
+        ui_type = "slider";
         ui_min = 0.00; ui_max = 4.00;
         ui_label = "Ambient Occlusion Amount";
         ui_tooltip = "Intensity of AO effect. Can cause pitch black clipping if set too high.";
@@ -72,28 +72,28 @@ uniform float MXAO_SSAO_AMOUNT <
 
 #if(MXAO_ENABLE_IL != 0)
         uniform float MXAO_SSIL_AMOUNT <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 0.00; ui_max = 12.00;
                 ui_label = "Indirect Lighting Amount";
                 ui_tooltip = "Intensity of IL effect. Can cause overexposured white spots if set too high.";
         > = 4.00;
 
         uniform float MXAO_SSIL_SATURATION <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 0.00; ui_max = 3.00;
                 ui_label = "Indirect Lighting Saturation";
                 ui_tooltip = "Controls color saturation of IL effect.";
         > = 1.00;
         
         uniform float MXAO_SSIL_SATURATION_FILTER <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 0.00; ui_max = 1.00;
                 ui_label = "Indirect Lighting Saturation Filter";
                 ui_tooltip = "Controls how much unsaturated colors should be excluded from IL. Or in other words how much saturation should control the amount of light bounced. Physically inaccurate but helps reducing ugly bright corners while keeping nicer color bleeding intact.";
         > = 0.00;
         
         uniform float MXAO_SSIL_GAMMA <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 1.00; ui_max = 3.00;
                 ui_label = "Indirect Lighting Gamma";
                 ui_tooltip = "Exponent for IL result. ( pow(<IL>, gamma) )";
@@ -102,21 +102,21 @@ uniform float MXAO_SSAO_AMOUNT <
 
 #if (MXAO_TWO_LAYER != 0)
         uniform float MXAO_SAMPLE_RADIUS_SECONDARY <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 0.1; ui_max = 1.00;
                 ui_label = "Fine AO Scale";
                 ui_tooltip = "Multiplier of Sample Radius for fine geometry. A setting of 0.5 scans the geometry at half the radius of the main AO.";
         > = 0.2;
 
         uniform float MXAO_AMOUNT_FINE <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 0.00; ui_max = 1.00;
                 ui_label = "Fine AO intensity multiplier";
                 ui_tooltip = "Intensity of small scale AO / IL.";
         > = 1.0;
 
         uniform float MXAO_AMOUNT_COARSE <
-                ui-ui_type = "slider"
+                ui_type = "slider";
                 ui_min = 0.00; ui_max = 1.00;
                 ui_label = "Coarse AO intensity multiplier";
                 ui_tooltip = "Intensity of large scale AO / IL.";
@@ -124,7 +124,7 @@ uniform float MXAO_SSAO_AMOUNT <
 #endif
 
 uniform float MXAO_GAMMA <
-        ui-ui_type = "slider"
+        ui_type = "slider";
         ui_min = 1.00; ui_max = 3.00;
         ui_label = "AO Gamma";
         ui_tooltip = "Exponent for the AO result. ( pow(<AO>, gamma) )";
@@ -507,7 +507,7 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
         	#if(MXAO_ENABLE_IL != 0)
                         if(fAO > 0.1)
                         {
-        			const float3 fIL = tex2Dlod(sMXAO_ColorTex, float4(sampleUV,0,sampleMIP + MXAO_MIPLEVEL_IL)).xyz;
+        			float3 fIL = tex2Dlod(sMXAO_ColorTex, float4(sampleUV,0,sampleMIP + MXAO_MIPLEVEL_IL)).xyz;
 			        fIL *= lerp(1, RGBtoHSV(fIL).y, MXAO_SSIL_SATURATION_FILTER);
         			const float3 tN = tex2Dlod(sMXAO_NormalTex, float4(sampleUV,0,sampleMIP + MXAO_MIPLEVEL_IL)).xyz * 2.0 - 1.0;
         			fIL = fIL - fIL*saturate(dot(V,tN)*rsqrt(VdotV)*2.0);
