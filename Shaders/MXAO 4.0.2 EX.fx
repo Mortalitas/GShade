@@ -51,7 +51,7 @@ uniform float MXAO_SAMPLE_RADIUS <
 
 uniform float MXAO_SAMPLE_NORMAL_BIAS <
         ui_type = "slider";
-        ui_min = 0.0; ui_max = 0.8;
+        ui_min = 0.0; ui_max = 2.0;
         ui_label = "Normal Bias";
         ui_tooltip = "Occlusion Cone bias to reduce self-occlusion of surfaces that have a low angle to each other.";
 > = 0.2;
@@ -65,7 +65,7 @@ uniform float MXAO_GLOBAL_RENDER_SCALE <
 
 uniform float MXAO_SSAO_AMOUNT <
         ui_type = "slider";
-        ui_min = 0.00; ui_max = 4.00;
+        ui_min = 0.00; ui_max = 6.00;
         ui_label = "Ambient Occlusion Amount";
         ui_tooltip = "Intensity of AO effect. Can cause pitch black clipping if set too high.";
 > = 1.00;
@@ -103,14 +103,14 @@ uniform float MXAO_SSAO_AMOUNT <
 #if (MXAO_TWO_LAYER != 0)
         uniform float MXAO_SAMPLE_RADIUS_SECONDARY <
                 ui_type = "slider";
-                ui_min = 0.1; ui_max = 1.00;
+                ui_min = 0.1; ui_max = 2.00;
                 ui_label = "Fine AO Scale";
                 ui_tooltip = "Multiplier of Sample Radius for fine geometry. A setting of 0.5 scans the geometry at half the radius of the main AO.";
         > = 0.2;
 
         uniform float MXAO_AMOUNT_FINE <
                 ui_type = "slider";
-                ui_min = 0.00; ui_max = 1.00;
+                ui_min = 0.00; ui_max = 2.00;
                 ui_label = "Fine AO intensity multiplier";
                 ui_tooltip = "Intensity of small scale AO / IL.";
         > = 1.0;
