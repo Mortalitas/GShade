@@ -139,7 +139,7 @@ uniform int MXAO_DEBUG_VIEW_ENABLE <
 
 uniform int MXAO_BLEND_TYPE <
 	ui_type = "combo";
-        ui_min = 0; ui_max = 3;
+        ui_items = "MXAO 2.0\0MXAO 3.0\0MXAO 4.0\0Beats Me What This Does - Marot\0";
         ui_label = "Blending Mode";
         ui_tooltip = "Different blending modes for merging AO/IL with original color.\0Blending mode 0 matches formula of MXAO 2.0 and older.";
 > = 0;
