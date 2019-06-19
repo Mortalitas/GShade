@@ -38,6 +38,10 @@
 
 #define TEXFORMAT RGBA8
 
+#ifndef StageTex3
+#define StageTex3 "Stage3.png"
+#endif
+
 uniform float Stage_Three_Opacity <
     ui_label = "Opacity";
     ui_tooltip = "Set the transparency of the image.";
@@ -54,7 +58,7 @@ uniform float Stage_Three_depth <
 	ui_label = "Depth";
 > = 0.97;
 
-texture Stage_Three_texture <source="Stage3.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Stage_Three_texture <source=StageTex3;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 
 sampler Stage_Three_sampler { Texture = Stage_Three_texture; };
 

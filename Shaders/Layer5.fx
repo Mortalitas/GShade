@@ -26,6 +26,10 @@
 
 #include "ReShade.fxh"
 
+#ifndef Layer5Tex
+#define Layer5Tex "Layer5.png"
+#endif
+
 uniform float Layer_Five_Blend <
     ui_label = "Opacity";
     ui_tooltip = "The transparency of the layer.";
@@ -56,7 +60,7 @@ uniform float Layer_Five_PosY <
 	ui_step = 0.001;
 > = 0.5;
 
-texture Layer_Five_texture <source="Layer5.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer_Five_texture <source=Layer5Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Layer_Five_sampler { Texture = Layer_Five_texture; };
 
 void PS_Layer_Five(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {

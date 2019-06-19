@@ -26,6 +26,10 @@
 
 #include "ReShade.fxh"
 
+#ifndef Layer3Tex
+#define Layer3Tex "Layer3.png"
+#endif
+
 uniform float Layer_Three_Blend <
     ui_label = "Opacity";
     ui_tooltip = "The transparency of the layer.";
@@ -56,7 +60,7 @@ uniform float Layer_Three_PosY <
 	ui_step = 0.001;
 > = 0.5;
 
-texture Layer_Three_texture <source="Layer3.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer_Three_texture <source=Layer3Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Layer_Three_sampler { Texture = Layer_Three_texture; };
 
 void PS_Layer_Three(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {

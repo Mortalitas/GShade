@@ -26,6 +26,10 @@
 
 #include "ReShade.fxh"
 
+#ifndef Layer2Tex
+#define Layer2Tex "Layer2.png"
+#endif
+
 uniform float Layer_Two_Blend <
     ui_label = "Opacity";
     ui_tooltip = "The transparency of the layer.";
@@ -56,7 +60,7 @@ uniform float Layer_Two_PosY <
 	ui_step = 0.001;
 > = 0.5;
 
-texture Layer_Two_texture <source="Layer2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer_Two_texture <source=Layer2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Layer_Two_sampler { Texture = Layer_Two_texture; };
 
 void PS_Layer_Two(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
