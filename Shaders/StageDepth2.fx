@@ -38,8 +38,8 @@
 
 #define TEXFORMAT RGBA8
 
-#ifndef StageTex2
-#define StageTex2 "Stage2.png"
+#ifndef Stage2Tex
+#define Stage2Tex "Stage2.png"
 #endif
 
 uniform float Stage_Two_Opacity <
@@ -58,7 +58,7 @@ uniform float Stage_Two_depth <
 	ui_label = "Depth";
 > = 0.97;
 
-texture Stage_Two_texture <source=StageTex2;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Stage_Two_texture <source=Stage2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 
 sampler Stage_Two_sampler { Texture = Stage_Two_texture; };
 

@@ -38,8 +38,8 @@
 
 #define TEXFORMAT RGBA8
 
-#ifndef StageTex5
-#define StageTex5 "Stage5.png"
+#ifndef Stage5Tex
+#define Stage5Tex "Stage5.png"
 #endif
 
 uniform float Stage_Five_Opacity <
@@ -58,7 +58,7 @@ uniform float Stage_Five_depth <
 	ui_label = "Depth";
 > = 0.97;
 
-texture Stage_Five_texture <source=StageTex5;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Stage_Five_texture <source=Stage5Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 
 sampler Stage_Five_sampler { Texture = Stage_Five_texture; };
 
