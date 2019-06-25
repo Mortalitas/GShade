@@ -104,7 +104,7 @@ uniform int2 ResScale <
 		"native screen resolution (using VSR or DSR)\n\n"
 		" First value  - screen resolution\n"
 		" Second value - virtual super resolution";
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 16; ui_max = 16384; ui_step = 0.2;
 	ui_category = "Debug Tools";
 > = int2(1920, 1920);

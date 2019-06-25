@@ -66,7 +66,7 @@
 
 
 uniform float coef <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 1.0; ui_max = 10.0;
 	ui_label = "Strength";
 	ui_tooltip = "Strength of the effect (4 or 6)";
