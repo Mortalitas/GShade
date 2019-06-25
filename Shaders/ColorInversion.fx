@@ -31,15 +31,42 @@
 
 uniform int nInversionSelector <
   ui_type = "combo";
-  ui_items = "All\0Red\0Green\0Blue\0Red & Green\0Red & Blue\0Green & Blue\0";
+  ui_items = "All\0Red\0Green\0Blue\0Red & Green\0Red & Blue\0Green & Blue\0None\0";
   ui_label = "The color(s) to invert.";
 > = 0;
+
+uniform float nInversionRed <
+  ui_type = "slider";
+  ui_label = "Red";
+  ui_min = 0.0;
+  ui_max = 1.0;
+  ui_step = 0.001;
+> = 1.0;
+
+uniform float nInversionGreen <
+  ui_type = "slider";
+  ui_label = "Green";
+  ui_min = 0.0;
+  ui_max = 1.0;
+  ui_step = 0.001;
+> = 1.0;
+
+uniform float nInversionBlue <
+  ui_type = "slider";
+  ui_label = "Blue";
+  ui_min = 0.0;
+  ui_max = 1.0;
+  ui_step = 0.001;
+> = 1.0;
 
 #include "ReShade.fxh"
 
 float4 SV_ColorInversion(float4 pos : SV_Position, float2 col : TEXCOORD) : SV_TARGET
 {
   float4 inversion = tex2D(ReShade::BackBuffer, col);
+	inversion.r = inversion.r * nInversionRed;
+	inversion.g = inversion.g * nInversionGreen;
+	inversion.b = inversion.b * nInversionBlue;
   if (nInversionSelector == 0)
   {
 	  inversion.r = 1.0f - inversion.r;
@@ -68,11 +95,15 @@ float4 SV_ColorInversion(float4 pos : SV_Position, float2 col : TEXCOORD) : SV_T
 	  inversion.r = 1.0f - inversion.r;
 	  inversion.b = 1.0f - inversion.b;
 	}
-	else
+	else if (nInversionSelector == 6)
 	{
 	  inversion.g = 1.0f - inversion.g;
 	  inversion.b = 1.0f - inversion.b;
 	}
+	else
+	{
+    return inversion;
+  }
 	return inversion;
 }
 
