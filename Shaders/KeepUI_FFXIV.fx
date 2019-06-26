@@ -24,6 +24,11 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#ifndef KeepUIDebug
+#define KeepUIDebug 0
+#endif
+
+#if KeepUIDebug
 uniform bool bTroubleshootOpacityIssue <
 	ui_category = "Troubleshooting (Do not use)";
 	ui_label = "Enable UI Highlighting";
@@ -39,6 +44,7 @@ uniform int iBlendSource <
 	ui_label = "Blend Type"; ui_type = "combo";
 	ui_items = "Checkerboard\0Negative\0";
 > = 0;
+#endif
 
 #include "ReShade.fxh"
 
@@ -54,7 +60,8 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 {
 	float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
 	float4 back;
-
+	
+#if KeepUIDebug
 	if (bTroubleshootOpacityIssue)
 	{
 		if (0 == iBlendSource)
@@ -76,11 +83,19 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 		color   = lerp(back, keep, keep.a);
 		color.a = keep.a;
 	}
+#else
+		back    = tex2D(ReShade::BackBuffer, texcoord);
+		color   = lerp(back, keep, keep.a);
+		color.a = keep.a;
+#endif
 }
+
+#undef KeepUIDebug
 
 technique FFKeepUI <
 	ui_tooltip = "Place this at the top of your Technique list to save the UI into a texture for restoration with FFRestoreUI.\n"
-	             "To use this Technique, you must also enable \"FFRestoreUI\".";
+	             "To use this Technique, you must also enable \"FFRestoreUI\".\n"
+	             "To enable Debug mode for testing, set the value of the preprocessor definition \"KeepUIDebug\" to 1.";
 >
 {
 	pass
@@ -93,7 +108,8 @@ technique FFKeepUI <
 
 technique FFRestoreUI <
 	ui_tooltip = "Place this at the bottom of your Technique list to restore the UI texture saved by FFKeepUI.\n"
-	             "To use this Technique, you must also enable \"FFKeepUI\".";
+	             "To use this Technique, you must also enable \"FFKeepUI\".\n"
+	             "To enable Debug mode for testing, set the value of the preprocessor definition \"KeepUIDebug\" to 1.";
 >
 {
 	pass
