@@ -23,6 +23,8 @@
 // OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
+//
+// Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef KeepUIDebug
 #define KeepUIDebug 0
@@ -58,33 +60,29 @@ void PS_FFKeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float
 
 void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-	float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
-	float4 back;
+	const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
+	const float4 back = tex2D(ReShade::BackBuffer, texcoord);
 	
 #if KeepUIDebug
 	if (bTroubleshootOpacityIssue)
 	{
 		if (0 == iBlendSource)
 		{
-			back    = step(1, pos.x / 32 % 2) == step(1, pos.y / 32 % 2) ? 0.45 : 0.55;
-			color   = lerp(back, keep, keep.a);
+			color   = lerp(step(1, pos.x / 32 % 2) == step(1, pos.y / 32 % 2) ? 0.45 : 0.55, keep, keep.a);
 			color.a = keep.a;
 		}
 		else
 		{
-			back    = step(1.19209e-07, keep.a) ? 1 - keep : keep;
-			color   = lerp(back, keep, 1 - keep.a);
+			color   = lerp(step(1.19209e-07, keep.a) ? 1 - keep : keep, keep, 1 - keep.a);
 			color.a = keep.a;
 		}
 	}
 	else
 	{
-		back    = tex2D(ReShade::BackBuffer, texcoord);
 		color   = lerp(back, keep, keep.a);
 		color.a = keep.a;
 	}
 #else
-		back    = tex2D(ReShade::BackBuffer, texcoord);
 		color   = lerp(back, keep, keep.a);
 		color.a = keep.a;
 #endif
