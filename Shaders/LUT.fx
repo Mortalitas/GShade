@@ -44,7 +44,7 @@
 
 uniform int fLUT_Selector <
   ui_type = "combo";
-  ui_items = "GShade/Angelite/MS\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0";
+  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0";
   ui_label = "The LUT file to use.";
   ui_tooltip = "Set this to whichever your preset requires!";
 > = 0;
