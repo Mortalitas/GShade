@@ -74,7 +74,7 @@ sampler	SamplerLUT 	{ Texture = texLUT; };
 texture texLUTwarm < source = fLUT_W_TextureName; > { Width = fLUT_W_TileSizeXY*fLUT_W_TileAmount; Height = fLUT_W_TileSizeXY; Format = RGBA8; };
 sampler	SamplerLUTwarm 	{ Texture = texLUTwarm; };
 
-texture texLUTautumn < source = fLUT_A_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_W_TileSizeXY; Format = RGBA8; };
+texture texLUTautumn < source = fLUT_A_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
 sampler	SamplerLUTautumn 	{ Texture = texLUTautumn; };
 
 texture texLUTNFG < source = fLUT_NFG_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
