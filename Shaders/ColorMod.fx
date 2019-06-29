@@ -64,8 +64,8 @@ uniform float ColormodBrightnessG <
 uniform float ColormodBrightnessB <
 	ui_type = "slider";
 	ui_min = -1.0; ui_max = 2.0;
-	ui_label = "Brightness for Green";
-	ui_tooltip = "Brightness for Green";
+	ui_label = "Brightness for Blue";
+	ui_tooltip = "Brightness for Blue";
 > = -0.08;
 
 //-----------------------------
