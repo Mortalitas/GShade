@@ -68,7 +68,7 @@ uniform float sharpenMaxDeltaDepth <
   /                          Main code                          /
   '-----------------------------------------------------------*/
 
-float3 DepthSharpenconstDofPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : SV_Target
+float3 DepthSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : SV_Target
 {
 	// -- Get the original pixel --
 	const float3 ori = tex2D(ReShade::BackBuffer, tex).rgb;
@@ -199,6 +199,6 @@ technique DepthSharpen
 	pass
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = DepthSharpenconstDofPass;
+		PixelShader = DepthSharpenPass;
 	}
 }
