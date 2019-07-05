@@ -27,8 +27,8 @@ float4 PS_SCurve(
 
 	//col = lerp(pow(col, fCurve), pow(col, 1.0 / fCurve), lum);
 	
-	const float3 low = pow(col, fCurve) + f4Offsets.x;
-	const float3 high = pow(col, 1.0 / fCurve) + f4Offsets.y;
+	const float3 low = pow(abs(col), fCurve) + f4Offsets.x;
+	const float3 high = pow(abs(col), 1.0 / fCurve) + f4Offsets.y;
 
 	col.r = lerp(low.r, high.r, col.r + f4Offsets.z);
 	col.g = lerp(low.g, high.g, col.g + f4Offsets.z);
