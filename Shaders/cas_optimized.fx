@@ -15,6 +15,26 @@
 // COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
+//Initial port to ReShade: SLSNe    https://gist.github.com/SLSNe/bbaf2d77db0b2a2a0755df581b3cf00c
+//Optimizations by Marty McFly:
+//     vectorized math, even with scalar gcn hardware this should work
+//     out the same, order of operations has not changed
+//     For some reason, it went from 64 to 48 instructions, a lot of MOV gone
+//     Also modified the way the final window is calculated
+//      
+//     reordered min() and max() operations, from 11 down to 9 registers    
+//
+//     restructured final weighting, 49 -> 48 instructions
+//
+//     delayed RCP to replace SQRT with RSQRT
+//
+//     removed the saturate() from the control var as it is clamped
+//     by UI manager already, 48 -> 47 instructions
+//
+//     replaced tex2D with tex2Doffset intrinsic (address offset by immediate integer)
+//     47 -> 43 instructions
+//     9 -> 8 registers
+
 uniform float Sharpness <
 	ui_type = "drag";
     ui_label = "Sharpening strength";
@@ -24,49 +44,33 @@ uniform float Sharpness <
 
 #include "ReShade.fxh"
 
-float3 min3rgb(float3 x, float3 y, float3 z)
-{
-     return min(x, min(y, z));
-}
-float3 max3rgb(float3 x, float3 y, float3 z)
-{
-     return max(x, max(y, z));
-}
-
 float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {    
     // fetch a 3x3 neighborhood around the pixel 'e',
     //  a b c
     //  d(e)f
     //  g h i
-    float pixelX = ReShade::PixelSize.x;
-    float pixelY = ReShade::PixelSize.y;
-    
-    float3 a = tex2D(ReShade::BackBuffer, texcoord + float2(-pixelX, -pixelY)).rgb;
-    float3 b = tex2D(ReShade::BackBuffer, texcoord + float2(0.0, -pixelY)).rgb;
-    float3 c = tex2D(ReShade::BackBuffer, texcoord + float2(pixelX, -pixelY)).rgb;
-    float3 d = tex2D(ReShade::BackBuffer, texcoord + float2(-pixelX, 0.0)).rgb;
-    float3 e = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    float3 f = tex2D(ReShade::BackBuffer, texcoord + float2(pixelX, 0.0)).rgb;
-    float3 g = tex2D(ReShade::BackBuffer, texcoord + float2(-pixelX, pixelY)).rgb;
-    float3 h = tex2D(ReShade::BackBuffer, texcoord + float2(0.0, pixelY)).rgb;
-    float3 i = tex2D(ReShade::BackBuffer, texcoord + float2(pixelX, pixelY)).rgb;
-
-    //McFly: vectorize math, even with scalar gcn hardware this should work
-    //out the same, order of operations has not changed
+    float3 a = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, -1)).rgb;
+    float3 b = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, -1)).rgb;
+    float3 c = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, -1)).rgb;
+    float3 d = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, 0)).rgb;
+    float3 e = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 0)).rgb;
+    float3 f = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, 0)).rgb;
+    float3 g = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, 1)).rgb;
+    float3 h = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 1)).rgb;
+    float3 i = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, 1)).rgb;
   
 	// Soft min and max.
 	//  a b c             b
 	//  d e f * 0.5  +  d e f * 0.5
 	//  g h i             h
     // These are 2.0x bigger (factored out the extra multiply).
-
-    float3 mnRGB = min3rgb(min3rgb(d, e, f), b, h);
-    float3 mnRGB2 = min3rgb(min3rgb(mnRGB, a, c), g, i);
+    float3 mnRGB = min(min(min(d, e), min(f, b)), h);
+    float3 mnRGB2 = min(mnRGB, min(min(a, c), min(g, i)));
     mnRGB += mnRGB2;
 
-    float3 mxRGB = max3rgb(max3rgb(d, e, f), b, h);
-    float3 mxRGB2 = max3rgb(max3rgb(mxRGB, a, c), g, i);
+    float3 mxRGB = max(max(max(d, e), max(f, b)), h);
+    float3 mxRGB2 = max(mxRGB, max(max(a, c), max(g, i)));
     mxRGB += mxRGB2;
 
     // Smooth minimum distance to signal limit divided by smooth max.
@@ -74,25 +78,23 @@ float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
     float3 ampRGB = saturate(min(mnRGB, 2.0 - mxRGB) * rcpMRGB);    
     
     // Shaping amount of sharpening.
-    ampRGB = sqrt(ampRGB);
-    
-    // Filter shape.
-    //  0 w 0
-    //  w 1 w
-    //  0 w 0  
-    float peak = -rcp(lerp(8.0, 5.0, saturate(Sharpness)));
-    float3 wRGB = ampRGB * peak;
+    ampRGB = rsqrt(ampRGB);
+
+    float peak = 8.0 - 3.0 * Sharpness;
+    float3 wRGB = -rcp(ampRGB * peak);
 
     float3 rcpWeightRGB = rcp(1.0 + 4.0 * wRGB);
 
-    //McFly: less instructions that way
+    //                          0 w 0
+    //  Filter shape:           w 1 w
+    //                          0 w 0  
     float3 window = (b + d) + (f + h);
     float3 outColor = saturate((window * wRGB + e) * rcpWeightRGB);
 
     return outColor;
 }
 
-technique CAS
+technique ContrastAdaptiveSharpen
 {
 	pass
 	{
