@@ -15,6 +15,8 @@ void CasInput(inout float r, inout float g, inout float b) {}
 
 #define A_GPU 1
 #define A_HLSL 1
+#define CAS_GO_SLOWER 0
+#define CAS_BETTER_DIAGONALS 1
 #include "ffx_a.h"
 #include "ffx_cas.h"
 
