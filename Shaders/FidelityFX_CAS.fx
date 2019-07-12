@@ -31,7 +31,7 @@ float4 MainPS(float4 pos: SV_Position, float2 tex: TexCoord): SV_Target {
     return color;
 }
 
-technique FidelityFX_CAS {
+technique CAS < ui_label="FidelityFX CAS"; > {
     pass {
         VertexShader = PostProcessVS;
         PixelShader = MainPS;
