@@ -51,13 +51,13 @@ uniform int Color <
 	ui_type = "combo";
 	ui_items = "Super Blue Ultimatte(tm)\0Green Ultimatte(tm)\0Custom\0";
 	ui_category = "Color settings";
-> = 0;
+> = 2;
 
 uniform float3 CustomColor <
 	ui_type = "color";
 	ui_label = "Custom color";
 	ui_category = "Color settings";
-> = float3(1.0, 0.0, 0.0);
+> = float3(0.0, 1.0, 0.0);
 
 uniform bool AntiAliased <
 	ui_label = "Anti-aliased mask";
