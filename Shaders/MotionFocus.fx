@@ -120,7 +120,7 @@ quadR.xyzw /= 5184f;
 
 float4 PS_MotionFocusDisplay(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-float4 Ganossa_MF_Quad = max(0,tex2D(Ganossa_MF_QuadColor, float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT))-0.1f);
+float4 Ganossa_MF_Quad = saturate(tex2D(Ganossa_MF_QuadColor, float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT))-0.1f);
 
 if (mfDebug)
 {

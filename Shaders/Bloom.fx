@@ -274,7 +274,7 @@ float4 GaussBlur22(float2 coord, sampler tex, float mult, float lodlevel, bool i
 
 float3 GetDnB(sampler tex, float2 coords)
 {
-	float3 color = max(0, dot(tex2Dlod(tex, float4(coords.xy, 0, 4)).rgb, 0.333) - fChapFlareTreshold) * fChapFlareIntensity;
+	float3 color = saturate(dot(tex2Dlod(tex, float4(coords.xy, 0, 4)).rgb, 0.333) - fChapFlareTreshold) * fChapFlareIntensity;
 #if CHAPMAN_DEPTH_CHECK
 	if (tex2Dlod(ReShade::DepthBuffer, float4(coords.xy, 0, 3)).x < 0.99999)
 		color = 0;
@@ -331,8 +331,8 @@ void BloomPass0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float
 		float2 bloomuv = offset[i] * ReShade::PixelSize.xy * 2;
 		bloomuv += texcoord;
 		float4 tempbloom = tex2Dlod(ReShade::BackBuffer, float4(bloomuv.xy, 0, 0));
-		tempbloom.w = max(0, dot(tempbloom.xyz, 0.333) - fAnamFlareThreshold);
-		tempbloom.xyz = max(0, tempbloom.xyz - fBloomThreshold); 
+		tempbloom.w = saturate(dot(tempbloom.xyz, 0.333) - fAnamFlareThreshold);
+		tempbloom.xyz = saturate(tempbloom.xyz - fBloomThreshold); 
 		bloom += tempbloom;
 	}
 
@@ -469,7 +469,7 @@ void LensFlarePass0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out f
 				lenstemp1 = 0;
 #endif
 
-			lenstemp1 = max(0, lenstemp1.xyz - fLenzThreshold);
+			lenstemp1 = saturate(lenstemp1.xyz - fLenzThreshold);
 			lenstemp1 *= lffactors[i] * templensmult;
 
 			lenstemp += lenstemp1;
@@ -568,7 +568,7 @@ void LightingCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 	else if (iBloomMixmode == 1)
 		color.rgb = 1 - (1 - color.rgb) * (1 - colorbloom);
 	else if (iBloomMixmode == 2)
-		color.rgb = max(0.0f, max(color.rgb, lerp(color.rgb, (1 - (1 - saturate(colorbloom)) * (1 - saturate(colorbloom))), 1.0)));
+		color.rgb = saturate(max(color.rgb, lerp(color.rgb, (1 - (1 - saturate(colorbloom)) * (1 - saturate(colorbloom))), 1.0)));
 	else if (iBloomMixmode == 3)
 		color.rgb = max(color.rgb, colorbloom);
 
@@ -594,7 +594,7 @@ void LightingCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 		else if (iLensdirtMixmode == 1)
 			color.rgb = 1 - (1 - color.rgb) * (1 - lensdirt);
 		else if (iLensdirtMixmode == 2)
-			color.rgb = max(0.0f, max(color.rgb, lerp(color.rgb, (1 - (1 - saturate(lensdirt)) * (1 - saturate(lensdirt))), 1.0)));
+			color.rgb = saturate(max(color.rgb, lerp(color.rgb, (1 - (1 - saturate(lensdirt)) * (1 - saturate(lensdirt))), 1.0)));
 		else if (iLensdirtMixmode == 3)
 			color.rgb = max(color.rgb, lensdirt);
 	}

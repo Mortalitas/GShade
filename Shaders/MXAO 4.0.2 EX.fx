@@ -584,7 +584,7 @@ void PS_BlurYandCombine(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 
 	if(MXAO_DEBUG_VIEW_ENABLE == 1) //can't move this into ternary as one is preprocessor def and the other is a uniform
 	{
-                color.rgb = max(0.0,1.0 - aoil.www + aoil.xyz);
+                color.rgb = saturate(1.0 - aoil.www + aoil.xyz);
                 color.rgb *= (MXAO_ENABLE_IL != 0) ? 0.5 : 1.0;
                  //color.rgb *= GetCullingMask(MXAO);
 	}

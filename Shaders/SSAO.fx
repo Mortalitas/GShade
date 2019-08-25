@@ -875,7 +875,7 @@ void PS_AO_SAO(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	
 		sum /= pow(fSAORadius,6.0);
 
-		float A = pow(max(0.0, 1.0 - sqrt(sum * (3.0 / iSAOSamples))), fSAOIntensity);
+		float A = pow(saturate(1.0 - sqrt(sum * (3.0 / iSAOSamples))), fSAOIntensity);
 
 		A = (pow(A, 0.2) + 1.2 * A*A*A*A) / 2.2;
 		const float ao = lerp(1.0, A, fSAOClamp);
@@ -898,7 +898,7 @@ void PS_AO_AOBlurV(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 		const float2 axis = float2(0.0, 1.0);
 		temp = tex2D(SamplerOcclusion1, texcoord.xy + axis * ReShade::PixelSize * r);
 		float weight = AO_BLUR_STEPS-abs(r); 
-		weight *= max(0.0, 1.0 - (1000.0 * AO_SHARPNESS) * abs(temp.w - base.w));
+		weight *= saturate(1.0 - (1000.0 * AO_SHARPNESS) * abs(temp.w - base.w));
 		sum += temp.x * weight;
 		totalweight += weight;
 	}
@@ -917,7 +917,7 @@ void PS_AO_AOBlurH(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 		const float2 axis = float2(1.0, 0.0);
 		temp = tex2D(SamplerOcclusion2, texcoord.xy + axis * ReShade::PixelSize * r);
 		float weight = AO_BLUR_STEPS-abs(r); 
-		weight *= max(0.0, 1.0 - (1000.0 * AO_SHARPNESS) * abs(temp.w - base.w));
+		weight *= saturate(1.0 - (1000.0 * AO_SHARPNESS) * abs(temp.w - base.w));
 		sum += temp.x * weight;
 		totalweight += weight;
 	}
@@ -1145,7 +1145,7 @@ void PS_AO_GIBlurV(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
       tempkey = dot(GetNormalFromDepth(tempdepth, texcoord.xy + axis * ReShade::PixelSize * r).xyz,0.333)*0.1;
 
 		float weight = AO_BLUR_STEPS-abs(r); 
-		weight *= max(0.0, 1.0 - (1000.0 * AO_SHARPNESS) * abs(tempkey - blurkey));
+		weight *= saturate(1.0 - (1000.0 * AO_SHARPNESS) * abs(tempkey - blurkey));
 		sum += temp * weight;
 		totalweight += weight;
 	}
@@ -1179,7 +1179,7 @@ void PS_AO_GIBlurH(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
       tempkey = dot(GetNormalFromDepth(tempdepth, texcoord.xy + axis * ReShade::PixelSize * r).xyz,0.333)*0.1;
 
 		float weight = AO_BLUR_STEPS-abs(r); 
-		weight *= max(0.0, 1.0 - (1000.0 * AO_SHARPNESS) * abs(tempkey - blurkey));
+		weight *= saturate(1.0 - (1000.0 * AO_SHARPNESS) * abs(tempkey - blurkey));
 		sum += temp * weight;
 		totalweight += weight;
 	}

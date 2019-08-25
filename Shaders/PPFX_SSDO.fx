@@ -312,8 +312,8 @@ float4 viewSpace(float2 txCoords)
 			dirVec.xy *= vsOrig.w;
 			const float3 dirVecN = normalize(dirVec);
 			float visibility = step(pSSDOAngleThreshold,dot(dirVecN,vsOrig.xyz)); // visibility check w/ angle threshold
-			visibility *= sign(max(0.0,abs(length(vsOrig.xyz-vsFetch.xyz))-0.01)); // normal bias
-			float distFade = max(0.0,SSDO_CONTRIB_RANGE-length(dirVec))/SSDO_CONTRIB_RANGE; // attenuation
+			visibility *= sign(saturate(abs(length(vsOrig.xyz-vsFetch.xyz))-0.01)); // normal bias
+			float distFade = saturate(SSDO_CONTRIB_RANGE-length(dirVec))/SSDO_CONTRIB_RANGE; // attenuation
 			ssdo += albedoFetch * visibility * distFade * distFade * pSSDOAmount;
 		}
 		ssdo /= pSSDOSampleAmount;
@@ -336,13 +336,13 @@ float4 viewSpace(float2 txCoords)
 			float2 fetchCoords = txCoords;
 			fetchCoords.x += texelSize * hOffs;
 			float4 fetch = tex2Dlod(SamplerSSDOB, float4(fetchCoords, 0.0, 0.0));
-			float contribFact = max(0.0,sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
+			float contribFact = saturate(sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
 			pxInput.xyz+=fetch.xyz * contribFact;
 			sampleSum += contribFact;
 			fetchCoords = txCoords;
 			fetchCoords.x -= texelSize * hOffs;
 			fetch = tex2Dlod(SamplerSSDOB, float4(fetchCoords, 0.0, 0.0));
-			contribFact = max(0.0,sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
+			contribFact = saturate(sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
 			pxInput.xyz+=fetch.xyz * contribFact;
 			sampleSum += contribFact;
 		}
@@ -366,13 +366,13 @@ float4 viewSpace(float2 txCoords)
 			float2 fetchCoords = txCoords;
 			fetchCoords.y += texelSize * vOffs;
 			float4 fetch = tex2Dlod(SamplerSSDOC, float4(fetchCoords, 0.0, 0.0));
-			float contribFact = max(0.0,sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
+			float contribFact = saturate(sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
 			pxInput.xyz+=fetch.xyz * contribFact;
 			sampleSum += contribFact;
 			fetchCoords = txCoords;
 			fetchCoords.y -= texelSize * vOffs;
 			fetch = tex2Dlod(SamplerSSDOC, float4(fetchCoords, 0.0, 0.0));
-			contribFact = max(0.0,sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
+			contribFact = saturate(sign(SSDO_CONTRIB_RANGE*SSDO_BLUR_DEPTH_DISCONTINUITY_THRESH_MULTIPLIER-abs(pxInput.w-fetch.w))) * weight;
 			pxInput.xyz+=fetch.xyz * contribFact;
 			sampleSum += contribFact;
 		}

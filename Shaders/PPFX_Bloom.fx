@@ -273,7 +273,7 @@ struct VS_INPUT_POST
 
 float3 threshold(float3 pxInput, float colThreshold)
 {
-	return pxInput*max(0.0,sign(max(pxInput.x,max(pxInput.y,pxInput.z))-colThreshold));
+	return pxInput*saturate(sign(max(pxInput.x,max(pxInput.y,pxInput.z))-colThreshold));
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

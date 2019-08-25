@@ -561,7 +561,7 @@ void PS_GPDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 
 	const float centerDepth = blurcolor.w;
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
-	float discRadius = max(0.0, blurAmount - 0.1) * DOF_BLURRADIUS; //optimization to clean focus areas a bit
+	float discRadius = saturate(blurAmount - 0.1) * DOF_BLURRADIUS; //optimization to clean focus areas a bit
 
 	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
 

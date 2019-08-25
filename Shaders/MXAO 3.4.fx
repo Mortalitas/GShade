@@ -458,7 +458,7 @@ void PS_AO_Blur2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	#endif
 
 	const float scenedepth = GetLinearDepth(texcoord.xy);
-	float4 color = max(0.0,tex2D(SamplerColorBypass, texcoord.xy));
+	float4 color = saturate(tex2D(SamplerColorBypass, texcoord.xy));
 	const float colorgray = dot(color.xyz,float3(0.299,0.587,0.114));
 
 	
@@ -470,7 +470,7 @@ void PS_AO_Blur2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	MXAOFFXIV.xyz  = lerp(MXAOFFXIV.xyz,0.0,smoothstep(fMXAOFadeoutStart*0.5, fMXAOFadeoutEnd*0.5, scenedepth));
 
 	float3 GI = MXAOFFXIV.w - MXAOFFXIV.xyz;
-	GI = max(0.0,1-GI);
+	GI = saturate(1-GI);
 	color.xyz *= GI;
 
 	if(bMXAODebugViewEnable) //can't move this into ternary as one is preprocessor def and the other is a uniform

@@ -83,7 +83,7 @@ void TiltShiftPass1PS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out 
 		float2 TiltVector = float2(sin(Angle), cos(Angle));
 		// Blur mask
 		float BlurMask = abs(dot(TiltVector, UvCoordAspect) + Offset);
-		BlurMask = max(0.0, min(1.0, BlurMask));
+		BlurMask = saturate(saturate(BlurMask));
 			// Set alpha channel
 			Image.a = BlurMask;
 		BlurMask = pow(Image.a, BlurCurve);

@@ -144,7 +144,7 @@ float3 GetNormalFromColor(float2 coords, float2 offset, float scale, float sharp
     	const float dmy = GetLinearDepth(coords - float2(0.0,offset.y));
 
 	float2 xymult = float2(abs(dmx - dpx), abs(dmy - dpy)) * sharpness; 
-	xymult = max(0.0, 1.0 - xymult);
+	xymult = saturate(1.0 - xymult);
     	
     	const float ddx = (hmx - hpx) / (2.0 * offset.x) * xymult.x;
     	const float ddy = (hmy - hpy) / (2.0 * offset.y) * xymult.y;

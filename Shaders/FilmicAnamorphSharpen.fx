@@ -123,7 +123,7 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		HighPassColor = 0.5 - 0.5 * (HighPassColor * 0.25 - dot(Source, LumaCoefficient));
 
 		Contrast = 1.0 - Contrast * 0.125 + SourceDepth;
-		Contrast = min(1.0, Contrast) + 1.0 - max(1.0, Contrast);
+		Contrast = saturate(Contrast) + 1.0 - max(1.0, Contrast);
 		Contrast = saturate(Contrast * Contrast + 1.0 - Contrast);
 
 		// Sharpen strength
