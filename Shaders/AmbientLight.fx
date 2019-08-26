@@ -44,6 +44,10 @@ uniform float alThreshold <
 	ui_tooltip = "Reduces intensity for not bright light";
 > = 0.050;
 
+uniform bool AL_Dither <
+	ui_tooltip = "Applies dither - may cause diagonal stripes";
+> = false;
+
 uniform bool AL_Adaptation <
 	ui_tooltip = "Activates adaptation algorithm";
 > = true;
@@ -135,6 +139,7 @@ void PS_AL_DetectInt(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 {
 	detectInt = tex2D(ReShade::BackBuffer, texcoord);
 }
+
 void PS_AL_DetectLow(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 detectLow : SV_Target0)
 {
 	detectLow = 0;
@@ -154,6 +159,7 @@ void PS_AL_DetectLow(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 
 	detectLow.xyz /= 32 * 32;
 }
+
 void PS_AL_DetectHigh(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 x : SV_Target)
 {
 	x = tex2D(ReShade::BackBuffer, texcoord);
@@ -249,6 +255,7 @@ void PS_AL_HGB(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	if ((texcoord.x - sampleOffsets[4] * GEMFX_PIXEL_SIZE.x) > -0.05)
 		hgb += tex2D(alInColor, texcoord - float2(sampleOffsets[4] * GEMFX_PIXEL_SIZE.x, 0.0)) * sampleWeights[4] * step;
 }
+
 void PS_AL_VGB(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 vgb : SV_Target)
 {
 	const float sampleOffsets[5] = { 0.0, 2.4347826, 4.3478260, 6.2608695, 8.1739130 };
@@ -296,6 +303,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 #if __RENDERER__ < 0xa000 && !__RESHADE_PERFORMANCE_MODE__
 	[flatten]
 #endif
+
 	if (AL_Adaptation)
 	{
 		//DetectLow	
@@ -332,6 +340,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 #if __RENDERER__ < 0xa000 && !__RESHADE_PERFORMANCE_MODE__
 	[flatten]
 #endif
+
 	if (AL_Dirt)
 	{
 		const float4 dirt = tex2D(dirtSampler, texcoord);
@@ -391,6 +400,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 #if __RENDERER__ < 0xa000 && !__RESHADE_PERFORMANCE_MODE__
 	[flatten]
 #endif
+
 	if (AL_Lens)
 	{
 		const float4 lensDB = tex2D(lensDBSampler, texcoord);
@@ -425,20 +435,36 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 #if __RENDERER__ < 0xa000 && !__RESHADE_PERFORMANCE_MODE__
 	[flatten]
 #endif
-	if (AL_Adaptation)
+
+	if (AL_Adaptation && AL_Dither)
 	{
 		base.xyz *= saturate((1.0f - adapt * 0.75f * alAdaptBaseMult * pow(abs(1.0f - (base.x + base.y + base.z) / 3), alAdaptBaseBlackLvL)));
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither;
+		const float4 baseSample = lerp(base, highSampleMix, max(0.0f, alInt - adapt));
+		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
+		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, max(0.0f, (alInt - adapt) * 0.85f) * baseSampleMix);
+	}
+	else if (AL_Adaptation)
+	{
+		base.xyz *= saturate((1.0f - adapt * 0.75f * alAdaptBaseMult * pow((1.0f - (base.x + base.y + base.z) / 3), alAdaptBaseBlackLvL)));
+		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0)));
 		const float4 baseSample = lerp(base, highSampleMix, saturate(alInt - adapt));
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, saturate((alInt - adapt) * 0.85f) * baseSampleMix);
 	}
-	else
+	else if (AL_Dither)
 	{
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither + adapt;
 		const float4 baseSample = lerp(base, highSampleMix, alInt);
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, saturate(alInt * 0.85f) * baseSampleMix);
+	}
+	else
+	{
+		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + adapt;
+		const float4 baseSample = lerp(base, highSampleMix, alInt);
+		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
+		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, max(0.0f, alInt * 0.85f) * baseSampleMix);
 	}
 }
 
