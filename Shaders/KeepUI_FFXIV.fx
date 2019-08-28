@@ -25,6 +25,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 // Lightly optimized by Marot Satil for the GShade project.
+// Special thanks to Sleeps_Hungry for the addition of the FFOccludeUI technique.
 
 #ifndef KeepUIDebug
 #define KeepUIDebug 0
@@ -56,6 +57,15 @@ sampler FFKeepUI_Sampler { Texture = FFKeepUI_Tex; };
 void PS_FFKeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
 	color = tex2D(ReShade::BackBuffer, texcoord);
+}
+
+void PS_FFOccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
+{
+	const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
+	const float4 back = tex2D(ReShade::BackBuffer, texcoord);
+	color = lerp(back, float4(0, 0, 0, 0), keep.a);
+	color.a = keep.a;
+
 }
 
 void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
@@ -101,6 +111,18 @@ technique FFKeepUI <
 		VertexShader = PostProcessVS;
 		PixelShader = PS_FFKeepUI;
 		RenderTarget = FFKeepUI_Tex;
+	}
+}
+
+technique FFOccludeUI <
+	ui_tooltip = "Place this after FFKeepUI to minimize the effect bloom, blur, and DOF effects have on the UI.\n"
+	             "To use this Technique, you must also enable \"FFKeepUI\" \& \"FFRestoreUI\".";
+>
+{
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = PS_FFOccludeUI;
 	}
 }
 
