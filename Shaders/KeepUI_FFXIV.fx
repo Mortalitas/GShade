@@ -65,7 +65,6 @@ void PS_FFOccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	const float4 back = tex2D(ReShade::BackBuffer, texcoord);
 	color = lerp(back, float4(0, 0, 0, 0), keep.a);
 	color.a = keep.a;
-
 }
 
 void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
@@ -112,13 +111,7 @@ technique FFKeepUI <
 		PixelShader = PS_FFKeepUI;
 		RenderTarget = FFKeepUI_Tex;
 	}
-}
 
-technique FFOccludeUI <
-	ui_tooltip = "Place this after FFKeepUI to minimize the effect bloom, blur, and DOF effects have on the UI.\n"
-	             "To use this Technique, you must also enable \"FFKeepUI\" \& \"FFRestoreUI\".";
->
-{
 	pass
 	{
 		VertexShader = PostProcessVS;
