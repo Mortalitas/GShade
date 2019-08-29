@@ -49,6 +49,10 @@ uniform int iBlendSource <
 > = 0;
 #endif
 
+uniform bool iOccludeToggle <
+  ui_label = "Occlusion Assistance";
+> = 1;
+
 #include "ReShade.fxh"
 
 texture FFKeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
@@ -63,8 +67,13 @@ void PS_FFOccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 {
 	const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
 	const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-	color = lerp(back, float4(0, 0, 0, 0), keep.a);
-	color.a = keep.a;
+	if (iOccludeToggle)
+  {
+    color = lerp(back, float4(0, 0, 0, 0), keep.a);
+    color.a = keep.a;
+  }
+  else
+    color = keep;
 }
 
 void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
