@@ -51,7 +51,7 @@ uniform int iBlendSource <
 
 uniform bool iOccludeToggle <
   ui_label = "Occlusion Assistance";
-> = 1;
+> = 0;
 
 #include "ReShade.fxh"
 
