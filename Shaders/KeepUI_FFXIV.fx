@@ -66,9 +66,9 @@ void PS_FFKeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float
 void PS_FFOccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
 	const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
-	const float4 back = tex2D(ReShade::BackBuffer, texcoord);
 	if (iOccludeToggle)
   {
+    const float4 back = tex2D(ReShade::BackBuffer, texcoord);
     color = lerp(back, float4(0, 0, 0, 0), keep.a);
     color.a = keep.a;
   }
