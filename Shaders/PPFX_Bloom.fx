@@ -14,6 +14,10 @@
 // CUSTOM PARAMETERS
 //+++++++++++++++++++++++++++++
 
+#ifndef PPFXBloomDirtTex
+#define PPFXBloomDirtTex "DirtA.png"
+#endif
+
 // ** HDR **
 uniform bool pEnableHDR <
    ui_category = "HDR & Tonemap";
@@ -189,7 +193,7 @@ texture texBloomB
 };
 
 // *** EXTERNAL TEXTURES ***
-texture texBDirt < source = "DirtA.png"; >
+texture texBDirt < source = PPFXBloomDirtTex; >
 {
 	Width = 1920;
 	Height = 1080;
