@@ -62,7 +62,7 @@
 
 uniform int fLUT_MultiLUTSelector <
   ui_type = "combo";
-  ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0HQ Shade/MoogleShade\0ninjafada Gameplay\0";
+  ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0";
   ui_label = "The MultiLUT file to use.";
   ui_tooltip = "Set this to whatever build your preset was made with!";
 > = 0;
