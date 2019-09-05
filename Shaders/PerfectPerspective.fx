@@ -6,10 +6,10 @@ Attribution-NonCommercial-NoDerivatives 4.0 International License.
 To view a copy of this license, visit 
 http://creativecommons.org/licenses/by-nc-nd/4.0/ 
 
-For inquiries please contact jakubfober@gmail.com
+For inquiries please contact jakub.m.fober@pm.me
 */
 
-// Perfect Perspective PS ver. 2.7.0
+// Perfect Perspective PS ver. 2.7.1
 
 
 	  ////////////
@@ -18,15 +18,15 @@ For inquiries please contact jakubfober@gmail.com
 
 
 uniform int Projection <
-	ui_tooltip = "Stereographic projection (shapes) preserves angles and proportions,\n"
+	ui_tooltip = "Stereographic projection (shape) preserves angles and proportions,\n"
 	             "best for navigation through tight space.\n\n"
-	             "Equisolid projection (size) preserves surface relations,\n"
-	             "Best for flying in open areas.\n\n"
-	             "Equidistant maintains angular speed of motion,\n"
+	             "Equisolid projection (distance) preserves size relations,\n"
+	             "best for navigation in open areas.\n\n"
+	             "Equidistant (speed) maintains angular speed of motion,\n"
 	             "best for chasing fast targets.";
 	ui_label = "Type of projection";
 	ui_type = "radio";
-	ui_items = "Stereographic projection (shapes)\0Equisolid projection (distance)\0Equidistant projection (speed)\0";
+	ui_items = "Stereographic projection (shape)\0Equisolid projection (distance)\0Equidistant projection (speed)\0";
 	ui_category = "Distortion Correction";
 > = 0;
 
@@ -180,7 +180,8 @@ float3 PerfectPerspectivePS(float4 vois : SV_Position, float2 texcoord : TexCoor
 	// Aspect Ratio correction
 	SphCoord.y *= AspectR;
 	// Zoom in image and adjust FOV type (pass 1 of 2)
-	SphCoord *= Zooming / FovType;
+	// SphCoord *= Zooming / FovType;
+	SphCoord *= clamp(Zooming, 0.5, 2.0) / FovType; // Anti-cheat
 
 	// Perspective lookup, vertical distortion amount and FOV type (pass 2 of 2)
 	switch(Projection)
