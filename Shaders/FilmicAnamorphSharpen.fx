@@ -1,5 +1,5 @@
 /*
-Filmic Anamorph Sharpen PS v1.3.0 (c) 2018 Jacob Maximilian Fober
+Filmic Anamorph Sharpen PS v1.4.1 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
@@ -14,38 +14,55 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 	////////////
 
 uniform float Strength <
-	ui_label = "Sharpen strength";
+	ui_label = "Strength";
+	ui_category = "Settings";
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 100.0; ui_step = 0.01;
 > = 60.0;
 
-uniform int Coefficient <
-	ui_tooltip = "For digital video signal use BT.709, for analog (like VGA) use BT.601";
-		ui_label = "YUV coefficients";
-		ui_type = "radio";
-		ui_items = "BT.709 - digital\0BT.601 - analog\0";
-> = 0;
+uniform float Offset <
+	ui_label = "Radius";
+	ui_type = "slider";
+	ui_tooltip = "High-pass cross offset in pixels";
+	ui_category = "Settings";
+	ui_min = 0.0; ui_max = 2.0; ui_step = 0.01;
+> = 0.1;
+
 
 uniform float Clamp <
-	ui_label = "Sharpen clamping";
+	ui_label = "Clamping";
+	ui_category = "Settings";
 	ui_type = "slider";
 	ui_min = 0.5; ui_max = 1.0; ui_step = 0.001;
 > = 0.65;
 
-uniform float Offset <
-	ui_label = "High-pass offset";
-	ui_tooltip = "High-pass cross offset in pixels";
-	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0; ui_step = 0.01;
-> = 0.1;
+uniform bool UseMask <
+	ui_label = "Sharpen only center";
+	ui_category = "Settings";
+	ui_tooltip = "Sharpen only in center of the image";
+> = false;
 
-uniform int Contrast <
-	ui_label = "Enable edges masking";
+uniform bool DepthMask <
+	ui_label = "Enable depth rim masking";
 	ui_tooltip = "Depth high-pass mask switch";
+	ui_category = "Depth mask";
+> = true;
+
+uniform int DepthMaskContrast <
+	ui_label = "Edges mask strength";
 	ui_tooltip = "Depth high-pass mask amount";
+	ui_category = "Depth mask";
 	ui_type = "slider";
 	ui_min = 0; ui_max = 2000; ui_step = 1;
 > = 128;
+
+uniform int Coefficient <
+	ui_tooltip = "For digital video signal use BT.709, for analog (like VGA) use BT.601";
+	ui_label = "YUV coefficients";
+	ui_type = "radio";
+	ui_items = "BT.709 - digital\0BT.601 - analog\0";
+	ui_category = "Additional settings";
+> = 0;
 
 uniform bool Preview <
 	ui_label = "Preview sharpen layer";
@@ -77,20 +94,42 @@ float Overlay(float LayerA, float LayerB)
 	return 2.0 * (MinA * MinB + MaxA + MaxB - MaxA * MaxB) - 1.5;
 }
 
+// Overlay blending mode for one input
+float Overlay(float LayerAB)
+{
+	const float MinAB = min(LayerAB, 0.5);
+	const float MaxAB = max(LayerAB, 0.5);
+	return 2.0 * (MinAB * MinAB + MaxAB + MaxAB - MaxAB * MaxAB) - 1.5;
+}
+
 // Sharpen pass
 float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : SV_Target
 {
+	// Sample display image
+	float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+
+	// Generate radial mask
+	float Mask;
+	if (UseMask)
+	{
+		// Generate radial mask
+		Mask = 1.0-length(UvCoord*2.0-1.0);
+		Mask = Overlay(Mask) * Strength;
+		// Bypass
+		if (Mask <= 0) return Source;
+	}
+	else Mask = Strength;
+
+	// Get pixel size
 	float2 Pixel = ReShade::PixelSize;
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
 	const float3 LumaCoefficient = bool(Coefficient) ? Luma601 : Luma709;
 
-	if(Contrast)
+	if (DepthMask)
 	{
-		float2 DepthPixel = Pixel * Offset + Pixel;
+		float2 DepthPixel = Pixel*Offset + Pixel;
 		Pixel *= Offset;
-		// Sample display image
-		const float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
 		// Sample display depth image
 		const float SourceDepth = ReShade::GetLinearizedDepth(UvCoord);
 
@@ -110,24 +149,23 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 
 		// Luma high-pass color
 		// Luma high-pass depth
-		float HighPassColor = 0.0, Contrast = 0.0;
+		float HighPassColor = 0.0, DepthMask = 0.0;
 	
-		[loop]
-		for(int s = 0; s < 4; s++)
+		[unroll]for(int s = 0; s < 4; s++)
 		{
 			HighPassColor += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
-			Contrast += ReShade::GetLinearizedDepth(NorSouWesEst[s])
+			DepthMask += ReShade::GetLinearizedDepth(NorSouWesEst[s])
 			+ ReShade::GetLinearizedDepth(DepthNorSouWesEst[s]);
 		}
 
 		HighPassColor = 0.5 - 0.5 * (HighPassColor * 0.25 - dot(Source, LumaCoefficient));
 
-		Contrast = 1.0 - Contrast * 0.125 + SourceDepth;
-		Contrast = saturate(Contrast) + 1.0 - max(1.0, Contrast);
-		Contrast = saturate(Contrast * Contrast + 1.0 - Contrast);
+		DepthMask = 1.0 - DepthMask * 0.125 + SourceDepth;
+		DepthMask = min(1.0, DepthMask) + 1.0 - max(1.0, DepthMask);
+		DepthMask = saturate(DepthMaskContrast * DepthMask + 1.0 - DepthMaskContrast);
 
 		// Sharpen strength
-		HighPassColor = lerp(0.5, HighPassColor, Strength * Contrast);
+		HighPassColor = lerp(0.5, HighPassColor, Mask * DepthMask);
 
 		// Clamping sharpen
 		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
@@ -140,9 +178,9 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 
 		if(Preview) // Preview mode ON
 		{
-			const float PreviewChannel = lerp(HighPassColor, HighPassColor * Contrast, 0.5);
+			const float PreviewChannel = lerp(HighPassColor, HighPassColor * DepthMask, 0.5);
 			return float3(
-				1.0 - Contrast * (1.0 - HighPassColor), 
+				1.0 - DepthMask * (1.0 - HighPassColor), 
 				PreviewChannel, 
 				PreviewChannel
 			);
@@ -154,9 +192,6 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 	{
 		Pixel *= Offset;
 
-		// Sample display image
-		const float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
-	
 		const float2 NorSouWesEst[4] = {
 			float2(UvCoord.x, UvCoord.y + Pixel.y),
 			float2(UvCoord.x, UvCoord.y - Pixel.y),
@@ -166,12 +201,12 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 
 		// Luma high-pass color
 		float HighPassColor = 0.0;
-		[loop]
+		[unroll]
 		for(int s = 0; s < 4; s++) HighPassColor += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
 		HighPassColor = 0.5 - 0.5 * (HighPassColor * 0.25 - dot(Source, LumaCoefficient));
 
 		// Sharpen strength
-		HighPassColor = lerp(0.5, HighPassColor, Strength);
+		HighPassColor = lerp(0.5, HighPassColor, Mask);
 
 		// Clamping sharpen
 		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
