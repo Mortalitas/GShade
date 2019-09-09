@@ -216,9 +216,9 @@ float Depth(in float2 texcoord : TEXCOORD0)
 	
 	//Conversions to linear space.....
 	//Near & Far Adjustment
-	float Far = 1.0, Near = 0.125/Depth_Map_Adjust; //Division Depth Map Adjust - Near
+	const float Far = 1.0, Near = 0.125/Depth_Map_Adjust; //Division Depth Map Adjust - Near
 	
-	float2 Z = float2( zBuffer, 1-zBuffer );
+	const float2 Z = float2( zBuffer, 1-zBuffer );
 	
 	if (Depth_Map == 0)//DM0. Normal
 		zBuffer = Far * Near / (Far + Z.x * (Near - Far));		
@@ -324,7 +324,7 @@ float4 CAS(float2 texcoord)
     ampRGB = sqrt(ampRGB);
       
 	//Bilateral Filter//                                                                                                                                                                   
-	float3 c = E(texcoord.xy);
+	const float3 c = E(texcoord.xy);
 	const int kSize = MSIZE * 0.5;	
 //													1			2			3			4				5			6			7			8				7			6			5				4			3			2			1
 //Full Kernal Size would be 15 as shown here (0.031225216, 0.03332227	1, 0.035206333, 0.036826804, 0.038138565, 0.039104044, 0.039695028, 0.039894000, 0.039695028, 0.039104044, 0.038138565, 0.036826804, 0.035206333, 0.033322271, 0.031225216)
@@ -360,14 +360,14 @@ if(Quality == 3)
 		
 		float3 cc;
 		float factor;
-		float bZ = rcp(normpdf(0.0, BSIGMA));
+		const float bZ = rcp(normpdf(0.0, BSIGMA));
 		
 		[loop]
 		for (int i=-kSize; i <= kSize; ++i)
 		{
 			for (int j=-kSize; j <= kSize; ++j)
 			{
-				float2 XY = float2(float(i),float(j))*pix*Q;
+				const float2 XY = float2(float(i),float(j))*pix*Q;
 				cc = E(texcoord.xy+XY);
 
 				factor = normpdf3(cc-c, BSIGMA)*bZ*weight[kSize+j]*weight[kSize+i];
@@ -384,7 +384,7 @@ return saturate(float4(final_colour/Z,CAS_Mask));
 }
 
 void Filters(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float4 color : SV_Target0)                                                                          
-{   float2 Adjust = (Spread * 0.625 ) * pix;
+{   const float2 Adjust = (Spread * 0.625 ) * pix;
 	float3 Done, result;	
 		result += E(texcoord + float2( 1, 0) * Adjust );
 		result += E(texcoord + float2(-1, 0) * Adjust );
@@ -407,7 +407,7 @@ void Filters(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, o
 // Spread the blur a bit more. 
 float Adjust(float2 texcoord : TEXCOORD) 
 {
-	float2 S = Spread * 0.125f * pix;
+	const float2 S = Spread * 0.125f * pix;
 
 		float result;
 		result += tex2Dlod(SamplerBF,float4(texcoord + float2( 1, 0) * S ,0,0)).w;
@@ -425,7 +425,7 @@ float Adjust(float2 texcoord : TEXCOORD)
 
 float DepthCues(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {	
-		float2 S = Spread * 0.75f * pix;
+		const float2 S = Spread * 0.75f * pix;
 
 		float result;
 		result += Adjust(texcoord + float2( 1, 0) * S ).x;
@@ -483,16 +483,16 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD0) : SV_Targ
 	}
 	else if (Debug_View == 1)
 	{
-		float3 Top_Left = lerp(float3(1.,1.,1.),CAS(float2(texcoord.x*2,texcoord.y*2)).www,1-DBTL);
+		const float3 Top_Left = lerp(float3(1.,1.,1.),CAS(float2(texcoord.x*2,texcoord.y*2)).www,1-DBTL);
 		
-		float3 Top_Right =  Depth(float2(texcoord.x*2-1,texcoord.y*2)).rrr;		
+		const float3 Top_Right =  Depth(float2(texcoord.x*2-1,texcoord.y*2)).rrr;		
 		
-		float3 Bottom_Left = lerp(float3(1., 0., 1.),tex2D(BackBuffer,float2(texcoord.x*2,texcoord.y*2-1)).rgb,DBBL);	
+		const float3 Bottom_Left = lerp(float3(1., 0., 1.),tex2D(BackBuffer,float2(texcoord.x*2,texcoord.y*2-1)).rgb,DBBL);	
 
-		float3 Bottom_Right = CAS(float2(texcoord.x*2-1,texcoord.y*2-1)).rgb;	
+		const float3 Bottom_Right = CAS(float2(texcoord.x*2-1,texcoord.y*2-1)).rgb;	
 		
-		float4 VA_Top = texcoord.x < 0.5 ? float4(Top_Left,1.) : float4(Top_Right,1.) ;
-		float4 VA_Bottom = texcoord.x < 0.5 ? float4(Bottom_Left,1.) : float4(Bottom_Right,1.) ;
+		const float4 VA_Top = texcoord.x < 0.5 ? float4(Top_Left,1.) : float4(Top_Right,1.) ;
+		const float4 VA_Bottom = texcoord.x < 0.5 ? float4(Bottom_Left,1.) : float4(Bottom_Right,1.) ;
 		
 		Out = texcoord.y < 0.5 ? VA_Top : VA_Bottom;
 	}
