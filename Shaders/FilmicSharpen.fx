@@ -82,7 +82,11 @@ float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : S
 	};
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
-	static float3 LumaCoefficient = bool(Coefficient) ? Luma601 : Luma709;
+	static float3 LumaCoefficient;
+	if (bool(Coefficient))
+		LumaCoefficient = Luma601;
+	else
+		LumaCoefficient = Luma709;
 
 	// Luma high-pass
 	float HighPass = 0.0;
@@ -94,7 +98,8 @@ float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : S
 	HighPass = lerp(0.5, HighPass, Strength);
 
 	// Clamping sharpen
-	HighPass = (Clamp != 1.0) ? max(min(HighPass, Clamp), 1.0 - Clamp) : HighPass;
+	if (Clamp != 1.0)
+		HighPass = max(min(HighPass, Clamp), 1.0 - Clamp);		
 
 	static float3 Sharpen = float3(
 		Overlay(Source.r, HighPass),
@@ -102,7 +107,10 @@ float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : S
 		Overlay(Source.b, HighPass)
 	);
 
-	return Preview ? HighPass : Sharpen;
+	if (Preview)
+		return HighPass;
+	else
+		return Sharpen;
 }
 
   //////////////

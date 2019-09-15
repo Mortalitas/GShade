@@ -54,8 +54,11 @@ float mod2(float x, float y)
 
 float fmod(float a, float b)
 {
-  float c = frac(abs(a/b))*abs(b);
-  return (a < 0) ? -c : c;   /* if ( a < 0 ) c = 0-c */
+  const float c = frac(abs(a/b))*abs(b);
+  if (a < 0)
+    return -c;
+  else
+    return c;
 }
 
 float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
@@ -74,9 +77,9 @@ float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	// Dither. Total rewrite.
 	// NOW, WHAT PIXEL AM I!??
 
-	int ditx = int(fmod(ditheu.x, 4.0));
-	int dity = int(fmod(ditheu.y, 4.0));
-	int ditdex = ditx * 4 + dity; // 4x4!
+	const int ditx = int(fmod(ditheu.x, 4.0));
+	const int dity = int(fmod(ditheu.y, 4.0));
+	const int ditdex = ditx * 4 + dity; // 4x4!
 	float3 color;
 	float3 colord;
 	color.r = colorInput.r * 255;
@@ -85,7 +88,7 @@ float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	int yeh = 0;
 	int ohyes = 0;
 
-    float erroredtable[16] = {
+    const float erroredtable[16] = {
 	16,4,13,1,   
 	8,12,5,9,
 	14,2,15,3,
@@ -128,9 +131,9 @@ float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	// Reduce to 16-bit color
 	//
 
-	float why = 1;
+	const float why = 1;
 	float3 reduceme = 1;
-	float radooct = 32;	// 32 is usually the proper value
+	const float radooct = 32;	// 32 is usually the proper value
 
 	reduceme.r = pow(colorInput.r, why);  
 	reduceme.r *= radooct;	
@@ -155,7 +158,7 @@ float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	// Add the purple line of lineness here, so the filter process catches it and gets gammaed.
 	{
 		float leifx_linegamma = (LEIFX_LINES / 10);
-		float horzline1 = 	(fmod(ditheu.y, 2.0));
+		const float horzline1 = 	(fmod(ditheu.y, 2.0));
 		if (horzline1 < 1)	leifx_linegamma = 0;
 	
 		colorInput.r += leifx_linegamma;
@@ -174,8 +177,8 @@ float4 PS_3DFX1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targ
 	pixel.x = 1 / ReShade::ScreenSize.x;
 	pixel.y = 1 / ReShade::ScreenSize.y;
 
-	float3 pixel1 = tex2D(ReShade::BackBuffer, texcoord + float2((pixel.x), 0)).rgb;
-	float3 pixel2 = tex2D(ReShade::BackBuffer, texcoord + float2(-pixel.x, 0)).rgb;
+	const float3 pixel1 = tex2D(ReShade::BackBuffer, texcoord + float2((pixel.x), 0)).rgb;
+	const float3 pixel2 = tex2D(ReShade::BackBuffer, texcoord + float2(-pixel.x, 0)).rgb;
 	float3 pixelblend;
 
 	// New filter

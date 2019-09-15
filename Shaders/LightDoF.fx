@@ -127,8 +127,11 @@ sampler sLastFocus { Texture=tLastFocus; };
 //interpret the focus textures and separate far/near focuses
 float getFocus(float2 coord, bool farOrNear) {
 	float depth = ReShade::GetLinearizedDepth(coord);
-	
-	depth -= bLightDoF_AutoFocus ? tex2D(sFocus, 0).x : fLightDoF_ManualFocus;
+
+	if (bLightDoF_AutoFocus)
+		depth -= tex2D(sFocus, 0).x;
+	else
+		depth -= fLightDoF_ManualFocus;
 	
 	if (farOrNear) {
 		depth = saturate(-depth * fLightDoF_Amount);
@@ -210,7 +213,11 @@ float3 Near(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target {
 //shader to get the focus, kinda like center of confusion but less complicated
 float GetFocus(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target {
 	const float2 linearMouse = f2LightDoF_MouseCoord * ReShade::PixelSize; //linearize the mouse position
-	const float2 focus = bLightDoF_UseMouseFocus ? linearMouse : f2Bokeh_AutoFocusCenter;
+	float2 focus;
+	if (bLightDoF_UseMouseFocus)
+		focus = linearMouse;
+	else
+		focus = f2Bokeh_AutoFocusCenter;
 	return lerp(tex2D(sLastFocus, 0).x, ReShade::GetLinearizedDepth(focus), fLightDoF_AutoFocusSpeed);
 }
 

@@ -470,8 +470,14 @@ void VS_PostProcess(
 	out float4 position : SV_POSITION,
 	out float2 uv : TEXCOORD
 ) {
-	uv.x = (id == 2) ? 2.0 : 0.0;
-	uv.y = (id == 1) ? 2.0 : 0.0;
+	if (id == 2)
+		uv.x = 2.0;
+	else
+		uv.x = 0.0;
+	if (id == 1)
+		uv.y = 2.0;
+	else
+		uv.y = 0.0;
 	position = float4(
 		uv * float2(2.0, -2.0) + float2(-1.0, 1.0),
 		0.0,
@@ -584,9 +590,10 @@ MAKE_SHADER(Blend) {
 
 	#if ARCANE_BLOOM_DEBUG
 
-	color = uDebugOptions == 1 ?
-		bloom :
-		color + bloom;
+	if (uDebugOptions == 1)
+		color = bloom;
+	else
+		color = color + bloom;
 
 	#else
 

@@ -192,8 +192,16 @@ MXAO_VSOUT VS_MXAO(in uint id : SV_VertexID)
 {
         MXAO_VSOUT MXAO;
 
-        MXAO.texcoord.x = (id == 2) ? 2.0 : 0.0;
-        MXAO.texcoord.y = (id == 1) ? 2.0 : 0.0;
+		if (id == 2)
+			MXAO.texcoord.x = 2.0;
+		else
+			MXAO.texcoord.x = 0.0;
+		
+		if (id == 1)
+			MXAO.texcoord.y = 2.0;
+		else
+			MXAO.texcoord.y = 0.0;
+
         MXAO.scaledcoord.xy = MXAO.texcoord.xy / MXAO_GLOBAL_RENDER_SCALE;
         MXAO.position = float4(MXAO.texcoord.xy * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 
@@ -585,8 +593,10 @@ void PS_BlurYandCombine(MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 	if(MXAO_DEBUG_VIEW_ENABLE == 1) //can't move this into ternary as one is preprocessor def and the other is a uniform
 	{
                 color.rgb = saturate(1.0 - aoil.www + aoil.xyz);
-                color.rgb *= (MXAO_ENABLE_IL != 0) ? 0.5 : 1.0;
-                 //color.rgb *= GetCullingMask(MXAO);
+				if (MXAO_ENABLE_IL != 0)
+					color.rgb *= 0.5;
+				else
+					color.rgb *= 1.0;
 	}
         else if(MXAO_DEBUG_VIEW_ENABLE == 2)
         {

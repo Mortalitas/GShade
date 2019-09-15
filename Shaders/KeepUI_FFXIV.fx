@@ -86,12 +86,18 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	{
 		if (0 == iBlendSource)
 		{
-			color   = lerp(step(1, pos.x / 32 % 2) == step(1, pos.y / 32 % 2) ? 0.45 : 0.55, keep, keep.a);
+			if (step(1, pos.x / 32 % 2) == step(1, pos.y / 32 % 2))
+				color = lerp(0.45, keep, keep.a);
+			else
+				color = lerp(0.55, keep, keep.a);
 			color.a = keep.a;
 		}
 		else
 		{
-			color   = lerp(step(1.19209e-07, keep.a) ? 1 - keep : keep, keep, 1 - keep.a);
+			if (step(1.19209e-07, keep.a))
+				color = lerp(1 - keep, keep, 1-keep.a);
+			else
+				color = lerp(keep, keep, 1 - keep.a);
 			color.a = keep.a;
 		}
 	}

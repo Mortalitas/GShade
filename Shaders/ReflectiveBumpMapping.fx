@@ -160,8 +160,18 @@ float3 GetBlendedNormals(float3 n1, float3 n2)
 float3 RGB2HSV(float3 RGB)
 {
     	const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    	const float4 p = RGB.g < RGB.b ? float4(RGB.bg, K.wz) : float4(RGB.gb, K.xy);
-    	const float4 q = RGB.r < p.x ? float4(p.xyw, RGB.r) : float4(RGB.r, p.yzx);
+
+		float4 p;
+		if (RGB.g < RGB.b)
+			p = float4(RGB.bg, K.wz);
+		else
+			p = float4(RGB.gb, K.xy);
+
+		float4 q;
+		if (RGB.r < p.x)
+			q = float4(p.xyw, RGB.r);
+		else
+			q = float4(RGB.r, p.yzx);
 
     	const float d = q.x - min(q.w, q.y);
     	const float e = 1.0e-10;

@@ -86,7 +86,10 @@ int get_bayer(int2 i) {
 //#define fmod(a, b) ((frac(abs(a / b)) * abs(b)) * ((step(a, 0) - 0.5) * 2.0))
 float2 fmod(float2 a, float2 b) {
     const float2 c = frac(abs(a / b)) * abs(b);
-    return (a < 0) ? -c : c;
+    if (a.r < 0 && a.g < 0)
+		return -c;
+	else
+		return c;
 }
 
 // Adapted from: http://devlog-martinsh.blogspot.com.br/2011/03/glsl-dithering.html

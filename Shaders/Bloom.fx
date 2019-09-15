@@ -247,7 +247,10 @@ sampler SamplerLensFlare2 { Texture = texLensFlare2; };
 float4 GaussBlur22(float2 coord, sampler tex, float mult, float lodlevel, bool isBlurVert)
 {
 	float4 sum = 0;
-	const float2 axis = isBlurVert ? float2(0, 1) : float2(1, 0);
+	if (isBlurVert)
+		const float2 axis = (0, 1);
+	else
+		const float2 axis = (1, 0);
 
 	const float weight[11] = {
 		0.082607,

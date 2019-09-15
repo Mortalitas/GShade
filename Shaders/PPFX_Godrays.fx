@@ -170,8 +170,17 @@ float linearDepth(float2 txCoords)
 VS_OUTPUT_POST VS_PostProcess(VS_INPUT_POST IN)
 {
 	VS_OUTPUT_POST OUT;
-	OUT.txcoord.x = (IN.id == 2) ? 2.0 : 0.0;
-	OUT.txcoord.y = (IN.id == 1) ? 2.0 : 0.0;
+
+	if (IN.id == 2)
+		OUT.txcoord.x = 2.0;
+	else
+		OUT.txcoord.x = 0.0;
+
+	if (IN.id == 1)
+		OUT.txcoord.y = 2.0;
+	else
+		OUT.txcoord.y = 0.0;
+
 	OUT.vpos = float4(OUT.txcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 	return OUT;
 }

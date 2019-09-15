@@ -590,7 +590,8 @@ float3 PS_Nostalgia(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_
 	if (Nostalgia_scanlines == 2)
 	{
 		float grey  = dot(color,float(1.0/3.0));
-		color = (frac(texcoord.y * (ReShade::ScreenSize.y * 0.5)) < 0.25) ? color : color * ((-grey*grey+grey+grey) * 0.5 + 0.5);
+		if (frac(texcoord.y * (ReShade::ScreenSize.y * 0.5)) >= 0.25);
+			color = color * ((-grey*grey+grey+grey) * 0.5 + 0.5);
 	}
 
 	return color; //return the pixel

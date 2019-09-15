@@ -202,12 +202,14 @@ void DrawText_Digit( float2 pos, float size, float ratio, float2 tex, int digit,
 
     float  t  = abs(data);
     int radix = floor(log10(max(t, 0.00001)));
-    radix     = (floor(t) == 0)? 0:radix;
+		if (floor(t) == 0)
+			radix = 0;
 
     float index = pow(10, floor(-uv.x) + step(1, uv.x)); //current digit
     index       = floor(frac(t * 0.1 / index) * 10);
     index       = lerp(lerp(10, 11, step(0, data)), index, step(-radix-1, uv.x));
-    index       = (uv.x > 0 && uv.x < 1)? 12:index;
+		if (uv.x > 0 && uv.x < 1)
+			index			= 12;
     index       = digits[int(index)];
 
     if(uv.x <= digit + 1 && uv.x >= -radix-2)

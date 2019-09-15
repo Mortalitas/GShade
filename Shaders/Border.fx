@@ -61,7 +61,10 @@ float3 BorderPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	float2 border = (ReShade::PixelSize * border_width_variable); // Translate integer pixel width to floating point
 	float2 within_border = saturate((-texcoord * texcoord + texcoord) - (-border * border + border)); // Becomes positive when inside the border and zero when outside
 
-	return all(within_border) ? color : border_color;
+	if (all(within_border))
+		return color;
+	else
+		return border_color;
 }
 
 technique Border

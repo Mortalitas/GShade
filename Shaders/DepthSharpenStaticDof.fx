@@ -131,7 +131,10 @@ float3 DepthSharpenconstDofPass(float4 position : SV_Position, float2 tex : TEXC
 		blurPercent = (depth - dofStartDepth)/dofTransitionDepth;
 
 	if( blurPercent <= 0 && !shouldSharpen )
-		return debug ? float3(0,1,0)*ori : ori;
+		if (debug)
+			return float3(0,1,0)*ori;
+		else
+			return ori;
 
 	// -- Combining the strength and luma multipliers --
 	float3 sharp_strength_luma = (CoefLuma * sharp_strength); //I'll be combining even more multipliers with it later on
@@ -225,7 +228,10 @@ float3 DepthSharpenconstDofPass(float4 position : SV_Position, float2 tex : TEXC
 	{
 		blurPercent = saturate(blurPercent);
 		if( debug )
-			return bluredEdge ? blurPercent * float3(0,0,1) : blurPercent * float3(1,0,0);
+			if (bluredEdge)
+				return blurPercent * float3(0,0,1);
+			else
+				return blurPercent * float3(1,0,0);
 
 		return blur_ori*blurPercent + ori*(1.0-blurPercent);
 	}

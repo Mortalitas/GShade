@@ -484,17 +484,29 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD0) : SV_Targ
 	else if (Debug_View == 1)
 	{
 		const float3 Top_Left = lerp(float3(1.,1.,1.),CAS(float2(texcoord.x*2,texcoord.y*2)).www,1-DBTL);
-		
+
 		const float3 Top_Right =  Depth(float2(texcoord.x*2-1,texcoord.y*2)).rrr;		
-		
+
 		const float3 Bottom_Left = lerp(float3(1., 0., 1.),tex2D(BackBuffer,float2(texcoord.x*2,texcoord.y*2-1)).rgb,DBBL);	
 
 		const float3 Bottom_Right = CAS(float2(texcoord.x*2-1,texcoord.y*2-1)).rgb;	
-		
-		const float4 VA_Top = texcoord.x < 0.5 ? float4(Top_Left,1.) : float4(Top_Right,1.) ;
-		const float4 VA_Bottom = texcoord.x < 0.5 ? float4(Bottom_Left,1.) : float4(Bottom_Right,1.) ;
-		
-		Out = texcoord.y < 0.5 ? VA_Top : VA_Bottom;
+
+		float4 VA_Top;
+		if (texcoord.x < 0.5)
+			VA_Top = float4(Top_Left,1.);
+		else
+			VA_Top = float4(Top_Right,1.);
+
+		float4 VA_Bottom;
+		if (texcoord.x < 0.5)
+			VA_Bottom = float4(Bottom_Left,1.);
+		else
+			VA_Bottom = float4(Bottom_Right,1.);
+
+		if (texcoord.y < 0.5)
+			Out = VA_Top;
+		else
+			Out = VA_Bottom;
 	}
 	else if (Debug_View == 2)
 	{
@@ -513,8 +525,16 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD0) : SV_Targ
 // Vertex shader generating a triangle covering the entire screen
 void PostProcessVS(in uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD)
 {
-	texcoord.x = (id == 2) ? 2.0 : 0.0;
-	texcoord.y = (id == 1) ? 2.0 : 0.0;
+	if (id == 2)
+		texcoord.x = 2.0;
+	else
+		texcoord.x = 0.0;
+
+	if (id == 1)
+		texcoord.y = 2.0;
+	else
+		texcoord.y = 0.0;
+
 	position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 }
 

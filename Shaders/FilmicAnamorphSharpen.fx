@@ -124,8 +124,12 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 	float2 Pixel = ReShade::PixelSize;
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
-	const float3 LumaCoefficient = bool(Coefficient) ? Luma601 : Luma709;
-
+	float3 LumaCoefficient;
+	if (bool(Coefficient))
+		LumaCoefficient = Luma601;
+	else
+		LumaCoefficient = Luma709;
+	
 	if (DepthMask)
 	{
 		float2 DepthPixel = Pixel*Offset + Pixel;
@@ -168,7 +172,8 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		HighPassColor = lerp(0.5, HighPassColor, Mask * DepthMask);
 
 		// Clamping sharpen
-		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
+		if (Clamp != 1.0)
+			HighPassColor = max(min(HighPassColor, Clamp), 1.0 - Clamp);
 
 		const float3 Sharpen = float3(
 			Overlay(Source.r, HighPassColor),
@@ -209,7 +214,8 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		HighPassColor = lerp(0.5, HighPassColor, Mask);
 
 		// Clamping sharpen
-		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
+		if (Clamp != 1.0)
+			HighPassColor = max(min(HighPassColor, Clamp), 1.0 - Clamp);
 
 		const float3 Sharpen = float3(
 			Overlay(Source.r, HighPassColor),
@@ -218,7 +224,10 @@ float3 FilmicAnamorphSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCo
 		);
 
 		// Preview mode ON
-		return Preview ? HighPassColor : Sharpen;
+		if (Preview)
+			return HighPassColor;
+		else
+			return Sharpen;
 	}
 }
 

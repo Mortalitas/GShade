@@ -48,8 +48,18 @@ float3 Hue(in float3 RGB)
 {
    	// Based on work by Sam Hocevar and Emil Persson
    	const float Epsilon = 1e-10;
-   	const float4 P = (RGB.g < RGB.b) ? float4(RGB.bg, -1.0, 2.0/3.0) : float4(RGB.gb, 0.0, -1.0/3.0);
-   	const float4 Q = (RGB.r < P.x) ? float4(P.xyw, RGB.r) : float4(RGB.r, P.yzx);
+	float4 P;
+	if (RGB.g < RGB.b)
+		P = float4(RGB.bg, -1.0, 2.0/3.0);
+	else
+		P = float4(RGB.gb, 0.0, -1.0/3.0);
+
+	float4 Q;
+	if (RGB.r < P.x)
+		Q = float4(P.xyw, RGB.r);
+	else
+		Q = float4(RGB.r, P.yzx);
+
    	const float C = Q.x - min(Q.w, Q.y);
    	const float H = abs((Q.w - Q.y) / (6 * C + Epsilon) + Q.z);
    	return float3(H, C, Q.x);

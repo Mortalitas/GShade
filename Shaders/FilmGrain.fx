@@ -30,8 +30,7 @@ uniform float Timer < source = "timer"; >;
 float3 FilmGrainPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-  
-	//float inv_luma = dot(color, float3(-0.2126, -0.7152, -0.0722)) + 1.0;
+
 	const float inv_luma = dot(color, float3(-1.0/3.0, -1.0/3.0, -1.0/3.0)) + 1.0; //Calculate the inverted luma so it can be used later to control the variance of the grain
   
 	/*---------------------.
@@ -51,25 +50,26 @@ float3 FilmGrainPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV
 	const float uniform_noise2 = frac(cosine * 53758.5453 - t); // and it doesn't cost any extra ASM
 
 	//Get settings
-	const float stn = SignalToNoiseRatio != 0 ? pow(abs(inv_luma), (float)SignalToNoiseRatio) : 1.0; // Signal to noise feature - Brighter pixels get less noise.
+	float stn;
+	if (SignalToNoiseRatio != 0)
+		stn = pow(abs(inv_luma), (float)SignalToNoiseRatio);
+	else
+		stn = 1.0;
 	const float variance = (Variance*Variance) * stn;
 	const float mean = Mean;
 
 	//Box-Muller transform
-	uniform_noise1 = (uniform_noise1 < 0.0001) ? 0.0001 : uniform_noise1; //fix log(0)
+	if (uniform_noise1 < 0.0001)
+		uniform_noise1 = 0.0001; //fix log(0)
 		
 	float r = sqrt(-log(uniform_noise1));
-	r = (uniform_noise1 < 0.0001) ? PI : r; //fix log(0) - PI happened to be the right answer for uniform_noise == ~ 0.0000517.. Close enough and we can reuse a constant.
+	if (uniform_noise1 < 0.0001)
+		r = PI; //fix log(0) - PI happened to be the right answer for uniform_noise == ~ 0.0000517.. Close enough and we can reuse a constant.
 	const float theta = (2.0 * PI) * uniform_noise2;
 	
 	const float gauss_noise1 = variance * r * cos(theta) + mean;
-	//float gauss_noise2 = variance * r * sin(theta) + mean; //we can get two gaussians out of it :)
-
-	//gauss_noise1 = (ddx(gauss_noise1) - ddy(gauss_noise1)) * 0.50  + gauss_noise2;
-  
 
 	//Calculate how big the shift should be
-	//float grain = lerp(1.0 - Intensity,  1.0 + Intensity, gauss_noise1);
 	const float grain = lerp(1.0 + Intensity,  1.0 - Intensity, gauss_noise1);
   
 	//float grain2 = (2.0 * Intensity) * gauss_noise1 + (1.0 - Intensity);

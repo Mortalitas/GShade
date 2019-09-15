@@ -83,8 +83,11 @@ float CalculateDepthDiffCoC(float2 texcoord : TEXCOORD)
 	{
 		depthdiff = abs(scenedepth-scenefocus);
 	}
-	
-	return saturate((depthdiff > desaturateFullRange) ? 1.0 : smoothstep(0, desaturateFullRange, depthdiff));
+
+	if (depthdiff > desaturateFullRange)
+		return saturate(1.0);
+	else
+		return saturate(smoothstep(0, desaturateFullRange, depthdiff));
 }
 
 void PS_Otis_EMZ_Desaturate(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 outFragment : SV_Target)

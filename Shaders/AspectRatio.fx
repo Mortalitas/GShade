@@ -68,7 +68,10 @@ float3 AspectRatioPS(float4 pos : SV_Position, float2 coord : TEXCOORD0) : SV_Ta
 	coord += 0.5;
 
 	// Sample display image and return
-	return Mask? Color : tex2D(ReShade::BackBuffer, coord).rgb;
+	if (Mask)
+		return Color;
+	else
+		return tex2D(ReShade::BackBuffer, coord).rgb;
 }
 
 

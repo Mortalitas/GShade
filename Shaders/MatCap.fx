@@ -58,7 +58,10 @@ float4 PS_Outlines(
 	
 	const float gs = (col.r + col.g + col.b) / 3.0;
 
-	col = bDisplayOutlines ? outlines : col * outlines;
+	if (bDisplayOutlines)
+		col = outlines;
+	else
+		col = col * outlines;
 
 	//col = normals;
 

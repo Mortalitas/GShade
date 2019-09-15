@@ -82,7 +82,11 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 
 	// Adjust number of samples
 	// IF Automatic IS True Ceil odd numbers to even with minimum 6, else Clamp odd numbers to even
-	float Samples = Automatic ? max(6.0, 2.0 * ceil(abs(Aberration) * 0.5) + 2.0) : floor(SampleCount * 0.5) * 2.0;
+	float Samples;
+	if (Automatic)
+		Samples = max(6.0, 2.0 * ceil(abs(Aberration) * 0.5) + 2.0);
+	else
+		Samples = floor(SampleCount * 0.5) * 2.0;
 	// Clamp maximum sample count
 	Samples = min(Samples, PrismLimit);
 	// Calculate sample offset
@@ -104,7 +108,7 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 		BluredImage = 0.0;
 		for (float P = 0.0; P < Samples; P++)
 		{
-			const float Progress = P / Samples;
+			const float Progress = P / Samples;	
 			const float Offset = OffsetBase * (Progress - 0.5) + 1.0;
 	
 			// Scale UVs at center

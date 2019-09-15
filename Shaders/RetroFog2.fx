@@ -135,8 +135,11 @@ float dither_two(float x, float2 uv) {
         x = round(x * fQuantizeTwo) / fQuantizeTwo;
     
     const float2 index = float2(uv * ReShade::ScreenSize) % 8;
-    const float limit = (index.x < 8) ? float(get_bayer_two(index) + 1) / 64.0
-                                : 0.0;
+	float limit;
+	if (index.x < 8)
+		limit = float(get_bayer_two(index) + 1) / 64.0;
+	else
+		limit = 0.0;
 
     if (x < limit)
         return 0.0;
@@ -159,7 +162,7 @@ float3 get_scene_color_two(float2 uv) {
     };
 
     float3 color = _tex2D(sRetroFog_BackBufferTwo, points[0]).rgb;
-    [unroll]
+    [loop]
     for (int i = 1; i < point_count; ++i)
         color += _tex2D(sRetroFog_BackBufferTwo, points[i]).rgb;
 

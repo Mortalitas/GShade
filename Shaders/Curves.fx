@@ -162,7 +162,10 @@ float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 
 		a = x * x * 2.0;
 		b = (2.0 * -x + 4.0) * x - 1.0;
-		x = (x < 0.5) ? a : b;
+		if (x.r < 0.5 || x.g < 0.5 || x.b < 0.5)
+			x = a;
+		else
+			x = b;
 	}
 
 	/*-----------------------------------------------------------.

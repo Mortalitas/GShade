@@ -102,7 +102,11 @@ void PS_Otis_DEH_BlendBlurWithNormalBuffer(float4 vpos: SV_Position, float2 texc
 {
 	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
 	const float4 blendedFragment = lerp(tex2D(ReShade::BackBuffer, texcoord), tex2D(Otis_SamplerFragmentBuffer2, texcoord), clamp(depth  * EffectStrength, 0.0, 1.0)); 
-	const float yFactor = clamp(texcoord.y > 0.5 ? 1-((texcoord.y-0.5)*2.0) : texcoord.y * 2.0, 0, 1);
+	float yFactor;
+	if (texcoord.y > 0.5)
+		yFactor = clamp(1-((texcoord.y-0.5)*2.0), 0, 1);
+	else
+		yFactor = clamp(texcoord.y * 2.0, 0, 1);
 	fragment = lerp(blendedFragment, float4(FogColor, blendedFragment.r), clamp((depth-FogStart) * yFactor * FogFactor, 0.0, 1.0));
 }
 

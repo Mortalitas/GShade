@@ -118,8 +118,18 @@ uniform float fUIOverlayOpacity <
 //http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 float3 RGBtoHSV(float3 c) {
     const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    const float4 p = c.g < c.b ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
-    const float4 q = c.r < p.x ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
+
+	float4 p;
+	if (c.g < c.b)
+		p = float4(c.bg, K.wz);
+	else
+		p = float4(c.gb, K.xy);
+
+	float4 q;
+	if (c.r < p.x)
+		q = float4(p.xyw, c.r);
+	else
+		q = float4(c.r, p.yzx);
 
     const float d = q.x - min(q.w, q.y);
     const float e = 1.0e-10;
@@ -133,7 +143,11 @@ float3 HSVtoRGB(float3 c) {
 }
 
 float Map(float value, float2 span_old, float2 span_new) {
-    const float span_old_diff = abs(span_old.y - span_old.x) < 1e-6 ? 1e-6 : span_old.y - span_old.x;
+	float span_old_diff;
+    if (abs(span_old.y - span_old.x) < 1e-6)
+		span_old_diff = 1e-6;
+	else
+		span_old_diff = span_old.y - span_old.x;
     return lerp(span_new.x, span_new.y, (clamp(value, span_old.x, span_old.y)-span_old.x)/(span_old_diff));
 }
 

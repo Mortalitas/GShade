@@ -126,12 +126,18 @@ static const float3x3 yiq2rgb = float3x3(
 // === HELPER FUNCTIONS
 
 float fmod(float a, float b) {
-    float c = frac(abs(a / b)) * abs(b);
-    return (a < 0) ? -c : c;
+    const float c = frac(abs(a / b)) * abs(b);
+    if (a < 0)
+		return -c;
+	else
+		return c;
 }
 
 float wrap(float f, float f_min, float f_max) {
-    return (f < f_min) ? (f_max - fmod(f_min - f, f_max - f_min)) : (f_min + fmod(f - f_min, f_max - f_min));
+	if (f < f_min)
+		return f_max - fmod(f_min - f, f_max - f_min);
+	else
+		return f_min + fmod(f - f_min, f_max - f_min);
 }
 
 float rand(float3 myVector)
@@ -160,8 +166,16 @@ float3 quantize_rgb( float3 rgb )
 
 void RetroTV_VS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0, out float2 pix_no : TEXCOORD1, out float2 mask_uv : TEXCOORD2)
 {
-    texcoord.x = (id == 2) ? 2.0 : 0.0;
-	texcoord.y = (id == 1) ? 2.0 : 0.0;
+	if (id == 2)
+		texcoord.x = 2.0;
+	else
+		texcoord.x = 0.0;
+
+	if (id == 1)
+		texcoord.y = 2.0;
+	else
+		texcoord.y = 0.0;
+
 	position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 	
 	pix_no = texcoord * display_size * float2( 4.0, 1.0 );

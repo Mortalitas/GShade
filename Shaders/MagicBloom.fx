@@ -322,7 +322,8 @@ float3 blend_screen(float3 a, float3 b) {
 */
 /*void debug_value(inout float3 col, float2 uv, float value, float3 needle_color) {
     static const float2 ps = ReShade::PixelSize;
-    col = (uv.x + ps.x > value && uv.x - ps.x < value) ? needle_color : col;
+	if (uv.x + ps.x > value && uv.x - ps.x < value)
+		col = needle_color;
 }*/
 
 //Shaders
@@ -399,7 +400,8 @@ float4 PS_Blend(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
     col = blend_screen(col, bloom);
 
     //If we're to display the bloom texture, we replace col with it.
-    col = iDebug == 1 ? bloom : col;
+	if (iDebug == 1)
+		col = bloom;
 
     return float4(col, 1.0);
 }

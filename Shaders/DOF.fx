@@ -374,7 +374,11 @@ float GetCoC(float2 coords)
 	{
 		scenefocus = 0.0;
 
-		static float2 focusPoint = DOF_MOUSEDRIVEN_AF ? MouseCoords * ReShade::PixelSize : DOF_FOCUSPOINT;
+		static float2 focusPoint;
+		if (DOF_MOUSEDRIVEN_AF)
+			focusPoint = MouseCoords * ReShade::PixelSize;
+		else
+			focusPoint = DOF_FOCUSPOINT;
 
 		[loop]
 		for (int r = DOF_FOCUSSAMPLES; 0 < r; r--)
@@ -423,7 +427,10 @@ void PS_RingDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	static float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0));
+	else
+		discRadius *= 1.0;
 
 	static float2 blurRadius = discRadius * ReShade::PixelSize / iRingDOFRings;
 	scenecolor.x = tex2Dlod(SamplerHDR1, float4(texcoord + float2( 0.000,  1.0) * fRingDOFFringe * discRadius * ReShade::PixelSize, 0, 0)).x;
@@ -443,7 +450,10 @@ void PS_RingDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (discRadius < 1.2)
 	{
@@ -473,7 +483,11 @@ void PS_RingDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 			static float tapthresh = max((tapluma - fRingDOFThreshold) * fRingDOFGain, 0.0);
 			tap.xyz *= 1.0 + tapthresh * blurAmount;
 
-			tap.w = (tap.w >= centerDepth * 0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+			if (tap.w >= centerDepth * 0.99)
+				tap.w = 1.0;
+			else
+				tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
+
 			tap.w *= lerp(1.0, g / iRingDOFRings, fRingDOFBias);
 			blurcolor.xyz += tap.xyz * tap.w;
 			blurcolor.w += tap.w;
@@ -494,7 +508,10 @@ void PS_MagicDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0));
+	else
+		discRadius *= 1.0;
 
 	if (discRadius < 1.2)
 	{
@@ -509,7 +526,10 @@ void PS_MagicDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 		{
 			static float2 tapoffset = float2(1, 0) * i;
 			float4 tap = tex2Dlod(SamplerHDR1, float4(texcoord + tapoffset * discRadius * ReShade::PixelSize.x / iMagicDOFBlurQuality, 0, 0));
-			tap.w = (tap.w >= centerDepth*0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+			if (tap.w >= centerDepth*0.99)
+				tap.w = 1.0;
+			else
+				tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
 			blurcolor.xyz += tap.xyz*tap.w;
 			blurcolor.w += tap.w;
 		}
@@ -528,7 +548,10 @@ void PS_MagicDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (discRadius < 1.2)
 	{
@@ -563,7 +586,10 @@ void PS_GPDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = saturate(blurAmount - 0.1) * DOF_BLURRADIUS; //optimization to clean focus areas a bit
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	float3 distortion = float3(-1.0, 0.0, 1.0);
 	distortion *= fGPDOFChromaAmount;
@@ -589,7 +615,10 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (discRadius < 1.2)
 	{
@@ -609,7 +638,11 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	const float basedAngle = 360.0 / iGPDOFPolygonCount;
 	float2 currentVertex, nextVertex;
 
-	const int	dofTaps = bGPDOFPolygonalBokeh ? (iGPDOFQuality * (iGPDOFQuality + 1) * iGPDOFPolygonCount / 2.0) : (iGPDOFQuality * (iGPDOFQuality + 1) * 4);
+	int dofTaps;
+	if (bGPDOFPolygonalBokeh)
+		dofTaps = iGPDOFQuality * (iGPDOFQuality + 1) * iGPDOFPolygonCount / 2.0;
+	else
+		dofTaps = iGPDOFQuality * (iGPDOFQuality + 1) * 4;
 
 	for (int i = 0; i < dofTaps; i++)
 	{
@@ -672,7 +705,10 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 		const float brightMultipiler = max((dot(tap.xyz, 0.333) - fGPDOFBrightnessThreshold) * fGPDOFBrightnessMultiplier, 0.0);
 		tap.xyz *= 1.0 + brightMultipiler * abs(tap.w * 2.0 - 1.0);
 
-		tap.w = (tap.w >= centerDepth * 0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+		if (tap.w >= centerDepth * 0.99)
+			tap.w = 1.0;
+		else
+			tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
 		float BiasCurve = 1.0 + fGPDOFBias * pow(abs((float)sampleCycleCounter / iGPDOFQuality), fGPDOFBiasCurve);
 
 		blurcolor.xyz += tap.xyz * tap.w * BiasCurve;
@@ -705,8 +741,10 @@ float4 GetMatsoDOFBlur(int axis, float2 coord, sampler SamplerHDRX)
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS; //optimization to clean focus areas a bit
 
-	discRadius*=(centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
-
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 	blurcolor = 0.0;
 
 	const float2 tdirs[4] = { 
@@ -725,8 +763,11 @@ float4 GetMatsoDOFBlur(int axis, float2 coord, sampler SamplerHDRX)
 		
 		const float2 tcoord = coord.xy + (float)i * taxis * discRadius * ReShade::PixelSize * 0.5 / iMatsoDOFBokehQuality;
 
-		const float4 ct = bMatsoDOFChromaEnable ? GetMatsoDOFCA(SamplerHDRX, tcoord.xy, discRadius * ReShade::PixelSize.x * 0.5 / iMatsoDOFBokehQuality) : tex2Dlod(SamplerHDRX, float4(tcoord.xy, 0, 0));
-
+		float4 ct;
+		if (bMatsoDOFChromaEnable)
+			ct = GetMatsoDOFCA(SamplerHDRX, tcoord.xy, discRadius * ReShade::PixelSize.x * 0.5 / iMatsoDOFBokehQuality);
+		else
+			ct = tex2Dlod(SamplerHDRX, float4(tcoord.xy, 0, 0));
 		// my own pseudo-bokeh weighting
 		const float b = dot(ct.rgb, 0.333) + length(ct.rgb) + 0.1;
 		const float w = pow(abs(b), fMatsoDOFBokehCurve) + abs((float)i);
@@ -761,7 +802,10 @@ void PS_MatsoDOF4(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius*=(centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0; 
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	//not 1.2 - 2.0 because matso's has a weird bokeh weighting that is almost like a tonemapping and border between blur and no blur appears to harsh
 	blurcolor.xyz = lerp(noblurcolor.xyz,blurcolor.xyz,smoothstep(0.2,2.0,discRadius)); 
@@ -874,8 +918,16 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 				if (bADOF_ShapeDiffusionEnable)
 					sampleOffset *= Grain;
 
-				float4 tap = bADOF_ShapeChromaEnable ? tex2Dchroma(tex, coord, sampleOffset * discRadius) : tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-				tap.w = (tap.w >= centerDepth*0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+				float4 tap;
+				if (bADOF_ShapeChromaEnable)
+					tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+				else
+					tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+				if (tap.w >= centerDepth*0.99)
+					tap.w = 1.0;
+				else
+					tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
 
 				if (bADOF_ShapeWeightEnable)
 					tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
@@ -955,8 +1007,16 @@ float3 BokehBlurP(sampler2D tex, float2 coord, float CoC, float centerDepth)
 				if (bADOF_ShapeDiffusionEnable)
 					sampleOffset *= Grain;
 
-				float4 tap = bADOF_ShapeChromaEnable ? tex2Dchroma(tex, coord, sampleOffset * discRadius) : tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-				tap.w = (tap.w >= centerDepth*0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+				float4 tap;
+				if (bADOF_ShapeChromaEnable)
+					tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+				else
+					tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+				if (tap.w >= centerDepth*0.99)
+					tap.w = 1.0;
+				else
+					tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
 
 				if (bADOF_ShapeWeightEnable)
 					tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
@@ -1036,8 +1096,16 @@ float3 BokehBlurD(sampler2D tex, float2 coord, float CoC, float centerDepth)
 				if (bADOF_ShapeDiffusionEnable)
 					sampleOffset *= Grain;
 
-				float4 tap = bADOF_ShapeChromaEnable ? tex2Dchroma(tex, coord, sampleOffset * discRadius) : tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-				tap.w = (tap.w >= centerDepth*0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+				float4 tap;
+				if (bADOF_ShapeChromaEnable)
+					tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+				else
+					tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+				if (tap.w >= centerDepth*0.99)
+					tap.w = 1.0;
+				else
+					tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
 
 				if (bADOF_ShapeWeightEnable)
 					tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
@@ -1117,8 +1185,16 @@ float3 BokehBlurT(sampler2D tex, float2 coord, float CoC, float centerDepth)
 				if (bADOF_ShapeDiffusionEnable)
 					sampleOffset *= Grain;
 
-				float4 tap = bADOF_ShapeChromaEnable ? tex2Dchroma(tex, coord, sampleOffset * discRadius) : tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-				tap.w = (tap.w >= centerDepth*0.99) ? 1.0 : pow(abs(tap.w * 2.0 - 1.0), 4.0);
+				float4 tap;
+				if (bADOF_ShapeChromaEnable)
+					tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+				else
+					tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+				
+				if (tap.w >= centerDepth*0.99)
+					tap.w = 1.0;
+				else
+					pow(abs(tap.w * 2.0 - 1.0), 4.0);
 
 				if (bADOF_ShapeWeightEnable)
 					tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
@@ -1147,12 +1223,17 @@ void PS_McFlyDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (max(texcoord.x, texcoord.y) <= 1.05 && discRadius >= 1.2)
 	{
 		//doesn't bring that much with intelligent tap calculation
-		blurcolor.xyz = (discRadius >= 1.2) ? BokehBlur(SamplerHDR1, texcoord, discRadius, centerDepth) : blurcolor.xyz;
+		if (discRadius >= 1.2)
+			blurcolor.xyz = BokehBlur(SamplerHDR1, texcoord, discRadius, centerDepth);
+			
 		blurcolor.w = centerDepth;
 	}
 
@@ -1168,12 +1249,16 @@ void PS_McFlyDOF1P(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (max(texcoord.x, texcoord.y) <= 1.05 && discRadius >= 1.2)
 	{
 		//doesn't bring that much with intelligent tap calculation
-		blurcolor.xyz = (discRadius >= 1.2) ? BokehBlurP(SamplerHDR1, texcoord, discRadius, centerDepth) : blurcolor.xyz;
+		if (discRadius >= 1.2)
+			blurcolor.xyz = BokehBlur(SamplerHDR1, texcoord, discRadius, centerDepth);
 		blurcolor.w = centerDepth;
 	}
 
@@ -1189,12 +1274,16 @@ void PS_McFlyDOF1D(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (max(texcoord.x, texcoord.y) <= 1.05 && discRadius >= 1.2)
 	{
 		//doesn't bring that much with intelligent tap calculation
-		blurcolor.xyz = (discRadius >= 1.2) ? BokehBlurD(SamplerHDR1, texcoord, discRadius, centerDepth) : blurcolor.xyz;
+		if (discRadius >= 1.2)
+			blurcolor.xyz = BokehBlur(SamplerHDR1, texcoord, discRadius, centerDepth);
 		blurcolor.w = centerDepth;
 	}
 
@@ -1210,12 +1299,16 @@ void PS_McFlyDOF1T(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 	if (max(texcoord.x, texcoord.y) <= 1.05 && discRadius >= 1.2)
 	{
 		//doesn't bring that much with intelligent tap calculation
-		blurcolor.xyz = (discRadius >= 1.2) ? BokehBlurT(SamplerHDR1, texcoord, discRadius, centerDepth) : blurcolor.xyz;
+		if (discRadius >= 1.2)
+			blurcolor.xyz = BokehBlur(SamplerHDR1, texcoord, discRadius, centerDepth);
 		blurcolor.w = centerDepth;
 	}
 
@@ -1231,7 +1324,10 @@ void PS_McFlyDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
-	discRadius *= (centerDepth < 0.5) ? (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0)) : 1.0;
+	if (centerDepth < 0.5)
+		discRadius *= 1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0);
+	else
+		discRadius *= 1.0;
 
 #if __RENDERER__ < 0xa000 && !__RESHADE_PERFORMANCE_MODE__
 	[flatten]
@@ -1301,7 +1397,11 @@ void PS_McFlyDOF3(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	AnimGrain = dot(AnimGrain.xyz, 0.333);
 
 	//Photoshop overlay mix mode
-	const float3 graincolor = (scenecolor.xyz < 0.5 ? (2.0 * scenecolor.xyz * AnimGrain.xxx) : (1.0 - 2.0 * (1.0 - scenecolor.xyz) * (1.0 - AnimGrain.xxx)));
+	float3 graincolor;
+	if (scenecolor.xyz < 0.5)
+		graincolor = 2.0 * scenecolor.xyz * AnimGrain.xxx;
+	else
+		graincolor = 1.0 - 2.0 * (1.0 - scenecolor.xyz) * (1.0 - AnimGrain.xxx);
 	scenecolor.xyz = lerp(scenecolor.xyz, graincolor.xyz, pow(outOfFocus, fADOF_ImageGrainCurve) * fADOF_ImageGrainAmount);
 #endif
 

@@ -118,7 +118,12 @@ float Posterize(float x, int numLevels, float continuity, float slope, int type)
     else if(type == 2)
         step2 = (1.0 / (1.0 + exp(-slope*(frc - 0.5)))) * stepheight;
     else if(type == 3)
-        step2 = (frc < 0.5 ? pow(frc, slope) * pow(2.0, slope) * 0.5 : 1.0 - pow(1.0 - frc, slope) * pow(2.0, slope) * 0.5) * stepheight;
+	{
+		if (frc < 0.5)
+			step2 = (pow(frc, slope) * pow(2.0, slope) * 0.5) * stepheight;
+		else
+			step2 = (1.0 - pow(1.0 - frc, slope) * pow(2.0, slope) * 0.5) * stepheight;
+	}
     else
         step2 = frc * stepheight;
 

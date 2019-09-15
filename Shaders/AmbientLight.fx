@@ -358,7 +358,11 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 			high.b = (high.b / maxhigh) * 3.2f;
 		}
 
-		float4 highDirt = AL_DirtTex ? highOrig * dirt * alDirtInt : highOrig * high * alDirtInt;
+		float4 highDirt;
+		if (AL_DirtTex)
+			highDirt = highOrig * dirt * alDirtInt;
+		else
+			highDirt = highOrig * high * alDirtInt;
 
 		if (AL_Vibrance)
 		{
@@ -395,8 +399,10 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	const float origBright = max(highLensSrc.r, max(highLensSrc.g, highLensSrc.b));
 	const float maxOrig = max((1.8f * alLensThresh) - pow(origBright * (0.5f - abs(texcoord.x - 0.5f)), 4), 0.0f);
 	float smartWeight = maxOrig * max(abs(flipcoord.x - 0.5f), 0.3f * abs(flipcoord.y - 0.5f)) * (2.2 - 1.2 * (abs(flipcoord.x - 0.5f))) * alLensInt;
-	smartWeight = min(0.85f, saturate(AL_Adaptation ? smartWeight - adapt : smartWeight));
-
+	if (AL_Adaptation)
+    	smartWeight = min(0.85f, saturate(smartWeight - adapt));
+	else
+		smartWeight = min(0.85f, saturate(smartWeight));
 #if __RENDERER__ < 0xa000 && !__RESHADE_PERFORMANCE_MODE__
 	[flatten]
 #endif
@@ -442,7 +448,10 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither;
 		const float4 baseSample = lerp(base, highSampleMix, max(0.0f, alInt - adapt));
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
-		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, max(0.0f, (alInt - adapt) * 0.85f) * baseSampleMix);
+		if (baseSampleMix > 0.008)
+			return baseSample;
+		else
+			return lerp(base, highSampleMix, max(0.0f, (alInt - adapt) * 0.85f) * baseSampleMix);
 	}
 	else if (AL_Adaptation)
 	{
@@ -450,21 +459,30 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0)));
 		const float4 baseSample = lerp(base, highSampleMix, saturate(alInt - adapt));
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
-		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, saturate((alInt - adapt) * 0.85f) * baseSampleMix);
+		if (baseSampleMix > 0.008)
+			return baseSample;
+		else
+			return lerp(base, highSampleMix, saturate((alInt - adapt) * 0.85f) * baseSampleMix);
 	}
 	else if (AL_Dither)
 	{
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither + adapt;
 		const float4 baseSample = lerp(base, highSampleMix, alInt);
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
-		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, saturate(alInt * 0.85f) * baseSampleMix);
+		if (baseSampleMix > 0.008)
+			return baseSample;
+		else
+			return lerp(base, highSampleMix, saturate(alInt * 0.85f) * baseSampleMix);
 	}
 	else
 	{
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + adapt;
 		const float4 baseSample = lerp(base, highSampleMix, alInt);
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
-		return baseSampleMix > 0.008 ? baseSample : lerp(base, highSampleMix, max(0.0f, alInt * 0.85f) * baseSampleMix);
+		if (baseSampleMix > 0.008)
+			return baseSample;
+		else
+			return lerp(base, highSampleMix, max(0.0f, alInt * 0.85f) * baseSampleMix);
 	}
 }
 

@@ -992,8 +992,14 @@ FxaaFloat4 FxaaPixelShader(
     posB.x = posM.x;
     posB.y = posM.y;
     FxaaFloat2 offNP;
-    offNP.x = (!horzSpan) ? 0.0 : fxaaQualityRcpFrame.x;
-    offNP.y = ( horzSpan) ? 0.0 : fxaaQualityRcpFrame.y;
+    if (!horzSpan)
+        offNP.x = 0.0;
+    else
+        offNP.x = fxaaQualityRcpFrame.x;
+    if ( horzSpan)
+        offNP.y = 0.0;
+    else
+        offNP.y = fxaaQualityRcpFrame.y;
     if(!horzSpan) posB.x += lengthSign * 0.5;
     if( horzSpan) posB.y += lengthSign * 0.5;
 /*--------------------------------------------------------------------------*/
@@ -1221,12 +1227,20 @@ FxaaFloat4 FxaaPixelShader(
 /*--------------------------------------------------------------------------*/
     FxaaBool directionN = dstN < dstP;
     FxaaFloat dst = min(dstN, dstP);
-    FxaaBool goodSpan = directionN ? goodSpanN : goodSpanP;
+    FxaaBool goodSpan;
+    if (directionN)
+        goodSpan = goodSpanN;
+    else
+        goodSpan = goodSpanP;
     FxaaFloat subpixG = subpixF * subpixF;
     FxaaFloat pixelOffset = (dst * (-spanLengthRcp)) + 0.5;
     FxaaFloat subpixH = subpixG * fxaaQualitySubpix;
 /*--------------------------------------------------------------------------*/
-    FxaaFloat pixelOffsetGood = goodSpan ? pixelOffset : 0.0;
+    FxaaFloat pixelOffsetGood;
+    if (goodSpan)
+        pixelOffsetGood = pixelOffset;
+    else
+        pixelOffsetGood = 0.0;
     FxaaFloat pixelOffsetSubpix = max(pixelOffsetGood, subpixH);
     if(!horzSpan) posM.x += pixelOffsetSubpix * lengthSign;
     if( horzSpan) posM.y += pixelOffsetSubpix * lengthSign;
@@ -1424,8 +1438,13 @@ float4 FxaaPixelShader(
     float4 rgbyA = rgbyN1 + rgbyP1;
     float4 rgbyB = rgbyN2 + rgbyP2 + rgbyA * 0.5;
 /*--------------------------------------------------------------------------*/
-    float4 rgbyR = ((FxaaLuma(rgbyB) - lumaMax) > 0.0) ? rgbyA : rgbyB; 
-    rgbyR = ((FxaaLuma(rgbyB) - lumaMin) > 0.0) ? rgbyR : rgbyA; 
+    float4 rgbyR;
+    if ((FxaaLuma(rgbyB) - lumaMax) > 0.0)
+        rgbyR = rgbyA;
+    else
+        rgbyR = rgbyB;
+    if ((FxaaLuma(rgbyB) - lumaMin) < 0.0);
+        rgbyR = rgbyA;
     return rgbyR; }
 /*==========================================================================*/
 #endif

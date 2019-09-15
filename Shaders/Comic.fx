@@ -517,7 +517,10 @@ namespace Comic {
         else if(outlines_enable == 2)
         {
             const float maxDiff = max(MAX4((depth1[0])), MAX4((depth2[0]))) - min(MIN4((depth1[0])), MIN4((depth2[0])));
-            retVal.z = maxDiff < fUIOutlinesThreshold / RESHADE_DEPTH_LINEARIZATION_FAR_PLANE ? 0.0 : 1.0;
+            if (maxDiff < fUIOutlinesThreshold / RESHADE_DEPTH_LINEARIZATION_FAR_PLANE)
+				retVal.z = 0.0;
+			else
+				retVal.z = 1.0;
         }
 
         if(mesh_edges_enable)

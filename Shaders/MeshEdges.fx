@@ -98,7 +98,10 @@ float3 MeshEdges_PS(float4 vpos:SV_Position, float2 texcoord:TexCoord):SV_Target
 
     const float lineWeight = MAX2(retVal);
 
-    return lerp(iUIBackground == 0 ? backbuffer : fUIColorBackground, fUIColorLines, lineWeight * fUIStrength);
+	if (iUIBackground == 0)
+		return lerp(backbuffer, fUIColorLines, lineWeight * fUIStrength);
+	else
+		return lerp(fUIColorBackground, fUIColorLines, lineWeight * fUIStrength);
 }
 
 technique MeshEdges {

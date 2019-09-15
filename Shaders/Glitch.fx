@@ -19,11 +19,17 @@ uniform bool bUseUV <
 
 float fmod(float a, float b) {
 	float c = frac(abs(a / b)) * abs(b);
-	return a < 0 ? -c : c;
+	if (a < 0)
+		return -c;
+	else
+		return c;
 }
 float2 fmod(float2 a, float2 b) {
 	float2 c = frac(abs(a / b)) * abs(b);
-	return a < 0 ? -c : c;
+	if (a.r < 0 && a.g < 0)
+		return -c;
+	else
+		return c;
 }
 
 float3 rgb2hsv(float3 c)

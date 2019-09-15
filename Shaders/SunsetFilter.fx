@@ -83,7 +83,10 @@ void SunsetFilterPS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out fl
 	BlendMask = Overlay(BlendMask * 0.5 + 0.5); // Linear coordinates
 
 	// Color image
-	Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, Flip ? 1 - BlendMask : BlendMask));
+	if (Flip)
+		Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, 1 - BlendMask));
+	else
+		Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, BlendMask));
 }
 
 technique SunsetFilter

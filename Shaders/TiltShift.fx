@@ -141,7 +141,8 @@ void TiltShiftPass2PS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out 
 	}
 	// Draw red line
 	// Image IS Red IF (Line IS True AND Image.a < 0.01), ELSE Image IS Image
-	Image.rgb = (Line && Image.a < 0.01) ? float3(1.0, 0.0, 0.0) : Image.rgb;
+	if (Line && Image.a < 0.01)
+		Image.rgb = float3(1.0, 0.0, 0.0);
 }
 
 

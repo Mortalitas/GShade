@@ -210,15 +210,26 @@ float3 PerfectPerspectivePS(float4 vois : SV_Position, float2 texcoord : TexCoor
 	float3 Display = tex2D(SamplerColor, SphCoord).rgb;
 
 	// Mask outside-border pixels or mirror
-	Display = lerp(
-		Display, 
-		lerp(
-			MirrorBorders ? Display : tex2D(SamplerColor, texcoord).rgb, 
-			BorderColor.rgb, 
-			BorderColor.a
-		), 
-		max(AtBorders.x, AtBorders.y)
-	);
+	if (MirrorBorders)
+		Display = lerp(
+			Display,
+			lerp(
+				Display, 
+				BorderColor.rgb, 
+				BorderColor.a
+			), 
+			max(AtBorders.x, AtBorders.y)
+		);
+	else
+		Display = lerp(
+			Display,
+			lerp(		
+				tex2D(SamplerColor, texcoord).rgb, 
+				BorderColor.rgb, 
+				BorderColor.a
+			), 
+			max(AtBorders.x, AtBorders.y)
+		);
 
 	// Output type choice
 	if(DebugPreview)

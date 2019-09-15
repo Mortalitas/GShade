@@ -124,7 +124,10 @@ float3 Colourfulness(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_Targ
 			const float xy_magic = vpos.x*magic.x + vpos.y*magic.y;
 		#endif
 		const float noise = (frac(magic.z*frac(xy_magic)) - 0.5)/(exp2(backbuffer_bits) - 1);
-		c_diff += col_noise == true ? float3(-noise, noise, -noise) : noise;
+		if (col_noise == true)
+			c_diff += float3(-noise, noise, -noise);
+		else
+			c_diff += noise;
 	}
 
 	return saturate(c0 + c_diff);

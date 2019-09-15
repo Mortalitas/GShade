@@ -45,7 +45,13 @@ uniform bool HighlightClipping <
 float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float black_point_float = BlackPoint / 255.0;
-	const float white_point_float = WhitePoint == BlackPoint ? (255.0 / 0.00025) : (255.0 / (WhitePoint - BlackPoint)); // Avoid division by zero if the white and black point are the same
+
+	float white_point_float;
+	// Avoid division by zero if the white and black point are the same
+	if (WhitePoint == BlackPoint)
+		white_point_float = (255.0 / 0.00025);
+	else
+		white_point_float = 255.0 / (WhitePoint - BlackPoint);
 
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	color = color * white_point_float - (black_point_float *  white_point_float);
@@ -54,18 +60,23 @@ float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	{
 		float3 clipped_colors;
 
-		clipped_colors = any(color > saturate(color)) // any colors whiter than white?
-			? float3(1.0, 0.0, 0.0)
-			: color;
-		clipped_colors = all(color > saturate(color)) // all colors whiter than white?
-			? float3(1.0, 1.0, 0.0)
-			: clipped_colors;
-		clipped_colors = any(color < saturate(color)) // any colors blacker than black?
-			? float3(0.0, 0.0, 1.0)
-			: clipped_colors;
-		clipped_colors = all(color < saturate(color)) // all colors blacker than black?
-			? float3(0.0, 1.0, 1.0)
-			: clipped_colors;
+		// any colors whiter than white?
+		if (any(color > saturate(color)))
+			clipped_colors = float3(1.0, 0.0, 0.0);
+		else
+			clipped_colors = color;
+
+		// all colors whiter than white?
+		if (all(color > saturate(color)))
+			clipped_colors = float3(1.0, 1.0, 0.0);
+
+		// any colors blacker than black?
+		if (any(color < saturate(color)))
+			clipped_colors = float3(0.0, 0.0, 1.0);
+
+		// all colors blacker than black?
+		if (all(color < saturate(color)))
+			clipped_colors = float3(0.0, 1.0, 1.0);
 
 		color = clipped_colors;
 	}

@@ -464,7 +464,8 @@ void PS_AO_Blur2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	
 	MXAOFFXIV.w    = 1.0-pow(1.0-MXAOFFXIV.w, fMXAOAmbientOcclusionAmount*4.0);
 
-	MXAOFFXIV    = (bMXAODebugViewEnable) ? MXAOFFXIV : lerp(MXAOFFXIV, 0.0, pow(colorgray,2.0));
+	if (!bMXAODebugViewEnable)
+		MXAOFFXIV = lerp(MXAOFFXIV, 0.0, pow(colorgray,2.0));
 
 	MXAOFFXIV.w    = lerp(MXAOFFXIV.w, 0.0,smoothstep(fMXAOFadeoutStart, fMXAOFadeoutEnd, scenedepth));
 	MXAOFFXIV.xyz  = lerp(MXAOFFXIV.xyz,0.0,smoothstep(fMXAOFadeoutStart*0.5, fMXAOFadeoutEnd*0.5, scenedepth));
@@ -475,7 +476,10 @@ void PS_AO_Blur2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 
 	if(bMXAODebugViewEnable) //can't move this into ternary as one is preprocessor def and the other is a uniform
 	{
-		color.xyz = (MXAO_ENABLE_IL != 0) ? GI*0.5 : GI;
+		if (MXAO_ENABLE_IL != 0)
+			color.xyz = GI*0.5;
+		else
+			color.xyz = GI;
 	}
 
 	res = color;

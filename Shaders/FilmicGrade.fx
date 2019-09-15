@@ -88,16 +88,19 @@ float SuperGrade(float2 Controls, float Input)
 void FilmicGradePS(float4 vois : SV_Position, float2 texcoord : TexCoord, out float3 Display : SV_Target)
 {
 	// Sample display image and convert to YUV
-	Display = bool(Coefficients) ?
-		mul(ToYUV709, tex2D(ReShade::BackBuffer, texcoord).rgb) :
-		mul(ToYUV601, tex2D(ReShade::BackBuffer, texcoord).rgb)
-	;
+	if (bool(Coefficients))
+		Display = mul(ToYUV709, tex2D(ReShade::BackBuffer, texcoord).rgb);
+	else
+		Display = mul(ToYUV601, tex2D(ReShade::BackBuffer, texcoord).rgb);
 
 	// Color Grade Luma
 	Display.x = SuperGrade(LightControl, Display.x);
 
 	// Convert YUV to RGB
-	Display = bool(Coefficients) ? mul(ToRGB709, Display) : mul(ToRGB601, Display);
+	if (bool(Coefficients))
+		Display = mul(ToRGB709, Display);
+	else
+		Display = mul(ToRGB601, Display);
 }
 
 technique FilmicGrade

@@ -229,7 +229,11 @@ float3 AdvancedCRTPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : 
 	const float2 rubyInputSize = Resolution;
 	const float2 rubyOutputSize = ReShade::ScreenSize;
 
-	const float2 orig_xy = Curvature ? transform(tex, rubyTextureSize, rubyInputSize) : tex;
+	float2 orig_xy;
+	if (Curvature)
+		orig_xy = transform(tex, rubyTextureSize, rubyInputSize);
+	else
+		orig_xy = tex;
 	const float cval = corner(orig_xy, rubyTextureSize, rubyInputSize);
 
 	// Of all the pixels that are mapped onto the texel we are

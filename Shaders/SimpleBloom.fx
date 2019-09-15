@@ -133,7 +133,8 @@ out float3 Image : SV_Target)
 //	Image += Target; // Add
 	Image = 1 - (1 - Image) * (1 - Target); // Screen
 
-	Image = Debug ? Target : Image;
+	if (Debug)
+		Image = Target;
 }
 
 	  //////////////

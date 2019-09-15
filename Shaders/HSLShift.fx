@@ -138,7 +138,10 @@
           float3 Delta  = (color.brg - color.rgb) / C + float3(2.0f, 4.0f, 6.0f);
                  Delta *= step(M, color.gbr); //if max = rgb
           HSL.x = frac(max(Delta.r, max(Delta.g, Delta.b)) / 6.0);
-          HSL.y = (HSL.z == 1)? 0.0: C/ (1 - abs( 2 * HSL.z - 1));
+          if (HSL.z == 1)
+                 HSL.y = 0.0;
+          else
+                 HSL.y = C / (1 - abs( 2 * HSL.z - 1));
       }
 
       return HSL;
@@ -185,7 +188,10 @@
       const float3 H0 = RGB_to_HSL(node[base].rgb);
       float3 H1 = RGB_to_HSL(node[base+1].rgb);
 
-      H1.x += (H1.x < H0.x)? 1.0:0.0;
+	  if (H1.x < H0.x)
+	      H1.x += 1.0;
+	  else
+	      H1.x += 0.0;
 
       float3 shift = frac(lerp( H0, H1 , w));
       w = max( hsl.g, 0.0)*max( 1.0-hsl.b, 0.0);

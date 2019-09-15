@@ -169,7 +169,11 @@ float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD0) : 
 	}
             
 	result /= sum;
-	const float lerpQ = (counter > (CounterThreshold * iWindowArea)) ? 1.0 - LerpCoefficeint : LerpCoefficeint;
+	float lerpQ;
+	if (counter > (CounterThreshold * iWindowArea))
+		lerpQ = 1.0 - LerpCoefficeint;
+	else
+		lerpQ = LerpCoefficeint;
 
 	return lerp(result, orig, lerpQ);
 }
@@ -217,7 +221,10 @@ float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD0) : 
 
     result /= sum;
 
-	return lerp(result, orig, (counter > (CounterThreshold * iWindowArea)) ? 1.0 - LerpCoefficeint : LerpCoefficeint);
+	if (counter > (CounterThreshold * iWindowArea))
+		return lerp(result, orig, 1.0 - LerpCoefficeint);
+	else
+		return lerp(result, orig, LerpCoefficeint);
 }
 
 technique KNearestNeighbors

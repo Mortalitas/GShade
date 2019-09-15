@@ -123,8 +123,16 @@ void VS_Downscale( in  uint   id       : SV_VertexID,
                    out float4 position : SV_Position,
                    out float2 texcoord : TEXCOORD0 )
 {
-  texcoord.x = (id == 2) ? 2.0 : 0.0;
-  texcoord.y = (id == 1) ? 2.0 : 0.0;
+  if (id == 2)
+    texcoord.x = 2.0;
+  else
+    texcoord.x = 0.0;
+
+  if (id == 1)
+    texcoord.y = 2.0;
+  else
+    texcoord.y = 0.0;
+
   position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
   
   texcoord *= float2(coef, coef);
@@ -143,9 +151,17 @@ void VS_XBRZ4X( in  uint   id       : SV_VertexID,
                 out float4 t6       : TEXCOORD6,
                 out float4 t7       : TEXCOORD7
               )
-{  
-  texcoord.x = (id == 2) ? 2.0 : 0.0;
-  texcoord.y = (id == 1) ? 2.0 : 0.0;
+{
+  if (id == 2)
+    texcoord.x = 2.0;
+  else
+    texcoord.x = 0.0;
+  
+  if (id == 1)
+    texcoord.y = 2.0;
+  else
+    texcoord.y = 0.0;
+
   position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
    
   float dx = ( 1.0 / BUFFER_WIDTH  );
@@ -299,8 +315,22 @@ float3 PS_XBRZ4X( float4 pos : SV_Position,
     float dist_00_02       = DistYCbCr(src[ 5], src[ 3]) + DistYCbCr(src[ 3], src[13]) + DistYCbCr(src[ 7], src[ 1]) +
                              DistYCbCr(src[ 1], src[11]) + (4.0 * DistYCbCr(src[ 0], src[ 2]));
     bool  dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_03_01) < dist_00_02;
-    
-    blendResult[2] = ((dist_03_01 < dist_00_02) && (v[0] != v[1]) && (v[0] != v[3])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
+
+    if ((dist_03_01 < dist_00_02) && (v[0] != v[1]) && (v[0] != v[3]))
+    {
+      if (dominantGradient)
+      {
+        blendResult[2] = BLEND_DOMINANT;
+      }
+      else
+      {
+        blendResult[2] = BLEND_NORMAL;
+      }
+    }
+    else
+    {
+      blendResult[2] = BLEND_NONE;
+    }
   }
     
     
@@ -318,7 +348,22 @@ float3 PS_XBRZ4X( float4 pos : SV_Position,
                              DistYCbCr(src[ 0], src[ 2]) + (4.0 * DistYCbCr(src[ 5], src[ 3]));
     bool  dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_05_03) < dist_04_00;
     
-    blendResult[3] = ((dist_04_00 > dist_05_03) && (v[0] != v[5]) && (v[0] != v[3])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
+//    blendResult[3] = ((dist_04_00 > dist_05_03) && (v[0] != v[5]) && (v[0] != v[3])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
+    if ((dist_04_00 > dist_05_03) && (v[0] != v[5]) && (v[0] != v[3]))
+    {
+      if (dominantGradient)
+      {
+        blendResult[3] = BLEND_DOMINANT;
+      }
+      else
+      {
+        blendResult[3] = BLEND_NORMAL;
+      }
+    }
+    else
+    {
+      blendResult[3] = BLEND_NONE;
+    }
   }
     
   // Pixel Tap Mapping: --|--|22|23|--
@@ -334,8 +379,22 @@ float3 PS_XBRZ4X( float4 pos : SV_Position,
     float dist_07_01       = DistYCbCr(src[ 6], src[ 0]) + DistYCbCr(src[ 0], src[ 2]) + DistYCbCr(src[22], src[ 8]) +
                              DistYCbCr(src[ 8], src[10]) + (4.0 * DistYCbCr(src[ 7], src[ 1]));
     bool  dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_07_01) < dist_00_08;
-    
-    blendResult[1] = ((dist_00_08 > dist_07_01) && (v[0] != v[7]) && (v[0] != v[1])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
+
+    if ((dist_00_08 > dist_07_01) && (v[0] != v[7]) && (v[0] != v[1]))
+    {
+      if (dominantGradient)
+      {
+        blendResult[1] = BLEND_DOMINANT;
+      }
+      else
+      {
+        blendResult[1] = BLEND_NORMAL;
+      }
+    }
+    else
+    {
+      blendResult[1] = BLEND_NONE;
+    }
   }
     
   // Pixel Tap Mapping: --|21|22|--|--
@@ -351,8 +410,22 @@ float3 PS_XBRZ4X( float4 pos : SV_Position,
     float dist_06_00       = DistYCbCr(src[19], src[ 5]) + DistYCbCr(src[ 5], src[ 3]) + DistYCbCr(src[21], src[ 7]) +
                              DistYCbCr(src[ 7], src[ 1]) + (4.0 * DistYCbCr(src[ 6], src[ 0]));
     bool  dominantGradient = (DOMINANT_DIRECTION_THRESHOLD * dist_05_07) < dist_06_00;
-    
-    blendResult[0] = ((dist_05_07 < dist_06_00) && (v[0] != v[5]) && (v[0] != v[7])) ? ((dominantGradient) ? BLEND_DOMINANT : BLEND_NORMAL) : BLEND_NONE;
+
+    if ((dist_05_07 < dist_06_00) && (v[0] != v[5]) && (v[0] != v[7]))
+    {
+      if (dominantGradient)
+      {
+        blendResult[0] = BLEND_DOMINANT;
+      }
+      else
+      {
+        blendResult[0] = BLEND_NORMAL;
+      }
+    }
+    else
+    {
+      blendResult[0] = BLEND_NONE;
+    }
   }
   
   float3 dst[16];
@@ -390,18 +463,139 @@ float3 PS_XBRZ4X( float4 pos : SV_Position,
                             (IsPixEqual(src[4], src[3]) && IsPixEqual(src[3], src[2]) && IsPixEqual(src[2], src[1]) && IsPixEqual(src[1], src[8]) && !IsPixEqual(src[0], src[2]))
                           )
                        );
-    
-    float3 blendPix = ( DistYCbCr(src[0], src[1]) <= DistYCbCr(src[0], src[3]) ) ? src[1] : src[3];
-    dst[ 2] = lerp( dst[ 2], blendPix, (needBlend && doLineBlend) ? ((haveShallowLine) ? ((haveSteepLine) ? 1.0/3.0 : 0.25) : ((haveSteepLine) ? 0.25 : 0.00)) : 0.00 );
-    dst[ 9] = lerp( dst[ 9], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.25 : 0.00 );
-    dst[10] = lerp( dst[10], blendPix, (needBlend && doLineBlend && haveSteepLine) ? 0.75 : 0.00 );
-    dst[11] = lerp( dst[11], blendPix, (needBlend) ? ((doLineBlend) ? ((haveSteepLine) ? 1.00 : ((haveShallowLine) ? 0.75 : 0.50)) : 0.08677704501) : 0.00 );
-    dst[12] = lerp( dst[12], blendPix, (needBlend) ? ((doLineBlend) ? 1.00 : 0.6848532563) : 0.00 );
-    dst[13] = lerp( dst[13], blendPix, (needBlend) ? ((doLineBlend) ? ((haveShallowLine) ? 1.00 : ((haveSteepLine) ? 0.75 : 0.50)) : 0.08677704501) : 0.00 );
-    dst[14] = lerp( dst[14], blendPix, (needBlend && doLineBlend && haveShallowLine) ? 0.75 : 0.00 );
-    dst[15] = lerp( dst[15], blendPix, (needBlend && doLineBlend && haveShallowLine) ? 0.25 : 0.00 );
-    
-    
+
+    float3 blendPix;
+    if ( DistYCbCr(src[0], src[1]) <= DistYCbCr(src[0], src[3]) )
+      blendPix = src[1];
+    else
+      blendPix = src[3];
+
+    if (needBlend && doLineBlend)
+    {
+      if (haveShallowLine)
+      {
+        if (haveSteepLine)
+        {
+          dst[2] = lerp( dst[2], blendPix, 1.0/3.0 );
+        }
+        else
+        {
+          dst[2] = lerp( dst[2], blendPix, 0.25 );
+        }
+      }
+      else
+      {
+        if (haveSteepLine)
+        {
+          dst[2] = lerp( dst[2], blendPix, 0.25 );
+        }
+        else
+        {
+          dst[2] = lerp( dst[2], blendPix, 0.0 );
+        }
+      }
+    }
+    else
+    {
+      dst[2] = lerp( dst[2], blendPix, 0.0 );
+    }
+
+    if (needBlend && doLineBlend && haveSteepLine)
+      dst[9] = lerp( dst[9], blendPix, 0.25 );
+    else
+      dst[9] = lerp( dst[9], blendPix, 0.00 );
+
+    if (needBlend && doLineBlend && haveSteepLine)
+      dst[10] = lerp( dst[10], blendPix, 0.75 );
+    else
+      dst[10] = lerp( dst[10], blendPix, 0.00 );
+
+    if (needBlend)
+    {
+      if (doLineBlend)
+      {
+        if (haveSteepLine)
+        {
+          dst[11] = lerp( dst[11], blendPix, 1.0);
+        }
+        else
+        {
+          if (haveShallowLine)
+          {
+            dst[11] = lerp( dst[11], blendPix, 0.75);
+          }
+          else
+          {
+            dst[11] = lerp( dst[11], blendPix, 0.50);
+          }
+        }
+      }
+      else
+      {
+        dst[11] = lerp( dst[11], blendPix, 0.08677704501);
+      }
+    }
+    else
+    {
+      dst[11] = lerp( dst[11], blendPix, 0.0);
+    }
+
+    if (needBlend)
+    {
+      if (doLineBlend)
+      {
+        dst[12] = lerp( dst[12], blendPix, 1.0);
+      }
+      else
+      {
+        dst[12] = lerp( dst[12], blendPix, 0.6848532563);
+      }
+    }
+    else
+    {
+      dst[12] = lerp( dst[12], blendPix, 0.00);
+    }
+
+    if (needBlend)
+    {
+      if (doLineBlend)
+      {
+        if (haveShallowLine)
+        {
+          dst[13] = lerp( dst[13], blendPix, 1.0);
+        }
+        else
+        {
+          if (haveSteepLine)
+          {
+            dst[13] = lerp( dst[13], blendPix, 0.75);
+          }
+          else
+          {
+            dst[13] = lerp( dst[13], blendPix, 0.50);
+          }
+        }
+      }
+      else
+      {
+        dst[13] = lerp( dst[13], blendPix, 0.08677704501);
+      }
+    }
+    else
+    {
+      dst[13] = lerp( dst[13], blendPix, 0.0);
+    }
+
+  if (needBlend && doLineBlend && haveShallowLine)
+    dst[14] = lerp( dst[14], blendPix, 0.75);
+  else
+    dst[14] = lerp( dst[14], blendPix, 0.00);
+
+  if (needBlend && doLineBlend && haveShallowLine)
+    dst[15] = lerp( dst[15], blendPix, 0.25);
+  else
+    dst[15] = lerp( dst[15], blendPix, 0.00);
+
     // --- Quality Level 2 ---
     
     dist_01_04      = DistYCbCr(src[7], src[2]);
