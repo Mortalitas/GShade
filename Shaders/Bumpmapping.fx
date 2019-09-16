@@ -1,5 +1,5 @@
 /*
-   Bumpmapping shader
+   Bumpmapping Shader
    
    Copyright (C) 2019 guest(r) - guest.r@gmail.com
 
@@ -20,109 +20,104 @@
 
 #include "ReShade.fxh"
 
-uniform float buGlow <
+uniform float SMOOTHING <
+	ui_min = 0.0; ui_max = 1.0;
     ui_type = "slider";
-    ui_label = "Glow";
-    ui_tooltip = "Max brightness on borders.";
-    ui_min = 0.0;
-    ui_max = 1.0;
+	ui_label = "Effect Smoothing";
+	ui_tooltip = "Effect Smoothing";
     ui_step = 0.001;
-> = 1.25;
+> = 0.5;
 
-uniform float buShade <
+uniform float RANGE <
+	ui_min = 0.5; ui_max = 2.0;
     ui_type = "slider";
-    ui_label = "Shade";
-    ui_tooltip = "Max darkening.";
-    ui_min = 0.0;
-    ui_max = 5.0;
+	ui_label = "Effect Width";
+	ui_tooltip = "Effect Width";
     ui_step = 0.001;
-> = 0.75;
+> = 1.0;
 
-uniform float buBump <
+uniform float EMBOSS <
+	ui_min = 0.0; ui_max = 2.0;
     ui_type = "slider";
-    ui_label = "Strength";
-    ui_tooltip = "Effect strength. Lower values bring more effect.";
-    ui_min = 0.75;
-    ui_max = 3.0;
+    ui_label = "BumpMapping Strength";
+    ui_tooltip = "BumpMapping Strength";
     ui_step = 0.001;
-> = 2.25;
+> = 1.0;
 
-sampler Texture00S
-{
-	Texture = ReShade::BackBufferTex;
-	MinFilter = Point; MagFilter = Point;
-};
+uniform float CONTRAST <
+	ui_min = 0.0; ui_max = 0.40;
+	ui_type = "slider";
+	ui_label = "Contrast";
+	ui_tooltip = "Ammount of haloing etc.";
+    ui_step = 0.001;
+> = 0.20; 
 
-texture Texture01 { Width = 2.0 * BUFFER_WIDTH; Height = 2.0 * BUFFER_HEIGHT; Format = RGBA8; };
-sampler Texture01S { Texture = Texture01; };
+uniform float SMART <
+	ui_min = 0.0; ui_max = 1.0;
+	ui_type = "slider";
+	ui_label = "Smart Bumpmapping";
+	ui_tooltip = "Smart Bumpmapping";
+    ui_step = 0.001;
+> = 0.75; 
 
 
-float3 TWODS0(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
-{
-	// Calculating texel coordinates
-	const float2 ps = 0.5 * ReShade::PixelSize;	
+texture SmoothTexture01 { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
+sampler Texture01S { Texture = SmoothTexture01; };
 
-	const float x = ps.x;
-	const float y = ps.y;
-	const float2 dg1 = float2( x,y);  float2 dg2 = float2(-x,y);
-	const float2 sd1 = dg1*0.5;     float2 sd2 = dg2*0.5;
-	const float2 ddx = float2(x,0.0); float2 ddy = float2(0.0,y);
 
-	const float3 c11 = tex2D(Texture00S, uv.xy).xyz;
-	const float3 s00 = tex2D(Texture00S, uv.xy - sd1).xyz; 
-	const float3 s20 = tex2D(Texture00S, uv.xy - sd2).xyz; 
-	const float3 s22 = tex2D(Texture00S, uv.xy + sd1).xyz; 
-	const float3 s02 = tex2D(Texture00S, uv.xy + sd2).xyz; 
-	const float3 c00 = tex2D(Texture00S, uv.xy - dg1).xyz; 
-	const float3 c22 = tex2D(Texture00S, uv.xy + dg1).xyz; 
-	const float3 c20 = tex2D(Texture00S, uv.xy - dg2).xyz;
-	const float3 c02 = tex2D(Texture00S, uv.xy + dg2).xyz;
-	const float3 c10 = tex2D(Texture00S, uv.xy - ddy).xyz; 
-	const float3 c21 = tex2D(Texture00S, uv.xy + ddx).xyz; 
-	const float3 c12 = tex2D(Texture00S, uv.xy + ddy).xyz; 
-	const float3 c01 = tex2D(Texture00S, uv.xy - ddx).xyz;     
-	const float3 dt = float3(1.0,1.0,1.0);
+static const float2 g10 = float2( 0.333,-1.0)*ReShade::PixelSize;
+static const float2 g01 = float2(-1.0,-0.333)*ReShade::PixelSize;
+static const float2 g12 = float2(-0.333, 1.0)*ReShade::PixelSize;
+static const float2 g21 = float2( 1.0, 0.333)*ReShade::PixelSize;
 
-	const float d1=dot(abs(c00-c22),dt)+0.0001;
-	const float d2=dot(abs(c20-c02),dt)+0.0001;
-	const float hl=dot(abs(c01-c21),dt)+0.0001;
-	const float vl=dot(abs(c10-c12),dt)+0.0001;
-	const float m1=dot(abs(s00-s22),dt)+0.0001;
-	const float m2=dot(abs(s02-s20),dt)+0.0001;
+float3 SMOOTH (float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
+{		
+	const float3 c10 = tex2D(ReShade::BackBuffer, uv + g10).rgb;
+	const float3 c01 = tex2D(ReShade::BackBuffer, uv + g01).rgb;
+	const float3 c11 = tex2D(ReShade::BackBuffer, uv      ).rgb;
+	const float3 c21 = tex2D(ReShade::BackBuffer, uv + g21).rgb;
+	const float3 c12 = tex2D(ReShade::BackBuffer, uv + g12).rgb;
 
-	const float3 t1=(hl*(c10+c12)+vl*(c01+c21)+(hl+vl)*c11)/(3.0*(hl+vl));
-	const float3 t2=(d1*(c20+c02)+d2*(c00+c22)+(d1+d2)*c11)/(3.0*(d1+d2));
+	const float3 b11 = (c10+c01+c12+c21+c11)*0.2;
 	
-	return .25*(t1+t2+(m2*(s00+s22)+m1*(s02+s20))/(m1+m2));
+	return lerp(c11,b11,SMOOTHING);
 } 
+ 
 
+float3 GetWeight(float3 dif1)
+{
+	return lerp(float3(1.0,1.0,1.0), 0.7*dif1 + 0.3, SMART);
+}
 
 float3 BUMP(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {
 	const float3 dt = float3(1.0,1.0,1.0);
 
 	// Calculating texel coordinates
-	const float2 inv_size = 0.8 * ReShade::PixelSize;	
+	const float2 inv_size = RANGE * ReShade::PixelSize;	
 
 	const float2 dx = float2(inv_size.x,0.0);
 	const float2 dy = float2(0.0, inv_size.y);
-	const float2 g1 = float2(inv_size.x,inv_size.y);	
+	const float2 g1 = float2(inv_size.x,inv_size.y);
+	
+	const float2 pC4 = uv;	
 	
 	// Reading the texels
 	const float3 c00 = tex2D(Texture01S,uv - g1).rgb; 
 	const float3 c10 = tex2D(Texture01S,uv - dy).rgb;
 	const float3 c01 = tex2D(Texture01S,uv - dx).rgb;
-	float3 c11 = tex2D(Texture01S,uv     ).rgb;
+	const float3 c11 = 0.5*(tex2D(ReShade::BackBuffer,uv).rgb + tex2D(Texture01S,uv).rgb);
 	const float3 c21 = tex2D(Texture01S,uv + dx).rgb;
 	const float3 c12 = tex2D(Texture01S,uv + dy).rgb;
 	const float3 c22 = tex2D(Texture01S,uv + g1).rgb;
+
+	const float3 w00 = GetWeight(saturate(2.25*abs(c00-c22)/(c00+c22+0.25)));
+	const float3 w01 = GetWeight(saturate(2.25*abs(c01-c21)/(c01+c21+0.25)));
+	const float3 w10 = GetWeight(saturate(2.25*abs(c10-c12)/(c10+c12+0.25)));
 	
-	const float3 d11 = c11;
+	const float3 b11 = (w00*(c00-c22) + w01*(c01-c21) + w10*(c10-c12)) + c11;
 
-	c11 = (-c00+c22-c01+c21-c10+c12+buBump*d11)/buBump;
-	c11 = min(c11,buGlow*d11);
-
-	return max(c11,buShade*d11);
+	return clamp(lerp(c11,b11,-EMBOSS), c11*(1.0-CONTRAST),c11*(1.0+CONTRAST));
 }
 
 technique BUMPMAPPING
@@ -130,8 +125,8 @@ technique BUMPMAPPING
 	pass bump1
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = TWODS0;
-		RenderTarget = Texture01; 		
+		PixelShader = SMOOTH;
+		RenderTarget = SmoothTexture01; 		
 	}
 	pass bump2
 	{
