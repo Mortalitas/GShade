@@ -60,11 +60,13 @@ float3 DEB(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	const float3 c10 = tex2D(ReShade::BackBuffer,pC4 - dy).rgb;
 	const float3 c20 = tex2D(ReShade::BackBuffer,pC4 - g2).rgb;
 	const float3 c01 = tex2D(ReShade::BackBuffer,pC4 - dx).rgb;
-	const float3 c11 = tex2D(ReShade::BackBuffer,pC4     ).rgb;
+	float3 c11 = tex2D(ReShade::BackBuffer,pC4     ).rgb;
 	const float3 c21 = tex2D(ReShade::BackBuffer,pC4 + dx).rgb;
 	const float3 c02 = tex2D(ReShade::BackBuffer,pC4 + g2).rgb;
 	const float3 c12 = tex2D(ReShade::BackBuffer,pC4 + dy).rgb;
 	const float3 c22 = tex2D(ReShade::BackBuffer,pC4 + g1).rgb;
+
+	float3 d11 = c11;
 	
 	float3 mn1 = min (min (c00,c01),c02);
 	const float3 mn2 = min (min (c10,c11),c12);
