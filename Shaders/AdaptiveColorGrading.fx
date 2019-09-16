@@ -79,6 +79,7 @@ uniform float HighlightThreshold <
 	ui_tooltip = "Any luma value above this will have highlights\nSimulates HDR look in low light";
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
+	ui_step = 0.001;
 > = 0.5;
 
 uniform float HighlightMaxThreshold <
