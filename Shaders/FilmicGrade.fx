@@ -1,5 +1,5 @@
 /*
-FilmicGrade v1.0.1 (c) 2018 Jacob Maximilian Fober,
+FilmicGrade v1.1.0 (c) 2018 Jacob Maximilian Fober,
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
@@ -8,15 +8,17 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 */
 // Lightly optimized by Marot Satil for the GShade project.
 
-  ////////////////////
- /////// MENU ///////
-////////////////////
+
+	  ////////////
+	 /// MENU ///
+	////////////
 
 uniform int Coefficients <
+	ui_tooltip = "For digital video signal (HDMI, DVI, Display Port) use BT.709,\n"
+	"for analog (like VGA, S-Video) use BT.601";
 	ui_label = "YUV coefficients";
-	ui_tooltip = "For digital signal use BT.709, analog (like VGA) use BT.601";
 	ui_type = "combo";
-	ui_items = "BT.709\0BT.601\0";
+	ui_items = "BT.709 - digital\0BT.601 - analog\0";
 > = 0;
 
 uniform float2 LightControl <
@@ -27,9 +29,10 @@ uniform float2 LightControl <
 	ui_min = -1.0; ui_max = 1.0;
 > = float2(0.0, 0.0);
 
-  //////////////////////
- /////// SHADER ///////
-//////////////////////
+
+	  //////////////
+	 /// SHADER ///
+	//////////////
 
 #include "ReShade.fxh"
 
@@ -66,8 +69,8 @@ static const float2 MaxUV = float2(0.492, 0.877);
 // Overlay blending mode
 float Overlay(float LayerAB)
 {
-	static float MinAB = min(LayerAB, 0.5);
-	static float MaxAB = max(LayerAB, 0.5);
+	const float MinAB = min(LayerAB, 0.5);
+	const float MaxAB = max(LayerAB, 0.5);
 	return 2 * (MinAB * MinAB + MaxAB + MaxAB - MaxAB * MaxAB) - 1.5;
 }
 
@@ -103,7 +106,12 @@ void FilmicGradePS(float4 vois : SV_Position, float2 texcoord : TexCoord, out fl
 		Display = mul(ToRGB601, Display);
 }
 
-technique FilmicGrade
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
+
+technique FilmicGrade < ui_label = "Filmic Grade"; >
 {
 	pass
 	{
