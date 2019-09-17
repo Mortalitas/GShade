@@ -102,8 +102,8 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 		n *= pix / (nl * 0.5);
  	
 	const float4   o = GetBB( UV ),
-			t0 = GetBB( UV + n * 0.5) * 0.9,
-			t1 = GetBB( UV - n * 0.5) * 0.9,
+			t0 = GetBB( UV + float2(n.x, -n.y)  * 0.5) * 0.9,
+			t1 = GetBB( UV - float2(n.x, -n.y)  * 0.5) * 0.9,
 			t2 = GetBB( UV + n * 0.9) * 0.75,
 			t3 = GetBB( UV - n * 0.9) * 0.75;
  
@@ -130,7 +130,7 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	}
 	else if (View_Mode == 2)
 	{
-		NFAA = float3(float2(t - d,-(r - l)) * 0.5 + 0.5,1);
+		NFAA = float3(-float2(-(r - l),-(t - d)) * 0.5 + 0.5,1);
 	}
 	
 return NFAA;
