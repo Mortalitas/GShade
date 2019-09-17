@@ -203,10 +203,10 @@ float3 Sharpen_Out(float2 texcoord)
 
 
 float3 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
-{	
-	float3 Out, Luma;
+{
 	const float3 Sharpen = Sharpen_Out(texcoord).rgb,BB = tex2D(BackBuffer,texcoord).rgb;
-	float DB = Depth(texcoord).r,DBTL = Depth(float2(texcoord.x*2,texcoord.y*2)).r, DBBL = Depth(float2(texcoord.x*2,texcoord.y*2-1)).r;
+	float DB = Depth(texcoord).r, DBBL = Depth(float2(texcoord.x*2,texcoord.y*2-1)).r;
+	const float DBTL = Depth(float2(texcoord.x*2,texcoord.y*2)).r;
 	
 	if(No_Depth_Map)
 	{
@@ -216,8 +216,7 @@ float3 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	
 	if (Debug_View == 0)
 	{			
-		Out.rgb = lerp(Sharpen, BB, DB);
-		return Out;
+		return lerp(Sharpen, BB, DB);
 	}
 	else if (Debug_View == 1)
 	{
