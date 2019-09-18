@@ -96,9 +96,10 @@ uniform float Sharpness <
 	ui_category = "Bilateral CAS";
 > = 0.625;
 
-uniform bool CAS_BETTER_DIAGONALS <
-	ui_label = "CAS Better Diagonals";
-	ui_tooltip = "Instead of using the 3x3 'box' with the 5-tap 'circle' this uses just the 'circle'.";
+uniform bool CAM_IOB <
+	ui_label = "CAM Ignore Overbright";
+	ui_tooltip = "Instead of of allowing Overbright in the mask this allows sharpening of this area.\n"
+				 "I think it's more accurate to turn this on.";
 	ui_category = "Bilateral CAS";
 > = false;
 
@@ -174,7 +175,7 @@ float Depth(in float2 texcoord : TEXCOORD0)
 	if (Depth_Map_Flip)
 		texcoord.y =  1 - texcoord.y;
 		
-	float zBuffer = tex2D(DepthBuffer, texcoord).x; //Depth Buffer
+	const float zBuffer = tex2D(DepthBuffer, texcoord).x; //Depth Buffer
 	
 	//Conversions to linear space.....
 	//Near & Far Adjustment
@@ -182,27 +183,20 @@ float Depth(in float2 texcoord : TEXCOORD0)
 	
 	const float2 Z = float2( zBuffer, 1-zBuffer );
 	
-	if (Depth_Map == 0)//DM0. Normal
-		zBuffer = Far * Near / (Far + Z.x * (Near - Far));		
-	else if (Depth_Map == 1)//DM1. Reverse
-		zBuffer = Far * Near / (Far + Z.y * (Near - Far));	
-		 
-	return saturate(zBuffer);	
+	if (Depth_Map == 0) //DM0. Normal
+		return saturate(Far * Near / (Far + Z.x * (Near - Far)));		
+	else //DM1. Reverse
+		return saturate(Far * Near / (Far + Z.y * (Near - Far)));
 }	
 
-float3 Min3(float3 x, float3 y, float3 z)
+float Min3(float x, float y, float z)
 {
     return min(x, min(y, z));
 }
 
-float3 Max3(float3 x, float3 y, float3 z)
+float Max3(float x, float y, float z)
 {
     return max(x, max(y, z));
-}
-
-float normpdf(in float x, in float sigma)
-{
-	return 0.39894*exp(-0.5*x*x/(sigma*sigma))/sigma;
 }
 
 float normpdf3(in float3 v, in float sigma)
@@ -215,41 +209,33 @@ float3 BB(in float2 texcoord, float2 AD)
 	return tex2Dlod(BackBuffer, float4(texcoord + AD,0,0)).rgb;
 }
 
+float LI(float3 RGB)
+{
+	return dot(RGB,float3(0.2126, 0.7152, 0.0722));
+}
+
 float4 CAS(float2 texcoord)
 {
-	// fetch a 3x3 neighborhood around the pixel 'e',
-	//  a b c
-	//  d(e)f
-	//  g h i
-	const float3 A = BB(texcoord, float2(-pix.x,-pix.y));
-    const float3 B = BB(texcoord, float2( 0,-pix.y));
-    const float3 C = BB(texcoord, float2( pix.x,-pix.y));
-    const float3 D = BB(texcoord, float2(-pix.x, 0));
-    const float3 E = BB(texcoord, 0);
-    const float3 F = BB(texcoord, float2( pix.x, 0));
-    const float3 G = BB(texcoord, float2(-pix.x, pix.y));
-    const float3 H = BB(texcoord, float2( 0, pix.y));
-    const float3 I = BB(texcoord, float2( pix.x, pix.y));
-	// Soft min and max.
-	//  a b c             b
-	//  d e f * 0.5  +  d e f * 0.5
-	//  g h i             h
-    // These are 2.0x bigger (factored out the extra multiply).
-    float3 mnRGB = Min3( Min3(D, E, F), B, H), mnRGB2 = Min3( Min3(mnRGB, A, C), G, I);
-	
-	if( CAS_BETTER_DIAGONALS)
-		mnRGB += mnRGB2;
-    
-    float3 mxRGB = Max3( Max3(D, E, F), B, H), mxRGB2 = Max3( Max3(mxRGB, A, C), G, I);
-    
-    if( CAS_BETTER_DIAGONALS )
-		mxRGB += mxRGB2;
-    
-    // Smooth minimum distance to signal limit divided by smooth max.
-    const float3 rcpMRGB = rcp(mxRGB);
-	float3 ampRGB = saturate(min(mnRGB, 2.0 - mxRGB) * rcpMRGB);
+	// fetch a Cross neighborhood around the pixel 'C',
+	//         Up
+	//
+	//  Left(Center)Right
+	//
+	//        Down  
+    const float Up = LI(BB(texcoord, float2( 0,-pix.y)));
+    const float Left = LI(BB(texcoord, float2(-pix.x, 0)));
+    const float Center = LI(BB(texcoord, 0));
+    const float Right = LI(BB(texcoord, float2( pix.x, 0)));
+    const float Down = LI(BB(texcoord, float2( 0, pix.y)));
 
-	if( CAS_BETTER_DIAGONALS)
+    const float mnRGB = Min3( Min3(Left, Center, Right), Up, Down);
+    const float mxRGB = Max3( Max3(Left, Center, Right), Up, Down);
+       
+    // Smooth minimum distance to signal limit divided by smooth max.
+    const float rcpMRGB = rcp(mxRGB);
+	float ampRGB = saturate(min(mnRGB, 1.0 - mxRGB) * rcpMRGB);
+
+	if( CAM_IOB )
 		ampRGB = saturate(min(mnRGB, 2.0 - mxRGB) * rcpMRGB);
     
     // Shaping amount of sharpening.
@@ -285,7 +271,7 @@ float4 CAS(float2 texcoord)
 		final_colour += factor * cc;
 	}
 		
-	float CAS_Mask = dot(ampRGB,float3(0.2126, 0.7152, 0.0722));
+	float CAS_Mask = ampRGB;
 
 	if(CA_Mask_Boost)
 		CAS_Mask = lerp(CAS_Mask,CAS_Mask * CAS_Mask,saturate(Sharpness * 0.5));
@@ -298,7 +284,7 @@ return saturate(float4(final_colour/Z,CAS_Mask));
 
 float3 Sharpen_Out(float2 texcoord)                                                                          
 {   const float3 Done = tex2D(BackBuffer,texcoord).rgb;	
-	return lerp(Done,Done+(Done - CAS(texcoord).rgb)*(Sharpness*3.), CAS(texcoord).w * saturate(Sharpness)); //Sharpen Out
+	return lerp(Done,Done+(Done - CAS(texcoord).rgb)*(Sharpness*3.1), CAS(texcoord).w * saturate(Sharpness)); //Sharpen Out
 }
 
 
@@ -369,6 +355,8 @@ void PostProcessVS(in uint id : SV_VertexID, out float4 position : SV_Position, 
 
 //*Rendering passes*//
 technique Smart_Sharp
+< ui_tooltip = "Suggestion : You Can Enable 'Performance Mode Checkbox,' in the lower bottom right of the ReShade's Main UI.\n"
+			   "             Do this once you set your Smart Sharp settings of course."; >
 {		
 			pass UnsharpMask
 		{
