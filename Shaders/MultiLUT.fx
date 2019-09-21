@@ -4,6 +4,7 @@
 // Multi-LUT shader, using a texture atlas with multiple LUTs
 // by Otis / Infuse Project.
 // Based on Marty's LUT shader 1.0 for ReShade 3.0
+// Further improvements including overall intensity, multiple texture support, and increased precision added by seri14 and Marot Satil.
 // Copyright © 2008-2016 Marty McFly
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // MultiLut_GShade.png is a modified version of miiok's Angelite MultiLUT table made for GShade!
@@ -11,14 +12,18 @@
 // And GPOSERS here: https://twitter.com/GPOSERS_FFXIV
 // For GShade news and updates, join our Discord: https://twitter.com/GPOSERS_FFXIV
 //
-// MultiLut_Johto.png was provided by Johto!
+// MultiLut_Johto.png was created by Johto!
 // Follow them on Twitter here: https://twitter.com/JohtoFFXIV
 //
-// FFXIVLUTAtlas.png was provided by Espresso Lalaqo'te from their Espresso Glow Build!
+// FFXIVLUTAtlas.png was created by Espresso Lalaqo'te from their Espresso Glow Build!
 // Follow them on Twitter here: https://twitter.com/espressolala
 //
-// MultiLut_ninjafadaGameplay.png was provided by ninjafada!
+// MultiLut_ninjafadaGameplay.png was created by ninjafada!
 // You can see their ReShade-related work here: http://sfx.thelazy.net/users/u/ninjafada/
+//
+// MultiLut_seri14.png was created by seri14!
+// Follow their work on Github here: https://github.com/seri14
+// And follow them on Twitter here: https://twitter.com/seri_haruna
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
@@ -40,6 +45,12 @@
 #ifndef fLUT_NFGTextureName
 	#define fLUT_NFGTextureName "MultiLut_ninjafadaGameplay.png"
 #endif
+#ifndef fLUT_S14TextureName
+	#define fLUT_S14TextureName "MultiLut_seri14.png"
+#endif
+#ifndef fLUT_YOMTextureName
+	#define fLUT_YOMTextureName "MultiLut_Yomi.png"
+#endif
 #ifndef fLUT_TileSizeXY
 	#define fLUT_TileSizeXY 32
 #endif
@@ -55,36 +66,141 @@
 #ifndef fLUT_LutAmountLow
 	#define fLUT_LutAmountLow 12
 #endif
+#ifndef fLUT_LutAmountLower
+	#define fLUT_LutAmountLower 11
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 uniform int fLUT_MultiLUTSelector <
-  ui_type = "combo";
-  ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0";
-  ui_label = "The MultiLUT file to use.";
-  ui_tooltip = "Set this to whatever build your preset was made with!";
+	ui_category = "Pass 1";
+	ui_type = "combo";
+	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0";
+	ui_label = "The MultiLUT file to use.";
+	ui_tooltip = "Set this to whatever build your preset was made with!";
 > = 0;
 
 uniform int fLUT_LutSelector < 
+	ui_category = "Pass 1";
 	ui_type = "combo";
-	ui_items="Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Sepia\0\B&W mid constrast\0\B&W high contrast\0\An Extra One for Johto lol\0";
+	ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
 	ui_label = "LUT to use. Names may not be accurate.";
-	ui_tooltip = "LUT to use for color transformation. 'Neutral' doesn't do any color transformation.";
+	ui_tooltip = "LUT to use for color transformation. ReShade 4's 'Neutral' doesn't do any color transformation.";
 > = 0;
 
-uniform float fLUT_AmountChroma <
+uniform float fLUT_Intensity <
+	ui_category = "Pass 1";
 	ui_type = "slider";
 	ui_min = 0.00; ui_max = 1.00;
-	ui_label = "LUT chroma amount.";
+	ui_label = "LUT Intensity";
+	ui_tooltip = "Overall intensity of the LUT effect.";
+> = 1.00;
+
+uniform float fLUT_AmountChroma <
+	ui_category = "Pass 1";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Chroma Amount";
 	ui_tooltip = "Intensity of color/chroma change of the LUT.";
 > = 1.00;
 
 uniform float fLUT_AmountLuma <
+	ui_category = "Pass 1";
 	ui_type = "slider";
 	ui_min = 0.00; ui_max = 1.00;
-	ui_label = "LUT luma amount.";
+	ui_label = "LUT Luma Amount";
+	ui_tooltip = "Intensity of luma change of the LUT.";
+> = 1.00;
+
+uniform bool fLUT_MultiLUTPass2 <
+	ui_category = "Pass 2";
+	ui_label = "Enable Pass 2";
+> = 0;
+
+uniform int fLUT_MultiLUTSelector2 <
+	ui_category = "Pass 2";
+	ui_type = "combo";
+	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0";
+	ui_label = "The MultiLUT file to use.";
+	ui_tooltip = "The MultiLUT table to use on Pass 2.";
+> = 1;
+
+uniform int fLUT_LutSelector2 < 
+	ui_category = "Pass 2";
+	ui_type = "combo";
+	ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
+	ui_label = "LUT to use. Names may not be accurate.";
+	ui_tooltip = "LUT to use for color transformation on Pass 2. ReShade 4's 'Neutral' doesn't do any color transformation.";
+> = 0;
+
+uniform float fLUT_Intensity2 <
+	ui_category = "Pass 2";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Intensity";
+	ui_tooltip = "Overall intensity of the LUT effect.";
+> = 1.00;
+
+uniform float fLUT_AmountChroma2 <
+	ui_category = "Pass 2";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Chroma Amount";
+	ui_tooltip = "Intensity of color/chroma change of the LUT.";
+> = 1.00;
+
+uniform float fLUT_AmountLuma2 <
+	ui_category = "Pass 2";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Luma Amount";
+	ui_tooltip = "Intensity of luma change of the LUT.";
+> = 1.00;
+
+uniform bool fLUT_MultiLUTPass3 <
+	ui_category = "Pass 3";
+	ui_label = "Enable Pass 3";
+> = 0;
+
+uniform int fLUT_MultiLUTSelector3 <
+	ui_category = "Pass 3";
+	ui_type = "combo";
+	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0";
+	ui_label = "The MultiLUT file to use.";
+	ui_tooltip = "The MultiLUT table to use on Pass 3.";
+> = 1;
+
+uniform int fLUT_LutSelector3 < 
+	ui_category = "Pass 3";
+	ui_type = "combo";
+	ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
+	ui_label = "LUT to use. Names may not be accurate.";
+	ui_tooltip = "LUT to use for color transformation on Pass 3. ReShade 4's 'Neutral' doesn't do any color transformation.";
+> = 0;
+
+uniform float fLUT_Intensity3 <
+	ui_category = "Pass 3";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Intensity";
+	ui_tooltip = "Overall intensity of the LUT effect.";
+> = 1.00;
+
+uniform float fLUT_AmountChroma3 <
+	ui_category = "Pass 3";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Chroma Amount";
+	ui_tooltip = "Intensity of color/chroma change of the LUT.";
+> = 1.00;
+
+uniform float fLUT_AmountLuma3 <
+	ui_category = "Pass 3";
+	ui_type = "slider";
+	ui_min = 0.00; ui_max = 1.00;
+	ui_label = "LUT Luma Amount";
 	ui_tooltip = "Intensity of luma change of the LUT.";
 > = 1.00;
 
@@ -93,129 +209,148 @@ uniform float fLUT_AmountLuma <
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #include "ReShade.fxh"
-texture texGSMultiLUT < source = fLUT_GSTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
-sampler	SamplerGSMultiLUT { Texture = texGSMultiLUT; };
 
-texture texRESMultiLUT < source = fLUT_RESTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
-sampler	SamplerRESMultiLUT { Texture = texRESMultiLUT; };
+texture texGSMultiLUT < source = fLUT_GSTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
+sampler SamplerGSMultiLUT { Texture = texGSMultiLUT; };
 
-texture texJOHMultiLUT < source = fLUT_JOHTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountEx; Format = RGBA8; };
-sampler	SamplerJOHMultiLUT { Texture = texJOHMultiLUT; };
+texture texRESMultiLUT < source = fLUT_RESTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
+sampler SamplerRESMultiLUT { Texture = texRESMultiLUT; };
 
-texture texEGMultiLUT < source = fLUT_EGTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
-sampler	SamplerEGMultiLUT { Texture = texEGMultiLUT; };
+texture texJOHMultiLUT < source = fLUT_JOHTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountEx; Format = RGBA8; };
+sampler SamplerJOHMultiLUT { Texture = texJOHMultiLUT; };
 
-texture texMSMultiLUT < source = fLUT_MSTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
-sampler	SamplerMSMultiLUT { Texture = texMSMultiLUT; };
+texture texEGMultiLUT < source = fLUT_EGTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmount; Format = RGBA8; };
+sampler SamplerEGMultiLUT { Texture = texEGMultiLUT; };
 
-texture texNFGMultiLUT < source = fLUT_NFGTextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
-sampler	SamplerNFGMultiLUT { Texture = texNFGMultiLUT; };
+texture texMSMultiLUT < source = fLUT_MSTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
+sampler SamplerMSMultiLUT { Texture = texMSMultiLUT; };
+
+texture texNFGMultiLUT < source = fLUT_NFGTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
+sampler SamplerNFGMultiLUT { Texture = texNFGMultiLUT; };
+
+texture texS14MultiLUT < source = fLUT_S14TextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLower; Format = RGBA8; };
+sampler SamplerS14MultiLUT { Texture = texS14MultiLUT; };
+
+texture texYOMMultiLUT < source = fLUT_YOMTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
+sampler SamplerYOMMultiLUT { Texture = texYOMMultiLUT; };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
+float4 apply(in const float4 color, in const int tex, in const float lut)
 {
-	const float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
-	float2 texelsize = 1.0 / fLUT_TileSizeXY;
-	texelsize.x /= fLUT_TileAmount;
-	float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
+	float lerpfact;
+	const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
+	float3 lutcoord;
+	float4 lutcolor;
+	
+	lutcoord.xy = (color.xy * fLUT_TileSizeXY - color.xy + 0.5) * texelsize;
+	lutcoord.z  = (color.z  * fLUT_TileSizeXY - color.z);
+
+	lerpfact = frac(lutcoord.z);
+	lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
 
 //Default GShade MultiLut_GShade.png
-	if (fLUT_MultiLUTSelector == 0)
+	if (tex == 0)
 	{
-    lutcoord.y /= fLUT_LutAmount;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerGSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerGSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+		lutcolor   = lerp(tex2D(SamplerGSMultiLUT, lutcoord.xy), tex2D(SamplerGSMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
-
 //ReShade 4 MultiLut_atlas4.png
-	else if (fLUT_MultiLUTSelector == 1)
+	else if (tex == 1)
 	{
-    lutcoord.y /= fLUT_LutAmount;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+		lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy), tex2D(SamplerRESMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
 //ReShade 3 MultiLut_atlas4.png
-	else if (fLUT_MultiLUTSelector == 2)
+	else if (tex == 2)
 	{
-    lutcoord.y /= fLUT_LutAmount;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy).xyz, tex2D(SamplerRESMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+		lutcolor   = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy), tex2D(SamplerRESMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
-
 //Johto MultiLut_Johto.png
-	else if (fLUT_MultiLUTSelector == 3)
+	else if (tex == 3)
 	{
-    lutcoord.y /= fLUT_LutAmountEx;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountEx);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerJOHMultiLUT, lutcoord.xy).xyz, tex2D(SamplerJOHMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmountEx + lutcoord.y / fLUT_LutAmountEx;
+		lutcolor   = lerp(tex2D(SamplerJOHMultiLUT, lutcoord.xy), tex2D(SamplerJOHMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
-
 //EG FFXIVLUTAtlas.png
-	else if (fLUT_MultiLUTSelector == 4)
+	else if (tex == 4)
 	{
-    lutcoord.y /= fLUT_LutAmount;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmount);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerEGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerEGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+		lutcolor   = lerp(tex2D(SamplerEGMultiLUT, lutcoord.xy), tex2D(SamplerEGMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
-
 //MS TMP_MultiLUT.png
-	else if (fLUT_MultiLUTSelector == 5)
+	else if (tex == 5)
 	{
-    lutcoord.y /= fLUT_LutAmountLow;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy).xyz, tex2D(SamplerMSMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+		lutcolor   = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy), tex2D(SamplerMSMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
 //ninjafada Gameplay MultiLut_ninjafadaGameplay.png
+	else if (tex == 6)
+	{
+		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+		lutcolor   = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy), tex2D(SamplerNFGMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+	}
+//seri14 MultiLut_seri14.png
+	else if (tex == 7)
+	{
+		lutcoord.y = lut / fLUT_LutAmountLower + lutcoord.y / fLUT_LutAmountLower;
+		lutcolor   = lerp(tex2D(SamplerS14MultiLUT, lutcoord.xy), tex2D(SamplerS14MultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+	}
+//Yomi MultiLut_Yomi.png
 	else
 	{
-    lutcoord.y /= fLUT_LutAmountLow;
-    lutcoord.y += (float(fLUT_LutSelector)/ fLUT_LutAmountLow);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-    const float3 lutcolor = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy).xyz, tex2D(SamplerNFGMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-    res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+		lutcolor   = lerp(tex2D(SamplerYOMMultiLUT, lutcoord.xy), tex2D(SamplerYOMMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+	}
+
+	lutcolor.a = color.a;
+	return lutcolor;
+}
+
+void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target)
+{
+	const float4 color = tex2D(ReShade::BackBuffer, texcoord);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  Pass 1
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	float4 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
+
+	res = lerp(normalize(color), normalize(lutcolor), fLUT_AmountChroma)
+	    * lerp(   length(color),    length(lutcolor),   fLUT_AmountLuma);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  Pass 2
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	if (fLUT_MultiLUTPass2)
+	{
+		lutcolor = lerp(res, apply(res, fLUT_MultiLUTSelector2, fLUT_LutSelector2), fLUT_Intensity2);
+
+		res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma2)
+		    * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma2);
+	}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  Pass 3
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	if (fLUT_MultiLUTPass3)
+	{
+		lutcolor = lerp(res, apply(res, fLUT_MultiLUTSelector3, fLUT_LutSelector3), fLUT_Intensity3);
+
+		res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma3)
+		    * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma3);
 	}
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 
 technique MultiLUT
 {
