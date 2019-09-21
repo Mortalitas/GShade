@@ -75,8 +75,6 @@ sampler	Gr8mmFilmColor 	{ Texture = Gr8mmFilmTex; };
 
 float4 PS_Gr8mmFilm(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-
-	const float4 color = tex2D(ReShade::BackBuffer, texcoord);
 	const float4 singleGr8mmFilm = tex2D(Gr8mmFilmColor, float2(texcoord.x, texcoord.y/Gr8mmFilmTileAmount + (CFX_Gr8mmFilm_TY/Gr8mmFilmTextureSizeY)* 
 #if Gr8mmFilmScroll
 filmroll.x
@@ -84,8 +82,8 @@ filmroll.x
 trunc(filmroll.x/* / speed*/) 
 #endif
 ));
-	const float alpha = max(0.0f,min(1.0f,max(abs(texcoord.x-0.5f),abs(texcoord.y-0.5f))*Gr8mmFilmVignettePower + 0.75f - (singleGr8mmFilm.x+singleGr8mmFilm.y+singleGr8mmFilm.z)*CFX_Gr8mmFilm_AP));
-	return lerp(color, singleGr8mmFilm, Gr8mmFilmPower*pow(alpha,2));
+	const float alpha = saturate(saturate(max(abs(texcoord.x-0.5f),abs(texcoord.y-0.5f))*Gr8mmFilmVignettePower + 0.75f - (singleGr8mmFilm.x+singleGr8mmFilm.y+singleGr8mmFilm.z)*CFX_Gr8mmFilm_AP));
+	return lerp(tex2D(ReShade::BackBuffer, texcoord), singleGr8mmFilm, Gr8mmFilmPower*(alpha*alpha));
 }
 
 technique Gr8mmFilm 
