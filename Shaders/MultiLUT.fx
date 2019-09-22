@@ -329,6 +329,7 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 
 	if (fLUT_MultiLUTPass2)
 	{
+		res = saturate(res);
 		lutcolor = lerp(res, apply(res, fLUT_MultiLUTSelector2, fLUT_LutSelector2), fLUT_Intensity2);
 
 		res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma2)
@@ -341,6 +342,7 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 
 	if (fLUT_MultiLUTPass3)
 	{
+		res = saturate(res);
 		lutcolor = lerp(res, apply(res, fLUT_MultiLUTSelector3, fLUT_LutSelector3), fLUT_Intensity3);
 
 		res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma3)
