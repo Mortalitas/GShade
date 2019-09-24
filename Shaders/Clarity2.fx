@@ -436,11 +436,11 @@ ClarityFloat blur = tex2D(Clarity2Sampler, texcoord/ClarityOffsetTwo).CF;
 		{
 			range = ClarityBlendIfD*BlendIfRange;
 			#if ClarityRGBMode
-				float3 mix = 1-orig.rgb;
-				mask -= smoothstep(ClarityBlendIfD-(range),ClarityBlendIfD+(range),mix);
+				float3 cmix = 1-orig.rgb;
+				mask -= smoothstep(ClarityBlendIfD-(range),ClarityBlendIfD+(range),cmix);
 			#else 
-			const float mix = 1.0-luma;
-				mask -= smoothstep(ClarityBlendIfD-(range),ClarityBlendIfD+(range),mix);
+			const float cmix = 1.0-luma;
+				mask -= smoothstep(ClarityBlendIfD-(range),ClarityBlendIfD+(range),cmix);
 			#endif 
 		}
 					
@@ -448,11 +448,11 @@ ClarityFloat blur = tex2D(Clarity2Sampler, texcoord/ClarityOffsetTwo).CF;
 		{
 			range = ClarityBlendIfL*BlendIfRange;
 			#if ClarityRGBMode
-				const float3 mix = orig.rgb;
-				mask = lerp(mask,0.0,smoothstep(ClarityBlendIfL-range, ClarityBlendIfL+range, mix));
+				const float3 cmix = orig.rgb;
+				mask = lerp(mask,0.0,smoothstep(ClarityBlendIfL-range, ClarityBlendIfL+range, cmix));
 			#else 
-			const float mix = luma;
-				mask = lerp(mask,0.0,smoothstep(ClarityBlendIfL-range, ClarityBlendIfL+range, mix));
+			const float cmix = luma;
+				mask = lerp(mask,0.0,smoothstep(ClarityBlendIfL-range, ClarityBlendIfL+range, cmix));
 			#endif 
 
 		}
