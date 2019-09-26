@@ -26,8 +26,7 @@ uniform int AA_Adjust <
 	ui_type = "slider";
 	ui_min = 1; ui_max = 32;
 	ui_label = "AA Power";
-	ui_tooltip = "Use this to adjust the AA power.\n"
-				 "Default is 16";
+	ui_tooltip = "Use this to adjust the AA power.\nDefault is 16";
 	ui_category = "NFAA";
 > = 16;
 
@@ -35,12 +34,7 @@ uniform int View_Mode <
 	ui_type = "combo";
 	ui_items = "NFAA\0Mask View\0Normals\0DLSS\0";
 	ui_label = "View Mode";
-	ui_tooltip = "This is used to select the normal view output or debug view.\n"
-				 "NFAA Masked gives you a sharper image with applyed Normals AA.\n"
-				 "Masked View gives you a view of the edge detection.\n"
-				 "Normals gives you an view of the normals created.\n"
-				 "DLSS is NV_AI_DLSS Parody experiance.\n"
-				 "Default is NFAA.";
+	ui_tooltip = "This is used to select the normal view output or debug view.\nNFAA Masked gives you a sharper image with applyed Normals AA.\nMasked View gives you a view of the edge detection.\nNormals gives you an view of the normals created.\nDLSS is NV_AI_DLSS Parody experiance.\nDefault is NFAA.";
 	ui_category = "NFAA";
 > = 0;
 
@@ -48,8 +42,7 @@ uniform float Mask_Adjust <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 2.0;
 	ui_label = "Mask Adjustment";
-	ui_tooltip = "Use this to adjust the Mask.\n"
-				 "Default is 1.00";
+	ui_tooltip = "Use this to adjust the Mask.\nDefault is 1.00";
 	ui_category = "NFAA";
 > = 1.00;
 
