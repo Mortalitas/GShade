@@ -65,7 +65,7 @@ uniform float Gr8mmFilmAlphaPower <
 #define CFX_Gr8mmFilm_VP Gr8mmFilmVignettePower*0.65f
 #define CFX_Gr8mmFilm_AP Gr8mmFilmAlphaPower/3f
 
-float2 filmroll < source = "pingpong"; min = 0.0f; max = (Gr8mmFilmTileAmount-Gr8mmFilmBlackFrameMix)/**speed*/; step = float2(1.0f, 2.0f); >;
+uniform float2 filmroll < source = "pingpong"; min = 0.0f; max = (Gr8mmFilmTileAmount-Gr8mmFilmBlackFrameMix)/**speed*/; step = float2(1.0f, 2.0f); >;
 
 
 texture Gr8mmFilmTex < source = "CFX_Gr8mmFilm.png"; > { Width = Gr8mmFilmTextureSizeX; Height = Gr8mmFilmTextureSizeY; Format = RGBA8; };
