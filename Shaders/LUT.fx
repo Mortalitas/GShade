@@ -8,6 +8,9 @@
 // lut_ninjafadaGameplay.png was provided by ninjafada!
 // You can see their ReShade-related work here: http://sfx.thelazy.net/users/u/ninjafada/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// lut_Sleepy.png was provided by Sleeps_Hungry!
+// You can find them here: https://twitter.com/advent1013
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_TextureName
@@ -37,6 +40,9 @@
 #ifndef fLUT_RS_TextureName
 	#define fLUT_RS_TextureName "lut_ReShade.png"
 #endif
+#ifndef fLUT_SL_TextureName
+	#define fLUT_SL_TextureName "lut_Sleepy.png"
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -44,7 +50,7 @@
 
 uniform int fLUT_Selector <
   ui_type = "combo";
-  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0";
+  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0Sleeps_Hungry\0";
   ui_label = "The LUT file to use.";
   ui_tooltip = "Set this to whichever your preset requires!";
 > = 0;
@@ -82,6 +88,9 @@ sampler	SamplerLUTNFG 	{ Texture = texLUTNFG; };
 
 texture texLUTRS < source = fLUT_RS_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
 sampler	SamplerLUTRS 	{ Texture = texLUTRS; };
+
+texture texLUTSL < source = fLUT_SL_TextureName; > { Width = fLUT_W_TileSizeXY*fLUT_W_TileAmount; Height = fLUT_W_TileSizeXY; Format = RGBA8; };
+sampler	SamplerLUTSL 	{ Texture = texLUTSL; };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -166,7 +175,7 @@ void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
     res.xyz = color.xyz;
     res.w = 1.0;
   }
-  else
+  else if (fLUT_Selector == 4)
   {
     float2 texelsize = 1.0 / fLUT_TileSizeXY;
     texelsize.x /= fLUT_TileAmount;
@@ -176,6 +185,23 @@ void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
     lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
 
     const float3 lutcolor = lerp(tex2D(SamplerLUTRS, lutcoord.xy).xyz, tex2D(SamplerLUTRS, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+
+    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
+
+    res.xyz = color.xyz;
+    res.w = 1.0;
+  }
+  else
+  {
+    float2 texelsize = 1.0 / fLUT_W_TileSizeXY;
+    texelsize.x /= fLUT_W_TileAmount;
+
+    float3 lutcoord = float3((color.xy*fLUT_W_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_W_TileSizeXY-color.z);
+    const float lerpfact = frac(lutcoord.z);
+    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+    const float3 lutcolor = lerp(tex2D(SamplerLUTSL, lutcoord.xy).xyz, tex2D(SamplerLUTSL, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
 
     color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
