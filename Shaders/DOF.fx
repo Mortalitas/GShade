@@ -374,7 +374,7 @@ float GetCoC(float2 coords)
 	{
 		scenefocus = 0.0;
 
-		static float2 focusPoint;
+		float2 focusPoint;
 		if (DOF_MOUSEDRIVEN_AF)
 			focusPoint = MouseCoords * ReShade::PixelSize;
 		else
@@ -395,7 +395,7 @@ float GetCoC(float2 coords)
 	scenefocus = smoothstep(0.0, DOF_INFINITEFOCUS, scenefocus);
 	scenedepth = smoothstep(0.0, DOF_INFINITEFOCUS, scenedepth);
 
-	static float farBlurDepth = scenefocus * pow(4.0, DOF_FARBLURCURVE);
+	const float farBlurDepth = scenefocus * pow(4.0, DOF_FARBLURCURVE);
 
 	if (scenedepth < scenefocus)
 		scenecoc = (scenedepth - scenefocus) / scenefocus;
@@ -423,16 +423,16 @@ void PS_RingDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 {
 	float4 scenecolor = tex2D(SamplerHDR1, texcoord);
 
-	static float centerDepth = scenecolor.w;
-	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
-	static float discRadius = blurAmount * DOF_BLURRADIUS;
+	const float centerDepth = scenecolor.w;
+	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
+	float discRadius = blurAmount * DOF_BLURRADIUS;
 
 	if (centerDepth < 0.5)
 		discRadius *= (1.0 / max(DOF_NEARBLURCURVE * 2.0, 1.0));
 	else
 		discRadius *= 1.0;
 
-	static float2 blurRadius = discRadius * ReShade::PixelSize / iRingDOFRings;
+	const float2 blurRadius = discRadius * ReShade::PixelSize / iRingDOFRings;
 	scenecolor.x = tex2Dlod(SamplerHDR1, float4(texcoord + float2( 0.000,  1.0) * fRingDOFFringe * discRadius * ReShade::PixelSize, 0, 0)).x;
 	scenecolor.y = tex2Dlod(SamplerHDR1, float4(texcoord + float2(-0.866, -0.5) * fRingDOFFringe * discRadius * ReShade::PixelSize, 0, 0)).y;
 	scenecolor.z = tex2Dlod(SamplerHDR1, float4(texcoord + float2( 0.866, -0.5) * fRingDOFFringe * discRadius * ReShade::PixelSize, 0, 0)).z;
@@ -443,11 +443,11 @@ void PS_RingDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 void PS_RingDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 blurcolor : SV_Target)
 {
 	blurcolor = tex2D(SamplerHDR2, texcoord);
-	static float4 noblurcolor = tex2D(ReShade::BackBuffer, texcoord);
+	const float4 noblurcolor = tex2D(ReShade::BackBuffer, texcoord);
 
-	static float centerDepth = GetCoC(texcoord);
+	const float centerDepth = GetCoC(texcoord);
 
-	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
+	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
 	if (centerDepth < 0.5)
@@ -463,7 +463,7 @@ void PS_RingDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 
 	blurcolor.w = 1.0;
 
-	static float s = 1.0;
+	const float s = 1.0;
 	int ringsamples;
 
 	[loop]
@@ -474,13 +474,13 @@ void PS_RingDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 		[loop]
 		for (int j = 0; j < ringsamples; j += 1)
 		{
-			static float step = 6.283 / ringsamples;
-			static float2 sampleoffset = 0.0;
+			const float step = 6.283 / ringsamples;
+			float2 sampleoffset = 0.0;
 			sincos(j * step, sampleoffset.y, sampleoffset.x);
 			float4 tap = tex2Dlod(SamplerHDR2, float4(texcoord + sampleoffset * ReShade::PixelSize * discRadius * g / iRingDOFRings, 0, 0));
 
-			static float tapluma = dot(tap.xyz, 0.333);
-			static float tapthresh = max((tapluma - fRingDOFThreshold) * fRingDOFGain, 0.0);
+			const float tapluma = dot(tap.xyz, 0.333);
+			const float tapthresh = max((tapluma - fRingDOFThreshold) * fRingDOFGain, 0.0);
 			tap.xyz *= 1.0 + tapthresh * blurAmount;
 
 			if (tap.w >= centerDepth * 0.99)
@@ -504,8 +504,8 @@ void PS_MagicDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 {
 	float4 blurcolor = tex2D(SamplerHDR1, texcoord);
 
-	static float centerDepth = blurcolor.w;
-	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
+	const float centerDepth = blurcolor.w;
+	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
 	if (centerDepth < 0.5)
@@ -524,7 +524,7 @@ void PS_MagicDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 		[loop]
 		for (int i = -iMagicDOFBlurQuality; i <= iMagicDOFBlurQuality; ++i)
 		{
-			static float2 tapoffset = float2(1, 0) * i;
+			const float2 tapoffset = float2(1, 0) * i;
 			float4 tap = tex2Dlod(SamplerHDR1, float4(texcoord + tapoffset * discRadius * ReShade::PixelSize.x / iMagicDOFBlurQuality, 0, 0));
 			if (tap.w >= centerDepth*0.99)
 				tap.w = 1.0;
@@ -542,10 +542,10 @@ void PS_MagicDOF1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 void PS_MagicDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 blurcolor : SV_Target)
 {
 	blurcolor = 0.0;
-	static float4 noblurcolor = tex2D(ReShade::BackBuffer, texcoord);
+	const float4 noblurcolor = tex2D(ReShade::BackBuffer, texcoord);
 
-	static float centerDepth = GetCoC(texcoord); //use fullres CoC data
-	static float blurAmount = abs(centerDepth * 2.0 - 1.0);
+	const float centerDepth = GetCoC(texcoord); //use fullres CoC data
+	const float blurAmount = abs(centerDepth * 2.0 - 1.0);
 	float discRadius = blurAmount * DOF_BLURRADIUS;
 
 	if (centerDepth < 0.5)
@@ -632,9 +632,9 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	blurcolor.xyz *= lerp(1.0, 0.0, saturate(fGPDOFBias));
 	blurcolor.w = 1.0;
 
-	float sampleCycle = 0;
-	float sampleCycleCounter = 0;
-	float sampleCounterInCycle = 0;
+	int sampleCycle = 0;
+	int sampleCycleCounter = 0;
+	int sampleCounterInCycle = 0;
 	const float basedAngle = 360.0 / iGPDOFPolygonCount;
 	float2 currentVertex, nextVertex;
 
@@ -829,9 +829,9 @@ float4 tex2Dchroma(sampler2D tex, float2 sourcecoord, float2 offsetcoord)
 {
 	float4 res = 0.0;
 
-	const float4 sample1 = tex2Dlod(tex, float4(sourcecoord.xy + offsetcoord.xy * (1.0 - fADOF_ShapeChromaAmount), 0, 0));
+	const float3 sample1 = tex2Dlod(tex, float4(sourcecoord.xy + offsetcoord.xy * (1.0 - fADOF_ShapeChromaAmount), 0, 0)).xyz;
 	const float4 sample2 = tex2Dlod(tex, float4(sourcecoord.xy + offsetcoord.xy, 0, 0));
-	const float4 sample3 = tex2Dlod(tex, float4(sourcecoord.xy + offsetcoord.xy * (1.0 + fADOF_ShapeChromaAmount), 0, 0));
+	const float3 sample3 = tex2Dlod(tex, float4(sourcecoord.xy + offsetcoord.xy * (1.0 + fADOF_ShapeChromaAmount), 0, 0)).xyz;
 
 	if (iADOF_ShapeChromaMode == 0)		
 		res.xyz = float3(sample1.x, sample2.y, sample3.z);
@@ -883,6 +883,7 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 	}
 
+	[unroll]
 	for (int z = 0; z <= iADOF_ShapeVertices; z++)
 	{
 		sincos((6.2831853 / iADOF_ShapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
