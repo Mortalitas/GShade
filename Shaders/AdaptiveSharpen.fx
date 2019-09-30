@@ -323,13 +323,13 @@ float3 AdaptiveSharpenP1(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_
 			float temp; int i; int ii;
 
 			// 1st iteration
-			[loop] for (i = 0; i < 24; i += 2)
+			[unroll] for (i = 0; i < 24; i += 2)
 			{
 				temp = luma[i];
 				luma[i]   = min(luma[i], luma[i+1]);
 				luma[i+1] = max(temp, luma[i+1]);
 			}
-			[loop] for (ii = 24; ii > 0; ii -= 2)
+			[unroll] for (ii = 24; ii > 0; ii -= 2)
 			{
 				temp = luma[0];
 				luma[0]    = min(luma[0], luma[ii]);
@@ -341,13 +341,13 @@ float3 AdaptiveSharpenP1(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_
 			}
 
 			// 2nd iteration
-			[loop] for (i = 1; i < 23; i += 2)
+			[unroll] for (i = 1; i < 23; i += 2)
 			{
 				temp = luma[i];
 				luma[i]   = min(luma[i], luma[i+1]);
 				luma[i+1] = max(temp, luma[i+1]);
 			}
-			[loop] for (ii = 23; ii > 1; ii -= 2)
+			[unroll] for (ii = 23; ii > 1; ii -= 2)
 			{
 				temp = luma[1];
 				luma[1]    = min(luma[1], luma[ii]);

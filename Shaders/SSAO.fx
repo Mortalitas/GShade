@@ -896,7 +896,7 @@ void PS_AO_AOBlurV(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	for (int r = -AO_BLUR_STEPS; r <= AO_BLUR_STEPS; ++r) 
 	{
 		const float2 axis = float2(0.0, 1.0);
-		temp = tex2D(SamplerOcclusion1, texcoord.xy + axis * ReShade::PixelSize * r);
+		temp = tex2Dlod(SamplerOcclusion1, float4(texcoord.xy + axis * ReShade::PixelSize * r, 0.0, 0.0));
 		float weight = AO_BLUR_STEPS-abs(r); 
 		weight *= saturate(1.0 - (1000.0 * AO_SHARPNESS) * abs(temp.w - base.w));
 		sum += temp.x * weight;
@@ -915,7 +915,7 @@ void PS_AO_AOBlurH(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	for (int r = -AO_BLUR_STEPS; r <= AO_BLUR_STEPS; ++r) 
 	{
 		const float2 axis = float2(1.0, 0.0);
-		temp = tex2D(SamplerOcclusion2, texcoord.xy + axis * ReShade::PixelSize * r);
+		temp = tex2Dlod(SamplerOcclusion2, float4(texcoord.xy + axis * ReShade::PixelSize * r, 0.0, 0.0));
 		float weight = AO_BLUR_STEPS-abs(r); 
 		weight *= saturate(1.0 - (1000.0 * AO_SHARPNESS) * abs(temp.w - base.w));
 		sum += temp.x * weight;
@@ -1136,7 +1136,7 @@ void PS_AO_GIBlurV(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	for (int r = -AO_BLUR_STEPS; r <= AO_BLUR_STEPS; ++r) 
 	{
 		const float2 axis = float2(0, 1);
-		temp = tex2D(SamplerOcclusion1, texcoord.xy + axis * ReShade::PixelSize * r);
+		temp = tex2Dlod(SamplerOcclusion1, float4(texcoord.xy + axis * ReShade::PixelSize * r, 0.0, 0.0));
 		const float tempdepth = ReShade::GetLinearizedDepth(texcoord + axis * ReShade::PixelSize * r).x;
     float tempkey;
     if( AO_SHARPNESS_DETECT == 0)
@@ -1170,7 +1170,7 @@ void PS_AO_GIBlurH(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 	for (int r = -AO_BLUR_STEPS; r <= AO_BLUR_STEPS; ++r) 
 	{
 		const float2 axis = float2(1, 0);
-		temp = tex2D(SamplerOcclusion2, texcoord.xy + axis * ReShade::PixelSize * r);
+		temp = tex2Dlod(SamplerOcclusion2, float4(texcoord.xy + axis * ReShade::PixelSize * r, 0.0, 0.0));
 		const float tempdepth = ReShade::GetLinearizedDepth(texcoord + axis * ReShade::PixelSize * r).x;
     float tempkey;
     if( AO_SHARPNESS_DETECT == 0)

@@ -458,7 +458,7 @@ namespace Comic {
         float4 depth2[COMIC_MESHEDGES_ITERATIONS_MAX];
 
         const int iterations = clamp(iUIMeshEdgesIterations, 1, COMIC_MESHEDGES_ITERATIONS_MAX);
-        [loop]
+        [unroll]
         for(int i = 0; i < iterations; i++)
         {
             depth1[i] = float4(
