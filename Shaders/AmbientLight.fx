@@ -147,10 +147,10 @@ void PS_AL_DetectLow(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 	if (texcoord.x != 0.5 && texcoord.y != 0.5)
 		discard;
 
-	[loop]
+	[unroll]
 	for (float i = 0.0; i <= 1; i += 0.03125)
 	{
-		[loop]
+		[unroll]
 		for (float j = 0.0; j <= 1; j += 0.03125)
 		{
 			detectLow.xyz += tex2D(detectIntColor, float2(i, j)).xyz;
