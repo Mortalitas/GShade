@@ -99,6 +99,7 @@ for (float i = 2.0f; i < Ganossa_MF_BUFFERX; i=i+xSprint)
 {
 coord.x = BUFFER_RCP_WIDTH*i*2;
 
+[unroll]
 for (float j = 2.0f; j < Ganossa_MF_BUFFERY; j=j+ySprint )
 {
 coord.y = BUFFER_RCP_HEIGHT*j*2;
