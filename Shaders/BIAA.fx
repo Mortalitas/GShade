@@ -115,13 +115,17 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	    Edge += EdgeDetection( texcoord +X -Y, Offset);
 	    Edge += EdgeDetection( texcoord +X +Y, Offset);
 	       	    
-	    //Revert then Normalize New gradient
+	    //Revert gradient
 	    N = float2(Edge.x,-Edge.y);
-	    N = normalize(N);
+
 	    
 	    // Like NFAA reproject with samples along the edge and adjust againts it self.
-		// May add 2-4 more samples later like NFAA 
-	    const float AA_Adjust = (AA_Power * 0.5);   
+		// Will Be Making changes for short edges and long later.
+	    const float AA_Adjust = AA_Power * rcp(6);   
+		result += tex2D(BackBuffer, texcoord+(N * 0.5)*Offset).rgb * AA_Adjust;
+		result += tex2D(BackBuffer, texcoord-(N * 0.5)*Offset).rgb * AA_Adjust;
+		result += tex2D(BackBuffer, texcoord+(N * 0.25)*Offset).rgb * AA_Adjust;
+		result += tex2D(BackBuffer, texcoord-(N * 0.25)*Offset).rgb * AA_Adjust;
 		result += tex2D(BackBuffer, texcoord+N*Offset).rgb * AA_Adjust;
 		result += tex2D(BackBuffer, texcoord-N*Offset).rgb * AA_Adjust;
 	}
