@@ -95,7 +95,18 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
     
     // Like NFAA calculate normal from Edge
     float2 N = float2(Edge.x,-Edge.y);
-    // Like DLAA calculate mask from gradient above.
+    
+	//Calculate Gradient from edge    
+	Edge += EdgeDetection( texcoord -X, Offset);
+	Edge += EdgeDetection( texcoord +X, Offset);
+	Edge += EdgeDetection( texcoord -Y, Offset);
+	Edge += EdgeDetection( texcoord +Y, Offset);
+	Edge += EdgeDetection( texcoord -X -Y, Offset);
+	Edge += EdgeDetection( texcoord -X +Y, Offset);
+	Edge += EdgeDetection( texcoord +X -Y, Offset);
+	Edge += EdgeDetection( texcoord +X +Y, Offset);
+	
+	// Like DLAA calculate mask from gradient above.
     const float Mask = length(N) < pow(0.002, Mask_Adjust);
     
     // Like NFAA Calculate Main Mask based on edge strenght.
@@ -105,20 +116,10 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
     }
     else
 	{
-	    //Calculate Gradient from edge    
-	    Edge += EdgeDetection( texcoord -X, Offset);
-	    Edge += EdgeDetection( texcoord +X, Offset);
-	    Edge += EdgeDetection( texcoord -Y, Offset);
-	    Edge += EdgeDetection( texcoord +Y, Offset);
-	    Edge += EdgeDetection( texcoord -X -Y, Offset);
-	    Edge += EdgeDetection( texcoord -X +Y, Offset);
-	    Edge += EdgeDetection( texcoord +X -Y, Offset);
-	    Edge += EdgeDetection( texcoord +X +Y, Offset);
 	       	    
 	    //Revert gradient
 	    N = float2(Edge.x,-Edge.y);
-
-	    
+    
 	    // Like NFAA reproject with samples along the edge and adjust againts it self.
 		// Will Be Making changes for short edges and long later.
 	    const float AA_Adjust = AA_Power * rcp(6);   
