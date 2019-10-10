@@ -51,6 +51,9 @@
 #ifndef fLUT_YOMTextureName
 	#define fLUT_YOMTextureName "MultiLut_Yomi.png"
 #endif
+#ifndef fLUT_NENTextureName
+	#define fLUT_NENTextureName "MultiLut_Neneko.png"
+#endif
 #ifndef fLUT_TileSizeXY
 	#define fLUT_TileSizeXY 32
 #endif
@@ -77,7 +80,7 @@
 uniform int fLUT_MultiLUTSelector <
 	ui_category = "Pass 1";
 	ui_type = "combo";
-	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0";
+	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0";
 	ui_label = "The MultiLUT file to use.";
 	ui_tooltip = "Set this to whatever build your preset was made with!";
 > = 0;
@@ -122,7 +125,7 @@ uniform bool fLUT_MultiLUTPass2 <
 uniform int fLUT_MultiLUTSelector2 <
 	ui_category = "Pass 2";
 	ui_type = "combo";
-	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0";
+	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0";
 	ui_label = "The MultiLUT file to use.";
 	ui_tooltip = "The MultiLUT table to use on Pass 2.";
 > = 1;
@@ -167,7 +170,7 @@ uniform bool fLUT_MultiLUTPass3 <
 uniform int fLUT_MultiLUTSelector3 <
 	ui_category = "Pass 3";
 	ui_type = "combo";
-	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0";
+	ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0";
 	ui_label = "The MultiLUT file to use.";
 	ui_tooltip = "The MultiLUT table to use on Pass 3.";
 > = 1;
@@ -233,6 +236,9 @@ sampler SamplerS14MultiLUT { Texture = texS14MultiLUT; };
 
 texture texYOMMultiLUT < source = fLUT_YOMTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
 sampler SamplerYOMMultiLUT { Texture = texYOMMultiLUT; };
+
+texture texNENMultiLUT < source = fLUT_NENTextureName; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * fLUT_LutAmountLow; Format = RGBA8; };
+sampler SamplerNENMultiLUT { Texture = texNENMultiLUT; };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -300,10 +306,16 @@ float4 apply(in const float4 color, in const int tex, in const float lut)
 		lutcolor   = lerp(tex2D(SamplerS14MultiLUT, lutcoord.xy), tex2D(SamplerS14MultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
 //Yomi MultiLut_Yomi.png
-	else
+	else if (tex == 8)
 	{
 		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
 		lutcolor   = lerp(tex2D(SamplerYOMMultiLUT, lutcoord.xy), tex2D(SamplerYOMMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+	}
+//Neneko MultiLut_Neneko.png
+	else
+	{
+		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+		lutcolor   = lerp(tex2D(SamplerNENMultiLUT, lutcoord.xy), tex2D(SamplerNENMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 	}
 
 	lutcolor.a = color.a;
