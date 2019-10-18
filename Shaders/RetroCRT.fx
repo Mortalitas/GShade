@@ -60,18 +60,18 @@ float4 RetroCRTPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	const float vPos = float( ( texcoord.y + GLTimer * 0.5 ) * 272.0 );
 	const float line_intensity = vPos - 2.0 * floor(vPos / 2.0);
     
-    // color shift
-    const float2 shift = float2( line_intensity * 0.0005, 0 );
+	// color shift
+	const float2 shift = float2( line_intensity * 0.0005, 0 );
     
-    // shift R and G channels to simulate NTSC color bleed
-    const float2 colorShift = float2( 0.001, 0 );
-    
-    const float4 c = float4( tex2D( ReShade::BackBuffer, texcoord + colorShift + shift ).x, // Red
-					tex2D( ReShade::BackBuffer, texcoord - colorShift + shift ).y * 0.99, 	// Green
-					tex2D( ReShade::BackBuffer, texcoord ).z,								// Blue
+	// shift R and G channels to simulate NTSC color bleed
+	const float2 colorShift = float2( 0.001, 0 );
+
+	const float4 c = float4( tex2D( ReShade::BackBuffer, texcoord + colorShift + shift ).x,			// Red
+					tex2D( ReShade::BackBuffer, texcoord - colorShift + shift ).y * 0.99,	// Green
+					tex2D( ReShade::BackBuffer, texcoord ).z,				// Blue
 					1.0) * clamp( line_intensity, 0.85, 1.0 );
 
-    return c + (sin( ( texcoord.y + GLTimer ) * 4.0 ) * 0.02);
+	return c + (sin( ( texcoord.y + GLTimer ) * 4.0 ) * 0.02);
 }
 
 technique RetroCRT
