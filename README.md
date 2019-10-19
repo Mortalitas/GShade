@@ -1,5 +1,5 @@
 # GShade-Shaders
-**Shaders modified and/or created for the GShade package, a highly modified ReShade fork & package with a network-unlocked depth buffer.** 
+**Shaders modified and/or created for the GShade, a highly modified ReShade fork & package with a network-unlocked depth buffer.** 
 
 Note that all shaders in this repository are strictly intended for use with ReShade 4+. Please refer to individual file licenses for questions about distribution and modification.
 
