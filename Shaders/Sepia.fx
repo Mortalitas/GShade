@@ -6,6 +6,7 @@ uniform float3 Tint <
 uniform float Strength <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
+	ui_tooltip = "Adjust the strength of the effect.";
 > = 0.58;
 
 #include "ReShade.fxh"

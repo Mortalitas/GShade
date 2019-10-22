@@ -41,7 +41,7 @@ uniform float offset_bias <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 6.0;
 	ui_label = "Offset bias";
-	ui_tooltip = "Offset bias adjusts the radius of the sampling pattern. I designed the pattern for offset_bias 1.0, but feel free to experiment.";
+	ui_tooltip = "Offset bias adjusts the radius of the sampling pattern. I designed the pattern for an offset bias of 1.0, but feel free to experiment.";
 > = 1.0;
 uniform bool show_sharpen <
 	ui_label = "Show sharpening pattern";

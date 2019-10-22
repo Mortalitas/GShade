@@ -21,7 +21,7 @@ uniform float coloramount <
 uniform float lumamount <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
-	ui_type = "Luminance Amount";
+	ui_label = "Luminance Amount";
 > = 1.0;
 
 uniform float grainsize <
