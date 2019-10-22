@@ -320,7 +320,6 @@ float4 BlurH (sampler input, float2 uv, float radius, float sampling) {
 	const float width = 1.0 / BUFFER_WIDTH * sampling;					
 	float divisor = 0.000001; 
 
-    [loop]
 		for (float x = -radius; x <= radius; x++)
 		{
 			coordinate = uv + float2(x * width, 0.0);
@@ -343,7 +342,6 @@ float4 BlurV (sampler input, float2 uv, float radius, float sampling) {
 	const float height = 1.0 / BUFFER_HEIGHT * sampling;					
 	float divisor = 0.000001; 
 
-    [loop]
 		for (float y = -radius; y <= radius; y++)
 		{
 			coordinate = uv + float2(0.0, y * height);
@@ -453,13 +451,13 @@ float4 PandaComposition (float4 vpos : SV_Position,
 
 			// ------- Blur layer colors
 
-				float4 blurLayerGray = dot(0.3333, blurLayer.rgb);
+				const float4 blurLayerGray = dot(0.3333, blurLayer.rgb);
 				blurLayer = lerp(blurLayer, blurLayerGray, Diffusion_2_Desaturate);
 
-				float4 blurLayerMedResGray = dot(0.3333, blurLayerMedRes.rgb);
+				const float4 blurLayerMedResGray = dot(0.3333, blurLayerMedRes.rgb);
 				blurLayerMedRes = lerp(blurLayerMedRes, blurLayerMedResGray, Diffusion_2_Desaturate);
 
-				float4 blurLayerLoResGray = dot(0.3333, blurLayerLoRes.rgb);
+				const float4 blurLayerLoResGray = dot(0.3333, blurLayerLoRes.rgb);
 				blurLayerLoRes = lerp(blurLayerLoRes, blurLayerLoResGray, Diffusion_3_Desaturate);
 
 				// blurLayerMedRes.g *= 0.75;
@@ -484,7 +482,7 @@ float4 PandaComposition (float4 vpos : SV_Position,
 	// ------- Read original image
 
 		float4 A = tex2D(PFX_PrePassLayer, uv);
-		float4 O = tex2D(ReShade::BackBuffer, uv);
+		const float4 O = tex2D(ReShade::BackBuffer, uv);
 
 	// ------- Screen blend the blur layers to create lens diffusion
 
