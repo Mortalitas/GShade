@@ -34,9 +34,11 @@ uniform float Strength <
 
 float3 ColorMatrixPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
+	const float color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+
 	const float3x3 ColorMatrix = float3x3(ColorMatrix_Red, ColorMatrix_Green, ColorMatrix_Blue);
 
-	return saturate(lerp(tex2D(ReShade::BackBuffer, texcoord).rgb, mul(ColorMatrix, color), Strength));
+	return saturate(lerp(color, mul(ColorMatrix, color), Strength));
 }
 
 technique ColorMatrix
