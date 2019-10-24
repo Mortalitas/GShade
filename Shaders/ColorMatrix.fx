@@ -34,7 +34,7 @@ uniform float Strength <
 
 float3 ColorMatrixPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	const float color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	const float3x3 ColorMatrix = float3x3(ColorMatrix_Red, ColorMatrix_Green, ColorMatrix_Blue);
 
