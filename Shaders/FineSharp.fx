@@ -41,12 +41,12 @@ uniform float xrep <
 
 uniform float lstr <
 	ui_type = "input";
-	ui_tooltip = "modifier for non-linear sharpening";
+	ui_tooltip = "Modifier for non-linear sharpening";
 > = 1.49;
 
 uniform float pstr <
 	ui_type = "input";
-	ui_tooltip = "exponent for non-linear sharpening";
+	ui_tooltip = "Exponent for non-linear sharpening";
 > = 1.272;
 
 // Viscera parameters
@@ -72,7 +72,7 @@ float3x3 YUVtoRGB(float Kb, float Kr) {
 }
 
 void sort(inout float a1, inout float a2) {
-	static const float t = min(a1, a2);
+	const float t = min(a1, a2);
 	a2 = max(a1, a2);
 	a1 = t;
 }
