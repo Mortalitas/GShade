@@ -17,7 +17,6 @@ Note that all shaders in this repository are strictly intended for use with ReSh
 * [Preset Converter](https://mortalitas.github.io/ffxiv/GShade/GShade%20Converter.exe) for presets from:
   * ReShade 3
   * ReShade 4
-  * NVIDIA Geforce Experience
   * Stormshade
   * MoogleShade
   * HQ Shade
