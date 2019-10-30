@@ -38,7 +38,7 @@ uniform float FOV <
 	ui_category = "Radial distance";
 > = 90;
 
-uniform int Pass <
+uniform int CKPass <
 	ui_label = "Keying type";
 	ui_type = "combo";
 	ui_items = "Background key\0Foreground key\0";
@@ -109,7 +109,7 @@ float3 ChromakeyPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_T
 
 	// Generate depth mask
 	float DepthMask = MaskAA(texcoord);
-	if(bool(Pass)) DepthMask = 1.0-DepthMask;
+	if(bool(CKPass)) DepthMask = 1.0-DepthMask;
 
 	return lerp(tex2D(ReShade::BackBuffer, texcoord).rgb, Screen, DepthMask);
 }
