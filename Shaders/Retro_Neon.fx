@@ -62,9 +62,9 @@ uniform bool DEBUG_LINE_MODE = false;
 
 uniform float DEBUG_FADE_MULT = 0.0;
 */
-bool DEBUG_CHEAT_MASK = false;
-bool DEBUG_LINE_MODE = false;
-bool DEBUG_FADE_MULT = 0.0;
+uniform bool DEBUG_CHEAT_MASK = false;
+uniform bool DEBUG_LINE_MODE = false;
+uniform bool DEBUG_FADE_MULT = 0.0;
 
 /*=============================================================================
 	Textures, Samplers, Globals
