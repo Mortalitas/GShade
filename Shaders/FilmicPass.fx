@@ -80,40 +80,26 @@ uniform float3 LumCoeff <
 
 float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 B = tex2D(ReShade::BackBuffer, texcoord).rgb;	
-	static float3 G = B;
-	static float3 H = 0.01;
- 
-	B = saturate(B);
-	B = pow(B, Linearization);
-	B = lerp(H, B, Contrast);
- 
-	float A = dot(B.rgb, LumCoeff);
-	float3 D = A;
- 
+	float3 B = lerp(0.01, pow(saturate(tex2D(ReShade::BackBuffer, texcoord).rgb), Linearization), Contrast);
+
+	float3 D = dot(B.rgb, LumCoeff);
+
 	B = pow(abs(B), 1.0 / BaseGamma);
- 
-	static float a = RedCurve;
-	static float b = GreenCurve;
-	static float c = BlueCurve;
-	static float d = BaseCurve;
- 
-	static float y = 1.0 / (1.0 + exp(a / 2.0));
-	static float z = 1.0 / (1.0 + exp(b / 2.0));
-	static float w = 1.0 / (1.0 + exp(c / 2.0));
-	static float v = 1.0 / (1.0 + exp(d / 2.0));
- 
+
+	const float y = 1.0 / (1.0 + exp(RedCurve / 2.0));
+	const float z = 1.0 / (1.0 + exp(GreenCurve / 2.0));
+	const float w = 1.0 / (1.0 + exp(BlueCurve / 2.0));
+	const float v = 1.0 / (1.0 + exp(BaseCurve / 2.0));
+
 	float3 C = B;
- 
-	D.r = (1.0 / (1.0 + exp(-a * (D.r - 0.5))) - y) / (1.0 - 2.0 * y);
-	D.g = (1.0 / (1.0 + exp(-b * (D.g - 0.5))) - z) / (1.0 - 2.0 * z);
-	D.b = (1.0 / (1.0 + exp(-c * (D.b - 0.5))) - w) / (1.0 - 2.0 * w);
- 
+
+	D.r = (1.0 / (1.0 + exp(-RedCurve * (D.r - 0.5))) - y) / (1.0 - 2.0 * y);
+	D.g = (1.0 / (1.0 + exp(-GreenCurve * (D.g - 0.5))) - z) / (1.0 - 2.0 * z);
+	D.b = (1.0 / (1.0 + exp(-BlueCurve * (D.b - 0.5))) - w) / (1.0 - 2.0 * w);
+
 	D = pow(abs(D), 1.0 / EffectGamma);
  
-	static float3 Di = 1.0 - D;
- 
-	D = lerp(D, Di, Bleach);
+	D = lerp(D, 1.0 - D, Bleach);
  
 	D.r = pow(abs(D.r), 1.0 / EffectGammaR);
 	D.g = pow(abs(D.g), 1.0 / EffectGammaG);
@@ -134,39 +120,23 @@ float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
 	else
 		C.b = (2.0 * D.b - 1.0) * (sqrt(B.b) - B.b) + B.b;
  
-	float3 F = lerp(B, C, Strength);
- 
-	F = (1.0 / (1.0 + exp(-d * (F - 0.5))) - v) / (1.0 - 2.0 * v);
- 
-	static float r2R = 1.0 - Saturation;
-	static float g2R = 0.0 + Saturation;
-	static float b2R = 0.0 + Saturation;
- 
-	static float r2G = 0.0 + Saturation;
-	static float g2G = (1.0 - Fade) - Saturation;
-	static float b2G = (0.0 + Fade) + Saturation;
- 
-	static float r2B = 0.0 + Saturation;
-	static float g2B = (0.0 + Fade) + Saturation;
-	static float b2B = (1.0 - Fade) - Saturation;
- 
-	static float3 iF = F;
- 
-	F.r = (iF.r * r2R + iF.g * g2R + iF.b * b2R);
-	F.g = (iF.r * r2G + iF.g * g2G + iF.b * b2G);
-	F.b = (iF.r * r2B + iF.g * g2B + iF.b * b2B);
- 
-	float N = dot(F.rgb, LumCoeff);
-	static float3 Cn = F;
- 
+	float3 F = (1.0 / (1.0 + exp(-BaseCurve * (lerp(B, C, Strength) - 0.5))) - v) / (1.0 - 2.0 * v);
+
+	const float3 iF = F;
+
+	F.r = (iF.r * (1.0 - Saturation) + iF.g * (0.0 + Saturation) + iF.b * Saturation);
+	F.g = (iF.r * Saturation + iF.g * ((1.0 - Fade) - Saturation) + iF.b * (Fade + Saturation));
+	F.b = (iF.r * Saturation + iF.g * (Fade + Saturation) + iF.b * ((1.0 - Fade) - Saturation));
+
+	const float N = dot(F.rgb, LumCoeff);
+
+	float3 Cn;
 	if (N < 0.5)
 		Cn = (2.0 * N - 1.0) * (F - F * F) + F;
 	else
 		Cn = (2.0 * N - 1.0) * (sqrt(F) - F) + F;
- 
-	Cn = pow(max(Cn,0), 1.0 / Linearization);
- 
-	return lerp(B, Cn, Strength);
+
+	return lerp(B, pow(max(Cn,0), 1.0 / Linearization), Strength);
 }
 
 technique FilmicPass
