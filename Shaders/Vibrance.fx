@@ -42,21 +42,14 @@ uniform int Vibrance_Luma <
 
 float3 VibrancePass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	static float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-  
-	static float3 coefLuma = float3(0.212656, 0.715158, 0.072186);
-		
-	const float luma = dot(coefLuma, color);
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-	const float max_color = max(color.r, max(color.g, color.b)); // Find the strongest color
-	const float min_color = min(color.r, min(color.g, color.b)); // Find the weakest color
-
-	const float color_saturation = max_color - min_color; // The difference between the two is the saturation
+	const float luma = dot(float3(0.212656, 0.715158, 0.072186), color);
 
 	// Extrapolate between luma and original by 1 + (1-saturation) - current
 	const float3 coeffVibrance = float3(VibranceRGBBalance * Vibrance);
 
-	return lerp(luma, color, 1.0 + (coeffVibrance * (1.0 - (sign(coeffVibrance) * color_saturation))));
+	return lerp(luma, color, 1.0 + (coeffVibrance * (1.0 - (sign(coeffVibrance) * (max(color.r, max(color.g, color.b)) - min(color.r, min(color.g, color.b)))))));
 }
 
 technique Vibrance
