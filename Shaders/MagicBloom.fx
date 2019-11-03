@@ -1,6 +1,7 @@
 /*
     Magic Bloom by luluco250
     Modified for Reshade 4.0 by Marot
+    Modified for FFXIV by HealingBrew
     Attempts to simulate a natural-looking bloom.
 
     Features:
@@ -194,6 +195,20 @@ uniform int iAdapt_Precision <
     ui_max = lowest_mip;
     ui_step = 0.1;
 > = lowest_mip * 0.3;
+
+uniform bool bAdapt_IgnoreOccludedByUI <
+  ui_label = "Ignore Trigger Area if Occluded by UI (FFXIV)";
+> = 0;
+
+uniform float fAdapt_IgnoreTreshold <
+    ui_label = "Ignore Alpha Treshold";
+    ui_tooltip = "How visible the UI must be to be ignored"
+                 "0 = any UI, including window shadows prevents occlusion"
+                 "1 = only 100% opaque windows prevent occlusion";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = 0.2;
 #endif
 
 uniform uint iDebug <
@@ -424,6 +439,10 @@ float PS_GetAdapt(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
     curr *= fAdapt_Sensitivity;
     curr = clamp(curr, f2Adapt_Clip.x, f2Adapt_Clip.y);
     const float last = tex2D(sMagicBloom_LastAdapt, 0.0).x;
+    const float uiVisibility = tex2D(ReShade::BackBuffer, float2(0.5, 0.5)).a;
+    if(bAdapt_IgnoreOccludedByUI && uiVisibility > fAdapt_IgnoreTreshold) {
+        return last == 0 ? curr : last;
+    }
     //Using the frametime/delta here would actually scale adaptation with the framerate.
     //We don't want that, so we don't even bother with it.
     return lerp(last, curr, fAdapt_Speed);
