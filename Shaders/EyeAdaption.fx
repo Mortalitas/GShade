@@ -1,7 +1,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // ReShade effect file
 // Eye Adaption by brussell
-// v. 2.3
+// v. 2.3_FFXIV - FFXIV Edit
+//
+// modified by healingbrew to disable adaptation 
+// when occluded by UI
 //
 // Credits:
 // luluco250 - luminance get/store code from Magic Bloom
@@ -52,6 +55,22 @@ uniform float fAdp_Strength <
     ui_min = 0.0;
     ui_max = 2.0;
 > = 1.0;
+
+uniform bool bAdp_IgnoreOccludedByUI <
+  ui_label = "Ignore Trigger Area if Occluded by UI (FFXIV)";
+  ui_category = "General settings";
+> = 0;
+
+uniform float fAdp_IgnoreTreshold <
+    ui_label = "Ignore Alpha Treshold";
+    ui_tooltip = "How visible the UI must be to be ignored"
+                 "0 = any UI, including window shadows prevents occlusion"
+                 "1 = only 100% opaque windows prevent occlusion";
+    ui_category = "General settings";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = 0.2;
 
 uniform float fAdp_BrightenHighlights <
     ui_label = "Brighten Highlights";
@@ -109,7 +128,6 @@ uniform float fAdp_DarkenShadows <
     ui_max = 1.0;
 > = 0.1;
 
-
 //global vars
 #define LumCoeff float3(0.212656, 0.715158, 0.072186)
 uniform float Frametime < source = "frametime";>;
@@ -134,6 +152,11 @@ float PS_AvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targ
 {
     const float avgLumaCurrFrame = tex2Dlod(SamplerLuma, float4(0.5.xx, 0, fAdp_TriggerRadius)).x;
     const float avgLumaLastFrame = tex2Dlod(SamplerAvgLumaLast, float4(0.0.xx, 0, 0)).x;
+    const float uiVisibility = tex2D(ReShade::BackBuffer, float2(0.5, 0.5)).a;
+    if(bAdp_IgnoreOccludedByUI && uiVisibility > fAdp_IgnoreTreshold)
+    {
+        return avgLumaLastFrame;
+    }
     const float delay = sign(fAdp_Delay) * saturate(0.815 + fAdp_Delay / 10.0 - Frametime / 1000.0);
     return lerp(avgLumaCurrFrame, avgLumaLastFrame, delay);
 }
