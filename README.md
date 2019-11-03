@@ -1,12 +1,13 @@
 # GShade-Shaders
-**Shaders modified and/or created for GShade, a highly modified ReShade fork & package with a network-unlocked depth buffer.** 
+**Shaders modified and/or created for GShade, a highly modified ReShade fork & package with a selectively network-unlocked depth buffer.** 
 
 Note that all shaders in this repository are strictly intended for use with ReShade 4+. Please refer to individual file licenses for questions about distribution and modification.
 
-**GShade itself officially supports and is locked to the following online games:**
+**GShade itself officially supports and is only network-unlocked to the following online games, but will hook to any game that ReShade can:**
 * Final Fantasy XIV
 * Black Desert Online
 * Elder Scrolls Online
+* Phantasy Star Online 2 (Japan)
 * Second Life (Official, Firestorm, Black Dragon)
 * TERA Online
 * Warframe
