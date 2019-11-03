@@ -3,7 +3,7 @@
 
 Note that all shaders in this repository are strictly intended for use with ReShade 4+. Please refer to individual file licenses for questions about distribution and modification.
 
-**GShade itself officially supports and is only network-unlocked to the following online games, but will hook to any game that ReShade can:**
+**GShade itself officially supports and is only network-unlocked to the following online games, but will work with any game that ReShade can:**
 * Final Fantasy XIV
 * Black Desert Online
 * Elder Scrolls Online
