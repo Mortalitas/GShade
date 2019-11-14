@@ -99,7 +99,7 @@ float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	//ORIGINAL
 	float4 color = tex2D(ReShade::BackBuffer, uv);
 	const float4 blur = tex2D(sBlur, uv);
-	color = mad(blur, uAmount * uColor, color);
+	color = mad(blur, float4(uAmount, uAmount, uAmount, 1.0) * float4(uColor, 1.0), color);
 
 	return color;
 }
