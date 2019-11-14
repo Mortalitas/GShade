@@ -210,15 +210,15 @@ float4 PS_FineSharp_P3(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 float4 PS_FineSharp_P4(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 	float4 o = Src(0.0, 0.0, texcoord);
 
-	const float t1 = Src(-1.0, -1.0, texcoord).a;
-	const float t2 = Src( 0.0, -1.0, texcoord).a;
-	const float t3 = Src( 1.0, -1.0, texcoord).a;
-	const float t4 = Src(-1.0,  0.0, texcoord).a;
-	const float t5 = o.a;
-	const float t6 = Src( 1.0,  0.0, texcoord).a;
-	const float t7 = Src(-1.0,  1.0, texcoord).a;
-	const float t8 = Src( 0.0,  1.0, texcoord).a;
-	const float t9 = Src( 1.0,  1.0, texcoord).a;
+	float t1 = Src(-1.0, -1.0, texcoord).a;
+	float t2 = Src( 0.0, -1.0, texcoord).a;
+	float t3 = Src( 1.0, -1.0, texcoord).a;
+	float t4 = Src(-1.0,  0.0, texcoord).a;
+	float t5 = o.a;
+	float t6 = Src( 1.0,  0.0, texcoord).a;
+	float t7 = Src(-1.0,  1.0, texcoord).a;
+	float t8 = Src( 0.0,  1.0, texcoord).a;
+	float t9 = Src( 1.0,  1.0, texcoord).a;
 
 	o.x += t1 + t2 + t3 + t4 + t6 + t7 + t8 + t9;
 	o.x /= 9.0;

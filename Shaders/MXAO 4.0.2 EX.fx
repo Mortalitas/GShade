@@ -477,7 +477,7 @@ void PS_AmbientObscurance(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
         color = 0.0;
 
 	float3 P             = GetPositionLOD(MXAO.scaledcoord.xy, MXAO, 0);
-        const float3 N             = tex2D(sMXAO_NormalTex, MXAO.scaledcoord.xy).xyz * 2.0 - 1.0;
+        float3 N             = tex2D(sMXAO_NormalTex, MXAO.scaledcoord.xy).xyz * 2.0 - 1.0;
         const float  layerID       = (MXAO.position.x + MXAO.position.y) % 2.0;
 
         #if(MXAO_SMOOTHNORMALS != 0)
