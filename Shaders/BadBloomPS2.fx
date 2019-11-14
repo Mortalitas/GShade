@@ -20,12 +20,36 @@ uniform float uAmount <
 
 uniform float uThreshold <
 	ui_label = "Threshold";
-	ui_tooltip = "Default: 2.0";
+	ui_tooltip =
+		"Minimum pixel brightness required to generate bloom.\n"
+		"Anything below this will be cut-off before blurring.\n"
+		"Default: 0.0";
 	ui_type = "slider";
-	ui_min = 1.0;
-	ui_max = 10.0;
+	ui_min = 0.0;
+	ui_max = 1.0;
 	ui_step = 0.001;
-> = 2.0;
+> = 0.0;
+
+uniform float uCutOff <
+	ui_label = "Cut-Off";
+	ui_tooltip = 
+		"Same as threshold but applied to the post-blur bloom texture.\n"
+		"Anything below this will be be cut-off after blurring.\n"
+		"Default: 0.0";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_step = 0.001;
+> = 0.0;
+
+uniform float uCurve <
+	ui_label = "Curve";
+	ui_tooltip = "Default: 1.0";
+	ui_type = "slider";
+	ui_min = 0.001;
+	ui_max = 10.0;
+	ui_step = 0.01;
+> = 1.0;
 
 uniform float2 uScale <
 	ui_label = "Scale";
@@ -36,9 +60,19 @@ uniform float2 uScale <
 	ui_step = 0.001;
 > = float2(1, 1);
 
+uniform float uMaxBrightness <
+	ui_label = "Max Brightness";
+	ui_tooltip = "Default: 100.0";
+	ui_type = "slider";
+	ui_min = 1.0;
+	ui_max = 1000.0;
+	ui_step = 1.0;
+> = 100.0;
+
 texture tBadBloom_Threshold {
 	Width = BUFFER_WIDTH / BAD_BLOOM_DOWN_SCALE;
 	Height = BUFFER_HEIGHT / BAD_BLOOM_DOWN_SCALE;
+	Format = RGBA16F;
 };
 sampler sThreshold {
 	Texture = tBadBloom_Threshold;
@@ -62,14 +96,34 @@ float4 gamma(float4 col, float g)
 }
 
 float3 jodieReinhardTonemap(float3 c){
+    const float l = dot(c, float3(0.2126, 0.7152, 0.0722));
     const float3 tc = c / (c + 1.0);
 
-    return lerp(c / (dot(c, float3(0.2126, 0.7152, 0.0722)) + 1.0), tc, tc);
+    return lerp(c / (l + 1.0), tc, tc);
+}
+
+float3 inv_reinhard(float3 color, float inv_max) {
+	return (color / max(1.0 - color, inv_max));
+}
+
+float3 inv_reinhard_lum(float3 color, float inv_max) {
+	float lum = max(color.r, max(color.g, color.b));
+	return color * (lum / max(1.0 - lum, inv_max));
+}
+
+float3 reinhard(float3 color) {
+	return color / (1.0 + color);
 }
 
 float4 PS_Threshold(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	float4 color = tex2D(ReShade::BackBuffer, uv);
-	if(dot(color.rgb, float3(0.299, 0.587, 0.114)) > uThreshold) color = 0;
+
+	// Change to inv_reinhard_lum if you feel colors are overly saturated.
+	color = inv_reinhard(color, 1.0 / uMaxBrightness);
+
+	color.rgb *= step(uThreshold, dot(color.rgb, float3(0.299, 0.587, 0.114)));
+	color.rgb = pow(color.rgb, uCurve);
+
 	return color;
 }
 
@@ -96,11 +150,15 @@ float4 PS_Blur(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 }
 
 float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
-	//ORIGINAL
 	float4 color = tex2D(ReShade::BackBuffer, uv);
-	const float4 blur = tex2D(sBlur, uv);
-	color = mad(blur, float4(uAmount, uAmount, uAmount, 1.0) * float4(uColor, 1.0), color);
+	color = inv_reinhard(color, 1.0 / uMaxBrightness);
 
+	float4 blur = tex2D(sBlur, uv);
+	blur *= step(uCutOff, blur);
+
+	color = mad(blur, uAmount * uColor, color);
+	color = reinhard(color);
+ 
 	return color;
 }
 
