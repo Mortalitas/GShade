@@ -119,7 +119,7 @@ float4 PS_Threshold(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	float4 color = tex2D(ReShade::BackBuffer, uv);
 
 	// Change to inv_reinhard_lum if you feel colors are overly saturated.
-	color = inv_reinhard(color, 1.0 / uMaxBrightness);
+	color.rgb = inv_reinhard(color.rgb, 1.0 / uMaxBrightness);
 
 	color.rgb *= step(uThreshold, dot(color.rgb, float3(0.299, 0.587, 0.114)));
 	color.rgb = pow(color.rgb, uCurve);
@@ -151,13 +151,13 @@ float4 PS_Blur(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 
 float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	float4 color = tex2D(ReShade::BackBuffer, uv);
-	color = inv_reinhard(color, 1.0 / uMaxBrightness);
+	color.rgb = inv_reinhard(color.rgb, 1.0 / uMaxBrightness);
 
 	float4 blur = tex2D(sBlur, uv);
 	blur *= step(uCutOff, blur);
 
-	color = mad(blur, uAmount * uColor, color);
-	color = reinhard(color);
+	color.rgb = mad(blur.rgb, uAmount * uColor, color.rgb);
+	color.rgb = reinhard(color.rgb);
  
 	return color;
 }
