@@ -14,18 +14,10 @@
  * -- Version 1.4.1 by CeeJay.dk --
  * Cleaned up setting for Reshade 3.x
  * -- Version 1.4.2 by Marot --
- * Modified for Reshade 4.0 compatibility.
+ * Added opacity slider & modified for Reshade 4.0 compatibility.
  */
 
 #include "ReShade.fxh"
-
-/*
-uniform float2 border_width <
-	ui_type = "input";
-	ui_label = "Size";
-	ui_tooltip = "Measured in pixels. If this is set to zero then the ratio will be used instead.";
-> = float2(0.0, 0.0);
-*/
 
 uniform float2 border_width <
 	ui_type = "slider";
@@ -41,15 +33,14 @@ uniform float border_ratio <
 	ui_tooltip = "Set the desired ratio for the visible area.";
 > = 2.35;
 
-uniform float3 border_color <
+uniform float4 border_color <
 	ui_type = "color";
 	ui_label = "Border Color";
-> = float3(0.7, 0.0, 0.0);
+> = float4(0.7, 0.0, 0.0, 1.0);
 
 float3 BorderPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	// -- calculate the right border_width for a given border_ratio --
 	float2 border_width_variable = border_width;
 	if (border_width.x == -border_width.y) // If width is not used
@@ -58,13 +49,12 @@ float3 BorderPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 		else
 			border_width_variable = float2((ReShade::ScreenSize.x - (ReShade::ScreenSize.y * border_ratio)) * 0.5, 0.0);
 
-	float2 border = (ReShade::PixelSize * border_width_variable); // Translate integer pixel width to floating point
-	float2 within_border = saturate((-texcoord * texcoord + texcoord) - (-border * border + border)); // Becomes positive when inside the border and zero when outside
+	const float2 border = (ReShade::PixelSize * border_width_variable); // Translate integer pixel width to floating point
 
-	if (all(within_border))
+	if (all(saturate((-texcoord * texcoord + texcoord) - (-border * border + border)))) // Becomes positive when inside the border and zero when outside
 		return color;
 	else
-		return border_color;
+		return lerp(color, border_color.rgb, border_color.a);
 }
 
 technique Border
