@@ -460,7 +460,7 @@ float4 blur(sampler sp, float2 uv, float2 dir) {
 
 	[unroll]
 	for (int i = 1; i < cBlurSamples; ++i) {
-		float weight = gaussian(i - cBlurHalfSamples, uSigma);
+		const float weight = gaussian(i - cBlurHalfSamples, uSigma);
 
 		uv += dir * ReShade::PixelSize;
 		color += tex2D(sp, uv) * weight;
@@ -530,9 +530,9 @@ float4 PS_Split(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	
 	[unroll]
 	for (int i = 0; i < cBloomCount; ++i) {
-		float4 rect = cBlooms[i];
+		const float4 rect = cBlooms[i];
 		float2 rect_uv = scale_uv(uv - rect.xy, 1.0 / rect.z, 0.0);
-		float inbounds =
+		const float inbounds =
 			step(0.0, rect_uv.x) * step(rect_uv.x, 1.0) *
 			step(0.0, rect_uv.y) * step(rect_uv.y, 1.0);
 		
@@ -583,7 +583,9 @@ float4 PS_CalcAdapt(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	}
 
 	gs *= uAdaptSensitivity;
-	gs = uAdaptUseLimits ? clamp(gs, uAdaptLimits.x, uAdaptLimits.y) : gs;
+
+	if (uAdaptUseLimits)
+		gs = clamp(gs, uAdaptLimits.x, uAdaptLimits.y);
 
 	gs = lerp(tex2D(sLastAdapt, 0.0).r, gs, (uFrameTime * 0.001) / uAdaptTime);
 
@@ -605,11 +607,11 @@ float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 
 	[unroll]
 	for (int i = 0; i < cBloomCount; ++i) {
-		float4 rect = cBlooms[i];
+		const float4 rect = cBlooms[i];
 		float2 rect_uv = scale_uv(uv, 1.0 / (1.0 + uPadding * (i + 1)), 0.5);
 		rect_uv = scale_uv(rect_uv + rect.xy / rect.z, rect.z, 0.0);
 
-		float weight = normal_distribution(i, uMean, uVariance);
+		const float weight = normal_distribution(i, uMean, uVariance);
 		bloom += tex2D(sTempA, rect_uv) * weight;
 		accum += weight;
 	}
