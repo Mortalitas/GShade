@@ -392,7 +392,7 @@ sampler2D sLastAdapt {
 #if ARCANE_BLOOM_USE_DIRT
 
 texture2D tArcaneBloom_Dirt <
-	source = "ArcaneBloom_Dirt.png";
+	source = "SharedBloom_Dirt.png";
 > {
 	Width = BUFFER_WIDTH;
 	Height = BUFFER_HEIGHT;
