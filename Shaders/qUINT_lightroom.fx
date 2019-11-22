@@ -38,7 +38,7 @@ uniform bool LIGHTROOM_ENABLE_LUT <
 > = false;
 
 uniform int LIGHTROOM_LUT_TILE_SIZE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 8; ui_max = 64;
 	ui_label = "LUT tile size";
 	ui_tooltip = "This controls the XY size of tiles of the LUT (which is accuracy in red/green channel).";
@@ -46,7 +46,7 @@ uniform int LIGHTROOM_LUT_TILE_SIZE <
 > = 16;
 
 uniform int LIGHTROOM_LUT_TILE_COUNT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 8; ui_max = 64;
 	ui_label = "LUT tile count";
 	ui_tooltip = "This controls the amount of tiles of the LUT (which is accuracy in blue channel).\nBe aware that Tile Size XY * Tile Amount is the width of the LUT and if this value\nis larger than your resolution width, the LUT won't fit on your screen.";
@@ -54,7 +54,7 @@ uniform int LIGHTROOM_LUT_TILE_COUNT <
 > = 16;
 
 uniform int LIGHTROOM_LUT_SCROLL <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0; ui_max = 5;
 	ui_label = "LUT scroll";
 	ui_tooltip = "If your LUT size exceeds your screen width, set this to 0, take screenshot, set it to 1, take screenshot\netc until you  reach the end of your LUT and assemble the screenshots like a panorama.\nIf your LUT fits the screen size however, leave it at 0.";
@@ -82,7 +82,7 @@ uniform bool LIGHTROOM_ENABLE_CLIPPING_DISPLAY <
 	> = false;
 
 	uniform int LIGHTROOM_HISTOGRAM_SAMPLES <
-		ui_type = "drag";
+		ui_type = "slider";
 		ui_min = 32; ui_max = 96;
 		ui_label = "Histogram Samples";
 		ui_tooltip = "The amount of samples, 20 means 20x20 samples distributed on the screen.\nHigher means a more accurate histogram depicition and less temporal noise.";
@@ -90,7 +90,7 @@ uniform bool LIGHTROOM_ENABLE_CLIPPING_DISPLAY <
 	> = 20;
 
 	uniform float LIGHTROOM_HISTOGRAM_HEIGHT <
-		ui_type = "drag";
+		ui_type = "slider";
 		ui_step = 1;
 		ui_min = 5.0; ui_max = 50.0;
 		ui_label = "Histogram Curve Height";
@@ -99,7 +99,7 @@ uniform bool LIGHTROOM_ENABLE_CLIPPING_DISPLAY <
 	> = 15;
 
 	uniform float LIGHTROOM_HISTOGRAM_SMOOTHNESS <
-		ui_type = "drag";
+		ui_type = "slider";
 		ui_min = 1.0; ui_max = 10.00;
 		ui_label = "Histogram Curve Smoothness";
 		ui_tooltip = "Smoothens the Histogram curve for a more temporally coherent result.\nNote that raising this falsifies the Histogram data.";
@@ -111,7 +111,7 @@ uniform bool LIGHTROOM_ENABLE_CLIPPING_DISPLAY <
 //=============================================================================
 
 uniform float LIGHTROOM_RED_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Red       Hue Control";
 	ui_tooltip = "Magenta <= ... Red ... => Orange";
@@ -119,7 +119,7 @@ uniform float LIGHTROOM_RED_HUESHIFT <
 > = 0.00;
 
 uniform float LIGHTROOM_ORANGE_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Orange    Hue Control";
 	ui_tooltip = "Red <= ... Orange ... => Yellow";
@@ -127,7 +127,7 @@ uniform float LIGHTROOM_ORANGE_HUESHIFT <
 > = 0.00;
 
 uniform float LIGHTROOM_YELLOW_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Yellow    Hue Control";
 	ui_tooltip = "Orange <= ... Yellow ... => Green";
@@ -135,7 +135,7 @@ uniform float LIGHTROOM_YELLOW_HUESHIFT <
 > = 0.00;
 
 uniform float LIGHTROOM_GREEN_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Green     Hue Control";
 	ui_tooltip = "Yellow <= ... Green ... => Aqua";
@@ -143,7 +143,7 @@ uniform float LIGHTROOM_GREEN_HUESHIFT <
 > = 0.00;
 
 uniform float LIGHTROOM_AQUA_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Aqua      Hue Control";
 	ui_tooltip = "Green <= ... Aqua ... => Blue";
@@ -151,7 +151,7 @@ uniform float LIGHTROOM_AQUA_HUESHIFT <
 > = 0.00;
 
 uniform float LIGHTROOM_BLUE_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Blue      Hue Control";
 	ui_tooltip = "Aqua <= ... Blue ... => Magenta";
@@ -159,7 +159,7 @@ uniform float LIGHTROOM_BLUE_HUESHIFT <
 > = 0.00;
 
 uniform float LIGHTROOM_MAGENTA_HUESHIFT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Magenta   Hue Control";
 	ui_tooltip = "Blue <= ... Magenta ... => Red";
@@ -169,7 +169,7 @@ uniform float LIGHTROOM_MAGENTA_HUESHIFT <
 //=============================================================================
 
 uniform float LIGHTROOM_RED_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Red       Exposure";
 	ui_tooltip = "Exposure control of Red colors";
@@ -177,7 +177,7 @@ uniform float LIGHTROOM_RED_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_ORANGE_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Orange    Exposure";
 	ui_tooltip = "Exposure control of Orange colors";
@@ -185,7 +185,7 @@ uniform float LIGHTROOM_ORANGE_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_YELLOW_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Yellow    Exposure";
 	ui_tooltip = "Exposure control of Yellow colors";
@@ -193,7 +193,7 @@ uniform float LIGHTROOM_YELLOW_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_GREEN_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Green     Exposure";
 	ui_tooltip = "Exposure control of Green colors";
@@ -201,7 +201,7 @@ uniform float LIGHTROOM_GREEN_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_AQUA_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Aqua      Exposure";
 	ui_tooltip = "Exposure control of Aqua colors";
@@ -209,7 +209,7 @@ uniform float LIGHTROOM_AQUA_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_BLUE_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Blue      Exposure";
 	ui_tooltip = "Exposure control of Blue colors";
@@ -217,7 +217,7 @@ uniform float LIGHTROOM_BLUE_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_MAGENTA_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Magenta   Exposure";
 	ui_tooltip = "Exposure control of Magenta colors";
@@ -227,7 +227,7 @@ uniform float LIGHTROOM_MAGENTA_EXPOSURE <
 //=============================================================================
 
 uniform float LIGHTROOM_RED_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Red       Saturation";
 	ui_tooltip = "Saturation control of Red colors";
@@ -235,7 +235,7 @@ uniform float LIGHTROOM_RED_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_ORANGE_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Orange    Saturation";
 	ui_tooltip = "Saturation control of Orange colors";
@@ -243,7 +243,7 @@ uniform float LIGHTROOM_ORANGE_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_YELLOW_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Yellow    Saturation";
 	ui_tooltip = "Saturation control of Yellow colors";
@@ -251,7 +251,7 @@ uniform float LIGHTROOM_YELLOW_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_GREEN_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Green     Saturation";
 	ui_tooltip = "Saturation control of Green colors";
@@ -259,7 +259,7 @@ uniform float LIGHTROOM_GREEN_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_AQUA_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Aqua      Saturation";
 	ui_tooltip = "Saturation control of Aqua colors";
@@ -267,7 +267,7 @@ uniform float LIGHTROOM_AQUA_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_BLUE_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Blue      Saturation";
 	ui_tooltip = "Saturation control of Blue colors";
@@ -275,7 +275,7 @@ uniform float LIGHTROOM_BLUE_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_MAGENTA_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Magenta   Saturation";
 	ui_tooltip = "Saturation control of Magenta colors";
@@ -285,7 +285,7 @@ uniform float LIGHTROOM_MAGENTA_SATURATION <
 //=============================================================================
 
 uniform float LIGHTROOM_GLOBAL_BLACK_LEVEL <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0; ui_max = 512;
 	ui_step = 1;
 	ui_label = "Global Black Level";
@@ -294,7 +294,7 @@ uniform float LIGHTROOM_GLOBAL_BLACK_LEVEL <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_WHITE_LEVEL <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0; ui_max = 512;
 	ui_step = 1;
 	ui_label = "Global White Level";
@@ -303,7 +303,7 @@ uniform float LIGHTROOM_GLOBAL_WHITE_LEVEL <
 > = 255.00;
 
 uniform float LIGHTROOM_GLOBAL_EXPOSURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Exposure";
 	ui_tooltip = "Global Exposure Control";
@@ -311,7 +311,7 @@ uniform float LIGHTROOM_GLOBAL_EXPOSURE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_GAMMA <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Gamma";
 	ui_tooltip = "Global Gamma Control";
@@ -319,7 +319,7 @@ uniform float LIGHTROOM_GLOBAL_GAMMA <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_BLACKS_CURVE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Blacks Curve";
 	ui_tooltip = "Global Blacks Curve Control";
@@ -327,7 +327,7 @@ uniform float LIGHTROOM_GLOBAL_BLACKS_CURVE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_SHADOWS_CURVE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Shadows Curve";
 	ui_tooltip = "Global Shadows Curve Control";
@@ -335,7 +335,7 @@ uniform float LIGHTROOM_GLOBAL_SHADOWS_CURVE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_MIDTONES_CURVE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Midtones Curve";
 	ui_tooltip = "Global Midtones Curve Control";
@@ -343,7 +343,7 @@ uniform float LIGHTROOM_GLOBAL_MIDTONES_CURVE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_HIGHLIGHTS_CURVE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Highlights Curve";
 	ui_tooltip = "Global Highlights Curve Control";
@@ -351,7 +351,7 @@ uniform float LIGHTROOM_GLOBAL_HIGHLIGHTS_CURVE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_WHITES_CURVE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Whites Curve";
 	ui_tooltip = "Global Whites Curve Control";
@@ -359,7 +359,7 @@ uniform float LIGHTROOM_GLOBAL_WHITES_CURVE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_CONTRAST <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Contrast";
 	ui_tooltip = "Global Contrast Control";
@@ -367,7 +367,7 @@ uniform float LIGHTROOM_GLOBAL_CONTRAST <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_SATURATION <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Saturation";
 	ui_tooltip = "Global Saturation Control";
@@ -375,7 +375,7 @@ uniform float LIGHTROOM_GLOBAL_SATURATION <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_VIBRANCE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global Vibrance";
 	ui_tooltip = "Global Vibrance Control";
@@ -383,7 +383,7 @@ uniform float LIGHTROOM_GLOBAL_VIBRANCE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_TEMPERATURE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global White Balance: Temperature";
 	ui_tooltip = "Global Temperature Control";
@@ -391,7 +391,7 @@ uniform float LIGHTROOM_GLOBAL_TEMPERATURE <
 > = 0.00;
 
 uniform float LIGHTROOM_GLOBAL_TINT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = -1.00; ui_max = 1.00;
 	ui_label = "Global White Balance: Tint";
 	ui_tooltip = "Global Tint Control";
@@ -413,7 +413,7 @@ uniform bool LIGHTROOM_VIGNETTE_SHOW_RADII <
 > = false;
 
 uniform float LIGHTROOM_VIGNETTE_RADIUS_INNER <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 2.00;
 	ui_label = "Inner Vignette Radius";
 	ui_tooltip = "Anything closer to the screen center than this is not affected by vignette.";
@@ -421,7 +421,7 @@ uniform float LIGHTROOM_VIGNETTE_RADIUS_INNER <
 > = 0.00;
 
 uniform float LIGHTROOM_VIGNETTE_RADIUS_OUTER <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 3.00;
 	ui_label = "Outer Vignette Radius";
 	ui_tooltip = "Anything farther from the screen center than this gets fully vignette'd.";
@@ -429,7 +429,7 @@ uniform float LIGHTROOM_VIGNETTE_RADIUS_OUTER <
 > = 1.00;
 
 uniform float LIGHTROOM_VIGNETTE_WIDTH <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Vignette Width";
 	ui_tooltip = "Higher values stretch the vignette horizontally.";
@@ -437,7 +437,7 @@ uniform float LIGHTROOM_VIGNETTE_WIDTH <
 > = 0.00;
 
 uniform float LIGHTROOM_VIGNETTE_HEIGHT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Vignette Height";
 	ui_tooltip = "Higher values stretch the vignette vertically.";
@@ -445,7 +445,7 @@ uniform float LIGHTROOM_VIGNETTE_HEIGHT <
 > = 0.00;
 
 uniform float LIGHTROOM_VIGNETTE_AMOUNT <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 1.00;
 	ui_label = "Vignette Amount";
 	ui_tooltip = "Intensity of vignette effect.";
@@ -453,7 +453,7 @@ uniform float LIGHTROOM_VIGNETTE_AMOUNT <
 > = 1.00;
 
 uniform float LIGHTROOM_VIGNETTE_CURVE <
-	ui_type = "drag";
+	ui_type = "slider";
 	ui_min = 0.00; ui_max = 10.00;
 	ui_label = "Vignette Curve";
 	ui_tooltip = "Curve of gradient between inner and outer radius. 1.0 means linear.";
