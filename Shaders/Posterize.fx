@@ -51,6 +51,7 @@ uniform float3 PALETTE_COLOR_4 <
 	Textures, Samplers, Globals
 =============================================================================*/
 
+#define QUINT_COMMON_VERSION_REQUIRE 200
 #include "qUINT_common.fxh"
 
 /*=============================================================================

@@ -9,7 +9,7 @@
 
     Lightroom 
     by Marty McFly / P.Gilcher
-    part of qUINT shader library for ReShade 3
+    part of qUINT shader library for ReShade 4
 
     CC BY-NC-ND 3.0 licensed.
 
@@ -472,6 +472,7 @@ uniform int LIGHTROOM_VIGNETTE_BLEND_MODE <
 	Textures, Samplers, Globals
 =============================================================================*/
 
+#define QUINT_COMMON_VERSION_REQUIRE 200
 #include "qUINT_common.fxh"
 
 #if(ENABLE_HISTOGRAM == 1)

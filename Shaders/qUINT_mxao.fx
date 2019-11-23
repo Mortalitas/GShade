@@ -171,6 +171,7 @@ uniform int qMXAO_DEBUG_VIEW_ENABLE <
 	Textures, Samplers, Globals
 =============================================================================*/
 
+#define QUINT_COMMON_VERSION_REQUIRE 200
 #include "qUINT_common.fxh"
 
 texture2D qMXAO_ColorTex 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 3+qMXAO_MIPLEVEL_IL;};
@@ -181,7 +182,13 @@ sampler2D sMXAO_ColorTex	{ Texture = qMXAO_ColorTex;	};
 sampler2D sMXAO_DepthTex	{ Texture = qMXAO_DepthTex;	};
 sampler2D sMXAO_NormalTex	{ Texture = qMXAO_NormalTex;	};
 
-#if(qMXAO_ENABLE_IL != 0)
+texture2D CommonTex0 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; };
+sampler2D sCommonTex0	{ Texture = CommonTex0;	};
+
+texture2D CommonTex1 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; };
+sampler2D sCommonTex1	{ Texture = CommonTex1;	};
+
+#if(MXAO_ENABLE_IL != 0)
  #define BLUR_COMP_SWIZZLE xyzw
 #else
  #define BLUR_COMP_SWIZZLE w
@@ -525,12 +532,12 @@ void PS_qAmbientObscuranceHQ(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 
 void PS_qSpatialFilter1(in qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {
-    color = blur_filter(MXAO, qUINT::sCommonTex0, qMXAO_GLOBAL_RENDER_SCALE, 0.75, 4);
+    color = blur_filter(MXAO, sCommonTex0, qMXAO_GLOBAL_RENDER_SCALE, 0.75, 4);
 }
 
 void PS_qSpatialFilter2(qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 {
-    float4 ssil_ssao = blur_filter(MXAO, qUINT::sCommonTex1, 1, 1.0 / qMXAO_GLOBAL_RENDER_SCALE, 8);
+    float4 ssil_ssao = blur_filter(MXAO, sCommonTex1, 1, 1.0 / qMXAO_GLOBAL_RENDER_SCALE, 8);
 
 	color = tex2D(sMXAO_ColorTex, MXAO.uv.xy);
 
@@ -625,7 +632,7 @@ technique qMXAO
     {
         VertexShader = VS_qMXAO;
         PixelShader  = PS_qAmbientObscuranceHQ;
-        RenderTarget = qUINT::CommonTex0;
+        RenderTarget = CommonTex0;
         ClearRenderTargets = true;
         StencilEnable = true;
         StencilPass = KEEP;
@@ -637,7 +644,7 @@ technique qMXAO
     {
         VertexShader = VS_qMXAO;
         PixelShader  = PS_qAmbientObscurance;
-        RenderTarget = qUINT::CommonTex0;
+        RenderTarget = CommonTex0;
         ClearRenderTargets = true;
         StencilEnable = true;
         StencilPass = KEEP;
@@ -649,7 +656,7 @@ technique qMXAO
 	{
 		VertexShader = VS_qMXAO;
 		PixelShader  = PS_qSpatialFilter1;
-        RenderTarget = qUINT::CommonTex1;
+        RenderTarget = CommonTex1;
 	}
 	pass
 	{

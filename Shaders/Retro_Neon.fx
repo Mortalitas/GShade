@@ -70,6 +70,7 @@ uniform bool DEBUG_FADE_MULT = 0.0;
 	Textures, Samplers, Globals
 =============================================================================*/
 
+#define QUINT_COMMON_VERSION_REQUIRE 200
 #include "qUINT_common.fxh"
 uniform float timer < source = "timer"; >;
 

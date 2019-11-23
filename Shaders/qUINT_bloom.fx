@@ -10,7 +10,6 @@
     Simple Bloom
     by Marty McFly / P.Gilcher
     part of qUINT shader library for ReShade 4
-    Modified by Marot for Reshade 4.0 compatibility.
 
     CC BY-NC-ND 3.0 licensed.
 
@@ -127,6 +126,7 @@ uniform float BLOOM_TONEMAP_COMPRESSION <
 	Textures, Samplers, Globals
 =============================================================================*/
 
+#define QUINT_COMMON_VERSION_REQUIRE 200
 #include "qUINT_common.fxh"
 
 #define CONST_LOG2(v) (((v) & 0xAAAAAAAA) != 0) | ((((v) & 0xFFFF0000) != 0) << 4) | ((((v) & 0xFF00FF00) != 0) << 3) | ((((v) & 0xF0F0F0F0) != 0) << 2) | ((((v) & 0xCCCCCCCC) != 0) << 1)
