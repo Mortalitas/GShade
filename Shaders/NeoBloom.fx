@@ -45,6 +45,16 @@
 #define NEO_BLOOM_LENS_DIRT_TEXTURE_HEIGHT BUFFER_HEIGHT
 #endif
 
+#ifndef NEO_BLOOM_GHOSTING
+#define NEO_BLOOM_GHOSTING 1
+#endif
+
+// I wish I could set this to (NEO_BLOOM_DOWN_SCALE / 4), but it causes a
+// strange error, probably a bug.
+#ifndef NEO_BLOOM_GHOSTING_DOWN_SCALE
+#define NEO_BLOOM_GHOSTING_DOWN_SCALE (NEO_BLOOM_DOWN_SCALE / 2)
+#endif
+
   //===========//
  // Constants //
 //===========//
@@ -251,6 +261,25 @@ uniform float uVariance <
 	//ui_step = 0.005;
 > = cBloomCount;
 
+#if NEO_BLOOM_GHOSTING
+
+// Ghosting
+
+uniform float uGhostingAmount <
+	ui_label = "Amount";
+	ui_tooltip =
+		"Amount of ghosting applied.\n"
+		"Set NEO_BLOOM_GHOSTING to 0 if you don't use it for reducing resource "
+		"usage.\n"
+		"\nDefault: 0.0";
+	ui_category = "Ghosting";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 0.999;
+> = 0.0;
+
+#endif
+
 // HDR
 
 uniform float uMaxBrightness <
@@ -437,6 +466,19 @@ sampler sLensDirt {
 
 #endif
 
+#if NEO_BLOOM_GHOSTING
+
+texture tNeoBloom_Ghosting {
+	Width = BUFFER_WIDTH / NEO_BLOOM_GHOSTING_DOWN_SCALE;
+	Height = BUFFER_HEIGHT / NEO_BLOOM_GHOSTING_DOWN_SCALE;
+	Format = RGBA16F;
+};
+sampler sGhosting {
+	Texture = tNeoBloom_Ghosting;
+};
+
+#endif
+
   //===========//
  // Functions //
 //===========//
@@ -599,10 +641,7 @@ float4 PS_SaveAdapt(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 
 #endif
 
-float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
-	float4 color = tex2D(sBackBuffer, uv);
-	color.rgb = inv_reinhard(color.rgb, 1.0 / uMaxBrightness);
-
+float4 PS_JoinBlooms(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	float4 bloom = 0.0;
 	float accum = 0.0;
 
@@ -617,6 +656,34 @@ float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 		accum += weight;
 	}
 	bloom /= accum;
+
+	#if NEO_BLOOM_GHOSTING
+	bloom = lerp(bloom, tex2D(sGhosting, uv), uGhostingAmount);
+	#endif
+
+	return bloom;
+}
+
+#if NEO_BLOOM_GHOSTING
+
+float4 PS_SaveLastBloom(
+	float4 p : SV_POSITION,
+	float2 uv : TEXCOORD
+) : SV_TARGET {
+	return tex2D(sTempB, uv);
+}
+
+#endif
+
+float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
+	float4 color = tex2D(sBackBuffer, uv);
+	color.rgb = inv_reinhard(color.rgb, 1.0 / uMaxBrightness);
+
+	#if NEO_BLOOM_GHOSTING
+	float4 bloom = tex2D(sTempB, uv);
+	#else
+	float4 bloom = PS_JoinBlooms(p, uv);
+	#endif
 
 	if (uNormalizeBrightness)
 		bloom *= uIntensity / uMaxBrightness;
@@ -720,6 +787,21 @@ technique NeoBloom {
 		VertexShader = PostProcessVS;
 		PixelShader = PS_SaveAdapt;
 		RenderTarget = tNeoBloom_LastAdapt;
+	}
+
+	#endif
+
+	#if NEO_BLOOM_GHOSTING
+
+	pass JoinBlooms {
+		VertexShader = PostProcessVS;
+		PixelShader = PS_JoinBlooms;
+		RenderTarget = tNeoBloom_TempB;
+	}
+	pass SaveLastBloom {
+		VertexShader = PostProcessVS;
+		PixelShader = PS_SaveLastBloom;
+		RenderTarget = tNeoBloom_Ghosting;
 	}
 
 	#endif
