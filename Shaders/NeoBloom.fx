@@ -58,7 +58,8 @@ static const float4 cBlooms[] = {
 	float4(0.5, 0.0, 0.25, 2),
 	float4(0.75, 0.875, 0.125, 3),
 	float4(0.875, 0.0, 0.0625, 5),
-	float4(0.0, 0.0, 0.03125, 9)
+	float4(0.0, 0.0, 0.03, 7)
+	//float4(0.0, 0.0, 0.03125, 9)
 };
 static const int cMaxBloomLod = cBloomCount - 1;
 
