@@ -7,6 +7,7 @@
 // DEV_NOTES
 //+++++++++++++++++++++++++++++
 // Updated for compatibility with ReShade 4 and isolated by Marot Satil.
+// Reshade.fxh Preprocessor Definition Support added by JJXB
 #include "ReShade.fxh"
 //+++++++++++++++++++++++++++++
 // CUSTOM PARAMETERS
@@ -261,7 +262,7 @@ struct VS_INPUT_POST
 
 float linearDepth(float2 txCoords)
 {
-	return (2.0*ZNEAR)/(ZFAR+ZNEAR-tex2D(SamplerDepth,txCoords).x*(ZFAR-ZNEAR));
+	return ReShade::GetLinearizedDepth(txCoords);
 }
 
 float4 viewSpace(float2 txCoords)
