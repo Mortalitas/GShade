@@ -49,10 +49,8 @@
 #define NEO_BLOOM_GHOSTING 1
 #endif
 
-// I wish I could set this to (NEO_BLOOM_DOWN_SCALE / 4), but it causes a
-// strange error, probably a bug.
 #ifndef NEO_BLOOM_GHOSTING_DOWN_SCALE
-#define NEO_BLOOM_GHOSTING_DOWN_SCALE (NEO_BLOOM_DOWN_SCALE / 2)
+#define NEO_BLOOM_GHOSTING_DOWN_SCALE (NEO_BLOOM_DOWN_SCALE / 4.0)
 #endif
 
   //===========//
@@ -154,7 +152,9 @@ uniform float uAdaptAmount <
 
 uniform float uAdaptSensitivity <
 	ui_label = "Sensitivity";
-	ui_tooltip = "Default: 1.0";
+	ui_tooltip =
+		"How sensitive is the adaptation towards bright spots?\n"
+		"\nDefault: 1.0";
 	ui_category = "Adaptation";
 	ui_type = "slider";
 	ui_min = 0.0;
@@ -166,6 +166,8 @@ uniform float uAdaptExposure <
 	ui_tooltip =
 		"Determines the general brightness that the effect should adapt "
 		"towards.\n"
+		"This is measured in f-numbers, thus 0 is the base exposure, <0 will "
+		"be darker and >0 brighter.\n"
 		"\nDefault: 0.0";
 	ui_category = "Adaptation";
 	ui_type = "slider";
@@ -175,13 +177,22 @@ uniform float uAdaptExposure <
 
 uniform bool uAdaptUseLimits <
 	ui_label = "Use Limits";
-	ui_tooltip = "Default: On";
+	ui_tooltip =
+		"Should the adaptation be limited to the minimum and maximum values "
+		"specified below?\n"
+		"\nDefault: On";
 	ui_category = "Adaptation";
 > = true;
 
 uniform float2 uAdaptLimits <
 	ui_label = "Limits";
-	ui_tooltip = "Default: 0.0 1.0";
+	ui_tooltip =
+		"The minimum and maximum values that adaptation can achieve.\n"
+		"Increasing the minimum value will lessen how bright the image can "
+		"become in dark scenes.\n"
+		"Decreasing the maximum value will lessen how dark the image can "
+		"become in bright scenes.\n"
+		"\nDefault: 0.0 1.0";
 	ui_category = "Adaptation";
 	ui_type = "slider";
 	ui_min = 0.0;
@@ -202,7 +213,12 @@ uniform float uAdaptTime <
 
 uniform float uAdaptPrecision <
 	ui_label = "Precision";
-	ui_tooltip = "Default: 0.0";
+	ui_tooltip =
+		"How precise adaptation will be towards the center of the image.\n"
+		"This means that 0.0 will yield an adaptation of the overall image "
+		"brightness, while higher values will focus more and more towards the "
+		"center pixels.\n"
+		"\nDefault: 0.0";
 	ui_category = "Adaptation";
 	ui_type = "slider";
 	ui_min = 0.0;
@@ -234,13 +250,13 @@ uniform float uMean <
 		"The more variance is specified, the less effective this setting is, "
 		"so if you want to have very fine detail bloom reduce both "
 		"parameters.\n"
-		"\nDefault: 1.0";
+		"\nDefault: 0.0";
 	ui_category = "Blending";
 	ui_type = "slider";
 	ui_min = 0.0;
 	ui_max = cBloomCount;
 	//ui_step = 0.005;
-> = 1.0;
+> = 0.0;
 
 uniform float uVariance <
 	ui_label = "Variance";
