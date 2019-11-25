@@ -119,29 +119,29 @@ uniform float Diffusion_3_Amount <
 	ui_tooltip = "Adjust the amount of the third diffusion layer.";
 > = 0.5;
 
-uniform float Diffusion_1_Radius <
+uniform int Diffusion_1_Radius <
 	ui_label = "Diffusion 1 Radius";
 	ui_type = "slider";
-	ui_min = 5.0;
-	ui_max = 20.0;
+	ui_min = 5;
+	ui_max = 20;
 	ui_tooltip = "Set the radius of the first diffusion layer.";
-> = 8.0;
+> = 8;
 
-uniform float Diffusion_2_Radius <
+uniform int Diffusion_2_Radius <
 	ui_label = "Diffusion 2 Radius";
 	ui_type = "slider";
-	ui_min = 5.0;
-	ui_max = 20.0;
+	ui_min = 5;
+	ui_max = 20;
 	ui_tooltip = "Set the radius of the second diffusion layer.";
-> = 8.0;
+> = 8;
 
-uniform float Diffusion_3_Radius <
+uniform int Diffusion_3_Radius <
 	ui_label = "Diffusion 3 Radius";
 	ui_type = "slider";
-	ui_min = 5.0;
-	ui_max = 20.0;
+	ui_min = 5;
+	ui_max = 20;
 	ui_tooltip = "Set the radius of the third diffusion layer.";
-> = 8.0;
+> = 8;
 
 uniform float Diffusion_1_Gamma <
     ui_label = "Diffusion 1 Gamma";
@@ -488,8 +488,6 @@ float4 PandaComposition (float4 vpos : SV_Position,
 
 		if (Enable_Diffusion) 
 		{
-			float4 diffusion;
-
 			blurLayer = clamp(blurLayer, 0.0, 1.0);
 			blurLayerMedRes = clamp(blurLayerMedRes, 0.0, 1.0);
 			blurLayerLoRes = clamp(blurLayerLoRes, 0.0, 1.0);
