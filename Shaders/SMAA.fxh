@@ -419,9 +419,6 @@
  * Killzone 3, by using the light accumulation buffer. More information here:
  *     http://iryoku.com/aacourse/downloads/06-MLAA-on-PS3.pptx 
  */
-#ifndef SMAA_PREDICATION
-#define SMAA_PREDICATION 0
-#endif
 
 /**
  * Threshold to be used in the additional predication buffer. 
@@ -690,16 +687,56 @@ void SMAANeighborhoodBlendingVS(float2 texcoord,
 float2 SMAALumaEdgeDetectionPS(float2 texcoord,
                                float4 offset[3],
                                SMAATexture2D(colorTex)
-                               #if SMAA_PREDICATION
-                               , SMAATexture2D(predicationTex)
-                               #endif
                                ) {
     // Calculate the threshold:
-    #if SMAA_PREDICATION
-    const float2 threshold = SMAACalculatePredicatedThreshold(texcoord, offset, SMAATexturePass2D(predicationTex));
-    #else
-    const float2 threshold = float2(SMAA_THRESHOLD, SMAA_THRESHOLD);
-    #endif
+	const float2 threshold = float2(SMAA_THRESHOLD, SMAA_THRESHOLD);
+
+    // Calculate lumas:
+    const float3 weights = float3(0.2126, 0.7152, 0.0722);
+    const float L = dot(SMAASamplePoint(colorTex, texcoord).rgb, weights);
+
+    const float Lleft = dot(SMAASamplePoint(colorTex, offset[0].xy).rgb, weights);
+    const float Ltop  = dot(SMAASamplePoint(colorTex, offset[0].zw).rgb, weights);
+
+    // We do the usual threshold:
+    float4 delta;
+    delta.xy = abs(L - float2(Lleft, Ltop));
+    float2 edges = step(threshold, delta.xy);
+
+    // Then discard if there is no edge:
+    if (dot(edges, float2(1.0, 1.0)) == 0.0)
+        discard;
+
+    // Calculate right and bottom deltas:
+    const float Lright = dot(SMAASamplePoint(colorTex, offset[1].xy).rgb, weights);
+    const float Lbottom  = dot(SMAASamplePoint(colorTex, offset[1].zw).rgb, weights);
+    delta.zw = abs(L - float2(Lright, Lbottom));
+
+    // Calculate the maximum delta in the direct neighborhood:
+    float2 maxDelta = max(delta.xy, delta.zw);
+
+    // Calculate left-left and top-top deltas:
+    const float Lleftleft = dot(SMAASamplePoint(colorTex, offset[2].xy).rgb, weights);
+    const float Ltoptop = dot(SMAASamplePoint(colorTex, offset[2].zw).rgb, weights);
+    delta.zw = abs(float2(Lleft, Ltop) - float2(Lleftleft, Ltoptop));
+
+    // Calculate the final maximum delta:
+    maxDelta = max(maxDelta.xy, delta.zw);
+    const float finalDelta = max(maxDelta.x, maxDelta.y);
+
+    // Local contrast adaptation:
+    edges.xy *= step(finalDelta, SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR * delta.xy);
+
+    return edges;
+}
+
+float2 SMAALumaEdgePredicationDetectionPS(float2 texcoord,
+                               float4 offset[3],
+                               SMAATexture2D(colorTex)
+                               , SMAATexture2D(predicationTex)
+                               ) {
+    // Calculate the threshold:
+	const float2 threshold = SMAACalculatePredicatedThreshold(texcoord, offset, SMAATexturePass2D(predicationTex));
 
     // Calculate lumas:
     const float3 weights = float3(0.2126, 0.7152, 0.0722);
@@ -749,16 +786,67 @@ float2 SMAALumaEdgeDetectionPS(float2 texcoord,
 float2 SMAAColorEdgeDetectionPS(float2 texcoord,
                                 float4 offset[3],
                                 SMAATexture2D(colorTex)
-                                #if SMAA_PREDICATION
-                                , SMAATexture2D(predicationTex)
-                                #endif
                                 ) {
     // Calculate the threshold:
-    #if SMAA_PREDICATION
-    const float2 threshold = SMAACalculatePredicatedThreshold(texcoord, offset, predicationTex);
-    #else
     const float2 threshold = float2(SMAA_THRESHOLD, SMAA_THRESHOLD);
-    #endif
+
+    // Calculate color deltas:
+    float4 delta;
+    const float3 C = SMAASamplePoint(colorTex, texcoord).rgb;
+
+    const float3 Cleft = SMAASamplePoint(colorTex, offset[0].xy).rgb;
+    float3 t = abs(C - Cleft);
+    delta.x = max(max(t.r, t.g), t.b);
+
+    const float3 Ctop  = SMAASamplePoint(colorTex, offset[0].zw).rgb;
+    t = abs(C - Ctop);
+    delta.y = max(max(t.r, t.g), t.b);
+
+    // We do the usual threshold:
+    float2 edges = step(threshold, delta.xy);
+
+    // Then discard if there is no edge:
+    if (dot(edges, float2(1.0, 1.0)) == 0.0)
+        discard;
+
+    // Calculate right and bottom deltas:
+    const float3 Cright = SMAASamplePoint(colorTex, offset[1].xy).rgb;
+    t = abs(C - Cright);
+    delta.z = max(max(t.r, t.g), t.b);
+
+    const float3 Cbottom  = SMAASamplePoint(colorTex, offset[1].zw).rgb;
+    t = abs(C - Cbottom);
+    delta.w = max(max(t.r, t.g), t.b);
+
+    // Calculate the maximum delta in the direct neighborhood:
+    float2 maxDelta = max(delta.xy, delta.zw);
+
+    // Calculate left-left and top-top deltas:
+    const float3 Cleftleft  = SMAASamplePoint(colorTex, offset[2].xy).rgb;
+    t = abs(Cleft - Cleftleft);
+    delta.z = max(max(t.r, t.g), t.b);
+
+    const float3 Ctoptop = SMAASamplePoint(colorTex, offset[2].zw).rgb;
+    t = abs(Ctop - Ctoptop);
+    delta.w = max(max(t.r, t.g), t.b);
+
+    // Calculate the final maximum delta:
+    maxDelta = max(maxDelta.xy, delta.zw);
+    const float finalDelta = max(maxDelta.x, maxDelta.y);
+
+    // Local contrast adaptation:
+    edges.xy *= step(finalDelta, SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR * delta.xy);
+
+    return edges;
+}
+
+float2 SMAAColorEdgePredicationDetectionPS(float2 texcoord,
+                                float4 offset[3],
+                                SMAATexture2D(colorTex)
+                                , SMAATexture2D(predicationTex)
+                                ) {
+    // Calculate the threshold:
+    const float2 threshold = SMAACalculatePredicatedThreshold(texcoord, offset, predicationTex);
 
     // Calculate color deltas:
     float4 delta;

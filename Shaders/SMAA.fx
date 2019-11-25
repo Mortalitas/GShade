@@ -9,14 +9,11 @@
  *                               E N H A N C E D
  *       S U B P I X E L   M O R P H O L O G I C A L   A N T I A L I A S I N G
  *
+ *                               for ReShade 3.0+
  *                      Modified by Marot Satil for ReShade 4.0 and lightly optimized for the GShade project.
  */
 
 //------------------- Preprocessor Settings -------------------
-
-#ifndef SMAA_PREDICATION
-#define SMAA_PREDICATION 0 // Disable predication by default
-#endif
 
 #if !defined(SMAA_PRESET_LOW) && !defined(SMAA_PRESET_MEDIUM) && !defined(SMAA_PRESET_HIGH) && !defined(SMAA_PRESET_ULTRA)
 #define SMAA_PRESET_CUSTOM // Do not use a quality preset by default
@@ -65,7 +62,10 @@ uniform int CornerRounding <
 	ui_tooltip = "Determines the percent of anti-aliasing to apply to corners.";
 > = 25;
 
-#if SMAA_PREDICATION
+uniform bool SMAA_PREDICATION <
+	ui_label = "Enable Predicated Thresholding";
+> = false;
+
 uniform float PredicationThreshold <
 	ui_type = "slider";
 	ui_min = 0.005; ui_max = 1.00; ui_step = 0.01;
@@ -87,7 +87,6 @@ uniform float PredicationStrength <
 	ui_label = "Predication Strength";
 > = 0.4;
 #endif
-#endif
 
 uniform int DebugOutput <
 	ui_type = "combo";
@@ -101,11 +100,9 @@ uniform int DebugOutput <
 	#define SMAA_MAX_SEARCH_STEPS MaxSearchSteps
 	#define SMAA_MAX_SEARCH_STEPS_DIAG MaxSearchStepsDiagonal
 	#define SMAA_CORNER_ROUNDING CornerRounding
-	#if SMAA_PREDICATION
-		#define SMAA_PREDICATION_THRESHOLD PredicationThreshold
-		#define SMAA_PREDICATION_SCALE PredicationScale
-		#define SMAA_PREDICATION_STRENGTH PredicationStrength
-	#endif
+	#define SMAA_PREDICATION_THRESHOLD PredicationThreshold
+	#define SMAA_PREDICATION_SCALE PredicationScale
+	#define SMAA_PREDICATION_STRENGTH PredicationStrength
 #endif
 
 #define SMAA_RT_METRICS float4(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT, BUFFER_WIDTH, BUFFER_HEIGHT)
@@ -259,20 +256,18 @@ float2 SMAAEdgeDetectionWrapPS(
 	float2 texcoord : TEXCOORD0,
 	float4 offset[3] : TEXCOORD1) : SV_Target
 {
-	if (EdgeDetectionType == 0)
-		return SMAALumaEdgeDetectionPS(texcoord, offset, colorGammaSampler
-	#if SMAA_PREDICATION
-		, depthLinearSampler
-	#endif
-		);
+	if (EdgeDetectionType == 0 && SMAA_PREDICATION == true)
+		return SMAALumaEdgePredicationDetectionPS(texcoord, offset, colorGammaSampler, depthLinearSampler);
+	else if (EdgeDetectionType == 0)
+		return SMAALumaEdgeDetectionPS(texcoord, offset, colorGammaSampler);
+
 	if (EdgeDetectionType == 2)
 		return SMAADepthEdgeDetectionPS(texcoord, offset, depthLinearSampler);
 
-	return SMAAColorEdgeDetectionPS(texcoord, offset, colorGammaSampler
-	#if SMAA_PREDICATION
-		, depthLinearSampler
-	#endif
-		);
+	if (SMAA_PREDICATION)
+		return SMAAColorEdgePredicationDetectionPS(texcoord, offset, colorGammaSampler, depthLinearSampler);
+	else
+		return SMAAColorEdgeDetectionPS(texcoord, offset, colorGammaSampler);
 }
 float4 SMAABlendingWeightCalculationWrapPS(
 	float4 position : SV_Position,
