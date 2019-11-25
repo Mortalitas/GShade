@@ -62,7 +62,7 @@ uniform int CornerRounding <
 	ui_tooltip = "Determines the percent of anti-aliasing to apply to corners.";
 > = 25;
 
-uniform bool SMAA_PREDICATION <
+uniform bool PredicationEnabled <
 	ui_label = "Enable Predicated Thresholding";
 > = false;
 
@@ -95,6 +95,7 @@ uniform int DebugOutput <
 > = false;
 
 #ifdef SMAA_PRESET_CUSTOM
+	#define SMAA_PREDICATION PredicationEnabled
 	#define SMAA_THRESHOLD EdgeDetectionThreshold
 	#define SMAA_DEPTH_THRESHOLD DepthEdgeDetectionThreshold
 	#define SMAA_MAX_SEARCH_STEPS MaxSearchSteps

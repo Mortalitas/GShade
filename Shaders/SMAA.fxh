@@ -419,6 +419,9 @@
  * Killzone 3, by using the light accumulation buffer. More information here:
  *     http://iryoku.com/aacourse/downloads/06-MLAA-on-PS3.pptx 
  */
+#ifndef SMAA_PREDICATION
+#define SMAA_PREDICATION 0
+#endif
 
 /**
  * Threshold to be used in the additional predication buffer. 
