@@ -1,5 +1,5 @@
 /**
-Filmic Sharpen PS v1.2.1 (c) 2018 Jakub Maximilian Fober
+Filmic Sharpen PS v1.2.2 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
@@ -33,7 +33,7 @@ uniform float Clamp <
 > = 0.65;
 
 uniform bool UseMask <
-	ui_label = "Only center";
+	ui_label = "Sharpen only center";
 	ui_tooltip = "Sharpen only in center of the image";
 > = false;
 
@@ -86,7 +86,7 @@ float Overlay(float LayerAB)
 }
 
 // Sharpen pass
-float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : SV_Target
+float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD0) : SV_Target
 {
 	// Sample display image
 	const float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
@@ -123,7 +123,8 @@ float3 FilmicSharpenPS(float4 vois : SV_Position, float2 UvCoord : TexCoord) : S
 	// Luma high-pass
 	float HighPass = 0.0;
 	[unroll]
-	for(int i=0; i<4; i++) HighPass += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[i]).rgb, LumaCoefficient);
+	for(int i=0; i<4; i++)
+		HighPass += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[i]).rgb, LumaCoefficient);
 	HighPass = 0.5 - 0.5 * (HighPass * 0.25 - dot(Source, LumaCoefficient));
 
 	// Sharpen strength
