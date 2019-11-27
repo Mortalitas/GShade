@@ -8,10 +8,15 @@ To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
-// Rim Light PS v0.1.3 a
+// Rim Light PS v0.1.5 a
 // Lightly optimized by Marot Satil for the GShade project.
 
 #include "Reshade.fxh"
+
+
+	  ////////////
+	 /// MENU ///
+	////////////
 
 uniform float3 Color <
 	ui_label = "Rim Light Color";
@@ -23,6 +28,7 @@ uniform bool Debug <
 	ui_label = "Display Normal Map Pass";
 	ui_tooltip = "Surface vector angle color map";
 	ui_category = "Debug Tools";
+	ui_category_closed = true;
 > = false;
 
 uniform bool CustomFarPlane <
@@ -40,6 +46,11 @@ uniform float FarPlane <
 	ui_min = 0; ui_max = 1000; ui_step = 1;
 	ui_category = "Debug Tools";
 > = 1000.0;
+
+
+	  /////////////////
+	 /// FUNCTIONS ///
+	/////////////////
 
 // Overlay blending mode
 float Overlay(float Layer)
@@ -86,13 +97,17 @@ float3 NormalVector(float2 TexCoord)
 	const float2 posNorth = posCenter - offset.zy;
 	const float2 posEast = posCenter + offset.xz;
 
-	const float3 vertCenter = float3(posCenter, 1) * GetDepth(posCenter);
-	const float3 vertNorth = float3(posNorth, 1) * GetDepth(posNorth);
-	const float3 vertEast = float3(posEast, 1) * GetDepth(posEast);
+	const float3 vertCenter = float3(posCenter - 0.5, 1) * GetDepth(posCenter);
+	const float3 vertNorth = float3(posNorth - 0.5, 1) * GetDepth(posNorth);
+	const float3 vertEast = float3(posEast - 0.5, 1) * GetDepth(posEast);
 
 	return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast)) * 0.5 + 0.5;
 }
 
+
+	  //////////////
+	 /// SHADER ///
+	//////////////
 
 void RimLightPS(in float4 position : SV_Position, in float2 TexCoord : TEXCOORD0, out float3 color : SV_Target)
 {
@@ -108,7 +123,12 @@ void RimLightPS(in float4 position : SV_Position, in float2 TexCoord : TEXCOORD0
 	}
 }
 
-technique RimLight
+
+	  //////////////
+	 /// OUTPUT ///
+	//////////////
+
+technique RimLight < ui_label = "Rim Light"; >
 {
 	pass
 	{
