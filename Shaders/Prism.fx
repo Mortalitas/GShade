@@ -9,7 +9,7 @@ http://creativecommons.org/licenses/by-nc-sa/4.0/.
 Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 */
 
-// Chromatic Aberration PS (Prism) v1.2.4
+// Chromatic Aberration PS (Prism) v1.2.5
 // inspired by Marty McFly YACA shader
 
 
@@ -37,6 +37,7 @@ uniform bool Automatic <
 	ui_label = "Automatic sample count";
 	ui_tooltip = "Amount of samples will be adjusted automatically";
 	ui_category = "Performance";
+	ui_category_closed = true;
 > = true;
 
 uniform int SampleCount <
