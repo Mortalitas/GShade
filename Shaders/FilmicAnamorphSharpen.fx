@@ -1,5 +1,5 @@
 /*
-Filmic Anamorph Sharpen PS v1.4.1 (c) 2018 Jakub Maximilian Fober
+Filmic Anamorph Sharpen PS v1.4.2 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
@@ -46,6 +46,7 @@ uniform bool DepthMask <
 	ui_label = "Enable depth rim masking";
 	ui_tooltip = "Depth high-pass mask switch";
 	ui_category = "Depth mask";
+	ui_category_closed = true;
 > = true;
 
 uniform int DepthMaskContrast <
@@ -62,6 +63,7 @@ uniform int Coefficient <
 	ui_type = "radio";
 	ui_items = "BT.709 - digital\0BT.601 - analog\0";
 	ui_category = "Additional settings";
+	ui_category_closed = true;
 > = 0;
 
 uniform bool Preview <
@@ -70,6 +72,7 @@ uniform bool Preview <
 		"If you don't see red strokes,\n"
 		"try changing Preprocessor Definitions in the Settings tab.";
 	ui_category = "Debug View";
+	ui_category_closed = true;
 > = false;
 
 
