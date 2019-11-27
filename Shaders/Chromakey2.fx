@@ -63,7 +63,7 @@ uniform int Precision2 <
 	ui_label = "Floor precision";
 	ui_type = "slider";
 	ui_category = "Floor masking (experimental)";
-	ui_min = 2; ui_max = 64;
+	ui_min = 2; ui_max = 9216;
 > = 4;
 
 uniform int Color2 <
@@ -164,7 +164,8 @@ float3 Chromakey2PS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_
 
 		bool FloorMask = (float)round( GetNormal(texcoord).y*Precision2 )/Precision2==(float)round( FloorAngle2*Precision2 )/Precision2;
 
-		DepthMask = FloorMask ? 1.0 : DepthMask;
+		if (FloorMask)
+			DepthMask = 1.0;
 	}
 
 	if(bool(CKPass2)) DepthMask = 1.0-DepthMask;
