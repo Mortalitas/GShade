@@ -11,6 +11,9 @@
 // lut_Sleepy.png was provided by Sleeps_Hungry!
 // You can find them here: https://twitter.com/advent1013
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// lut_Feli.png was provided by Feli!
+// You can find them here: https://twitter.com/ffxivfeli
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_TextureName
