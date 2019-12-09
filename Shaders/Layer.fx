@@ -26,6 +26,10 @@
 
 #include "ReShade.fxh"
 
+#ifndef LayerTex
+#define LayerTex "LayerA.png"
+#endif
+
 uniform int Layer_Select <
     ui_label = "Layer Selection";
     ui_tooltip = "The image/texture you'd like to use.";
@@ -63,7 +67,7 @@ uniform float Layer_PosY <
 	ui_step = 0.001;
 > = 0.5;
 
-texture Layer_texture <source="LayerA.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer_texture <source=LayerTex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
 sampler Layer_sampler { Texture = Layer_texture; };
 
 texture LensDB_angel_texture <source="LensDBA.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };

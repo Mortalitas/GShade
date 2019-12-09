@@ -43,6 +43,14 @@
 
 #define TEXFORMAT RGBA8
 
+#ifndef SilhouetteTexPapyrus2
+#define SilhouetteTexPapyrus2 "Papyrus2.png"
+#endif
+
+#ifndef SilhouetteTexPapyrus6
+#define SilhouetteTexPapyrus6 "Papyrus6.png"
+#endif
+
 uniform bool SEnable_Foreground_Color <
     ui_label = "Enable Foreground Color";
     ui_tooltip = "Enable this to use a color instead of a texture for the foreground!";   
@@ -106,10 +114,10 @@ uniform int SBackground_Tex_Select <
     ui_items = "Papyrus2.png\0Papyrus6.png\0Metal1.jpg\0Ice1.jpg\0Silhouette1.png\0Silhouette2.png\0";
 > = 1;
 
-texture sPaper_two_texture <source="Papyrus2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture sPaper_two_texture <source=SilhouetteTexPapyrus2;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 sampler sPaper_two_sampler { Texture = sPaper_two_texture; };
 
-texture sPaper_six_texture <source="Papyrus6.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture sPaper_six_texture <source=SilhouetteTexPapyrus6;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 sampler sPaper_six_sampler { Texture = sPaper_six_texture; };
 
 texture sMetal_one_texture <source="Metal1.jpg";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
