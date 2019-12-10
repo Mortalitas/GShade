@@ -1,7 +1,9 @@
-# GShade-Shaders
-**Shaders modified and/or created for GShade, a highly modified ReShade fork & package with a selectively network-unlocked depth buffer.** 
+# GShade
+**GShade is a highly modified ReShade fork & package with a selectively network-unlocked depth buffer.** 
 
 Note that all shaders in this repository are strictly intended for use with ReShade 4+. Please refer to individual file licenses for questions about distribution and modification.
+
+**The latest release can always be found here, with the installer being highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
 
 **GShade itself officially whitelists and is only network-unlocked to the following online games, but will work with any game that ReShade can:**
 * Final Fantasy XIV
@@ -25,8 +27,6 @@ Note that all shaders in this repository are strictly intended for use with ReSh
   * Faeshade
 * Optional Desktop Update Reminder
 * [Uninstaller](https://mortalitas.github.io/ffxiv/GShade/GShade%20Uninstaller.exe)
-
-**The latest release can always be found here, with the installer being highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
 
 A **Visual Guide/Manual** for GShade can be found here: https://drive.google.com/file/d/18TQUmdzs3sJDYNVmHDaZ_4wigJU0ul4j/
 
