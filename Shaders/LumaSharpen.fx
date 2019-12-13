@@ -61,7 +61,7 @@ uniform bool show_sharpen <
   /                          Main code                          /
   '-----------------------------------------------------------*/
 
-float3 LumaSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD0) : SV_Target
+float3 LumaSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD) : SV_Target
 {
 	// -- Get the original pixel --
 	const float3 ori = tex2D(ReShade::BackBuffer, tex).rgb; // ori = original pixel

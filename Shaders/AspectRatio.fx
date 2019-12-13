@@ -41,7 +41,7 @@ uniform float4 Color <
 texture AspectBgTex < source = "AspectRatio.jpg"; > { Width = 1351; Height = 1013; };
 sampler AspectBgSampler { Texture = AspectBgTex; };
 
-float3 AspectRatioPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float3 AspectRatioPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	bool Mask = false;
 
