@@ -101,7 +101,7 @@ texture Ice_one_texture <source="Ice1.jpg";> { Width = BUFFER_WIDTH; Height = BU
 sampler Ice_one_sampler { Texture = Ice_one_texture; };
 
 
-void PS_StageDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float3 color : SV_Target)
+void PS_StageDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
   float4 Fire_one_stage = tex2D(Fire_one_sampler, texcoord).rgba;
   float4 Fire_two_stage = tex2D(Fire_two_sampler, texcoord).rgba;

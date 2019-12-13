@@ -835,7 +835,7 @@ float3 yiqDist(float2 uv, float m, float t)
 /////////////////////////PIXEL SHADERS//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////PIXEL SHADERS//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD0) : SV_Target
+float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
 	const float t = Timer.x * 0.001;//_Time.y;							
 	float2 p = txcoord.xy;
@@ -1082,7 +1082,7 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD0) : SV_Target
 
 }
 
-float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD0) : SV_Target
+float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
 	const float t = Timer.x * 0.001;//_Time.y;					
 	float2 p = txcoord.xy;	
@@ -1576,7 +1576,7 @@ float4 PS_VHS4(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	return float4(col, 1.0); 
 }
 
-float4 PS_VHSTape(float4 pos : SV_Position, float2 txcoord : TEXCOORD0) : SV_Target
+float4 PS_VHSTape(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
 	const float t = Timer.x * 0.001;
 	float2 p = txcoord.xy;
@@ -1612,7 +1612,7 @@ float4 PS_VHSTape(float4 pos : SV_Position, float2 txcoord : TEXCOORD0) : SV_Tar
 	return float4(nt,nl,ns,ntail);
 }
 
-float4 PS_VHSClear(float4 pos : SV_Position, float2 txcoord : TEXCOORD0) : SV_Target
+float4 PS_VHSClear(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
 	return float4(tex2D(SamplerColorVHS, txcoord).rgb, 1.0);  //black
 }

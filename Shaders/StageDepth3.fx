@@ -62,7 +62,7 @@ texture Stage_Three_texture <source=Stage3Tex;> { Width = BUFFER_WIDTH; Height =
 
 sampler Stage_Three_sampler { Texture = Stage_Three_texture; };
 
-void PS_StageThreeDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float3 color : SV_Target)
+void PS_StageThreeDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
   float4 stagethree = tex2D(Stage_Three_sampler, texcoord).rgba;
 	color = tex2D(ReShade::BackBuffer, texcoord).rgb;

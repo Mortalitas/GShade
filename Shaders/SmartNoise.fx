@@ -30,7 +30,7 @@ float gold_noise(float2 coordinate, float seed){
     return frac(tan(distance(coordinate*(seed+PHI), float2(PHI, PI)))*SQ2);
 }
 
-float3 SmartNoise(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float3 SmartNoise(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
     float amount = noise * 0.08;
     const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;

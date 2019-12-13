@@ -109,7 +109,7 @@ float3 NormalVector(float2 TexCoord)
 	 /// SHADER ///
 	//////////////
 
-void RimLightPS(in float4 position : SV_Position, in float2 TexCoord : TEXCOORD0, out float3 color : SV_Target)
+void RimLightPS(in float4 position : SV_Position, in float2 TexCoord : TEXCOORD, out float3 color : SV_Target)
 {
 	const float3 NormalPass = NormalVector(TexCoord);
 

@@ -62,7 +62,7 @@ texture Stage_Two_texture <source=Stage2Tex;> { Width = BUFFER_WIDTH; Height = B
 
 sampler Stage_Two_sampler { Texture = Stage_Two_texture; };
 
-void PS_StageTwoDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float3 color : SV_Target)
+void PS_StageTwoDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
   float4 stagetwo = tex2D(Stage_Two_sampler, texcoord).rgba;
 	color = tex2D(ReShade::BackBuffer, texcoord).rgb;

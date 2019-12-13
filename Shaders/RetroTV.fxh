@@ -457,7 +457,7 @@ float4 SVideoFinalPS(float4 vpos : SV_Position, float2 texcoord : TEXCOORD0, flo
 	return float4( rgb, 1.0 );
 }
 
-float4 TVCurvaturePS(float4 vpos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float4 TVCurvaturePS(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	if (EnableTVCurvature) {
 		float2 coords = texcoord;

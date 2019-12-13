@@ -62,7 +62,7 @@ texture Stage_Five_texture <source=Stage5Tex;> { Width = BUFFER_WIDTH; Height = 
 
 sampler Stage_Five_sampler { Texture = Stage_Five_texture; };
 
-void PS_StageFiveDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float3 color : SV_Target)
+void PS_StageFiveDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
   float4 stagefive = tex2D(Stage_Five_sampler, texcoord).rgba;
 	color = tex2D(ReShade::BackBuffer, texcoord).rgb;

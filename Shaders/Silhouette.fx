@@ -132,7 +132,7 @@ sampler sSilhouette_one_sampler { Texture = sSilhouette_one_texture; };
 texture sSilhouette_two_texture <source="Silhouette2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 sampler sSilhouette_two_sampler { Texture = sSilhouette_two_texture; };
 
-void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float3 color : SV_Target)
+void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
   float4 Paper_two_stage = tex2D(sPaper_two_sampler, texcoord).rgba;
   float4 Paper_six_stage = tex2D(sPaper_six_sampler, texcoord).rgba;
@@ -175,7 +175,7 @@ void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoor
 	}
 }
 
-void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float3 color : SV_Target)
+void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
   float4 Paper_two_stage = tex2D(sPaper_two_sampler, texcoord).rgba;
   float4 Paper_six_stage = tex2D(sPaper_six_sampler, texcoord).rgba;

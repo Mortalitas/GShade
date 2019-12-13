@@ -330,7 +330,7 @@ float3 Sharpen_Out(float2 texcoord)
 }
 
 
-float3 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float3 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {	
 	const float3 Sharpen = Sharpen_Out(texcoord).rgb,BB = tex2D(BackBuffer,texcoord).rgb;
 	float DB = Depth(texcoord).r, DBBL = Depth(float2(texcoord.x*2,texcoord.y*2-1)).r;

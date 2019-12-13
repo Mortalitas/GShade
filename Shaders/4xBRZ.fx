@@ -234,7 +234,7 @@ float3 PS_Downscale( float4 pos : SV_Position,
 
 
 float3 PS_Final( float4 pos : SV_Position,
-                 float2 uv  : TexCoord0 ) : COLOR
+                 float2 uv  : TexCoord ) : COLOR
 { 
   return tex2D(UpscaleSampler, uv).rgb;
 }

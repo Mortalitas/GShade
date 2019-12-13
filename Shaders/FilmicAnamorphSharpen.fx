@@ -106,7 +106,7 @@ float Overlay(float LayerAB)
 }
 
 // Sharpen pass
-float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD0) : SV_Target
+float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV_Target
 {
 	// Sample display image
 	float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;

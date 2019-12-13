@@ -136,7 +136,7 @@ float PixelAngle(float2 texcoord : TEXCOORD0)
 	return atan(gradient[1] / gradient[0]);
 }
 
-float4 KernelMeanAndVariance(float2 origin : TEXCOORD0, float4 kernelRange, 
+float4 KernelMeanAndVariance(float2 origin : TEXCOORD, float4 kernelRange, 
 	float2x2 rotation)
 {
 	float3 mean = float3(0, 0, 0);
@@ -208,7 +208,7 @@ float3 Kuwahara(float2 texcoord, float2 radius, float2x2 rotation)
 	
 }
 
-float4 PS_SkyKeep(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float4 PS_SkyKeep(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	if (!CFG_KUWAHARA_DEPTHAWARE_EXCLUDESKY)
 	{
@@ -236,7 +236,7 @@ float4 PS_SkyKeep(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Ta
 	return float4(result, 1.0);
 }
 
-float3 PS_SkyRestore(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float3 PS_SkyRestore(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	float4 bb = tex2D(ReShade::BackBuffer, texcoord);
 	if (!CFG_KUWAHARA_DEPTHAWARE_EXCLUDESKY)
@@ -305,7 +305,7 @@ float3 PS_SkyRestore(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV
 	}
 }
 
-float3 PS_Kuwahara(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+float3 PS_Kuwahara(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	float4 meanVariance[4];
 
