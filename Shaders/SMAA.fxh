@@ -437,7 +437,7 @@
  * How much to scale the global threshold used for luma or color edge
  * detection when using predication.
  *
- * Range: [1, 5]
+ * Range: [1, 16]
  */
 #ifndef SMAA_PREDICATION_SCALE
 #define SMAA_PREDICATION_SCALE 2.0
@@ -446,7 +446,7 @@
 /**
  * How much to locally decrease the threshold.
  *
- * Range: [0, 1]
+ * Range: [0, 4]
  */
 #ifndef SMAA_PREDICATION_STRENGTH
 #define SMAA_PREDICATION_STRENGTH 0.4
