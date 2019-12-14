@@ -28,7 +28,7 @@
 // Special thanks to Sleeps_Hungry for the addition of the FFOccludeUI technique.
 
 #ifndef KeepUIDebug
-#define KeepUIDebug 0
+#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
 #endif
 
 #ifndef KeepUIOccludeAssist
