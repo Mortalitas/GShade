@@ -39,7 +39,7 @@
 #define TEXFORMAT RGBA8
 
 #ifndef Stage5Tex
-#define Stage5Tex "Stage5.png"
+#define Stage5Tex "Stage5.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform float Stage_Five_Opacity <

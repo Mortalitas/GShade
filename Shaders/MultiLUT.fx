@@ -28,31 +28,31 @@
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_GSTextureName
-	#define fLUT_GSTextureName "MultiLut_GShade.png"
+	#define fLUT_GSTextureName "MultiLut_GShade.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 17 rows at 32px.
 #endif
 #ifndef fLUT_RESTextureName
-	#define fLUT_RESTextureName "MultiLut_atlas4.png"
+	#define fLUT_RESTextureName "MultiLut_atlas4.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 17 rows at 32px.
 #endif
 #ifndef fLUT_JOHTextureName
-	#define fLUT_JOHTextureName "MultiLut_Johto.png"
+	#define fLUT_JOHTextureName "MultiLut_Johto.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 18 rows at 32px.
 #endif
 #ifndef fLUT_EGTextureName
-	#define fLUT_EGTextureName "FFXIVLUTAtlas.png"
+	#define fLUT_EGTextureName "FFXIVLUTAtlas.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 17 rows at 32px.
 #endif
 #ifndef fLUT_MSTextureName
-	#define fLUT_MSTextureName "TMP_MultiLUT.png"
+	#define fLUT_MSTextureName "TMP_MultiLUT.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
 #ifndef fLUT_NFGTextureName
-	#define fLUT_NFGTextureName "MultiLut_ninjafadaGameplay.png"
+	#define fLUT_NFGTextureName "MultiLut_ninjafadaGameplay.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
 #ifndef fLUT_S14TextureName
-	#define fLUT_S14TextureName "MultiLut_seri14.png"
+	#define fLUT_S14TextureName "MultiLut_seri14.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 11 rows at 32px.
 #endif
 #ifndef fLUT_YOMTextureName
-	#define fLUT_YOMTextureName "MultiLut_Yomi.png"
+	#define fLUT_YOMTextureName "MultiLut_Yomi.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
 #ifndef fLUT_NENTextureName
-	#define fLUT_NENTextureName "MultiLut_Neneko.png"
+	#define fLUT_NENTextureName "MultiLut_Neneko.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
 #ifndef fLUT_TileSizeXY
 	#define fLUT_TileSizeXY 32

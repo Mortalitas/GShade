@@ -17,7 +17,7 @@
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_TextureName
-	#define fLUT_TextureName "lut_GShade.png"
+	#define fLUT_TextureName "lut_GShade.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_TileSizeXY
 	#define fLUT_TileSizeXY 32
@@ -26,7 +26,7 @@
 	#define fLUT_TileAmount 32
 #endif
 #ifndef fLUT_W_TextureName
-	#define fLUT_W_TextureName "lut_warm.png"
+	#define fLUT_W_TextureName "lut_warm.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
 #endif
 #ifndef fLUT_W_TileSizeXY
 	#define fLUT_W_TileSizeXY 64
@@ -35,19 +35,19 @@
 	#define fLUT_W_TileAmount 64
 #endif
 #ifndef fLUT_A_TextureName
-	#define fLUT_A_TextureName "lut.png"
+	#define fLUT_A_TextureName "lut.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_NFG_TextureName
-	#define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png"
+	#define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_RS_TextureName
-	#define fLUT_RS_TextureName "lut_ReShade.png"
+	#define fLUT_RS_TextureName "lut_ReShade.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_SL_TextureName
-	#define fLUT_SL_TextureName "lut_Sleepy.png"
+	#define fLUT_SL_TextureName "lut_Sleepy.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
 #endif
 #ifndef fLUT_FE_TextureName
-	#define fLUT_FE_TextureName "lut_Feli.png"
+	#define fLUT_FE_TextureName "lut_Feli.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -27,7 +27,7 @@
 #include "ReShade.fxh"
 
 #ifndef LayerTex
-#define LayerTex "LayerA.png"
+#define LayerTex "LayerA.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform int Layer_Select <

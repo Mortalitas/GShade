@@ -39,7 +39,7 @@
 #define TEXFORMAT RGBA8
 
 #ifndef Stage4Tex
-#define Stage4Tex "Stage4.png"
+#define Stage4Tex "Stage4.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform float Stage_Four_Opacity <

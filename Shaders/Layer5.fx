@@ -27,7 +27,7 @@
 #include "ReShade.fxh"
 
 #ifndef Layer5Tex
-#define Layer5Tex "Layer5.png"
+#define Layer5Tex "Layer5.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform float Layer_Five_Blend <

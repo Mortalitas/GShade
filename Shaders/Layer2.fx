@@ -27,7 +27,7 @@
 #include "ReShade.fxh"
 
 #ifndef Layer2Tex
-#define Layer2Tex "Layer2.png"
+#define Layer2Tex "Layer2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform float Layer_Two_Blend <

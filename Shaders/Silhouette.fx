@@ -44,11 +44,11 @@
 #define TEXFORMAT RGBA8
 
 #ifndef SilhouetteTexPapyrus2
-#define SilhouetteTexPapyrus2 "Papyrus2.png"
+#define SilhouetteTexPapyrus2 "Papyrus2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 #ifndef SilhouetteTexPapyrus6
-#define SilhouetteTexPapyrus6 "Papyrus6.png"
+#define SilhouetteTexPapyrus6 "Papyrus6.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform bool SEnable_Foreground_Color <

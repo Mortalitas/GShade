@@ -27,7 +27,7 @@
 #include "ReShade.fxh"
 
 #ifndef Layer4Tex
-#define Layer4Tex "Layer4.png"
+#define Layer4Tex "Layer4.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform float Layer_Four_Blend <
