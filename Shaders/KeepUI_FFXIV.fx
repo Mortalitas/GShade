@@ -109,12 +109,9 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 #endif
 }
 
-#undef KeepUIDebug
-
 technique FFKeepUI <
     ui_tooltip = "Place this at the top of your Technique list to save the UI into a texture for restoration with FFRestoreUI.\n"
-	             "To use this Technique, you must also enable \"FFRestoreUI\".\n"
-	             "To enable Debug mode for testing, set the value of the preprocessor definition \"KeepUIDebug\" to 1.";
+	             "To use this Technique, you must also enable \"FFRestoreUI\".\n";
 >
 {
     pass
@@ -134,8 +131,7 @@ technique FFKeepUI <
 
 technique FFRestoreUI <
     ui_tooltip = "Place this at the bottom of your Technique list to restore the UI texture saved by FFKeepUI.\n"
-	             "To use this Technique, you must also enable \"FFKeepUI\".\n"
-	             "To enable Debug mode for testing, set the value of the preprocessor definition \"KeepUIDebug\" to 1.";
+	             "To use this Technique, you must also enable \"FFKeepUI\".\n";
 >
 {
     pass
