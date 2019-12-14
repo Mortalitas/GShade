@@ -1,5 +1,5 @@
 /**
-Filmic Sharpen PS v1.2.2 (c) 2018 Jakub Maximilian Fober
+Filmic Sharpen PS v1.2.3 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 

@@ -1,5 +1,5 @@
 /*
-Filmic Anamorph Sharpen PS v1.4.3 (c) 2018 Jakub Maximilian Fober
+Filmic Anamorph Sharpen PS v1.4.4 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 

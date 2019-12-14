@@ -1,5 +1,5 @@
 /*
-Chromakey PS v1.5.1a (c) 2018 Jacob Maximilian Fober
+Chromakey PS v1.5.2a (c) 2018 Jacob Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 

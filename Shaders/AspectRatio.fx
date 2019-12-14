@@ -1,4 +1,4 @@
-/** Aspect Ratio PS, version 1.1.0
+/** Aspect Ratio PS, version 1.1.1
 by Fubax 2019 for ReShade
 */
 

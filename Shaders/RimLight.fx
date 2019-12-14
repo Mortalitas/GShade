@@ -8,7 +8,7 @@ To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
-// Rim Light PS v0.1.5 a
+// Rim Light PS v0.1.6 a
 // Lightly optimized by Marot Satil for the GShade project.
 
 #include "Reshade.fxh"
