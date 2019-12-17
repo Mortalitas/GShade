@@ -451,7 +451,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	}
 	else if (AL_Adaptation)
 	{
-		base.xyz *= saturate((1.0f - adapt * 0.75f * alAdaptBaseMult * pow((1.0f - (base.x + base.y + base.z) / 3), alAdaptBaseBlackLvL)));
+		base.xyz *= saturate((1.0f - adapt * 0.75f * alAdaptBaseMult * pow(abs(1.0f - (base.x + base.y + base.z) / 3), alAdaptBaseBlackLvL)));
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0)));
 		const float4 baseSample = lerp(base, highSampleMix, saturate(alInt - adapt));
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
