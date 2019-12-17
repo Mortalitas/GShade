@@ -130,7 +130,7 @@ float SampleLuma(float4 position : SV_Position, float2 texcoord : TexCoord) : SV
 float LumaInput(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).xyz;
 	
-	return pow((color.r*2 + color.b + color.g*3) / 6, 1/2.2);
+	return pow(abs((color.r*2 + color.b + color.g*3) / 6), 1/2.2);
 }
 
 float3 ApplyLUT(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target {
