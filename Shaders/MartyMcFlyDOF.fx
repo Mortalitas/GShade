@@ -703,7 +703,7 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 		float2 Grain;
 		if (bADOF_ShapeDiffusionEnable)
 		{
-			Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
+			Grain = float2(frac(float(sin(coord.x + coord.y * 543.31)) *  493013.0), frac(float(cos(coord.x - coord.y * 573.31)) * 289013.0));
 			Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
 		}
 

@@ -67,7 +67,7 @@ float3 SHARP(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	float3 mn1 = min(min(c10,c01),min(c12,c21)); mn1 = min(mn1,c11*(1.0-contrast));
 	float3 mx1 = max(max(c10,c01),max(c12,c21)); mx1 = max(mx1,c11*(1.0+contrast));
 	
-	const float3 dif = pow(mx1-mn1, float3(0.75,0.75,0.75));
+	const float3 dif = pow(abs(mx1-mn1), float3(0.75,0.75,0.75));
 	const float3 sharpen = lerp(SHARPEN*DETAILS, SHARPEN, dif);
 	
 	return clamp(lerp(c11,b11,-sharpen), mn1,mx1);
