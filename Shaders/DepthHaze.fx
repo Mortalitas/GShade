@@ -38,7 +38,7 @@ uniform float FogFactor <
 // textures
 //////////////////////////////////////
 texture   Otis_FragmentBuffer1 	{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};	
-texture   Otis_FragmentBuffer2 	{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};	
+texture   Otis_FragmentBuffer2 	< pooled = true; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};	
 
 //////////////////////////////////////
 // samplers

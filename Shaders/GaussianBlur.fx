@@ -24,7 +24,7 @@ uniform float GaussianBlurStrength <
 
 #include "ReShade.fxh"
 
-texture GaussianBlurTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
+texture GaussianBlurTex < pooled = true; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 sampler GaussianBlurSampler { Texture = GaussianBlurTex;};
 
 float3 GaussianBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR

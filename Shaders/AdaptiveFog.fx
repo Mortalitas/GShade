@@ -62,7 +62,7 @@ uniform float BloomWidth <
 //////////////////////////////////////
 // textures
 //////////////////////////////////////
-texture   Otis_BloomTarget 	{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};	
+texture   Otis_BloomTarget < pooled = true; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};	
 
 //////////////////////////////////////
 // samplers
