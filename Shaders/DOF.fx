@@ -703,7 +703,7 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 		bool dothatstep = sampleCounterInCycle == 0;
 		if (sampleCycle != 0)
 		{
-			if (sampleCounterInCycle % sampleCycle == 0)
+			if (float(sampleCounterInCycle) % float(sampleCycle) == 0)
 				dothatstep = true;
 		}
 		//until here
