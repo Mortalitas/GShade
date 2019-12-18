@@ -734,8 +734,8 @@ void PS_AO_HBAO(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float
  
 			for (int k = 1; k <= iHBAOSamples; k++)
 			{
-				sample_depth = ReShade::GetLinearizedDepth(sample_center + sample_coords*(k-0.5*(i%2))).x;
-				sample_pos = GetEyePosition(sample_center + sample_coords*(k-0.5*(i%2)), sample_depth);
+				sample_depth = ReShade::GetLinearizedDepth(sample_center + sample_coords*(k-0.5*(float(i)%2))).x;
+				sample_pos = GetEyePosition(sample_center + sample_coords*(k-0.5*(float(i)%2)), sample_depth);
 				occlusion_vector = sample_pos - pos;
 				temp_theta = dot( norm, normalize(occlusion_vector) );			
  

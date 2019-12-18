@@ -144,6 +144,7 @@ float4 gaussian_1D(in VSOUT i, in sampler input_tex, int kernel_size, float2 axi
     float4 sum = tex2D(input_tex, i.uv);
     float weightsum = 1;
 
+    [unroll]
     for(float j = 1; j <= kernel_size; j++)
     {
         float w = exp(-2 * j * j / (kernel_size * kernel_size));

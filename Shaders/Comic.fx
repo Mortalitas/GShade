@@ -525,6 +525,7 @@ namespace Comic {
 
         if(mesh_edges_enable)
         {
+			[unroll]
             for(int i = 0; i < iUIMeshEdgesIterations; i++)
             {
                 retVal.w = max(retVal.w, MeshEdges(depthC, depth1[i], depth2[i]));

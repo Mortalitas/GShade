@@ -132,7 +132,6 @@ void PS_Sharp(in VSOUT i, out float3 o : SV_Target0)
     //to adjust the intensity of the sharpener at edges with 
     //high local contrast to restrict sharpen to texture detail
     //only while leaving object and detail outlines mostly alone.
-    [branch]
     if(RMS_MASK_ENABLE)
     {
         float3 mean = (corners.rgb + neighbours.rgb + center.rgb) / 9.0;

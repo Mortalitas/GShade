@@ -101,7 +101,7 @@ float dither(float x, float2 uv) {
     
     #else // DirectX
 
-    const int2 index = int2(uv * ReShade::ScreenSize) % 8;
+    const int2 index = int2(uv * ReShade::ScreenSize % 8.0);
     const float limit = (float(get_bayer(index) + 1) / 64.0) * step(index.x, 8);
 
     #endif

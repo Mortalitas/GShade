@@ -273,7 +273,7 @@ float4 CAS(float2 texcoord)
 														
 //													1			2			3			4				5			6			7			8				7			6			5				4			3			2			1
 //Full Kernal Size would be 15 as shown here (0.031225216, 0.03332227	1, 0.035206333, 0.036826804, 0.038138565, 0.039104044, 0.039695028, 0.039894000, 0.039695028, 0.039104044, 0.038138565, 0.036826804, 0.035206333, 0.033322271, 0.031225216)
-#if Quality == 1
+/*#if Quality == 1
 	const float weight[MSIZE] = {0.031225216, 0.039894000, 0.031225216}; // by 3
 #endif
 #if Quality == 2
@@ -284,7 +284,7 @@ float4 CAS(float2 texcoord)
 #endif
 #if Quality == 4	
 	const float weight[MSIZE] = {0.031225216, 0.035206333, 0.038138565, 0.039695028, 0.039894000, 0.039695028, 0.038138565, 0.035206333, 0.031225216};  // by 9
-#endif
+#endif*/
 	
 	float3 final_colour, c = BB(texcoord.xy,0), cc;
 	const float2 RPC_WS = pix * GT();
