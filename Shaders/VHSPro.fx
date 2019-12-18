@@ -800,7 +800,7 @@ float vignette(float2 uv, float t)
 {
 	const float vigAmt = 2.5+0.1*sin(t + 5.0*cos(t*5.0));
 	float c = (1.0-vigAmt*(uv.y-0.5)*(uv.y-0.5))*(1.0-vigAmt*(uv.x-0.5)*(uv.x-0.5));
-	c = pow(c, vignetteAmount); //expensive!
+	c = pow(abs(c), vignetteAmount); //expensive!
 	return c;
 }
 
@@ -1447,7 +1447,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		const int taps = bleedLength-4;
 		//int taps = bleedLength; //RetroArch
 
-		for (int ii = 0; ii < taps % 1023; ii++){
+		for (int ii = 0; float(ii) < float(taps) % 1023; ii++){
 
 			const float offset = float(ii);
 			const float3 sums = 	fetch_offset(offset - float(taps), ONE_X) +
@@ -1504,7 +1504,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	float3 rgb = yiq2rgb(signal);					
 				   
 	if (VHS_SignalTweak){
-		if(gammaCorection!=1.0) rgb = pow(rgb, gammaCorection); //float3(gammaCorection).rgb
+		if(gammaCorection!=1.0) rgb = pow(abs(rgb), gammaCorection); //float3(gammaCorection).rgb
 	}
 
 	//cut trash after fish eye

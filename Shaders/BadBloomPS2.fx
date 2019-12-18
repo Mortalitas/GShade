@@ -122,7 +122,7 @@ float4 PS_Threshold(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	color.rgb = inv_reinhard(color.rgb, 1.0 / uMaxBrightness);
 
 	color.rgb *= step(uThreshold, dot(color.rgb, float3(0.299, 0.587, 0.114)));
-	color.rgb = pow(color.rgb, uCurve);
+	color.rgb = pow(abs(color.rgb), uCurve);
 
 	return color;
 }

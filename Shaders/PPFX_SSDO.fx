@@ -304,7 +304,7 @@ float4 viewSpace(float2 txCoords)
 			const float4 vsFetch = tex2Dlod(SamplerViewSpace,float4(fetchCoords,0,pSSDOSourceLOD));
 			
 			float3 albedoFetch = tex2Dlod(SamplerColorLOD,float4(fetchCoords,0,pSSDOBounceLOD)).xyz;
-			albedoFetch = pow(albedoFetch,pSSDOBounceSaturation);
+			albedoFetch = pow(abs(albedoFetch),pSSDOBounceSaturation);
 			albedoFetch = normalize(albedoFetch);
 			albedoFetch *= pSSDOBounceMultiplier;
 			albedoFetch = 1.0-albedoFetch;
@@ -442,12 +442,12 @@ float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
 	
 	float4 PS_SSDOMix(VS_OUTPUT_POST IN) : COLOR
 	{
-		float3 ssdo = pow(tex2D(SamplerSSDOB,IN.txcoord.xy).xyz,pSSDOIntensity.xxx);
+		float3 ssdo = pow(abs(tex2D(SamplerSSDOB,IN.txcoord.xy).xyz),pSSDOIntensity.xxx);
 		
 		if (pSSDODebugMode == 1)
 			return float4(pow(ssdo,2.2),1.0);
 		else if (pSSDODebugMode == 2)
-			return float4(pow(tex2D(SamplerSSDOA,IN.txcoord.xy).xyz,2.2),1.0);
+			return float4(pow(abs(tex2D(SamplerSSDOA,IN.txcoord.xy).xyz),2.2),1.0);
 		else
       return float4(ssdo * tex2D(SamplerColorLOD,IN.txcoord.xy).xyz,1.0);
 	}

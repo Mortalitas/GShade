@@ -320,7 +320,7 @@ if(DEBUG_LINE_MODE)
         sobely += n * sobel[y][x];
     }
 
-    o = pow(EDGES_AMT * 0.2 * (dot(sobelx, sobelx) + dot(sobely, sobely)), 1.5);
+    o = pow(abs(EDGES_AMT * 0.2 * (dot(sobelx, sobelx) + dot(sobely, sobely))), 1.5);
 }
 
     o *= smoothstep(0.5,0.48, max(abs(i.uv.x-0.5), abs(i.uv.y-0.5))); // fix screen edges

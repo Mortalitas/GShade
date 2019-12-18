@@ -347,7 +347,7 @@ float4 GenDOF(float2 texcoord, float2 v, sampler2D samp)
 	#endif
 	res.w = 1.0;
 	float4 lc = LumaChroma(res);
-	lc.w = pow(lc.w, 1.0 + float(DOF_BOKEH_CONTRAST) / 10.0);
+	lc.w = pow(abs(lc.w), 1.0 + float(DOF_BOKEH_CONTRAST) / 10.0);
 	res.rgb = lc.rgb * lc.w;
 
 	return res;
