@@ -227,7 +227,7 @@ float3 AdvancedCRTPass(float4 position : SV_Position, float2 tex : TEXCOORD) : S
 	const float2 Resolution = float2(Input_ratio, Input_ratio);
 	const float2 rubyTextureSize = Resolution;
 	const float2 rubyInputSize = Resolution;
-	const float2 rubyOutputSize = ReShade::ScreenSize;
+	const float2 rubyOutputSize = BUFFER_SCREEN_SIZE;
 
 	float2 orig_xy;
 	if (Curvature)

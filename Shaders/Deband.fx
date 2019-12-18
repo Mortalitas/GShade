@@ -206,7 +206,7 @@ float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
     for (int i = 1; i <= Iterations; ++i) {
         // Compute a random distance
         const float dist = rand(h) * Range * i;
-        const float2 pt = dist * ReShade::PixelSize;
+        const float2 pt = dist * BUFFER_PIXEL_SIZE;
 
         analyze_pixels(ori, ReShade::BackBuffer, texcoord, pt, o,
                        ref_avg,
@@ -239,7 +239,7 @@ float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
 	| :: Ordered Dithering :: |
 	'------------------------*/
 	//Calculate grid position
-	const float grid_position = frac(dot(texcoord, (ReShade::ScreenSize * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
+	const float grid_position = frac(dot(texcoord, (BUFFER_SCREEN_SIZE * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
 
 	//Calculate how big the shift should be
 	const float dither_shift = 0.25 * (1.0 / (pow(2, dither_bit) - 1.0));

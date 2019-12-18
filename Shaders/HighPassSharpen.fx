@@ -80,8 +80,8 @@ float3 SharpBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD
 		
 		[loop]
 		for(int i = 1; i < 5; ++i) {
-			color += tex2D(ReShade::BackBuffer, texcoord + float2(sampleOffsetsX[i] * ReShade::PixelSize.x, sampleOffsetsY[i] * ReShade::PixelSize.y) * HighPassSharpOffset).rgb * sampleWeights[i];
-			color += tex2D(ReShade::BackBuffer, texcoord - float2(sampleOffsetsX[i] * ReShade::PixelSize.x, sampleOffsetsY[i] * ReShade::PixelSize.y) * HighPassSharpOffset).rgb * sampleWeights[i];
+			color += tex2D(ReShade::BackBuffer, texcoord + float2(sampleOffsetsX[i] * BUFFER_RCP_WIDTH, sampleOffsetsY[i] * BUFFER_RCP_HEIGHT) * HighPassSharpOffset).rgb * sampleWeights[i];
+			color += tex2D(ReShade::BackBuffer, texcoord - float2(sampleOffsetsX[i] * BUFFER_RCP_WIDTH, sampleOffsetsY[i] * BUFFER_RCP_HEIGHT) * HighPassSharpOffset).rgb * sampleWeights[i];
 		}
 	}
 	
@@ -95,8 +95,8 @@ float3 SharpBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD
 		
 		[loop]
 		for(int i = 1; i < 13; ++i) {
-			color += tex2D(ReShade::BackBuffer, texcoord + float2(sampleOffsetsX[i] * ReShade::PixelSize.x, sampleOffsetsY[i] * ReShade::PixelSize.y) * HighPassSharpOffset).rgb * sampleWeights[i];
-			color += tex2D(ReShade::BackBuffer, texcoord - float2(sampleOffsetsX[i] * ReShade::PixelSize.x, sampleOffsetsY[i] * ReShade::PixelSize.y) * HighPassSharpOffset).rgb * sampleWeights[i];
+			color += tex2D(ReShade::BackBuffer, texcoord + float2(sampleOffsetsX[i] * BUFFER_RCP_WIDTH, sampleOffsetsY[i] * BUFFER_RCP_HEIGHT) * HighPassSharpOffset).rgb * sampleWeights[i];
+			color += tex2D(ReShade::BackBuffer, texcoord - float2(sampleOffsetsX[i] * BUFFER_RCP_WIDTH, sampleOffsetsY[i] * BUFFER_RCP_HEIGHT) * HighPassSharpOffset).rgb * sampleWeights[i];
 		}
 	}
 
@@ -110,8 +110,8 @@ float3 SharpBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD
 		
 		[loop]
 		for(int i = 1; i < 13; ++i) {
-			color += tex2D(ReShade::BackBuffer, texcoord + float2(sampleOffsetsX[i] * ReShade::PixelSize.x, sampleOffsetsY[i] * ReShade::PixelSize.y) * HighPassSharpOffset).rgb * sampleWeights[i];
-			color += tex2D(ReShade::BackBuffer, texcoord - float2(sampleOffsetsX[i] * ReShade::PixelSize.x, sampleOffsetsY[i] * ReShade::PixelSize.y) * HighPassSharpOffset).rgb * sampleWeights[i];
+			color += tex2D(ReShade::BackBuffer, texcoord + float2(sampleOffsetsX[i] * BUFFER_RCP_WIDTH, sampleOffsetsY[i] * BUFFER_RCP_HEIGHT) * HighPassSharpOffset).rgb * sampleWeights[i];
+			color += tex2D(ReShade::BackBuffer, texcoord - float2(sampleOffsetsX[i] * BUFFER_RCP_WIDTH, sampleOffsetsY[i] * BUFFER_RCP_HEIGHT) * HighPassSharpOffset).rgb * sampleWeights[i];
 		}
 	}	
 		

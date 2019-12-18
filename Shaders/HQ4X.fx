@@ -37,8 +37,8 @@ uniform float lum_add <
 
 float3 PS_HQ4X(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {
-	const float x = s * ReShade::PixelSize.x;
-	const float y = s * ReShade::PixelSize.y;
+	const float x = s * BUFFER_RCP_WIDTH;
+	const float y = s * BUFFER_RCP_HEIGHT;
 
 	const float3 dt = 1.0 * float3(1.0, 1.0, 1.0);
 

@@ -78,7 +78,7 @@ void PS_Otis_AFG_PerformBloom(float4 position : SV_Position, float2 texcoord : T
 	const float MaxDistance = 8*BloomWidth;
 	float CurDistance = 0;
 	const float Samplecount = 25.0;
-	const float2 blurtempvalue = texcoord * ReShade::PixelSize * BloomWidth;
+	const float2 blurtempvalue = texcoord * BUFFER_PIXEL_SIZE * BloomWidth;
 	float2 BloomSample = float2(2.5,-2.5);
 	float2 BloomSampleValue;
 	

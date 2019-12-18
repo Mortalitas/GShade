@@ -116,7 +116,7 @@ float3 GetPosition(float2 coords)
 float3 GetNormalFromDepth(float2 coords) 
 {
 	const float3 centerPos = GetPosition(coords.xy);
-	const float2 offs = ReShade::PixelSize.xy*1.0;
+	const float2 offs = BUFFER_PIXEL_SIZE*1.0;
 	float3 ddx1 = GetPosition(coords.xy + float2(offs.x, 0)) - centerPos;
 	const float3 ddx2 = centerPos - GetPosition(coords.xy + float2(-offs.x, 0));
 
@@ -207,7 +207,7 @@ void PS_RBM_Gen(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float
 {
 	const float scenedepth 		= GetLinearDepth(texcoord.xy);
 	float3 SurfaceNormals 		= GetNormalFromDepth(texcoord.xy).xyz;
-	const float3 TextureNormals 		= GetNormalFromColor(texcoord.xy, 0.01 * ReShade::PixelSize.xy / scenedepth, 0.0002 / scenedepth + 0.1, 1000.0);
+	const float3 TextureNormals 		= GetNormalFromColor(texcoord.xy, 0.01 * BUFFER_PIXEL_SIZE / scenedepth, 0.0002 / scenedepth + 0.1, 1000.0);
 	float3 SceneNormals		= GetBlendedNormals(SurfaceNormals, TextureNormals);
 	SceneNormals 			= normalize(lerp(SurfaceNormals,SceneNormals,fRBM_ReliefHeight));
 	const float3 ScreenSpacePosition 	= GetPosition(texcoord.xy);
@@ -218,7 +218,7 @@ void PS_RBM_Gen(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float
 
 	for(float i=1; i<=iRBM_SampleCount; i++)
 	{
-		const float2 currentOffset 	= texcoord.xy + SceneNormals.xy * ReShade::PixelSize.xy * i/(float)iRBM_SampleCount * fRBM_BlurWidthPixels;
+		const float2 currentOffset 	= texcoord.xy + SceneNormals.xy * BUFFER_PIXEL_SIZE * i/(float)iRBM_SampleCount * fRBM_BlurWidthPixels;
 		const float4 texelSample 	= tex2Dlod(ReShade::BackBuffer, float4(currentOffset,0,0));	
 		
 		const float depthDiff 	= smoothstep(0.005,0.0,scenedepth-GetLinearDepth(currentOffset));

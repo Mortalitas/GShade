@@ -77,9 +77,9 @@ sampler SamplerColor
 void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord, out float3 BluredImage : SV_Target)
 {
 	// Grab Aspect Ratio
-	const float Aspect = ReShade::AspectRatio;
+	const float Aspect = BUFFER_ASPECT_RATIO;
 	// Grab Pixel V size
-	const float Pixel = ReShade::PixelSize.y;
+	const float Pixel = BUFFER_RCP_HEIGHT;
 
 	// Adjust number of samples
 	// IF Automatic IS True Ceil odd numbers to even with minimum 6, else Clamp odd numbers to even

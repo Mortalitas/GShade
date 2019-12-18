@@ -14,7 +14,7 @@ float3 PS_Nightvision(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Targe
 	const float2 p = uv;
 	
 	const float2 u = p * 2. - 1.;
-	const float2 n = u * float2(ReShade::ScreenSize.x / ReShade::ScreenSize.y, 1.0);
+	const float2 n = u * float2(BUFFER_ASPECT_RATIO, 1.0);
 	float3 c = tex2D(ReShade::BackBuffer, uv).xyz;
 
 	// flicker, grain, vignette, fade in
