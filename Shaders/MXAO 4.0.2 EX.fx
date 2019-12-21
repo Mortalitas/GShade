@@ -20,19 +20,17 @@
 #endif
 
 #ifndef MXAO_ENABLE_IL
- #define MXAO_ENABLE_IL			0	//[0 or 1]	Enables Indirect Lighting calculation. Will cause a major fps hit.
+ #define MXAO_ENABLE_IL			0	//[0 or 1]	    Enables Indirect Lighting calculation. Will cause a major fps hit.
 #endif
 
-#if __RENDERER__ <= 0x9300                     //      Smooth Normals causes compiler errors under DX9, so it's automatically turned off under it.
- #define MXAO_SMOOTHNORMALS             0       //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
+#define MXAO_SMOOTHNORMALS      1   //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
+
+#if __RENDERER__ <= 0x9300          //              Two Layer causes compiler errors under DX9, so it's automatically turned off under it.
+ #define MXAO_TWO_LAYER         0
 #else
- #ifndef MXAO_SMOOTHNORMALS
-  #define MXAO_SMOOTHNORMALS             1       //[0 or 1]      This feature makes low poly surfaces smoother, especially useful on older games.
+ #ifndef MXAO_TWO_LAYER
+  #define MXAO_TWO_LAYER        1   //[0 or 1]      Splits MXAO into two separate layers that allow for both large and fine AO.
  #endif
-#endif
-
-#ifndef MXAO_TWO_LAYER
- #define MXAO_TWO_LAYER                 1       //[0 or 1]      Splits MXAO into two separate layers that allow for both large and fine AO.
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
