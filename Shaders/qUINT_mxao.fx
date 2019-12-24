@@ -171,7 +171,7 @@ uniform int qMXAO_DEBUG_VIEW_ENABLE <
 	Textures, Samplers, Globals
 =============================================================================*/
 
-#define QUINT_COMMON_VERSION_REQUIRE 200
+#define RESHADE_QUINT_COMMON_VERSION_REQUIRE 200
 #include "qUINT_common.fxh"
 
 texture2D qMXAO_ColorTex 	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 3+qMXAO_MIPLEVEL_IL;};
