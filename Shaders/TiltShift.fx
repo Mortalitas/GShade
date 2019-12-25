@@ -1,5 +1,5 @@
 /* 
-Tilt-Shift PS v1.1.3 (c) 2018 Jacob Maximilian Fober, 
+Tilt-Shift PS v1.1.4 (c) 2018 Jacob Maximilian Fober, 
 (based on TiltShift effect (c) 2016 kingeric1992)
 Modified by Marot for ReShade 4.x compatibility.
 
