@@ -57,7 +57,7 @@ uniform float BloomWidth <
 	ui_tooltip = "Width of the bloom";
 > = 0.2;
 
-#include "Reshade.fxh"
+#include "ReShade.fxh"
 
 //////////////////////////////////////
 // textures

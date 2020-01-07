@@ -32,7 +32,7 @@ uniform float FogFactor <
 	ui_tooltip = "The amount of fog added to the scene. 0.0 is no fog, 1.0 is the strongest fog possible.";
 > = 0.2;
 
-#include "Reshade.fxh"
+#include "ReShade.fxh"
 
 //////////////////////////////////////
 // textures
