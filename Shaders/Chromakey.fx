@@ -129,7 +129,7 @@ float3 GetPosition(float2 texcoord)
 // Normal map (OpenGL oriented) generator from DisplayDepth.fx
 float3 GetNormal(float2 texcoord)
 {
-	const float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+	const float3 offset = float3(BUFFER_PIXEL_SIZE.xy, 0.0);
 	const float2 posCenter = texcoord.xy;
 	const float2 posNorth  = posCenter - offset.zy;
 	const float2 posEast   = posCenter + offset.xz;

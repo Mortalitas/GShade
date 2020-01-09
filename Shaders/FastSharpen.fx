@@ -45,10 +45,10 @@ uniform float DETAILS <
 > = 0.50; 
  
 
-static const float2 g10 = float2( 0.3333,-1.0)*ReShade::PixelSize;
-static const float2 g01 = float2(-1.0,-0.3333)*ReShade::PixelSize;
-static const float2 g12 = float2(-0.3333, 1.0)*ReShade::PixelSize;
-static const float2 g21 = float2( 1.0, 0.3333)*ReShade::PixelSize; 
+static const float2 g10 = float2( 0.3333,-1.0)*BUFFER_PIXEL_SIZE;
+static const float2 g01 = float2(-1.0,-0.3333)*BUFFER_PIXEL_SIZE;
+static const float2 g12 = float2(-0.3333, 1.0)*BUFFER_PIXEL_SIZE;
+static const float2 g21 = float2( 1.0, 0.3333)*BUFFER_PIXEL_SIZE; 
  
 float3 SHARP(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {

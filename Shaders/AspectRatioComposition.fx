@@ -61,7 +61,7 @@ float3 DrawGrid(float3 backbuffer, float3 gridColor, float aspectRatio, float fr
 	
 	float3 retVal = backbuffer;
 
-	if(aspectRatio < ReShade::AspectRatio)
+	if(aspectRatio < BUFFER_ASPECT_RATIO)
 	{
 		borderSize = (BUFFER_WIDTH - BUFFER_HEIGHT * aspectRatio) / 2.0;
 		fractionWidth = (BUFFER_WIDTH - 2 * borderSize) / fraction;

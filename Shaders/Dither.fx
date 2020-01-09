@@ -96,12 +96,12 @@ float2 fmod(float2 a, float2 b) {
 float dither(float x, float2 uv) {
     #if (__RENDERER__ & 0x10000) // If OpenGL
     
-    const float2 index = fmod(uv * ReShade::ScreenSize, 8.0);
+    const float2 index = fmod(uv * BUFFER_SCREEN_SIZE, 8.0);
     const float limit  = (float(get_bayer(int2(index)) + 1) / 64.0) * step(index.x, 8.0);
     
     #else // DirectX
 
-    const int2 index = int2(uv * ReShade::ScreenSize % 8.0);
+    const int2 index = int2(uv * BUFFER_SCREEN_SIZE % 8.0);
     const float limit = (float(get_bayer(index) + 1) / 64.0) * step(index.x, 8);
 
     #endif

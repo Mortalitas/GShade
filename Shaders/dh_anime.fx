@@ -1,4 +1,4 @@
-#include "Reshade.fxh"
+#include "ReShade.fxh"
 
 #define getColor(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
 #define getBlur(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
@@ -67,7 +67,7 @@ namespace DHAnime {
 
 	float3 normal(float2 texcoord)
 	{
-		const float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+		const float3 offset = float3(BUFFER_PIXEL_SIZE.xy, 0.0);
 		const float2 posCenter = texcoord.xy;
 		const float2 posNorth  = posCenter - offset.zy;
 		const float2 posEast   = posCenter + offset.xz;
@@ -137,7 +137,7 @@ namespace DHAnime {
 				for(delta.y=-iSurfaceBlur;delta.y<=iSurfaceBlur;delta.y++) {
 					int d = dot(delta,delta);
 					if(d<=iSurfaceBlur*iSurfaceBlur) {
-						const float2 searchCoords = coords+ReShade::PixelSize*delta;
+						const float2 searchCoords = coords+BUFFER_PIXEL_SIZE*delta;
 						const float searchDepth = getDepth(searchCoords);
 						const float dRatio = getDepth(coords)/searchDepth;
 						
@@ -162,7 +162,7 @@ namespace DHAnime {
 			for(delta.x=-iBlackLineThickness;delta.x<=iBlackLineThickness;delta.x++) {
 				for(delta.y=-iBlackLineThickness;delta.y<=iBlackLineThickness;delta.y++) {
 					if(dot(delta,delta)<=iBlackLineThickness*iBlackLineThickness) {
-						const float2 searchCoords = coords+ReShade::PixelSize*delta;
+						const float2 searchCoords = coords+BUFFER_PIXEL_SIZE*delta;
 						const float searchDepth = getDepth(searchCoords);
 						const float3 searchNormal = loadNormal(searchCoords);
 

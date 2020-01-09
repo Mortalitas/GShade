@@ -65,10 +65,10 @@ texture SmoothTexture01 { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format =
 sampler Texture01S { Texture = SmoothTexture01; };
 
 
-static const float2 g10 = float2( 0.333,-1.0)*ReShade::PixelSize;
-static const float2 g01 = float2(-1.0,-0.333)*ReShade::PixelSize;
-static const float2 g12 = float2(-0.333, 1.0)*ReShade::PixelSize;
-static const float2 g21 = float2( 1.0, 0.333)*ReShade::PixelSize;
+static const float2 g10 = float2( 0.333,-1.0)*BUFFER_PIXEL_SIZE;
+static const float2 g01 = float2(-1.0,-0.333)*BUFFER_PIXEL_SIZE;
+static const float2 g12 = float2(-0.333, 1.0)*BUFFER_PIXEL_SIZE;
+static const float2 g21 = float2( 1.0, 0.333)*BUFFER_PIXEL_SIZE;
 
 float3 SMOOTH (float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {		
@@ -94,7 +94,7 @@ float3 BUMP(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	const float3 dt = float3(1.0,1.0,1.0);
 
 	// Calculating texel coordinates
-	const float2 inv_size = RANGE * ReShade::PixelSize;	
+	const float2 inv_size = RANGE * BUFFER_PIXEL_SIZE;	
 
 	const float2 dx = float2(inv_size.x,0.0);
 	const float2 dy = float2(0.0, inv_size.y);

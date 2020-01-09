@@ -68,8 +68,8 @@ void SunsetFilterPS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out fl
 	Image.rgb = tex2D(ReShade::BackBuffer, UvCoord).rgb;
 	// Correct Aspect Ratio
 	float2 UvCoordAspect = UvCoord;
-	UvCoordAspect.y += ReShade::AspectRatio * 0.5 - 0.5;
-	UvCoordAspect.y /= ReShade::AspectRatio;
+	UvCoordAspect.y += BUFFER_ASPECT_RATIO * 0.5 - 0.5;
+	UvCoordAspect.y /= BUFFER_ASPECT_RATIO;
 	// Center coordinates
 	UvCoordAspect = UvCoordAspect * 2 - 1;
 	UvCoordAspect *= Scale;

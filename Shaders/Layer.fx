@@ -87,31 +87,31 @@ void PS_Layer(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float
     const float2 Layer_Pos = float2(Layer_PosX, Layer_PosY);
     if (Layer_Select == 0)
     {
-      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Scale);
+      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Scale);
       const float4 Layer  = tex2D(Layer_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	  color = lerp(backbuffer, Layer, Layer.a * Layer_Blend);
     }
     else if (Layer_Select == 1)
     {
-      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Scale);
+      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Scale);
       const float4 Layer  = tex2D(LensDB_angel_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	  color = lerp(backbuffer, Layer, Layer.a * Layer_Blend);
     }
     else if (Layer_Select == 2)
     {
-      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Scale);
+      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Scale);
       const float4 Layer  = tex2D(Dirt_png_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	  color = lerp(backbuffer, Layer, Layer.a * Layer_Blend);
     }
     else if (Layer_Select == 3)
     {
-      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Scale);
+      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Scale);
       const float4 Layer  = tex2D(Dirt_four_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	  color = lerp(backbuffer, Layer, Layer.a * Layer_Blend);
     }
     else
     {
-      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Scale);
+      const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Scale);
       const float4 Layer  = tex2D(Dirt_jpg_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	  color = lerp(backbuffer, Layer, Layer.a * Layer_Blend);
     }

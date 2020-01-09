@@ -79,9 +79,9 @@ static const int cBlurSamples = NEO_BLOOM_BLUR_SAMPLES;
 static const int cBlurHalfSamples = cBlurSamples / 2;
 
 /*#if BUFFER_WIDTH > BUFFER_HEIGHT
-static const float2 cPixelScale = float2(ReShade::AspectRatio, 1.0);
+static const float2 cPixelScale = float2(BUFFER_ASPECT_RATIO, 1.0);
 #else
-static const float2 cPixelScale = float2(1.0, ReShade::AspectRatio);
+static const float2 cPixelScale = float2(1.0, BUFFER_ASPECT_RATIO);
 #endif*/
 
 static const float2 cPixelScale = 1.0;
@@ -515,13 +515,13 @@ float4 blur(sampler sp, float2 uv, float2 dir) {
 	float4 color = 0.0;
 	float accum = 0.0;
 
-	uv -= cBlurHalfSamples * dir * ReShade::PixelSize;
+	uv -= cBlurHalfSamples * dir * BUFFER_PIXEL_SIZE;
 
 	[unroll]
 	for (int i = 1; i < cBlurSamples; ++i) {
 		const float weight = gaussian(i - cBlurHalfSamples, uSigma);
 
-		uv += dir * ReShade::PixelSize;
+		uv += dir * BUFFER_PIXEL_SIZE;
 		color += tex2D(sp, uv) * weight;
 		accum += weight;
 	}
@@ -547,7 +547,7 @@ float3 checkered_pattern(float2 uv) {
 	static const float3 cColorA = pow(0.15, 2.2);
 	static const float3 cColorB = pow(0.5, 2.2);
 
-	uv *= ReShade::ScreenSize;
+	uv *= BUFFER_SCREEN_SIZE;
 	uv %= cSize;
 
 	const float half_size = cSize * 0.5;

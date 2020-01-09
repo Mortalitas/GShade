@@ -134,7 +134,7 @@ float dither_two(float x, float2 uv) {
     if (fQuantizeTwo > 0.0)
         x = round(x * fQuantizeTwo) / fQuantizeTwo;
     
-    const float2 index = float2(uv * ReShade::ScreenSize) % 8;
+    const float2 index = float2(uv * BUFFER_SCREEN_SIZE) % 8;
 	float limit;
 	if (index.x < 8)
 		limit = float(get_bayer_two(index) + 1) / 64.0;

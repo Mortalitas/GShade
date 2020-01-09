@@ -66,7 +66,7 @@ sampler Layer_Five_sampler { Texture = Layer_Five_texture; };
 void PS_Layer_Five(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
     const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
     const float2 Layer_Pos = float2(Layer_Five_PosX, Layer_Five_PosY);
-    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_Five_Scale);
+    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Five_Scale);
     const float4 Layer  = tex2D(Layer_Five_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	color = lerp(backbuffer, Layer, Layer.a * Layer_Five_Blend);
   	color.a = backbuffer.a;

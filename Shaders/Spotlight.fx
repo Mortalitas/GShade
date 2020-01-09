@@ -89,7 +89,7 @@ sampler2D sColor {
 #define nsin(x) (sin(x) * 0.5 + 0.5)
 
 float4 PS_Spotlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
-	const float2 res = ReShade::ScreenSize;
+	const float2 res = BUFFER_SCREEN_SIZE;
 	const float2 uCenter = uv - float2(uXCenter, -uYCenter);
 	float2 coord = res * uCenter;
 

@@ -27,8 +27,8 @@ float3 EmbossPass(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Ta
 
         float2 offset;
 	sincos(radians( iEmbossAngle), offset.y, offset.x);
-	const float3 col1 = tex2D(ReShade::BackBuffer, texcoord - ReShade::PixelSize*fEmbossOffset*offset).rgb;
-	const float3 col3 = tex2D(ReShade::BackBuffer, texcoord + ReShade::PixelSize*fEmbossOffset*offset).rgb;
+	const float3 col1 = tex2D(ReShade::BackBuffer, texcoord - BUFFER_PIXEL_SIZE*fEmbossOffset*offset).rgb;
+	const float3 col3 = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE*fEmbossOffset*offset).rgb;
 
 	const float3 colEmboss = col1 * 2.0 - color - col3;
 

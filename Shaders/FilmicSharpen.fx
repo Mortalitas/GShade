@@ -103,7 +103,7 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	else Mask = Strength;
 
 	// Get pixel size
-	const float2 Pixel = ReShade::PixelSize * Offset;
+	const float2 Pixel = BUFFER_PIXEL_SIZE * Offset;
 
 	// Sampling coordinates
 	const float2 NorSouWesEst[4] = {

@@ -11,7 +11,7 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 // Rim Light PS v0.1.6 a
 // Lightly optimized by Marot Satil for the GShade project.
 
-#include "Reshade.fxh"
+#include "ReShade.fxh"
 
 
 	  ////////////
@@ -92,7 +92,7 @@ float GetDepth(float2 TexCoord)
 // Normal pass from depth function
 float3 NormalVector(float2 TexCoord)
 {
-	const float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+	const float3 offset = float3(BUFFER_PIXEL_SIZE.xy, 0.0);
 	const float2 posCenter = TexCoord.xy;
 	const float2 posNorth = posCenter - offset.zy;
 	const float2 posEast = posCenter + offset.xz;

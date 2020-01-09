@@ -101,7 +101,7 @@ float MaskAA(float2 texcoord)
 	// Convert to radial depth
 	float2 Size;
 	Size.x = tan(radians(FOV2*0.5));
-	Size.y = Size.x / ReShade::AspectRatio;
+	Size.y = Size.x / BUFFER_ASPECT_RATIO;
 	if(RadialX2) Depth *= length(float2((texcoord.x-0.5)*Size.x, 1.0));
 	if(RadialY2) Depth *= length(float2((texcoord.y-0.5)*Size.y, 1.0));
 
@@ -129,7 +129,7 @@ float3 GetPosition(float2 texcoord)
 // Normal map (OpenGL oriented) generator from DisplayDepth.fx
 float3 GetNormal(float2 texcoord)
 {
-	const float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+	const float3 offset = float3(BUFFER_PIXEL_SIZE.xy, 0.0);
 	const float2 posCenter = texcoord.xy;
 	const float2 posNorth  = posCenter - offset.zy;
 	const float2 posEast   = posCenter + offset.xz;

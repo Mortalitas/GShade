@@ -58,11 +58,11 @@ uniform float fUIOverlayScale <
 
 float3 HotsamplingHelperPS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 
-    const float2 overlayPos = fUIOverlayPos * (1.0 - fUIOverlayScale) * ReShade::ScreenSize;
+    const float2 overlayPos = fUIOverlayPos * (1.0 - fUIOverlayScale) * BUFFER_SCREEN_SIZE;
 
-    if(all(vpos.xy >= overlayPos) && all(vpos.xy < overlayPos + ReShade::ScreenSize * fUIOverlayScale))
+    if(all(vpos.xy >= overlayPos) && all(vpos.xy < overlayPos + BUFFER_SCREEN_SIZE * fUIOverlayScale))
     {
-        texcoord = frac((texcoord - overlayPos / ReShade::ScreenSize) / fUIOverlayScale);
+        texcoord = frac((texcoord - overlayPos / BUFFER_SCREEN_SIZE) / fUIOverlayScale);
     }
 
     return tex2D(ReShade::BackBuffer, texcoord).rgb;

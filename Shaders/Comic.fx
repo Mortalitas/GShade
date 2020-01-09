@@ -452,7 +452,7 @@ namespace Comic {
             MAX3((color2[3] - luma2.www))
         );
 
-        const float2 pix = ReShade::PixelSize;
+        const float2 pix = BUFFER_PIXEL_SIZE;
         const float depthC = ReShade::GetLinearizedDepth(texcoord);//C
         float4 depth1[COMIC_MESHEDGES_ITERATIONS_MAX];
         float4 depth2[COMIC_MESHEDGES_ITERATIONS_MAX];

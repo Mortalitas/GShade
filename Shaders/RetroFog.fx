@@ -134,7 +134,7 @@ float dither(float x, float2 uv) {
     if (fQuantize > 0.0)
         x = round(x * fQuantize) / fQuantize;
     
-    const float2 index = float2(uv * ReShade::ScreenSize) % 8;
+    const float2 index = float2(uv * BUFFER_SCREEN_SIZE) % 8;
 	float limit;
 	if (index.x < 8)
 		limit = float(get_bayer(index) + 1) / 64.0;

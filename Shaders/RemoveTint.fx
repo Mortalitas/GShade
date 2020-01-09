@@ -78,7 +78,7 @@ namespace RemoveTint {
 		float4 currentMinRGB = 1.0.rrrr;
 		float4 currentMaxRGB = 0.0.rrrr;
 
-		const int2 size = ReShade::ScreenSize / REMOVE_TINT_MIPLEVEL_EXP2;
+		const int2 size = BUFFER_SCREEN_SIZE / REMOVE_TINT_MIPLEVEL_EXP2;
 
 		for(int y = 0; y < size.y; y++) {
 			for(int x = 0; x < size.x; x++) {

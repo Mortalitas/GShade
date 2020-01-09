@@ -179,7 +179,7 @@ float3 DrawDebugOverlayTwo(float3 background, float3 param, float2 pos, int2 siz
     float x, y, value, luma;
     float3 overlay, hsvStrip;
 
-	const float2 overlayPos = pos * (ReShade::ScreenSize - size);
+	const float2 overlayPos = pos * (BUFFER_SCREEN_SIZE - size);
 
     if(all(vpos.xy >= overlayPos) && all(vpos.xy < overlayPos + size))
     {

@@ -26,11 +26,11 @@ uniform int stats
 
 #include "ReShade.fxh"
 #include "DrawText.fxh"
-#define get_pixel(x) tex2D(ReShade::BackBuffer, ((x) + 0.5) * ReShade::PixelSize)
+#define get_pixel(x) tex2D(ReShade::BackBuffer, ((x) + 0.5) * BUFFER_PIXEL_SIZE)
 
 void PixelatePass(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-	int2 pixcoord = floor((ReShade::ScreenSize * texcoord) / cell_size) * cell_size;
+	int2 pixcoord = floor((BUFFER_SCREEN_SIZE * texcoord) / cell_size) * cell_size;
 	color = get_pixel(pixcoord);
 
 	if(avg_amount > 0.1)
@@ -48,8 +48,8 @@ void PixelatePass(in float4 position : SV_Position, in float2 texcoord : TEXCOOR
 
 	if(stats)
 	{
-		DrawText_Digit(float2(ReShade::ScreenSize.x - 256, 128), 64, 1, texcoord, -1, (ReShade::ScreenSize.x / cell_size), color.x);
-		DrawText_Digit(float2(ReShade::ScreenSize.x - 256, 192), 64, 1, texcoord, -1, (ReShade::ScreenSize.y / cell_size), color.x);
+		DrawText_Digit(float2(BUFFER_SCREEN_SIZE.x - 256, 128), 64, 1, texcoord, -1, (BUFFER_SCREEN_SIZE.x / cell_size), color.x);
+		DrawText_Digit(float2(BUFFER_SCREEN_SIZE.x - 256, 192), 64, 1, texcoord, -1, (BUFFER_SCREEN_SIZE.y / cell_size), color.x);
 	}
 }
 

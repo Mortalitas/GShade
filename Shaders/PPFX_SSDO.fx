@@ -7,7 +7,7 @@
 // DEV_NOTES
 //+++++++++++++++++++++++++++++
 // Updated for compatibility with ReShade 4 and isolated by Marot Satil.
-// Reshade.fxh Preprocessor Definition Support added by JJXB
+// ReShade.fxh Preprocessor Definition Support added by JJXB
 #include "ReShade.fxh"
 //+++++++++++++++++++++++++++++
 // CUSTOM PARAMETERS

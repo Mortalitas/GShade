@@ -71,7 +71,7 @@ out float3 Target : SV_Target)
 	};
 	// Grab screen texture
 	Target.rgb = tex2D(ReShade::BackBuffer, UvCoord).rgb;
-	const float UvOffset = ReShade::PixelSize.x * BlurMultiplier;
+	const float UvOffset = BUFFER_PIXEL_SIZE.x * BlurMultiplier;
 	Target.rgb *= Weight[0];
 	for (int i = 1; i < 11; i++)
 	{
@@ -107,7 +107,7 @@ out float3 Image : SV_Target)
 	// Grab second pass screen texture
 	float3 Target = tex2D(SimpleBloomSampler, UvCoord).rgb;
 	// Vertical gaussian blur
-	const float UvOffset = ReShade::PixelSize.y * BlurMultiplier;
+	const float UvOffset = BUFFER_PIXEL_SIZE.y * BlurMultiplier;
 	Target.rgb *= Weight[0];
 	for (int i = 1; i < 11; i++)
 	{

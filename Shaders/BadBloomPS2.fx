@@ -129,7 +129,7 @@ float4 PS_Threshold(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 
 float4 PS_Blur(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	float4 color = tex2D(sThreshold,uv);
-	const float2 pix = uScale * ReShade::PixelSize;
+	const float2 pix = uScale * BUFFER_PIXEL_SIZE;
 
 	color = tex2D(sThreshold, uv) * 0.204164;
 

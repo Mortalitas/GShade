@@ -83,31 +83,31 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
 
     if (cLayer_Select == 0)
     {
-      const float2 scale = 1.0 / (float2(411.0, 22.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float2 scale = 1.0 / (float2(411.0, 22.0) / BUFFER_SCREEN_SIZE * cLayer_Scale);
       const float4 cLayer  = tex2D(Horiz_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     else if (cLayer_Select == 1)
     {
-      const float2 scale = 1.0 / (float2(22.0, 412.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float2 scale = 1.0 / (float2(22.0, 412.0) / BUFFER_SCREEN_SIZE * cLayer_Scale);
       const float4 cLayer  = tex2D(Verti_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     else if (cLayer_Select == 2)
     {
-      const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float2 scale = 1.0 / (float2(1162.0, 135.0) / BUFFER_SCREEN_SIZE * cLayer_Scale);
       const float4 cLayer  = tex2D(Horiz_fancy_fourk_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     else if (cLayer_Select == 3)
     {
-      const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float2 scale = 1.0 / (float2(1162.0, 135.0) / BUFFER_SCREEN_SIZE * cLayer_Scale);
       const float4 cLayer  = tex2D(Horiz_yomi_b_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }
     else
     {
-      const float2 scale = 1.0 / (float2(1162.0, 135.0) / ReShade::ScreenSize * cLayer_Scale);
+      const float2 scale = 1.0 / (float2(1162.0, 135.0) / BUFFER_SCREEN_SIZE * cLayer_Scale);
       const float4 cLayer  = tex2D(Horiz_yomi_w_sampler, texcoord * scale + (1.0 - scale) * cLayer_Pos);
   	  color = lerp(backbuffer, cLayer, cLayer.a * cLayer_Blend);
     }

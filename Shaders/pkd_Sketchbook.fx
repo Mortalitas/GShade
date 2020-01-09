@@ -183,7 +183,7 @@ sampler Layer_PencilHatch_sampler { Texture = Layer_PencilHatch_texture; };
 void PS_Layer_PencilHatch(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
     const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
     const float2 Layer_Pos = float2(Layer_PencilHatch_PosX, Layer_PencilHatch_PosY);
-    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_PencilHatch_Scale);
+    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_PencilHatch_Scale);
     const float4 Layer  = tex2D(Layer_PencilHatch_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	color = lerp(backbuffer, Layer, Layer.a * Layer_PencilHatch_Blend);
   	color.a = backbuffer.a;
@@ -233,7 +233,7 @@ sampler Layer_PaperBase_sampler { Texture = Layer_PaperBase_texture; };
 void PS_Layer_PaperBase(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
     const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
     const float2 Layer_Pos = float2(Layer_PaperBase_PosX, Layer_PaperBase_PosY);
-    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_PaperBase_Scale);
+    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_PaperBase_Scale);
     const float4 Layer  = tex2D(Layer_PaperBase_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	color = lerp(backbuffer, Layer, Layer.a * Layer_PaperBase_Blend);
   	color.a = backbuffer.a;
@@ -283,7 +283,7 @@ sampler Layer_PaperOverlay_sampler { Texture = Layer_PaperOverlay_texture; };
 void PS_Layer_PaperOverlay(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
     const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
     const float2 Layer_Pos = float2(Layer_PaperOverlay_PosX, Layer_PaperOverlay_PosY);
-    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / ReShade::ScreenSize * Layer_PaperOverlay_Scale);
+    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_PaperOverlay_Scale);
     const float4 Layer  = tex2D(Layer_PaperOverlay_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
   	color = lerp(backbuffer, Layer, Layer.a * Layer_PaperOverlay_Blend);
   	color.a = backbuffer.a;

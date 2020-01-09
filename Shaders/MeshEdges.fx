@@ -67,7 +67,7 @@ uniform float fUIStrength <
 
 float3 MeshEdges_PS(float4 vpos:SV_Position, float2 texcoord:TexCoord):SV_Target {
     const float3 backbuffer = tex2D(ReShade::BackBuffer, texcoord).rgb;
-    const float4 pix = float4(ReShade::PixelSize, -ReShade::PixelSize);
+    const float4 pix = float4(BUFFER_PIXEL_SIZE, -BUFFER_PIXEL_SIZE);
 
     //Get depth of center pixel
     float c = ReShade::GetLinearizedDepth(texcoord);

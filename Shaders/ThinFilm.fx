@@ -190,7 +190,7 @@ float GetDepth(float2 TexCoord)
 // Normal map (OpenGL oriented) generator from DisplayDepth.fx
 float3 NormalVector(float2 texcoord)
 {
-	const float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+	const float3 offset = float3(BUFFER_PIXEL_SIZE.xy, 0.0);
 	const float2 posCenter = texcoord.xy;
 	const float2 posNorth  = posCenter - offset.zy;
 	const float2 posEast   = posCenter + offset.xz;
@@ -273,7 +273,7 @@ float thinFilmReflectance(float cos0, float lambda, float thickness, float n0, f
 float GetReflectionCosine(float2 TexCoord)
 {
 	// Get aspect ratio
-	const float Aspect = ReShade::AspectRatio;
+	const float Aspect = BUFFER_ASPECT_RATIO;
 
 	// Sample normal pass
 	float3 Normal = NormalVector(TexCoord);

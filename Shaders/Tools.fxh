@@ -474,14 +474,14 @@ namespace Tools {
         float DiffEdges(sampler s, float2 texcoord)
         {
             float valC = dot(tex2D(s, texcoord).rgb, LumaCoeff);
-            float valN = dot(tex2D(s, texcoord + float2(0.0, -ReShade::PixelSize.y)).rgb, LumaCoeff);
-            float valNE = dot(tex2D(s, texcoord + float2(ReShade::PixelSize.x, -ReShade::PixelSize.y)).rgb, LumaCoeff);
-            float valE = dot(tex2D(s, texcoord + float2(ReShade::PixelSize.x, 0.0)).rgb, LumaCoeff);
-            float valSE = dot(tex2D(s, texcoord + float2(ReShade::PixelSize.x, ReShade::PixelSize.y)).rgb, LumaCoeff);
-            float valS = dot(tex2D(s, texcoord + float2(0.0, ReShade::PixelSize.y)).rgb, LumaCoeff);
-            float valSW = dot(tex2D(s, texcoord + float2(-ReShade::PixelSize.x, ReShade::PixelSize.y)).rgb, LumaCoeff);
-            float valW = dot(tex2D(s, texcoord + float2(-ReShade::PixelSize.x, 0.0)).rgb, LumaCoeff);
-            float valNW = dot(tex2D(s, texcoord + float2(-ReShade::PixelSize.x, -ReShade::PixelSize.y)).rgb, LumaCoeff);
+            float valN = dot(tex2D(s, texcoord + float2(0.0, -BUFFER_PIXEL_SIZE.y)).rgb, LumaCoeff);
+            float valNE = dot(tex2D(s, texcoord + float2(BUFFER_PIXEL_SIZE.x, -BUFFER_PIXEL_SIZE.y)).rgb, LumaCoeff);
+            float valE = dot(tex2D(s, texcoord + float2(BUFFER_PIXEL_SIZE.x, 0.0)).rgb, LumaCoeff);
+            float valSE = dot(tex2D(s, texcoord + float2(BUFFER_PIXEL_SIZE.x, BUFFER_PIXEL_SIZE.y)).rgb, LumaCoeff);
+            float valS = dot(tex2D(s, texcoord + float2(0.0, BUFFER_PIXEL_SIZE.y)).rgb, LumaCoeff);
+            float valSW = dot(tex2D(s, texcoord + float2(-BUFFER_PIXEL_SIZE.x, BUFFER_PIXEL_SIZE.y)).rgb, LumaCoeff);
+            float valW = dot(tex2D(s, texcoord + float2(-BUFFER_PIXEL_SIZE.x, 0.0)).rgb, LumaCoeff);
+            float valNW = dot(tex2D(s, texcoord + float2(-BUFFER_PIXEL_SIZE.x, -BUFFER_PIXEL_SIZE.y)).rgb, LumaCoeff);
 
             float diffNS = abs(valN - valS);
             float diffWE = abs(valW - valE);
@@ -493,14 +493,14 @@ namespace Tools {
         float GetDepthBufferOutlines(float2 texcoord, int fading)
         {
             float depthC =  ReShade::GetLinearizedDepth(texcoord);
-            float depthN =  ReShade::GetLinearizedDepth(texcoord + float2(0.0, -ReShade::PixelSize.y));
-            float depthNE = ReShade::GetLinearizedDepth(texcoord + float2(ReShade::PixelSize.x, -ReShade::PixelSize.y));
-            float depthE =  ReShade::GetLinearizedDepth(texcoord + float2(ReShade::PixelSize.x, 0.0));
-            float depthSE = ReShade::GetLinearizedDepth(texcoord + float2(ReShade::PixelSize.x, ReShade::PixelSize.y));
-            float depthS =  ReShade::GetLinearizedDepth(texcoord + float2(0.0, ReShade::PixelSize.y));
-            float depthSW = ReShade::GetLinearizedDepth(texcoord + float2(-ReShade::PixelSize.x, ReShade::PixelSize.y));
-            float depthW =  ReShade::GetLinearizedDepth(texcoord + float2(-ReShade::PixelSize.x, 0.0));
-            float depthNW = ReShade::GetLinearizedDepth(texcoord + float2(-ReShade::PixelSize.x, -ReShade::PixelSize.y));
+            float depthN =  ReShade::GetLinearizedDepth(texcoord + float2(0.0, -BUFFER_PIXEL_SIZE.y));
+            float depthNE = ReShade::GetLinearizedDepth(texcoord + float2(BUFFER_PIXEL_SIZE.x, -BUFFER_PIXEL_SIZE.y));
+            float depthE =  ReShade::GetLinearizedDepth(texcoord + float2(BUFFER_PIXEL_SIZE.x, 0.0));
+            float depthSE = ReShade::GetLinearizedDepth(texcoord + float2(BUFFER_PIXEL_SIZE.x, BUFFER_PIXEL_SIZE.y));
+            float depthS =  ReShade::GetLinearizedDepth(texcoord + float2(0.0, BUFFER_PIXEL_SIZE.y));
+            float depthSW = ReShade::GetLinearizedDepth(texcoord + float2(-BUFFER_PIXEL_SIZE.x, BUFFER_PIXEL_SIZE.y));
+            float depthW =  ReShade::GetLinearizedDepth(texcoord + float2(-BUFFER_PIXEL_SIZE.x, 0.0));
+            float depthNW = ReShade::GetLinearizedDepth(texcoord + float2(-BUFFER_PIXEL_SIZE.x, -BUFFER_PIXEL_SIZE.y));
             float diffNS = abs(depthN - depthS);
             float diffWE = abs(depthW - depthE);
             float diffNWSE = abs(depthNW - depthSE);

@@ -325,7 +325,7 @@ float GetCoC(float2 coords)
 
 		float2 focusPoint;
 		if (DOF_MOUSEDRIVEN_AF)
-			focusPoint = MouseCoords * ReShade::PixelSize;
+			focusPoint = MouseCoords * BUFFER_PIXEL_SIZE;
 		else
 			focusPoint = DOF_FOCUSPOINT;
 
@@ -333,7 +333,7 @@ float GetCoC(float2 coords)
 		for (int r = DOF_FOCUSSAMPLES; 0 < r; r--)
 		{
 			sincos((6.2831853 / DOF_FOCUSSAMPLES) * r, coords.y, coords.x);
-			coords.y *= ReShade::AspectRatio;
+			coords.y *= BUFFER_ASPECT_RATIO;
 			scenefocus += ReShade::GetLinearizedDepth(coords * DOF_FOCUSRADIUS + focusPoint);
 		}
 		scenefocus /= DOF_FOCUSSAMPLES;
@@ -433,7 +433,7 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 	float4 res = float4(tex2Dlod(tex, float4(coord.xy, 0.0, 0.0)).xyz, 1.0);
 	const int ringCount = round(lerp(1.0, (float)iADOF_ShapeQuality, CoC / DOF_BLURRADIUS));
 	float rotAngle = fADOF_ShapeRotation;
-	float2 discRadius = CoC * ReShade::PixelSize;
+	float2 discRadius = CoC * BUFFER_PIXEL_SIZE;
 	int shapeVertices;
 	//"Circular" Bokeh
 	if (iADOF1_ShapeType == 0)
@@ -777,7 +777,7 @@ float3 BokehBlur2(sampler2D tex, float2 coord, float CoC, float centerDepth)
 	float4 res = float4(tex2Dlod(tex, float4(coord.xy, 0.0, 0.0)).xyz, 1.0);
 	const int ringCount = round(lerp(1.0, (float)iADOF_ShapeQuality, CoC / DOF_BLURRADIUS));
 	float rotAngle = fADOF_ShapeRotation;
-	float2 discRadius = CoC * ReShade::PixelSize;
+	float2 discRadius = CoC * BUFFER_PIXEL_SIZE;
 	int shapeVertices;
 	//"Circular" Bokeh
 	if (iADOF2_ShapeType == 0)
@@ -1121,7 +1121,7 @@ float3 BokehBlur3(sampler2D tex, float2 coord, float CoC, float centerDepth)
 	float4 res = float4(tex2Dlod(tex, float4(coord.xy, 0.0, 0.0)).xyz, 1.0);
 	const int ringCount = round(lerp(1.0, (float)iADOF_ShapeQuality, CoC / DOF_BLURRADIUS));
 	float rotAngle = fADOF_ShapeRotation;
-	float2 discRadius = CoC * ReShade::PixelSize;
+	float2 discRadius = CoC * BUFFER_PIXEL_SIZE;
 	int shapeVertices;
 	//"Circular" Bokeh
 	if (iADOF3_ShapeType == 0)
@@ -1577,7 +1577,7 @@ void PS_McFlyDOF3(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	float4 blurcolor = 0.0001;
 
 	//move all math out of loop if possible
-	const float2 blurmult = smoothstep(0.3, 0.8, abs(scenecolor.w * 2.0 - 1.0)) * ReShade::PixelSize * fADOF_SmootheningAmount;
+	const float2 blurmult = smoothstep(0.3, 0.8, abs(scenecolor.w * 2.0 - 1.0)) * BUFFER_PIXEL_SIZE * fADOF_SmootheningAmount;
 
 	const float weights[3] = { 1.0,0.75,0.5 };
 	//Why not separable? For the glory of Satan, of course!
@@ -1597,7 +1597,7 @@ void PS_McFlyDOF3(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	const float ImageGrain = frac(sin(texcoord.x + texcoord.y * 543.31) *  893013.0 + Timer * 0.001);
 
 	float3 AnimGrain = 0.5;
-	const float2 GrainPixelSize = ReShade::PixelSize / fADOF_ImageGrainScale;
+	const float2 GrainPixelSize = BUFFER_PIXEL_SIZE / fADOF_ImageGrainScale;
 	//My emboss noise
 	AnimGrain += lerp(tex2D(Sampler123Noise, texcoord * fADOF_ImageGrainScale + float2(GrainPixelSize.x, 0)).xyz, tex2D(Sampler123Noise, texcoord * fADOF_ImageGrainScale + 0.5 + float2(GrainPixelSize.x, 0)).xyz, ImageGrain) * 0.1;
 	AnimGrain -= lerp(tex2D(Sampler123Noise, texcoord * fADOF_ImageGrainScale + float2(0, GrainPixelSize.y)).xyz, tex2D(Sampler123Noise, texcoord * fADOF_ImageGrainScale + 0.5 + float2(0, GrainPixelSize.y)).xyz, ImageGrain) * 0.1;

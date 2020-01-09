@@ -123,8 +123,8 @@ if(GaussianBloomRadius == 0)
 	[loop]
 	for(int i = 1; i < 4; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
 	}
 }	
 
@@ -138,8 +138,8 @@ if(GaussianBloomRadius == 1)
 	[loop]
 	for(int i = 1; i < 6; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
 	}
 }	
 
@@ -153,8 +153,8 @@ if(GaussianBloomRadius == 2)
 	[loop]
 	for(int i = 1; i < 11; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
 	}
 }	
 
@@ -168,8 +168,8 @@ if(GaussianBloomRadius == 3)
 	[loop]
 	for(int i = 1; i < 15; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
 	}
 }
 
@@ -183,8 +183,8 @@ if(GaussianBloomRadius == 4)
 	[loop]
 	for(int i = 1; i < 18; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler, texcoord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y)).rgb * weight[i];
 	}
 }	
 
@@ -206,8 +206,8 @@ if(GaussianBloomRadius == 1)
 	[loop]
 	for(int i = 1; i < 6; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
 	}
 }	
 
@@ -221,8 +221,8 @@ if(GaussianBloomRadius == 2)
 	[loop]
 	for(int i = 1; i < 11; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
 	}
 }	
 
@@ -236,8 +236,8 @@ if(GaussianBloomRadius == 3)
 	[loop]
 	for(int i = 1; i < 15; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
 	}
 }
 
@@ -251,8 +251,8 @@ if(GaussianBloomRadius == 4)
 	[loop]
 	for(int i = 1; i < 18; ++i)
 	{
-		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
-		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * ReShade::PixelSize.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord + float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
+		blur += tex2D(GaussianBloomSampler2, texcoord - float2( offset[i] * BUFFER_PIXEL_SIZE.x,0.0)).rgb * weight[i];
 	}
 }	
 	return (blur);

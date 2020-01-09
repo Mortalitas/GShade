@@ -155,7 +155,7 @@ float3 GetPositionLOD(float2 coords, int mipLevel)
    inaccurate normals.*/
 float3 GetNormalFromDepth(float2 coords)
 {
-	const float3 offs = float3(ReShade::PixelSize.xy,0);
+	const float3 offs = float3(BUFFER_PIXEL_SIZE.xy,0);
 
 	const float3 f 	 =       GetPosition(coords.xy);
 	float3 d_dx1 	 = - f + GetPosition(coords.xy + offs.xz);
@@ -182,7 +182,7 @@ float3 GetSmoothedNormals(float2 texcoord, float3 ScreenSpaceNormals, float3 Scr
 		[loop]
 		for(float y = -3; y <= 3; y++)
 		{
-			const float2 offsetcoord 	= texcoord.xy + float2(x,y) * ReShade::PixelSize.xy * 3.5;
+			const float2 offsetcoord 	= texcoord.xy + float2(x,y) * BUFFER_PIXEL_SIZE.xy * 3.5;
 			const float3 samplenormal 	= normalize(tex2Dlod(SamplerSurfaceNormal,float4(offsetcoord,0,2)).xyz * 2.0 - 1.0);
 			const float3 sampleposition	= GetPositionLOD(offsetcoord.xy,2);
 			float weight 		= saturate(1.0 - distance(ScreenSpacePosition.xyz,sampleposition.xyz)*1.2);
@@ -249,7 +249,7 @@ float4 GetBlurredAO( float2 texcoord, sampler inputsampler, float2 axis, int nSt
 		[loop]
 		for(float iStep = 1.0; iStep <= nSteps; iStep++)
 		{
-			blurcoord.xy 	= (2.0 * iStep - 0.5) * orientation * axis * ReShade::PixelSize.xy + texcoord.xy;
+			blurcoord.xy 	= (2.0 * iStep - 0.5) * orientation * axis * BUFFER_PIXEL_SIZE.xy + texcoord.xy;
 			tempsample = tex2Dlod(inputsampler, blurcoord);
 			tempkey    = float4(tempsample.xyz*2-1,tex2Dlod(SamplerDistance,blurcoord).x);
 			tempweight = GetBlurWeight(tempkey, centerkey, surfacealignment);
@@ -284,7 +284,7 @@ float4 GetBlurredAOIL( float2 texcoord, sampler inputsampler, float2 axis, int n
 		[loop]
 		for(float iStep = 1.0; iStep <= nSteps; iStep++)
 		{
-			blurcoord.xy 	= (2.0 * iStep - 0.5) * orientation * axis * ReShade::PixelSize.xy + texcoord.xy;
+			blurcoord.xy 	= (2.0 * iStep - 0.5) * orientation * axis * BUFFER_PIXEL_SIZE.xy + texcoord.xy;
 			tempsample = tex2Dlod(inputsampler, blurcoord);
 			tempkey    = float4(tex2Dlod(SamplerSurfaceNormal,blurcoord).xyz*2-1,tex2Dlod(SamplerDistance,blurcoord).x);
 			tempweight = GetBlurWeight(tempkey, centerkey, surfacealignment);
@@ -347,7 +347,7 @@ float4 GetMXAO(float2 texcoord, float3 normal, float3 position, float nSamples, 
 	for(int iSample=0; iSample < nSamples; iSample++)
 	{
 		currentVector = mul(currentVector.xy, float2x2(0.575,0.81815,-0.81815,0.575));
-		currentOffset = texcoord.xy + currentVector.xy * float2(1.0,ReShade::AspectRatio) * (iSample + radiusJitter);
+		currentOffset = texcoord.xy + currentVector.xy * float2(1.0,BUFFER_ASPECT_RATIO) * (iSample + radiusJitter);
 
 		const float mipLevel = saturate(log2(mipFactor*iSample)*0.2 - 0.6) * 5.0;
 

@@ -46,7 +46,7 @@ uniform float SMART <
 float3 DEB(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {
 	// Calculating texel coordinates
-	const float2 inv_size = OFFSET * ReShade::PixelSize;
+	const float2 inv_size = OFFSET * BUFFER_PIXEL_SIZE;
 
 	const float2 dx = float2(inv_size.x,0.0);
 	const float2 dy = float2(0.0, inv_size.y);

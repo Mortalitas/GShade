@@ -36,7 +36,7 @@ sctpoint NewPoint(float3 color, float2 offset, float2 coord) {
 }
 
 float3 DrawPoint(float3 texcolor, sctpoint p, float2 texcoord) {
-    float2 pixelsize = ReShade::PixelSize * p.offset;
+    float2 pixelsize = BUFFER_PIXEL_SIZE * p.offset;
     
     if(p.coord.x == -1 || p.coord.y == -1)
         return texcolor;

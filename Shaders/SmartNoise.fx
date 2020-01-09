@@ -73,7 +73,7 @@ float3 SmartNoise(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Tar
     // a very low unique seed will lead to slow noise pattern changes on slow moving color gradients
     // a high fictive position will give good golden noise results
 
-    return color + ((gold_noise(texcoord * ReShade::ScreenSize.y * 2.0, ((luminance * ReShade::ScreenSize.y) + (ReShade::ScreenSize.x * texcoord.y) + texcoord.x + ReShade::GetLinearizedDepth(texcoord) * ReShade::ScreenSize.y) * 0.0001) * amount) - sub);
+    return color + ((gold_noise(texcoord * BUFFER_SCREEN_SIZE.y * 2.0, ((luminance * BUFFER_SCREEN_SIZE.y) + (BUFFER_SCREEN_SIZE.x * texcoord.y) + texcoord.x + ReShade::GetLinearizedDepth(texcoord) * BUFFER_SCREEN_SIZE.y) * 0.0001) * amount) - sub);
 }
 
 technique SmartNoise

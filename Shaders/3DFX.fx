@@ -66,8 +66,8 @@ float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	float4 colorInput = tex2D(ReShade::BackBuffer, texcoord);
 
 	float2 res;
-	res.x = ReShade::ScreenSize.x;
-	res.y = ReShade::ScreenSize.y;
+	res.x = BUFFER_SCREEN_SIZE.x;
+	res.y = BUFFER_SCREEN_SIZE.y;
 	
 	float2 ditheu = texcoord.xy * res.xy;
 
@@ -174,8 +174,8 @@ float4 PS_3DFX1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targ
    float4 colorInput = tex2D(ReShade::BackBuffer, texcoord);
    float2 pixel;
 
-	pixel.x = 1 / ReShade::ScreenSize.x;
-	pixel.y = 1 / ReShade::ScreenSize.y;
+	pixel.x = 1 / BUFFER_SCREEN_SIZE.x;
+	pixel.y = 1 / BUFFER_SCREEN_SIZE.y;
 
 	const float3 pixel1 = tex2D(ReShade::BackBuffer, texcoord + float2((pixel.x), 0)).rgb;
 	const float3 pixel2 = tex2D(ReShade::BackBuffer, texcoord + float2(-pixel.x, 0)).rgb;
@@ -220,8 +220,8 @@ float4 PS_3DFX2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targ
    float4 colorInput = tex2D(ReShade::BackBuffer, texcoord);
 
 	float2 res;
-	res.x = ReShade::ScreenSize.x;
-	res.y = ReShade::ScreenSize.y;
+	res.x = BUFFER_SCREEN_SIZE.x;
+	res.y = BUFFER_SCREEN_SIZE.y;
 
 	// Gamma scanlines
 	// the Voodoo drivers usually supply a 1.3 gamma setting whether people liked it or not

@@ -124,7 +124,7 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 	else Mask = Strength;
 
 	// Get pixel size
-	float2 Pixel = ReShade::PixelSize;
+	float2 Pixel = BUFFER_PIXEL_SIZE;
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
 	float3 LumaCoefficient;
