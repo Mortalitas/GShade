@@ -3,9 +3,9 @@
 
 Note that all shaders in this repository are strictly intended for use with the current GShade or ReShade 4+ release. Please refer to individual file licenses for questions about distribution and modification.
 
-**The latest release can always be found here, with the installer being highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
+**The latest release can always be found here, and use of the installer is highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
 
-**GShade itself officially whitelists and is only network-unlocked to the following online games, but will work with any game that ReShade can:**
+**GShade is only network-unlocked in the following online games, but will work with any game that ReShade itself can:**
 * Final Fantasy XIV
 * Black Desert Online
 * Elder Scrolls Online
@@ -29,6 +29,6 @@ Note that all shaders in this repository are strictly intended for use with the 
 * Optional Desktop Update Reminder
 * [Uninstaller](https://mortalitas.github.io/ffxiv/GShade/GShade%20Uninstaller.exe)
 
-A **Visual Guide/Manual** for GShade can be found here: https://drive.google.com/file/d/18TQUmdzs3sJDYNVmHDaZ_4wigJU0ul4j/
+A very outdated **Visual Guide/Manual** for GShade can be found here: https://drive.google.com/file/d/18TQUmdzs3sJDYNVmHDaZ_4wigJU0ul4j/
 
-For GShade troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/gposers
+For troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/gposers
