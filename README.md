@@ -1,7 +1,7 @@
 # GShade
 **GShade is a highly modified ReShade fork & package with a selectively network-unlocked depth buffer.** 
 
-Note that all shaders in this repository are strictly intended for use with ReShade 4+. Please refer to individual file licenses for questions about distribution and modification.
+Note that all shaders in this repository are strictly intended for use with the current GShade or ReShade 4+ release. Please refer to individual file licenses for questions about distribution and modification.
 
 **The latest release can always be found here, with the installer being highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
 
@@ -9,6 +9,7 @@ Note that all shaders in this repository are strictly intended for use with ReSh
 * Final Fantasy XIV
 * Black Desert Online
 * Elder Scrolls Online
+* Guild Wars 2
 * Phantasy Star Online 2 (Japan)
 * Second Life (Official, Firestorm, Black Dragon)
 * TERA Online
@@ -30,4 +31,4 @@ Note that all shaders in this repository are strictly intended for use with ReSh
 
 A **Visual Guide/Manual** for GShade can be found here: https://drive.google.com/file/d/18TQUmdzs3sJDYNVmHDaZ_4wigJU0ul4j/
 
-For GShade troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/39WpvU2
+For GShade troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/gposers
