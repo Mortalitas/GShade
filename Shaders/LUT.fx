@@ -107,135 +107,102 @@ sampler	SamplerLUTFE 	{ Texture = texLUTFE; };
 
 void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
 {
-  float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
+  res = tex2D(ReShade::BackBuffer, texcoord.xy);
+  float2 texelsize;
+  float3 lutcoord;
+  float lerpfact;
+  float3 lutcolor;
 
-//Default ReShade 3-4 LUT
-  if (fLUT_Selector == 0)
+  switch (fLUT_Selector)
   {
-    float2 texelsize = 1.0 / fLUT_TileSizeXY;
-    texelsize.x /= fLUT_TileAmount;
+    //GShade/Angelite LUT
+    default:
+      texelsize = 1.0 / fLUT_TileSizeXY;
+      texelsize.x /= fLUT_TileAmount;
 
-    float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
 
-    const float3 lutcolor = lerp(tex2D(SamplerLUT, lutcoord.xy).xyz, tex2D(SamplerLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      lutcolor = lerp(tex2D(SamplerLUT, lutcoord.xy).xyz, tex2D(SamplerLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
 
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
+    //LUT from LUT - Warm.fx
+    case 1:
+      texelsize = 1.0 / fLUT_W_TileSizeXY;
+      texelsize.x /= fLUT_W_TileAmount;
 
-    res.xyz = color.xyz;
-    res.w = 1.0;
+      lutcoord = float3((res.xy*fLUT_W_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_W_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+      lutcolor = lerp(tex2D(SamplerLUTwarm, lutcoord.xy).xyz, tex2D(SamplerLUTwarm, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
+
+    //MS Autumn LUT
+    case 2:
+      texelsize = 1.0 / fLUT_TileSizeXY;
+      texelsize.x /= fLUT_TileAmount;
+
+      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+      lutcolor = lerp(tex2D(SamplerLUTautumn, lutcoord.xy).xyz, tex2D(SamplerLUTautumn, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
+
+    //ninjafada Gameplay LUT
+    case 3:
+      texelsize = 1.0 / fLUT_TileSizeXY;
+      texelsize.x /= fLUT_TileAmount;
+
+      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+      lutcolor = lerp(tex2D(SamplerLUTNFG, lutcoord.xy).xyz, tex2D(SamplerLUTNFG, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
+  
+    //Default ReShade 3-4 LUT
+    case 4:
+      texelsize = 1.0 / fLUT_TileSizeXY;
+      texelsize.x /= fLUT_TileAmount;
+
+      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+      lutcolor = lerp(tex2D(SamplerLUTRS, lutcoord.xy).xyz, tex2D(SamplerLUTRS, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
+
+    //Sleepy LUT
+    case 5:
+      texelsize = 1.0 / fLUT_W_TileSizeXY;
+      texelsize.x /= fLUT_W_TileAmount;
+
+      lutcoord = float3((res.xy*fLUT_W_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_W_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+      lutcolor = lerp(tex2D(SamplerLUTSL, lutcoord.xy).xyz, tex2D(SamplerLUTSL, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
+
+    //Feli LUT
+    case 6:
+      texelsize = 1.0 / fLUT_TileSizeXY;
+      texelsize.x /= fLUT_TileAmount;
+
+      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
+      lerpfact = frac(lutcoord.z);
+      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+
+      lutcolor = lerp(tex2D(SamplerLUTFE, lutcoord.xy).xyz, tex2D(SamplerLUTFE, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+      break;
   }
 
-//LUT from LUT - Warm.fx
-  else if (fLUT_Selector == 1)
-  {
-    float2 texelsize = 1.0 / fLUT_W_TileSizeXY;
-    texelsize.x /= fLUT_W_TileAmount;
-
-    float3 lutcoord = float3((color.xy*fLUT_W_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_W_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-    const float3 lutcolor = lerp(tex2D(SamplerLUTwarm, lutcoord.xy).xyz, tex2D(SamplerLUTwarm, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
-
-//MS Autumn LUT
-  else if (fLUT_Selector == 2)
-  {
-    float2 texelsize = 1.0 / fLUT_TileSizeXY;
-    texelsize.x /= fLUT_TileAmount;
-
-    float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-    const float3 lutcolor = lerp(tex2D(SamplerLUTautumn, lutcoord.xy).xyz, tex2D(SamplerLUTautumn, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
-
-//ninjafada Gameplay LUT
-  else if (fLUT_Selector == 3)
-  {
-    float2 texelsize = 1.0 / fLUT_TileSizeXY;
-    texelsize.x /= fLUT_TileAmount;
-
-    float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-    const float3 lutcolor = lerp(tex2D(SamplerLUTNFG, lutcoord.xy).xyz, tex2D(SamplerLUTNFG, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
-  else if (fLUT_Selector == 4)
-  {
-    float2 texelsize = 1.0 / fLUT_TileSizeXY;
-    texelsize.x /= fLUT_TileAmount;
-
-    float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-    const float3 lutcolor = lerp(tex2D(SamplerLUTRS, lutcoord.xy).xyz, tex2D(SamplerLUTRS, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
-  else if (fLUT_Selector == 5)
-  {
-    float2 texelsize = 1.0 / fLUT_W_TileSizeXY;
-    texelsize.x /= fLUT_W_TileAmount;
-
-    float3 lutcoord = float3((color.xy*fLUT_W_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_W_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-    const float3 lutcolor = lerp(tex2D(SamplerLUTSL, lutcoord.xy).xyz, tex2D(SamplerLUTSL, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
-
-  else
-  {
-    float2 texelsize = 1.0 / fLUT_TileSizeXY;
-    texelsize.x /= fLUT_TileAmount;
-
-    float3 lutcoord = float3((color.xy*fLUT_TileSizeXY-color.xy+0.5)*texelsize.xy,color.z*fLUT_TileSizeXY-color.z);
-    const float lerpfact = frac(lutcoord.z);
-    lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-    const float3 lutcolor = lerp(tex2D(SamplerLUTFE, lutcoord.xy).xyz, tex2D(SamplerLUTFE, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-
-    color.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	            lerp(length(color.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-
-    res.xyz = color.xyz;
-    res.w = 1.0;
-  }
+  res.xyz = lerp(normalize(res.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+	          lerp(length(res.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
+  res.w = 1.0;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
