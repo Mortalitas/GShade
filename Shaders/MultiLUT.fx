@@ -246,78 +246,68 @@ sampler SamplerNENMultiLUT { Texture = texNENMultiLUT; };
 
 float4 apply(in const float4 color, in const int tex, in const float lut)
 {
-	float lerpfact;
 	const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
-	float3 lutcoord;
+	float3 lutcoord = float3((color.xy * fLUT_TileSizeXY - color.xy + 0.5) * texelsize, (color.z  * fLUT_TileSizeXY - color.z));
 	float4 lutcolor;
-	
-	lutcoord.xy = (color.xy * fLUT_TileSizeXY - color.xy + 0.5) * texelsize;
-	lutcoord.z  = (color.z  * fLUT_TileSizeXY - color.z);
 
-	lerpfact = frac(lutcoord.z);
+	const float lerpfact = frac(lutcoord.z);
 	lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
 
 //Default GShade MultiLut_GShade.png
-	if (tex == 0)
+	switch (fLUT_MultiLUTSelector)
 	{
-		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
-		lutcolor   = lerp(tex2D(SamplerGSMultiLUT, lutcoord.xy), tex2D(SamplerGSMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+		// GShade/Angelite MultiLut_GShade.png
+		default:
+			lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+			lutcolor   = lerp(tex2D(SamplerGSMultiLUT, lutcoord.xy), tex2D(SamplerGSMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//ReShade 4 MultiLut_atlas4.png
+		case 1:
+			lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+			lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy), tex2D(SamplerRESMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//ReShade 3 MultiLut_atlas4.png
+		case 2:
+			lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+			lutcolor   = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy), tex2D(SamplerRESMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//Johto MultiLut_Johto.png
+		case 3:
+			lutcoord.y = lut / fLUT_LutAmountEx + lutcoord.y / fLUT_LutAmountEx;
+			lutcolor   = lerp(tex2D(SamplerJOHMultiLUT, lutcoord.xy), tex2D(SamplerJOHMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//EG FFXIVLUTAtlas.png
+		case 4:
+			lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
+			lutcolor   = lerp(tex2D(SamplerEGMultiLUT, lutcoord.xy), tex2D(SamplerEGMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//MS TMP_MultiLUT.png
+		case 5:
+			lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+			lutcolor   = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy), tex2D(SamplerMSMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//ninjafada Gameplay MultiLut_ninjafadaGameplay.png
+		case 6:
+			lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+			lutcolor   = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy), tex2D(SamplerNFGMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//seri14 MultiLut_seri14.png
+		case 7:
+			lutcoord.y = lut / fLUT_LutAmountLower + lutcoord.y / fLUT_LutAmountLower;
+			lutcolor   = lerp(tex2D(SamplerS14MultiLUT, lutcoord.xy), tex2D(SamplerS14MultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//Yomi MultiLut_Yomi.png
+		case 8:
+			lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+			lutcolor   = lerp(tex2D(SamplerYOMMultiLUT, lutcoord.xy), tex2D(SamplerYOMMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
+		//Neneko MultiLut_Neneko.png
+		case 9:
+			lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
+			lutcolor   = lerp(tex2D(SamplerNENMultiLUT, lutcoord.xy), tex2D(SamplerNENMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
+			break;
 	}
-//ReShade 4 MultiLut_atlas4.png
-	else if (tex == 1)
-	{
-		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
-		lutcolor = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy), tex2D(SamplerRESMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//ReShade 3 MultiLut_atlas4.png
-	else if (tex == 2)
-	{
-		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
-		lutcolor   = lerp(tex2D(SamplerRESMultiLUT, lutcoord.xy), tex2D(SamplerRESMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//Johto MultiLut_Johto.png
-	else if (tex == 3)
-	{
-		lutcoord.y = lut / fLUT_LutAmountEx + lutcoord.y / fLUT_LutAmountEx;
-		lutcolor   = lerp(tex2D(SamplerJOHMultiLUT, lutcoord.xy), tex2D(SamplerJOHMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//EG FFXIVLUTAtlas.png
-	else if (tex == 4)
-	{
-		lutcoord.y = lut / fLUT_LutAmount + lutcoord.y / fLUT_LutAmount;
-		lutcolor   = lerp(tex2D(SamplerEGMultiLUT, lutcoord.xy), tex2D(SamplerEGMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//MS TMP_MultiLUT.png
-	else if (tex == 5)
-	{
-		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
-		lutcolor   = lerp(tex2D(SamplerMSMultiLUT, lutcoord.xy), tex2D(SamplerMSMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//ninjafada Gameplay MultiLut_ninjafadaGameplay.png
-	else if (tex == 6)
-	{
-		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
-		lutcolor   = lerp(tex2D(SamplerNFGMultiLUT, lutcoord.xy), tex2D(SamplerNFGMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//seri14 MultiLut_seri14.png
-	else if (tex == 7)
-	{
-		lutcoord.y = lut / fLUT_LutAmountLower + lutcoord.y / fLUT_LutAmountLower;
-		lutcolor   = lerp(tex2D(SamplerS14MultiLUT, lutcoord.xy), tex2D(SamplerS14MultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//Yomi MultiLut_Yomi.png
-	else if (tex == 8)
-	{
-		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
-		lutcolor   = lerp(tex2D(SamplerYOMMultiLUT, lutcoord.xy), tex2D(SamplerYOMMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-//Neneko MultiLut_Neneko.png
-	else
-	{
-		lutcoord.y = lut / fLUT_LutAmountLow + lutcoord.y / fLUT_LutAmountLow;
-		lutcolor   = lerp(tex2D(SamplerNENMultiLUT, lutcoord.xy), tex2D(SamplerNENMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-	}
-
+	
 	lutcolor.a = color.a;
 	return lutcolor;
 }
