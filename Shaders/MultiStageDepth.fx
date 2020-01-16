@@ -103,60 +103,58 @@ sampler Ice_one_sampler { Texture = Ice_one_texture; };
 
 void PS_StageDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
-  float4 Fire_one_stage = tex2D(Fire_one_sampler, texcoord).rgba;
-  float4 Fire_two_stage = tex2D(Fire_two_sampler, texcoord).rgba;
-  float4 Snow_one_stage = tex2D(Snow_one_sampler, texcoord).rgba;
-  float4 Snow_two_stage = tex2D(Snow_two_sampler, texcoord).rgba;
-  float4 Shatter_one_stage = tex2D(Shatter_one_sampler, texcoord).rgba;
-  float4 Lightrays_one_stage = tex2D(Lightrays_one_sampler, texcoord).rgba;
-  float4 Vignette_sharp_stage = tex2D(Vignette_sharp_sampler, texcoord).rgba;
-  float4 Vignette_soft_stage = tex2D(Vignette_soft_sampler, texcoord).rgba;
-  float4 Metal_one_stage = tex2D(Metal_one_sampler, texcoord).rgba;
-  float4 Ice_one_stage = tex2D(Ice_one_sampler, texcoord).rgba;
-
 	color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-
-	float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
+	const float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
 
 	if ((Tex_Select == 0) && (depth < Stage_depth))
 	{
+		const float4 Fire_one_stage = tex2D(Fire_one_sampler, texcoord);
 		color = lerp(color, Fire_one_stage.rgb, Fire_one_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 1) && (depth < Stage_depth))
 	{
+		const float4 Fire_two_stage = tex2D(Fire_two_sampler, texcoord);
 		color = lerp(color, Fire_two_stage.rgb, Fire_two_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 2) && (depth < Stage_depth))
 	{
-    color = lerp(color, Snow_one_stage.rgb, Snow_one_stage.a * Stage_Opacity);
+		const float4 Snow_one_stage = tex2D(Snow_one_sampler, texcoord);
+		color = lerp(color, Snow_one_stage.rgb, Snow_one_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 3) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Snow_two_stage.rgb, Snow_two_stage.a * Stage_Opacity);
+		const float4 Snow_two_stage = tex2D(Snow_two_sampler, texcoord);
+		color = lerp(color, Snow_two_stage.rgb, Snow_two_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 4) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Shatter_one_stage.rgb, Shatter_one_stage.a * Stage_Opacity);
+		const float4 Shatter_one_stage = tex2D(Shatter_one_sampler, texcoord);
+		color = lerp(color, Shatter_one_stage.rgb, Shatter_one_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 5) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Lightrays_one_stage.rgb, Lightrays_one_stage.a * Stage_Opacity);
+		const float4 Lightrays_one_stage = tex2D(Lightrays_one_sampler, texcoord);
+		color = lerp(color, Lightrays_one_stage.rgb, Lightrays_one_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 6) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Vignette_sharp_stage.rgb, Vignette_sharp_stage.a * Stage_Opacity);
+		const float4 Vignette_sharp_stage = tex2D(Vignette_sharp_sampler, texcoord);
+		color = lerp(color, Vignette_sharp_stage.rgb, Vignette_sharp_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 7) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Vignette_soft_stage.rgb, Vignette_soft_stage.a * Stage_Opacity);
+		const float4 Vignette_soft_stage = tex2D(Vignette_soft_sampler, texcoord);
+		color = lerp(color, Vignette_soft_stage.rgb, Vignette_soft_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 8) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Metal_one_stage.rgb, Metal_one_stage.a * Stage_Opacity);
+		const float4 Metal_one_stage = tex2D(Metal_one_sampler, texcoord);
+		color = lerp(color, Metal_one_stage.rgb, Metal_one_stage.a * Stage_Opacity);
 	}
 	else if ((Tex_Select == 9) && (depth < Stage_depth))	
 	{
-    color = lerp(color, Ice_one_stage.rgb, Ice_one_stage.a * Stage_Opacity);
+		const float4 Ice_one_stage = tex2D(Ice_one_sampler, texcoord);
+		color = lerp(color, Ice_one_stage.rgb, Ice_one_stage.a * Stage_Opacity);
 	}
 }
 
