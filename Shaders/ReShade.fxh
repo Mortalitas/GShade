@@ -43,14 +43,12 @@
 
 namespace ReShade
 {
-#if defined(__RESHADE_FXC__)
 	float GetAspectRatio() { return BUFFER_WIDTH * BUFFER_RCP_HEIGHT; }
 	float2 GetPixelSize() { return float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT); }
 	float2 GetScreenSize() { return float2(BUFFER_WIDTH, BUFFER_HEIGHT); }
 	#define AspectRatio GetAspectRatio()
 	#define PixelSize GetPixelSize()
 	#define ScreenSize GetScreenSize()
-#endif
 
 	// Global textures and samplers
 	texture BackBufferTex : COLOR;
