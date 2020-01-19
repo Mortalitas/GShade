@@ -435,6 +435,7 @@ static const float filmGrainPower = 1.0;				//Film Grain Power (DO NOT CHANGE)
 static const float feedbackAmp = 1.0; 					//Feedback Amp (DO NOT CHANGE)
 
 #define _ScreenParams float2(BUFFER_WIDTH, BUFFER_HEIGHT)
+#undef PixelSize
 #define PixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 uniform float  Timer < source = "timer"; >;
 

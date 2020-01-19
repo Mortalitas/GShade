@@ -198,10 +198,10 @@ float3 PerfectPerspectivePS(float4 vois : SV_Position, float2 texcoord : TexCoor
 	if(VerticalScale != 1.0) SphCoord.y /= lerp(VerticalScale, 1.0, Vertical);
 
 	// Get Pixel Size in stereographic coordinates
-	const float2 PixelSize = fwidth(SphCoord);
+	const float2 PPixelSize = fwidth(SphCoord);
 
 	// Outside borders check with Anti-Aliasing
-	const float2 AtBorders = smoothstep( 1.0 - PixelSize, 1.0 + PixelSize, abs(SphCoord) );
+	const float2 AtBorders = smoothstep( 1.0 - PPixelSize, 1.0 + PPixelSize, abs(SphCoord) );
 
 	// Back to UV Coordinates
 	SphCoord = SphCoord * 0.5 + 0.5;

@@ -2,8 +2,8 @@
 //Preprocess Settings
 #define DEPTH_TEXTURE_QUALITY		0.5	//[>0.0] 1.0 - Screen resolution. Lowering this might ruin the AO precision. Go from 1.0 to AO texture quality.
 #define DEPTH_AO_MIPLEVELS		5	//[>1] Mip levels to increase speed at the cost of quality
-#undef PixelSize
 #include "ReShade.fxh"
+#undef PixelSize
 #define PixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 //DOF Settings
 #define DOF_TEXTURE_QUALITY		0.5	//[>0.0] 1.0 - Screen resolution. Lowering this will decrease quality of the DOF, but also increase its radius.

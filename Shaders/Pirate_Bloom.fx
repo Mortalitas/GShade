@@ -1,6 +1,6 @@
 //===================================================================================================================
-#undef PixelSize
 #include "ReShade.fxh"
+#undef PixelSize
 #define PixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 //===================================================================================================================
 #define BLOOM_LINEAR_COEF	((BLOOM_LINEAR_TAPS * 2) - 1)
