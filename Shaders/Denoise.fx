@@ -194,9 +194,7 @@ float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
 				
 				weight = 0.0;
 				
-				[unroll]
 				for (int n = -BlockRadius; n <= BlockRadius; n++) {
-					[unroll]
 					for (int m = -BlockRadius; m <= BlockRadius; m++) {              
 							texIJb = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE * float2(i + n, j + m)).rgb;
 							texIJc = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE * float2(    n,     m)).rgb;
