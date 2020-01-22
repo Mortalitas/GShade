@@ -1,4 +1,4 @@
-// KeepUI for FFXIV
+// KeepUI for FFXIV, Phantasy Star Online, and other games with a UI depth of 0.
 // Author: seri14
 // 
 // This is free and unencumbered software released into the public domain.
@@ -28,11 +28,23 @@
 // Special thanks to Sleeps_Hungry for the addition of the FFOccludeUI technique.
 
 #ifndef KeepUIDebug
-#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
+	#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
 #endif
 
 #ifndef KeepUIOccludeAssist
-#define KeepUIOccludeAssist 0 // Set to 1 if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.
+	#define KeepUIOccludeAssist 0 // Set to 1 if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.
+#endif
+
+#ifndef KeepUIType
+	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
+#endif
+
+#if __APPLICATION__ == 0x6f24790f // Final Fantasy XIV
+	#undef KeepUIType
+	#define KeepUIType 1
+#elif __APPLICATION__ == 0x21050ce9 // Phantasy Star Online
+	#undef KeepUIType
+	#define KeepUIType 2
 #endif
 
 #if KeepUIDebug
@@ -61,6 +73,9 @@ sampler FFKeepUI_Sampler { Texture = FFKeepUI_Tex; };
 void PS_FFKeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
     color = tex2D(ReShade::BackBuffer, texcoord);
+#if KeepUIType == 2
+    color.a = step(1.0, 1.0 - ReShade::GetLinearizedDepth(texcoord));
+#endif
 }
 
 #if KeepUIOccludeAssist
@@ -77,7 +92,7 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
 {
     const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
     const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-	
+
 #if KeepUIDebug
     if (bTroubleshootOpacityIssue)
     {
@@ -103,15 +118,17 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
         color   = lerp(back, keep, keep.a);
         color.a = keep.a;
     }
-#else
-        color   = lerp(back, keep, keep.a);
-        color.a = keep.a;
+#elif KeepUIType == 0 // Unsupported game.
+    color = back;
+#else // Supported game.
+    color   = lerp(back, keep, keep.a);
+    color.a = keep.a;
 #endif
 }
 
 technique FFKeepUI <
     ui_tooltip = "Place this at the top of your Technique list to save the UI into a texture for restoration with FFRestoreUI.\n"
-	             "To use this Technique, you must also enable \"FFRestoreUI\".\n";
+                 "To use this Technique, you must also enable \"FFRestoreUI\".\n";
 >
 {
     pass
@@ -131,7 +148,7 @@ technique FFKeepUI <
 
 technique FFRestoreUI <
     ui_tooltip = "Place this at the bottom of your Technique list to restore the UI texture saved by FFKeepUI.\n"
-	             "To use this Technique, you must also enable \"FFKeepUI\".\n";
+                 "To use this Technique, you must also enable \"FFKeepUI\".\n";
 >
 {
     pass
