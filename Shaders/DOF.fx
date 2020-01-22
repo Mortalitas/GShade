@@ -216,7 +216,11 @@ uniform float fMatsoDOFBokehAngle <
 #endif
 
 #ifndef iADOF_ShapeVertices
-	#define iADOF_ShapeVertices 12 // Polygon count of bokeh shape. 4 = square, 5 = pentagon, 6 = hexagon and so on.
+	#if __RENDERER__ <= 0x9300 // Set polygon count of bokeh to 10 for DX9, as the DX9 compiler can't handle computation for values past 10.
+		#define iADOF_ShapeVertices 10
+	#else
+		#define iADOF_ShapeVertices 12 // Polygon count of bokeh shape. 4 = square, 5 = pentagon, 6 = hexagon and so on.
+	#endif
 #endif
 
 #ifndef iADOF_ShapeVerticesP
@@ -921,338 +925,333 @@ float3 BokehBlur(sampler2D tex, float2 coord, float CoC, float centerDepth)
 	float rotAngle = fADOF_ShapeRotation;
 	float2 discRadius = CoC * BUFFER_PIXEL_SIZE;
 	int shapeVertices;
-	//"Circular" Bokeh
-	if (iADOF_ShapeType == 0)
+	float2 edgeVertices[iADOF_ShapeVertices + 1];
+	float2 Grain;
+	
+	switch(iADOF_ShapeType)
 	{
-		shapeVertices = iADOF_ShapeVertices;
-		float2 edgeVertices[iADOF_ShapeVertices + 1];
-		if (bADOF_ShapeWeightEnable)
-			res.w = (1.0 - fADOF_ShapeWeightAmount);
+		//"Circular" Bokeh
+		case 0:
+			shapeVertices = iADOF_ShapeVertices;
+			if (bADOF_ShapeWeightEnable)
+				res.w = (1.0 - fADOF_ShapeWeightAmount);
 
-		res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
+			res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
 
-		if (bADOF_ShapeAnamorphEnable)
-			discRadius.x *= fADOF_ShapeAnamorphRatio;
+			if (bADOF_ShapeAnamorphEnable)
+				discRadius.x *= fADOF_ShapeAnamorphRatio;
 
-		if (bADOF_RotAnimationEnable)
-			rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
+			if (bADOF_RotAnimationEnable)
+				rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
 
-		float2 Grain;
-		if (bADOF_ShapeDiffusionEnable)
-		{
-			Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
-			Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
-		}
-
-		[unroll]
-		for (int z = 0; z <= shapeVertices; z++)
-		{
-			sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
-		}
-
-		[loop]
-		for (float i = 1; i <= ringCount; i++)
-		{
-			[loop]
-			for (int j = 1; j <= shapeVertices; j++)
+			if (bADOF_ShapeDiffusionEnable)
 			{
-				float radiusCoeff = i / ringCount;
-				float blursamples = i;
+				Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
+				Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
+			}
 
-#if bADOF_ShapeTextureEnable
-				blursamples *= 2;
-#endif
+			[unroll]
+			for (int z = 0; z <= shapeVertices; z++)
+			{
+				sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
+			}
 
+			[loop]
+			for (float i = 1; i <= ringCount; i++)
+			{
 				[loop]
-				for (float k = 0; k < blursamples; k++)
+				for (int j = 1; j <= shapeVertices; j++)
 				{
-					if (bADOF_ShapeApertureEnable)
-						radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
-
-					float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
-
-					if (bADOF_ShapeCurvatureEnable)
-						sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
-
-					if (bADOF_ShapeDistortEnable)
-						sampleOffset = GetDistortedOffsets(coord, sampleOffset);
-
-					if (bADOF_ShapeDiffusionEnable)
-						sampleOffset *= Grain;
-
-					float4 tap;
-					if (bADOF_ShapeChromaEnable)
-						tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
-					else
-						tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-
-					if (tap.w >= centerDepth*0.99)
-						tap.w = 1.0;
-					else
-						tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
-
-					if (bADOF_ShapeWeightEnable)
-						tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+					float radiusCoeff = i / ringCount;
+					float blursamples = i;
 
 #if bADOF_ShapeTextureEnable
-					tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+					blursamples *= 2;
 #endif
 
-					res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
-					res.w += tap.w;
+					[loop]
+					for (float k = 0; k < blursamples; k++)
+					{
+						if (bADOF_ShapeApertureEnable)
+							radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
+
+						float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
+
+						if (bADOF_ShapeCurvatureEnable)
+							sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
+
+						if (bADOF_ShapeDistortEnable)
+							sampleOffset = GetDistortedOffsets(coord, sampleOffset);
+
+						if (bADOF_ShapeDiffusionEnable)
+							sampleOffset *= Grain;
+
+						float4 tap;
+						if (bADOF_ShapeChromaEnable)
+							tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+						else
+							tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+						if (tap.w >= centerDepth*0.99)
+							tap.w = 1.0;
+						else
+							tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
+
+						if (bADOF_ShapeWeightEnable)
+							tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+
+#if bADOF_ShapeTextureEnable
+						tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+#endif
+
+						res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
+						res.w += tap.w;
+					}
 				}
 			}
-		}
-	}
-	//Pentagonal Bokeh
-	else if (iADOF_ShapeType == 1)
-	{
-		shapeVertices = iADOF_ShapeVerticesP;
-		float2 edgeVertices[iADOF_ShapeVerticesP + 1];
-		if (bADOF_ShapeWeightEnable)
-			res.w = (1.0 - fADOF_ShapeWeightAmount);
+			break;
+		//Pentagonal Bokeh
+		default:
+			shapeVertices = iADOF_ShapeVerticesP;
+			if (bADOF_ShapeWeightEnable)
+				res.w = (1.0 - fADOF_ShapeWeightAmount);
 
-		res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
+			res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
 
-		if (bADOF_ShapeAnamorphEnable)
-			discRadius.x *= fADOF_ShapeAnamorphRatio;
+			if (bADOF_ShapeAnamorphEnable)
+				discRadius.x *= fADOF_ShapeAnamorphRatio;
 
-		if (bADOF_RotAnimationEnable)
-			rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
+			if (bADOF_RotAnimationEnable)
+				rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
 
-		float2 Grain;
-		if (bADOF_ShapeDiffusionEnable)
-		{
-			Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
-			Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
-		}
-
-		[unroll]
-		for (int z = 0; z <= shapeVertices; z++)
-		{
-			sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
-		}
-
-		[loop]
-		for (float i = 1; i <= ringCount; i++)
-		{
-			[loop]
-			for (int j = 1; j <= shapeVertices; j++)
+			if (bADOF_ShapeDiffusionEnable)
 			{
-				float radiusCoeff = i / ringCount;
-				float blursamples = i;
+				Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
+				Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
+			}
 
-#if bADOF_ShapeTextureEnable
-				blursamples *= 2;
-#endif
+			[unroll]
+			for (int z = 0; z <= shapeVertices; z++)
+			{
+				sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
+			}
 
+			[loop]
+			for (float i = 1; i <= ringCount; i++)
+			{
 				[loop]
-				for (float k = 0; k < blursamples; k++)
+				for (int j = 1; j <= shapeVertices; j++)
 				{
-					if (bADOF_ShapeApertureEnable)
-						radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
-
-					float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
-
-					if (bADOF_ShapeCurvatureEnable)
-						sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
-
-					if (bADOF_ShapeDistortEnable)
-						sampleOffset = GetDistortedOffsets(coord, sampleOffset);
-
-					if (bADOF_ShapeDiffusionEnable)
-						sampleOffset *= Grain;
-
-					float4 tap;
-					if (bADOF_ShapeChromaEnable)
-						tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
-					else
-						tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-
-					if (tap.w >= centerDepth*0.99)
-						tap.w = 1.0;
-					else
-						tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
-
-					if (bADOF_ShapeWeightEnable)
-						tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+					float radiusCoeff = i / ringCount;
+					float blursamples = i;
 
 #if bADOF_ShapeTextureEnable
-					tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+					blursamples *= 2;
 #endif
 
-					res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
-					res.w += tap.w;
+					[loop]
+					for (float k = 0; k < blursamples; k++)
+					{
+						if (bADOF_ShapeApertureEnable)
+							radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
+
+						float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
+
+						if (bADOF_ShapeCurvatureEnable)
+							sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
+
+						if (bADOF_ShapeDistortEnable)
+							sampleOffset = GetDistortedOffsets(coord, sampleOffset);
+
+						if (bADOF_ShapeDiffusionEnable)
+							sampleOffset *= Grain;
+
+						float4 tap;
+						if (bADOF_ShapeChromaEnable)
+							tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+						else
+							tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+						if (tap.w >= centerDepth*0.99)
+							tap.w = 1.0;
+						else
+							tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
+
+						if (bADOF_ShapeWeightEnable)
+							tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+
+#if bADOF_ShapeTextureEnable
+						tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+#endif
+
+						res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
+						res.w += tap.w;
+					}
 				}
 			}
-		}
-	}
-	//Diamond Bokeh
-	else if (iADOF_ShapeType == 2)
-	{
-		shapeVertices = iADOF_ShapeVerticesD;
-		float2 edgeVertices[iADOF_ShapeVerticesD + 1];
-		if (bADOF_ShapeWeightEnable)
-			res.w = (1.0 - fADOF_ShapeWeightAmount);
+			break;
+		//Diamond Bokeh
+		case 2:
+			shapeVertices = iADOF_ShapeVerticesD;
+			if (bADOF_ShapeWeightEnable)
+				res.w = (1.0 - fADOF_ShapeWeightAmount);
 
-		res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
+			res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
 
-		if (bADOF_ShapeAnamorphEnable)
-			discRadius.x *= fADOF_ShapeAnamorphRatio;
+			if (bADOF_ShapeAnamorphEnable)
+				discRadius.x *= fADOF_ShapeAnamorphRatio;
 
-		if (bADOF_RotAnimationEnable)
-			rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
+			if (bADOF_RotAnimationEnable)
+				rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
 
-		float2 Grain;
-		if (bADOF_ShapeDiffusionEnable)
-		{
-			Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
-			Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
-		}
-
-		[unroll]
-		for (int z = 0; z <= shapeVertices; z++)
-		{
-			sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
-		}
-
-		[loop]
-		for (float i = 1; i <= ringCount; i++)
-		{
-			[loop]
-			for (int j = 1; j <= shapeVertices; j++)
+			if (bADOF_ShapeDiffusionEnable)
 			{
-				float radiusCoeff = i / ringCount;
-				float blursamples = i;
+				Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
+				Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
+			}
 
-#if bADOF_ShapeTextureEnable
-				blursamples *= 2;
-#endif
+			[unroll]
+			for (int z = 0; z <= shapeVertices; z++)
+			{
+				sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
+			}
 
+			[loop]
+			for (float i = 1; i <= ringCount; i++)
+			{
 				[loop]
-				for (float k = 0; k < blursamples; k++)
+				for (int j = 1; j <= shapeVertices; j++)
 				{
-					if (bADOF_ShapeApertureEnable)
-						radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
-
-					float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
-
-					if (bADOF_ShapeCurvatureEnable)
-						sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
-
-					if (bADOF_ShapeDistortEnable)
-						sampleOffset = GetDistortedOffsets(coord, sampleOffset);
-
-					if (bADOF_ShapeDiffusionEnable)
-						sampleOffset *= Grain;
-
-					float4 tap;
-					if (bADOF_ShapeChromaEnable)
-						tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
-					else
-						tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-
-					if (tap.w >= centerDepth*0.99)
-						tap.w = 1.0;
-					else
-						tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
-
-					if (bADOF_ShapeWeightEnable)
-						tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+					float radiusCoeff = i / ringCount;
+					float blursamples = i;
 
 #if bADOF_ShapeTextureEnable
-					tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+					blursamples *= 2;
 #endif
 
-					res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
-					res.w += tap.w;
+					[loop]
+					for (float k = 0; k < blursamples; k++)
+					{
+						if (bADOF_ShapeApertureEnable)
+							radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
+
+						float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
+
+						if (bADOF_ShapeCurvatureEnable)
+							sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
+
+						if (bADOF_ShapeDistortEnable)
+							sampleOffset = GetDistortedOffsets(coord, sampleOffset);
+
+						if (bADOF_ShapeDiffusionEnable)
+							sampleOffset *= Grain;
+
+						float4 tap;
+						if (bADOF_ShapeChromaEnable)
+							tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+						else
+							tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+						if (tap.w >= centerDepth*0.99)
+							tap.w = 1.0;
+						else
+							tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
+
+						if (bADOF_ShapeWeightEnable)
+							tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+
+#if bADOF_ShapeTextureEnable
+						tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+#endif
+
+						res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
+						res.w += tap.w;
+					}
 				}
 			}
-		}
-	}
-	//Triangular Bokeh
-	else
-	{
-		shapeVertices = iADOF_ShapeVerticesT;
-		float2 edgeVertices[iADOF_ShapeVerticesT + 1];
-		if (bADOF_ShapeWeightEnable)
-			res.w = (1.0 - fADOF_ShapeWeightAmount);
+			break;
 
-		res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
+		//Triangular Bokeh
+		case 3:
+			shapeVertices = iADOF_ShapeVerticesT;
+			if (bADOF_ShapeWeightEnable)
+				res.w = (1.0 - fADOF_ShapeWeightAmount);
 
-		if (bADOF_ShapeAnamorphEnable)
-			discRadius.x *= fADOF_ShapeAnamorphRatio;
+			res.xyz = pow(abs(res.xyz), fADOF_BokehCurve)*res.w;
 
-		if (bADOF_RotAnimationEnable)
-			rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
+			if (bADOF_ShapeAnamorphEnable)
+				discRadius.x *= fADOF_ShapeAnamorphRatio;
 
-		float2 Grain;
-		if (bADOF_ShapeDiffusionEnable)
-		{
-			Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
-			Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
-		}
+			if (bADOF_RotAnimationEnable)
+				rotAngle += fADOF_RotAnimationSpeed * Timer * 0.005;
 
-		[unroll]
-		for (int z = 0; z <= shapeVertices; z++)
-		{
-			sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
-		}
-
-		[loop]
-		for (float i = 1; i <= ringCount; i++)
-		{
-			[loop]
-			for (int j = 1; j <= shapeVertices; j++)
+			if (bADOF_ShapeDiffusionEnable)
 			{
-				float radiusCoeff = i / ringCount;
-				float blursamples = i;
+				Grain = float2(frac(sin(coord.x + coord.y * 543.31) *  493013.0), frac(cos(coord.x - coord.y * 573.31) * 289013.0));
+				Grain = (Grain - 0.5) * fADOF_ShapeDiffusionAmount + 1.0;
+			}
 
-#if bADOF_ShapeTextureEnable
-				blursamples *= 2;
-#endif
+			[unroll]
+			for (int z = 0; z <= shapeVertices; z++)
+			{
+				sincos((6.2831853 / shapeVertices)*z + radians(rotAngle), edgeVertices[z].y, edgeVertices[z].x);
+			}
 
+			[loop]
+			for (float i = 1; i <= ringCount; i++)
+			{
 				[loop]
-				for (float k = 0; k < blursamples; k++)
+				for (int j = 1; j <= shapeVertices; j++)
 				{
-					if (bADOF_ShapeApertureEnable)
-						radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
-
-					float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
-
-					if (bADOF_ShapeCurvatureEnable)
-						sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
-
-					if (bADOF_ShapeDistortEnable)
-						sampleOffset = GetDistortedOffsets(coord, sampleOffset);
-
-					if (bADOF_ShapeDiffusionEnable)
-						sampleOffset *= Grain;
-
-					float4 tap;
-					if (bADOF_ShapeChromaEnable)
-						tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
-					else
-						tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
-
-					if (tap.w >= centerDepth*0.99)
-						tap.w = 1.0;
-					else
-						tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
-
-					if (bADOF_ShapeWeightEnable)
-						tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+					float radiusCoeff = i / ringCount;
+					float blursamples = i;
 
 #if bADOF_ShapeTextureEnable
-					tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+					blursamples *= 2;
 #endif
 
-					res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
-					res.w += tap.w;
+					[loop]
+					for (float k = 0; k < blursamples; k++)
+					{
+						if (bADOF_ShapeApertureEnable)
+							radiusCoeff *= 1.0 + sin(k / blursamples * 6.2831853 - 1.5707963)*fADOF_ShapeApertureAmount; // * 2 pi - 0.5 pi so it's 1x up and down in [0|1] space.
+
+						float2 sampleOffset = lerp(edgeVertices[j - 1], edgeVertices[j], k / blursamples) * radiusCoeff;
+
+						if (bADOF_ShapeCurvatureEnable)
+							sampleOffset = lerp(sampleOffset, normalize(sampleOffset) * radiusCoeff, fADOF_ShapeCurvatureAmount);
+
+						if (bADOF_ShapeDistortEnable)
+							sampleOffset = GetDistortedOffsets(coord, sampleOffset);
+
+						if (bADOF_ShapeDiffusionEnable)
+							sampleOffset *= Grain;
+
+						float4 tap;
+						if (bADOF_ShapeChromaEnable)
+							tap = tex2Dchroma(tex, coord, sampleOffset * discRadius);
+						else
+							tap = tex2Dlod(tex, float4(coord.xy + sampleOffset.xy * discRadius, 0, 0));
+
+						if (tap.w >= centerDepth*0.99)
+							tap.w = 1.0;
+						else
+							tap.w = pow(abs(tap.w * 2.0 - 1.0), 4.0);
+
+						if (bADOF_ShapeWeightEnable)
+							tap.w *= lerp(1.0, pow(length(sampleOffset), fADOF_ShapeWeightCurve), fADOF_ShapeWeightAmount);
+
+#if bADOF_ShapeTextureEnable
+						tap.w *= tex2Dlod(SamplerMask, float4((sampleOffset + 0.707) * 0.707, 0, 0)).x;
+#endif
+
+						res.xyz += pow(abs(tap.xyz), fADOF_BokehCurve) * tap.w;
+						res.w += tap.w;
+					}
 				}
 			}
+			break;
 		}
-	}
 
 	res.xyz = max(res.xyz / res.w, 0.0);
 	return pow(res.xyz, 1.0 / fADOF_BokehCurve);
