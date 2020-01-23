@@ -33,7 +33,7 @@ sampler Sampler
 // -------------------------------------
 
 uniform float BlendIntensity <
-	ui_label = "Alpha blending level"
+	ui_label = "Alpha blending level";
 	ui_type = "drag";
 	ui_min = 0.001; ui_max = 1000.0;
 	ui_step = 0.001;
