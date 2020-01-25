@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Layer (version 0.3)
+    Layer (version 0.4)
 
     Author: CeeJay.dk
     License: MIT
