@@ -17,37 +17,37 @@
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_TextureName
-	#define fLUT_TextureName "lut_GShade.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
+    #define fLUT_TextureName "lut_GShade.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_TileSizeXY
-	#define fLUT_TileSizeXY 32
+    #define fLUT_TileSizeXY 32
 #endif
 #ifndef fLUT_TileAmount
-	#define fLUT_TileAmount 32
+    #define fLUT_TileAmount 32
 #endif
 #ifndef fLUT_W_TextureName
-	#define fLUT_W_TextureName "lut_warm.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
+    #define fLUT_W_TextureName "lut_warm.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
 #endif
 #ifndef fLUT_W_TileSizeXY
-	#define fLUT_W_TileSizeXY 64
+    #define fLUT_W_TileSizeXY 64
 #endif
 #ifndef fLUT_W_TileAmount
-	#define fLUT_W_TileAmount 64
+    #define fLUT_W_TileAmount 64
 #endif
 #ifndef fLUT_A_TextureName
-	#define fLUT_A_TextureName "lut.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
+    #define fLUT_A_TextureName "lut.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_NFG_TextureName
-	#define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
+    #define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_RS_TextureName
-	#define fLUT_RS_TextureName "lut_ReShade.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
+    #define fLUT_RS_TextureName "lut_ReShade.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 #ifndef fLUT_SL_TextureName
-	#define fLUT_SL_TextureName "lut_Sleepy.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
+    #define fLUT_SL_TextureName "lut_Sleepy.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
 #endif
 #ifndef fLUT_FE_TextureName
-	#define fLUT_FE_TextureName "lut_Feli.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
+    #define fLUT_FE_TextureName "lut_Feli.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -59,20 +59,26 @@ uniform int fLUT_Selector <
   ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0Sleeps_Hungry\0Feli\0";
   ui_label = "The LUT file to use.";
   ui_tooltip = "Set this to whichever your preset requires!";
+  ui_bind = "LUTTexture_Source";
 > = 0;
 
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef LUTTexture_Source
+#define LUTTexture_Source 0
+#endif
+
 uniform float fLUT_AmountChroma <
-	ui_type = "slider";
-	ui_min = 0.00; ui_max = 1.00;
-	ui_label = "LUT chroma amount";
-	ui_tooltip = "Intensity of color/chroma change of the LUT.";
+    ui_type = "slider";
+    ui_min = 0.00; ui_max = 1.00;
+    ui_label = "LUT chroma amount";
+    ui_tooltip = "Intensity of color/chroma change of the LUT.";
 > = 1.00;
 
 uniform float fLUT_AmountLuma <
-	ui_type = "slider";
-	ui_min = 0.00; ui_max = 1.00;
-	ui_label = "LUT luma amount";
-	ui_tooltip = "Intensity of luma change of the LUT.";
+    ui_type = "slider";
+    ui_min = 0.00; ui_max = 1.00;
+    ui_label = "LUT luma amount";
+    ui_tooltip = "Intensity of luma change of the LUT.";
 > = 1.00;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -80,26 +86,39 @@ uniform float fLUT_AmountLuma <
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #include "ReShade.fxh"
-texture texLUT < source = fLUT_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
+
+#if   LUTTexture_Source == 0 // GShade/Angelite LUT
+#define _SOURCE_LUT_FILE fLUT_TextureName
+#define _SOURCE_LUT_SIZE fLUT_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#elif LUTTexture_Source == 1 // LUT from LUT - Warm.fx
+#define _SOURCE_LUT_FILE fLUT_W_TextureName
+#define _SOURCE_LUT_SIZE fLUT_W_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_W_TileAmount
+#elif LUTTexture_Source == 2 // MS Autumn LUT
+#define _SOURCE_LUT_FILE fLUT_A_TextureName
+#define _SOURCE_LUT_SIZE fLUT_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#elif LUTTexture_Source == 3 // ninjafada Gameplay LUT
+#define _SOURCE_LUT_FILE fLUT_NFG_TextureName
+#define _SOURCE_LUT_SIZE fLUT_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#elif LUTTexture_Source == 4 // Default ReShade 3-4 LUT
+#define _SOURCE_LUT_FILE fLUT_RS_TextureName
+#define _SOURCE_LUT_SIZE fLUT_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#elif LUTTexture_Source == 5 // Sleepy LUT
+#define _SOURCE_LUT_FILE fLUT_SL_TextureName
+#define _SOURCE_LUT_SIZE fLUT_W_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_W_TileAmount
+#elif LUTTexture_Source == 6 // Feli LUT
+#define _SOURCE_LUT_FILE fLUT_FE_TextureName
+#define _SOURCE_LUT_SIZE fLUT_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#endif
+
+texture texLUT < source = _SOURCE_LUT_FILE; > { Width = _SOURCE_LUT_SIZE * _SOURCE_LUT_AMOUNT; Height = _SOURCE_LUT_SIZE; Format = RGBA8; };
 sampler	SamplerLUT 	{ Texture = texLUT; };
-
-texture texLUTwarm < source = fLUT_W_TextureName; > { Width = fLUT_W_TileSizeXY*fLUT_W_TileAmount; Height = fLUT_W_TileSizeXY; Format = RGBA8; };
-sampler	SamplerLUTwarm 	{ Texture = texLUTwarm; };
-
-texture texLUTautumn < source = fLUT_A_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
-sampler	SamplerLUTautumn 	{ Texture = texLUTautumn; };
-
-texture texLUTNFG < source = fLUT_NFG_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
-sampler	SamplerLUTNFG 	{ Texture = texLUTNFG; };
-
-texture texLUTRS < source = fLUT_RS_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
-sampler	SamplerLUTRS 	{ Texture = texLUTRS; };
-
-texture texLUTSL < source = fLUT_SL_TextureName; > { Width = fLUT_W_TileSizeXY*fLUT_W_TileAmount; Height = fLUT_W_TileSizeXY; Format = RGBA8; };
-sampler	SamplerLUTSL 	{ Texture = texLUTSL; };
-
-texture texLUTFE < source = fLUT_FE_TextureName; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
-sampler	SamplerLUTFE 	{ Texture = texLUTFE; };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -107,102 +126,20 @@ sampler	SamplerLUTFE 	{ Texture = texLUTFE; };
 
 void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
 {
-  res = tex2D(ReShade::BackBuffer, texcoord.xy);
-  float2 texelsize;
-  float3 lutcoord;
-  float lerpfact;
-  float3 lutcolor;
+    res = tex2D(ReShade::BackBuffer, texcoord.xy);
 
-  switch (fLUT_Selector)
-  {
-    //GShade/Angelite LUT
-    default:
-      texelsize = 1.0 / fLUT_TileSizeXY;
-      texelsize.x /= fLUT_TileAmount;
+    float2 texelsize = 1.0 / _SOURCE_LUT_SIZE;
+    texelsize.x /= _SOURCE_LUT_AMOUNT;
 
-      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
+    float3 lutcoord = float3((res.xy * _SOURCE_LUT_SIZE - res.xy + 0.5) * texelsize.xy, res.z * _SOURCE_LUT_SIZE - res.z);
+    const float lerpfact = frac(lutcoord.z);
+    lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
 
-      lutcolor = lerp(tex2D(SamplerLUT, lutcoord.xy).xyz, tex2D(SamplerLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
+    const float3 lutcolor = lerp(tex2D(SamplerLUT, lutcoord.xy).xyz, tex2D(SamplerLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
 
-    //LUT from LUT - Warm.fx
-    case 1:
-      texelsize = 1.0 / fLUT_W_TileSizeXY;
-      texelsize.x /= fLUT_W_TileAmount;
-
-      lutcoord = float3((res.xy*fLUT_W_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_W_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-      lutcolor = lerp(tex2D(SamplerLUTwarm, lutcoord.xy).xyz, tex2D(SamplerLUTwarm, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
-
-    //MS Autumn LUT
-    case 2:
-      texelsize = 1.0 / fLUT_TileSizeXY;
-      texelsize.x /= fLUT_TileAmount;
-
-      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-      lutcolor = lerp(tex2D(SamplerLUTautumn, lutcoord.xy).xyz, tex2D(SamplerLUTautumn, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
-
-    //ninjafada Gameplay LUT
-    case 3:
-      texelsize = 1.0 / fLUT_TileSizeXY;
-      texelsize.x /= fLUT_TileAmount;
-
-      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-      lutcolor = lerp(tex2D(SamplerLUTNFG, lutcoord.xy).xyz, tex2D(SamplerLUTNFG, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
-  
-    //Default ReShade 3-4 LUT
-    case 4:
-      texelsize = 1.0 / fLUT_TileSizeXY;
-      texelsize.x /= fLUT_TileAmount;
-
-      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-      lutcolor = lerp(tex2D(SamplerLUTRS, lutcoord.xy).xyz, tex2D(SamplerLUTRS, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
-
-    //Sleepy LUT
-    case 5:
-      texelsize = 1.0 / fLUT_W_TileSizeXY;
-      texelsize.x /= fLUT_W_TileAmount;
-
-      lutcoord = float3((res.xy*fLUT_W_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_W_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-      lutcolor = lerp(tex2D(SamplerLUTSL, lutcoord.xy).xyz, tex2D(SamplerLUTSL, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
-
-    //Feli LUT
-    case 6:
-      texelsize = 1.0 / fLUT_TileSizeXY;
-      texelsize.x /= fLUT_TileAmount;
-
-      lutcoord = float3((res.xy*fLUT_TileSizeXY-res.xy+0.5)*texelsize.xy,res.z*fLUT_TileSizeXY-res.z);
-      lerpfact = frac(lutcoord.z);
-      lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
-
-      lutcolor = lerp(tex2D(SamplerLUTFE, lutcoord.xy).xyz, tex2D(SamplerLUTFE, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
-      break;
-  }
-
-  res.xyz = lerp(normalize(res.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-	          lerp(length(res.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-  res.w = 1.0;
+    res.xyz = lerp(normalize(res.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
+              lerp(length(res.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
+    res.w = 1.0;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -212,9 +149,9 @@ void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 
 technique LUT
 {
-	pass LUT_Apply
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = PS_LUT_Apply;
-	}
+    pass LUT_Apply
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_LUT_Apply;
+    }
 }
