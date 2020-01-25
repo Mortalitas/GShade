@@ -45,14 +45,20 @@
 
 #include "ReShade.fxh"
 
-#define TEXFORMAT RGBA8
+#define MULTISTAGEDEPTH_TEX_FORMAT RGBA8
 
 uniform int Tex_Select <
     ui_label = "Texture";
     ui_tooltip = "The image to use.";
     ui_type = "combo";
     ui_items = "Fire1.png\0Fire2.png\0Snow1.png\0Snow2.png\0Shatter1.png\0Lightrays1.png\0VignetteSharp.png\0VignetteSoft.png\0Metal1.jpg\0Ice1.jpg\0";
+    ui_bind = "MultiStageDepthTexture_Source";
 > = 0;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef MultiStageDepthTexture_Source
+#define MultiStageDepthTexture_Source 0
+#endif
 
 uniform float Stage_Opacity <
     ui_label = "Opacity";
@@ -64,105 +70,54 @@ uniform float Stage_Opacity <
 > = 1.0;
 
 uniform float Stage_depth <
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_label = "Depth";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    ui_label = "Depth";
 > = 0.97;
 
-texture Fire_one_texture <source="Fire1.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Fire_one_sampler { Texture = Fire_one_texture; };
+#if   MultiStageDepthTexture_Source == 0 // Fire1.png
+#define _SOURCE_MULTILUT_FILE "Fire1.png"
+#elif MultiStageDepthTexture_Source == 1 // Fire2.png
+#define _SOURCE_MULTILUT_FILE "Fire2.png"
+#elif MultiStageDepthTexture_Source == 2 // Snow1.png
+#define _SOURCE_MULTILUT_FILE "Snow1.png"
+#elif MultiStageDepthTexture_Source == 3 // Snow2.png
+#define _SOURCE_MULTILUT_FILE "Snow2.png"
+#elif MultiStageDepthTexture_Source == 4 // Shatter1.png
+#define _SOURCE_MULTILUT_FILE "Shatter1.png"
+#elif MultiStageDepthTexture_Source == 5 // Lightrays1.png
+#define _SOURCE_MULTILUT_FILE "Lightrays1.png"
+#elif MultiStageDepthTexture_Source == 6 // VignetteSharp.png
+#define _SOURCE_MULTILUT_FILE "VignetteSharp.png"
+#elif MultiStageDepthTexture_Source == 7 // VignetteSoft.png
+#define _SOURCE_MULTILUT_FILE "VignetteSoft.png"
+#elif MultiStageDepthTexture_Source == 8 // Metal1.jpg
+#define _SOURCE_MULTILUT_FILE "Metal1.jpg"
+#elif MultiStageDepthTexture_Source == 9 // Ice1.jpg
+#define _SOURCE_MULTILUT_FILE "Ice1.jpg"
+#endif
 
-texture Fire_two_texture <source="Fire2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Fire_two_sampler { Texture = Fire_two_texture; };
-
-texture Snow_one_texture <source="Snow1.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Snow_one_sampler { Texture = Snow_one_texture; };
-
-texture Snow_two_texture <source="Snow2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Snow_two_sampler { Texture = Snow_two_texture; };
-
-texture Shatter_one_texture <source="Shatter1.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Shatter_one_sampler { Texture = Shatter_one_texture; };
-
-texture Lightrays_one_texture <source="Lightrays1.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Lightrays_one_sampler { Texture = Lightrays_one_texture; };
-
-texture Vignette_sharp_texture <source="VignetteSharp.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Vignette_sharp_sampler { Texture = Vignette_sharp_texture; };
-
-texture Vignette_soft_texture <source="VignetteSoft.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Vignette_soft_sampler { Texture = Vignette_soft_texture; };
-
-texture Metal_one_texture <source="Metal1.jpg";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Metal_one_sampler { Texture = Metal_one_texture; };
-
-texture Ice_one_texture <source="Ice1.jpg";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler Ice_one_sampler { Texture = Ice_one_texture; };
-
+texture MultiStageDepth_texture <source = _SOURCE_MULTILUT_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format= MULTISTAGEDEPTH_TEX_FORMAT; };
+sampler MultiStageDepth_sampler { Texture = MultiStageDepth_texture; };
 
 void PS_StageDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
-	color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	const float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
+    color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    const float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
 
-	if ((Tex_Select == 0) && (depth < Stage_depth))
-	{
-		const float4 Fire_one_stage = tex2D(Fire_one_sampler, texcoord);
-		color = lerp(color, Fire_one_stage.rgb, Fire_one_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 1) && (depth < Stage_depth))
-	{
-		const float4 Fire_two_stage = tex2D(Fire_two_sampler, texcoord);
-		color = lerp(color, Fire_two_stage.rgb, Fire_two_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 2) && (depth < Stage_depth))
-	{
-		const float4 Snow_one_stage = tex2D(Snow_one_sampler, texcoord);
-		color = lerp(color, Snow_one_stage.rgb, Snow_one_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 3) && (depth < Stage_depth))	
-	{
-		const float4 Snow_two_stage = tex2D(Snow_two_sampler, texcoord);
-		color = lerp(color, Snow_two_stage.rgb, Snow_two_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 4) && (depth < Stage_depth))	
-	{
-		const float4 Shatter_one_stage = tex2D(Shatter_one_sampler, texcoord);
-		color = lerp(color, Shatter_one_stage.rgb, Shatter_one_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 5) && (depth < Stage_depth))	
-	{
-		const float4 Lightrays_one_stage = tex2D(Lightrays_one_sampler, texcoord);
-		color = lerp(color, Lightrays_one_stage.rgb, Lightrays_one_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 6) && (depth < Stage_depth))	
-	{
-		const float4 Vignette_sharp_stage = tex2D(Vignette_sharp_sampler, texcoord);
-		color = lerp(color, Vignette_sharp_stage.rgb, Vignette_sharp_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 7) && (depth < Stage_depth))	
-	{
-		const float4 Vignette_soft_stage = tex2D(Vignette_soft_sampler, texcoord);
-		color = lerp(color, Vignette_soft_stage.rgb, Vignette_soft_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 8) && (depth < Stage_depth))	
-	{
-		const float4 Metal_one_stage = tex2D(Metal_one_sampler, texcoord);
-		color = lerp(color, Metal_one_stage.rgb, Metal_one_stage.a * Stage_Opacity);
-	}
-	else if ((Tex_Select == 9) && (depth < Stage_depth))	
-	{
-		const float4 Ice_one_stage = tex2D(Ice_one_sampler, texcoord);
-		color = lerp(color, Ice_one_stage.rgb, Ice_one_stage.a * Stage_Opacity);
-	}
+    if (depth < Stage_depth)
+    {
+        const float4 Multi_stage = tex2D(MultiStageDepth_sampler, texcoord);
+        color = lerp(color, Multi_stage.rgb, Multi_stage.a * Stage_Opacity);
+    }
 }
 
 technique MultiStageDepth
 {
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = PS_StageDepth;
-	}
+    pass
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_StageDepth;
+    }
 }
