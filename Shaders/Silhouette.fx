@@ -43,12 +43,12 @@
 
 #define TEXFORMAT RGBA8
 
-#ifndef SilhouetteTexPapyrus2
-#define SilhouetteTexPapyrus2 "Papyrus2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#ifndef SilhouetteForegroundName
+#define SilhouetteForegroundName "Papyrus2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
-#ifndef SilhouetteTexPapyrus6
-#define SilhouetteTexPapyrus6 "Papyrus6.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#ifndef SilhouetteBackgroundName
+#define SilhouetteBackgroundName "Papyrus6.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 uniform bool SEnable_Foreground_Color <
@@ -77,7 +77,11 @@ uniform int SForeground_Tex_Select <
     ui_tooltip = "The image to use in the foreground.";
     ui_type = "combo";
     ui_items = "Papyrus2.png\0Papyrus6.png\0Metal1.jpg\0Ice1.jpg\0Silhouette1.png\0Silhouette2.png\0";
+    ui_bind = "SilhouetteTexture_Source";
 > = 0;
+#ifndef SilhouetteTexture_Source
+#define SilhouetteTexture_Source 0
+#endif
 
 uniform bool SEnable_Background_Color <
     ui_label = "Enable Background Color";
@@ -101,10 +105,10 @@ uniform float SBackground_Stage_Opacity <
 > = 1.0;
 
 uniform float SBackground_Stage_depth <
-	ui_type = "slider";
-	ui_min = 0.001;
-	ui_max = 1.0;
-	ui_label = "Background Depth";
+    ui_type = "slider";
+    ui_min = 0.001;
+    ui_max = 1.0;
+    ui_label = "Background Depth";
 > = 0.500;
 
 uniform int SBackground_Tex_Select <
@@ -112,110 +116,75 @@ uniform int SBackground_Tex_Select <
     ui_tooltip = "The image to use in the background.";
     ui_type = "combo";
     ui_items = "Papyrus2.png\0Papyrus6.png\0Metal1.jpg\0Ice1.jpg\0Silhouette1.png\0Silhouette2.png\0";
+    ui_bind = "SilhouetteTexture2_Source";
 > = 1;
+#ifndef SilhouetteTexture2_Source
+#define SilhouetteTexture2_Source 1
+#endif
 
-texture sPaper_two_texture <source=SilhouetteTexPapyrus2;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler sPaper_two_sampler { Texture = sPaper_two_texture; };
+#if   SilhouetteTexture_Source == 0 // Papyrus2.png
+#define _SOURCE_SILHOUETTE_FILE SilhouetteForegroundName
+#elif SilhouetteTexture_Source == 1 // Papyrus6.png
+#define _SOURCE_SILHOUETTE_FILE SilhouetteBackgroundName
+#elif SilhouetteTexture_Source == 2 // Metal1.jpg
+#define _SOURCE_SILHOUETTE_FILE "Metal1.jpg"
+#elif SilhouetteTexture_Source == 3 // Ice1.jpg
+#define _SOURCE_SILHOUETTE_FILE "Ice1.jpg"
+#elif SilhouetteTexture_Source == 4 // Silhouette1.png
+#define _SOURCE_SILHOUETTE_FILE "Silhouette1.png"
+#elif SilhouetteTexture_Source == 5 // Silhouette2.png
+#define _SOURCE_SILHOUETTE_FILE "Silhouette2.png"
+#endif
 
-texture sPaper_six_texture <source=SilhouetteTexPapyrus6;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler sPaper_six_sampler { Texture = sPaper_six_texture; };
+#if   SilhouetteTexture2_Source == 0 // Papyrus2.png
+#define _SOURCE_SILHOUETTE_FILE2 SilhouetteForegroundName
+#elif SilhouetteTexture2_Source == 1 // Papyrus6.png
+#define _SOURCE_SILHOUETTE_FILE2 SilhouetteBackgroundName
+#elif SilhouetteTexture2_Source == 2 // Metal1.jpg
+#define _SOURCE_SILHOUETTE_FILE2 "Metal1.jpg"
+#elif SilhouetteTexture2_Source == 3 // Ice1.jpg
+#define _SOURCE_SILHOUETTE_FILE2 "Ice1.jpg"
+#elif SilhouetteTexture2_Source == 4 // Silhouette1.png
+#define _SOURCE_SILHOUETTE_FILE2 "Silhouette1.png"
+#elif SilhouetteTexture2_Source == 5 // Silhouette2.png
+#define _SOURCE_SILHOUETTE_FILE2 "Silhouette2.png"
+#endif
 
-texture sMetal_one_texture <source="Metal1.jpg";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler sMetal_one_sampler { Texture = sMetal_one_texture; };
+texture Silhouette_Texture <source = _SOURCE_SILHOUETTE_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+sampler Silhouette_Sampler { Texture = Silhouette_Texture; };
 
-texture sIce_one_texture <source="Ice1.jpg";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler sIce_one_sampler { Texture = sIce_one_texture; };
-
-texture sSilhouette_one_texture <source="Silhouette1.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler sSilhouette_one_sampler { Texture = sSilhouette_one_texture; };
-
-texture sSilhouette_two_texture <source="Silhouette2.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
-sampler sSilhouette_two_sampler { Texture = sSilhouette_two_texture; };
+texture Silhouette2_Texture < source = _SOURCE_SILHOUETTE_FILE2; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = TEXFORMAT; };
+sampler Silhouette2_Sampler { Texture = Silhouette2_Texture; };
 
 void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
-  const float4 Paper_two_stage = tex2D(sPaper_two_sampler, texcoord);
-  const float4 Paper_six_stage = tex2D(sPaper_six_sampler, texcoord);
-  const float4 Metal_one_stage = tex2D(sMetal_one_sampler, texcoord);
-  const float4 Ice_one_stage = tex2D(sIce_one_sampler, texcoord);
-  const float4 Silhouette_one_stage = tex2D(sSilhouette_one_sampler, texcoord);
-  const float4 Silhouette_two_stage = tex2D(sSilhouette_two_sampler, texcoord);
+    const float4 Silhouette_Stage = tex2D(Silhouette_Sampler, texcoord);
+    color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-
-  const float depth = 1.0 - ReShade::GetLinearizedDepth(texcoord).r;
-
-  if (SEnable_Foreground_Color == true)
-  {
-    color = lerp(color, SForeground_Color.rgb * 0.00392, SForeground_Stage_Opacity);
-  }
-  else if (SForeground_Tex_Select == 0)
-  {
-    color = lerp(color, Paper_two_stage.rgb, Paper_two_stage.a * SForeground_Stage_Opacity);
-  }
-  else if (SForeground_Tex_Select == 1)
-  {
-    color = lerp(color, Paper_six_stage.rgb, Paper_six_stage.a * SForeground_Stage_Opacity);
-  }
-  else if (SForeground_Tex_Select == 2)
-  {
-    color = lerp(color, Metal_one_stage.rgb, Metal_one_stage.a * SForeground_Stage_Opacity);
-  }
-  else if (SForeground_Tex_Select == 3)
-  {
-    color = lerp(color, Ice_one_stage.rgb, Ice_one_stage.a * SForeground_Stage_Opacity);
-  }
-  else if (SForeground_Tex_Select == 4)
-  {
-    color = lerp(color, Silhouette_one_stage.rgb, Silhouette_one_stage.a * SForeground_Stage_Opacity);
-  }
-  else
-  {
-    color = lerp(color, Silhouette_two_stage.rgb, Silhouette_two_stage.a * SForeground_Stage_Opacity);
-  }
+    if (SEnable_Foreground_Color == true)
+    {
+        color = lerp(color, SForeground_Color.rgb * 0.00392, SForeground_Stage_Opacity);
+    }
+    else
+    {
+        color = lerp(color, Silhouette_Stage.rgb, Silhouette_Stage.a * SForeground_Stage_Opacity);
+    }
 }
 
 void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
-  const float4 Paper_two_stage = tex2D(sPaper_two_sampler, texcoord).rgba;
-  const float4 Paper_six_stage = tex2D(sPaper_six_sampler, texcoord).rgba;
-  const float4 Metal_one_stage = tex2D(sMetal_one_sampler, texcoord).rgba;
-  const float4 Ice_one_stage = tex2D(sIce_one_sampler, texcoord).rgba;
-  const float4 Silhouette_one_stage = tex2D(sSilhouette_one_sampler, texcoord).rgba;
-  const float4 Silhouette_two_stage = tex2D(sSilhouette_two_sampler, texcoord).rgba;
+    const float4 Silhouette2_Stage = tex2D(Silhouette2_Sampler, texcoord);
+    const float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
+    color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-  color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-
-  const float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
-
-  if ((SEnable_Background_Color == true) && (depth < SBackground_Stage_depth))
-  {
-    color = lerp(color, SBackground_Color.rgb * 0.00392, SBackground_Stage_Opacity);
-  }
-  else if ((SBackground_Tex_Select == 0) && (depth < SBackground_Stage_depth))	
-  {
-    color = lerp(color, Paper_two_stage.rgb, Paper_two_stage.a * SBackground_Stage_Opacity);
-  }
-  else if ((SBackground_Tex_Select == 1) && (depth < SBackground_Stage_depth))	
-  {
-    color = lerp(color, Paper_six_stage.rgb, Paper_six_stage.a * SBackground_Stage_Opacity);
-  }
-  else if ((SBackground_Tex_Select == 2) && (depth < SBackground_Stage_depth))	
-  {
-    color = lerp(color, Metal_one_stage.rgb, Metal_one_stage.a * SBackground_Stage_Opacity);
-  }
-  else if ((SBackground_Tex_Select == 3) && (depth < SBackground_Stage_depth))	
-  {
-    color = lerp(color, Ice_one_stage.rgb, Ice_one_stage.a * SBackground_Stage_Opacity);
-  }
-  else if ((SBackground_Tex_Select == 4) && (depth < SBackground_Stage_depth))	
-  {
-    color = lerp(color, Silhouette_one_stage.rgb, Silhouette_one_stage.a * SBackground_Stage_Opacity);
-  }
-  else if ((SBackground_Tex_Select == 5) && (depth < SBackground_Stage_depth))	
-  {
-    color = lerp(color, Silhouette_two_stage.rgb, Silhouette_two_stage.a * SBackground_Stage_Opacity);
-  }
+    if ((SEnable_Background_Color == true) && (depth < SBackground_Stage_depth))
+    {
+        color = lerp(color, SBackground_Color.rgb * 0.00392, SBackground_Stage_Opacity);
+    }
+    else if (depth < SBackground_Stage_depth)	
+    {
+        color = lerp(color, Silhouette2_Stage.rgb, Silhouette2_Stage.a * SBackground_Stage_Opacity);
+    }
 }
 
 technique Silhouette
