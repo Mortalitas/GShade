@@ -2,26 +2,29 @@
 | :: Description :: |
 '-------------------/
 
-	Layer (version 0.2)
+    Layer (version 0.3)
 
-	Author: CeeJay.dk
-	License: MIT
+    Author: CeeJay.dk
+    License: MIT
 
-	About:
-	Blends an image with the game.
+    About:
+    Blends an image with the game.
     The idea is to give users with graphics skills the ability to create effects using a layer just like in an image editor.
     Maybe they could use this to create custom CRT effects, custom vignettes, logos, custom hud elements, toggable help screens and crafting tables or something I haven't thought of.
 
-	Ideas for future improvement:
+    Ideas for future improvement:
     * More blend modes
     * Texture size, placement and tiling control
     * A default Layer texture with something useful in it
 
-	History:
-	(*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
-	
-	Version 0.2 by seri14 & Marot Satil
-    * Added the ability to scale and move the layer around on an x, y axis. 
+    History:
+    (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
+    
+    Version 0.2 by seri14 & Marot Satil
+    * Added the ability to scale and move the layer around on an x, y axis.
+
+    Version 0.3 by seri14
+    * Reduced the problem of layer color is blending with border color
 */
 
 #include "ReShade.fxh"
@@ -29,8 +32,20 @@
 #ifndef Layer5Tex
 #define Layer5Tex "Layer5.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
+#ifndef LAYER5_SIZE_X
+#define LAYER5_SIZE_X BUFFER_WIDTH
+#endif
+#ifndef LAYER5_SIZE_Y
+#define LAYER5_SIZE_Y BUFFER_HEIGHT
+#endif
 
-uniform float Layer_Five_Blend <
+#if LAYER5_SINGLECHANNEL
+#define TEXFORMAT R8
+#else
+#define TEXFORMAT RGBA8
+#endif
+
+uniform float Layer5_Blend <
     ui_label = "Opacity";
     ui_tooltip = "The transparency of the layer.";
     ui_type = "slider";
@@ -39,43 +54,45 @@ uniform float Layer_Five_Blend <
     ui_step = 0.001;
 > = 1.0;
 
-uniform float Layer_Five_Scale <
+uniform float Layer5_Scale <
   ui_type = "slider";
-	ui_label = "Scale";
-	ui_min = 0.01; ui_max = 5.0;
-	ui_step = 0.001;
+    ui_label = "Scale";
+    ui_min = 0.01; ui_max = 5.0;
+    ui_step = 0.001;
 > = 1.001;
 
-uniform float Layer_Five_PosX <
+uniform float Layer5_PosX <
   ui_type = "slider";
-	ui_label = "Position X";
-	ui_min = -2.0; ui_max = 2.0;
-	ui_step = 0.001;
+    ui_label = "Position X";
+    ui_min = -2.0; ui_max = 2.0;
+    ui_step = 0.001;
 > = 0.5;
 
-uniform float Layer_Five_PosY <
+uniform float Layer5_PosY <
   ui_type = "slider";
-	ui_label = "Position Y";
-	ui_min = -2.0; ui_max = 2.0;
-	ui_step = 0.001;
+    ui_label = "Position Y";
+    ui_min = -2.0; ui_max = 2.0;
+    ui_step = 0.001;
 > = 0.5;
 
-texture Layer_Five_texture <source=Layer5Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
-sampler Layer_Five_sampler { Texture = Layer_Five_texture; };
+texture Layer5_Texture <source=Layer5Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+sampler Layer5_Sampler { Texture = Layer5_Texture; };
 
-void PS_Layer_Five(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target) {
-    const float4 backbuffer = tex2D(ReShade::BackBuffer, texcoord);
-    const float2 Layer_Pos = float2(Layer_Five_PosX, Layer_Five_PosY);
-    const float2 scale = 1.0 / (float2(BUFFER_WIDTH, BUFFER_HEIGHT) / BUFFER_SCREEN_SIZE * Layer_Five_Scale);
-    const float4 Layer  = tex2D(Layer_Five_sampler, texcoord * scale + (1.0 - scale) * Layer_Pos);
-  	color = lerp(backbuffer, Layer, Layer.a * Layer_Five_Blend);
-  	color.a = backbuffer.a;
+#define _layer5Coord(_) (_ / (float2(LAYER5_SIZE_X, LAYER5_SIZE_Y) * Layer5_Scale / BUFFER_SCREEN_SIZE))
+
+void PS_Layer5(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) {
+	const float4 backColor = tex2D(ReShade::BackBuffer, texCoord);
+	const float2 pickCoord = _layer5Coord(texCoord) + float2(Layer5_PosX, Layer5_PosY) * (1.0 - _layer5Coord(1.0));
+
+	passColor = tex2D(Layer5_Sampler, pickCoord) * all(pickCoord == saturate(pickCoord));
+	passColor = lerp(backColor, passColor, passColor.a * Layer5_Blend);
+	passColor.a = backColor.a;
 }
 
 technique Layer5 {
     pass
     {
         VertexShader = PostProcessVS;
-        PixelShader  = PS_Layer_Five;
+        PixelShader  = PS_Layer5;
     }
 }
