@@ -1,7 +1,7 @@
 # GShade
 **GShade is a highly modified ReShade fork & package with a selectively network-unlocked depth buffer.** 
 
-Note that all shaders in this repository are strictly intended for use with the current GShade release. Not all shaders will work in ReShade 4+ due to the implementation of GShade's additional features. Please refer to individual file licenses for questions about distribution and modification.
+Note that all shaders in this repository are strictly intended for use with the current GShade release. Not all shaders will work under normal ReShade builds due to the implementation of GShade's additional features. Please refer to individual file licenses for questions about distribution and modification.
 
 **The latest release can always be found here, and use of the installer is highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
 
