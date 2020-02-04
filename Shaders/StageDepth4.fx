@@ -39,7 +39,7 @@
 #define TEXFORMAT RGBA8
 
 #ifndef Stage4Tex
-#define Stage4Tex "Stage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#define Stage4Tex "LayerStage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 #ifndef STAGE4_SIZE_X
 #define STAGE4_SIZE_X BUFFER_WIDTH

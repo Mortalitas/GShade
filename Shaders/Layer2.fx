@@ -34,7 +34,7 @@
 #include "ReShade.fxh"
 
 #ifndef Layer2Tex
-#define Layer2Tex "Layer2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#define Layer2Tex "LayerStage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 #ifndef LAYER2_SIZE_X
 #define LAYER2_SIZE_X BUFFER_WIDTH
