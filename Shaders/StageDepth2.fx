@@ -1,4 +1,4 @@
-// Made by Marot Satil for the GShade ReShade package!
+// Made by Marot Satil, seri14, & Uchu Suzume for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
 // Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
 // for the latest GShade package updates!
@@ -39,10 +39,16 @@
 #define TEXFORMAT RGBA8
 
 #ifndef Stage2Tex
-#define Stage2Tex "Stage2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#define Stage2Tex "Stage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#endif
+#ifndef STAGE2_SIZE_X
+#define STAGE2_SIZE_X BUFFER_WIDTH
+#endif
+#ifndef STAGE2_SIZE_Y
+#define STAGE2_SIZE_Y BUFFER_HEIGHT
 #endif
 
-uniform float Stage_Two_Opacity <
+uniform float Stage2_Opacity <
     ui_label = "Opacity";
     ui_tooltip = "Set the transparency of the image.";
     ui_type = "slider";
@@ -51,35 +57,119 @@ uniform float Stage_Two_Opacity <
     ui_step = 0.002;
 > = 1.0;
 
-uniform float Stage_Two_depth <
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_label = "Depth";
+uniform float Stage2_depth <
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    ui_label = "Depth";
 > = 0.97;
 
-texture Stage_Two_texture <source=Stage2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+uniform float Stage2_Scale <
+  ui_type = "slider";
+    ui_label = "Scale";
+    ui_min = 0.01; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.001;
 
-sampler Stage_Two_sampler { Texture = Stage_Two_texture; };
+uniform float Stage2_PosX <
+  ui_type = "slider";
+    ui_label = "Position X";
+    ui_min = -2.0; ui_max = 2.0;
+    ui_step = 0.001;
+> = 0.5;
 
-void PS_StageTwoDepth(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
+uniform float Stage2_PosY <
+  ui_type = "slider";
+    ui_label = "Position Y";
+    ui_min = -2.0; ui_max = 2.0;
+    ui_step = 0.001;
+> = 0.5;
+
+uniform int Stage2_SnapRotate <
+    ui_type = "combo";
+	ui_label = "Snap Rotation";
+    ui_items = "None\0"
+               "90 Degrees\0"
+               "-90 Degrees\0"
+               "180 Degrees\0"
+               "-180 Degrees\0";
+	ui_tooltip = "Snap rotation to a specific angle.";
+> = false;
+
+uniform float Stage2_Rotate <
+    ui_label = "Rotate";
+    ui_type = "slider";
+    ui_min = -180.0;
+    ui_max = 180.0;
+    ui_step = 0.01;
+> = 0;
+
+texture Stage2_texture <source=Stage2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+
+sampler Stage2_sampler { Texture = Stage2_texture; };
+
+void PS_StageDepth2(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, out float4 passColor : SV_Target)
 {
-  float4 stagetwo = tex2D(Stage_Two_sampler, texcoord).rgba;
-	color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+    passColor = tex2D(ReShade::BackBuffer, texCoord);
+    const float depth = 1 - ReShade::GetLinearizedDepth(texCoord).r;
 
-	float depthtwo = 1 - ReShade::GetLinearizedDepth(texcoord).r;
+    if (depth < Stage2_depth)
+    {
+        const float3 backColor = tex2D(ReShade::BackBuffer, texCoord).rgb;
+        const float3 pivot = float3(0.5, 0.5, 0.0);
+        const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT));
+        const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
+        const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
+        const float2 ScaleSize = (float2(STAGE2_SIZE_X, STAGE2_SIZE_Y) * Stage2_Scale / BUFFER_SCREEN_SIZE);
+        const float ScaleX =  ScaleSize.x * AspectX;
+        const float ScaleY =  ScaleSize.y * AspectY;
+        float Rotate = Stage2_Rotate * (3.1415926 / 180.0);
 
-	if( depthtwo < Stage_Two_depth )
-	{
-		color = lerp(color, stagetwo.rgb, stagetwo.a * Stage_Two_Opacity);
-	}
+        switch(Stage2_SnapRotate)
+        {
+            default:
+                break;
+            case 1:
+                Rotate = -90.0 * (3.1415926 / 180.0);
+                break;
+            case 2:
+                Rotate = 90.0 * (3.1415926 / 180.0);
+                break;
+            case 3:
+                Rotate = 0.0;
+                break;
+            case 4:
+                Rotate = 180.0 * (3.1415926 / 180.0);
+                break;
+        }
+
+        const float3x3 positionMatrix = float3x3 (
+            1, 0, 0,
+            0, 1, 0,
+            -Stage2_PosX, -Stage2_PosY, 1
+        );
+        const float3x3 scaleMatrix = float3x3 (
+            1/ScaleX, 0, 0,
+            0,  1/ScaleY, 0,
+            0, 0, 1
+        );
+        const float3x3 rotateMatrix = float3x3 (
+            (cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
+            (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+            0, 0, 1
+        );
+
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
+        passColor = tex2D(Stage2_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+        passColor = lerp(backColor, passColor.rgb, passColor.a * Stage2_Opacity);
+    }
 }
 
 technique StageDepth2
 {
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = PS_StageTwoDepth;
-	}
+    pass
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_StageDepth2;
+    }
 }
