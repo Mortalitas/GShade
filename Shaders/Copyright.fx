@@ -226,7 +226,7 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     
     const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
     const float4 backColor = tex2D(ReShade::BackBuffer, texCoord);
-    passColor = tex2D(Copyright_Sampler, float3(SumUV + pivot).rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+    passColor = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
     passColor = lerp(backColor, passColor, passColor.a * cLayer_Blend);
     passColor.a = backColor.a;
 }
