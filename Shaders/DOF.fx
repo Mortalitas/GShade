@@ -879,35 +879,26 @@ float4 tex2Dchroma(sampler2D tex, float2 sourcecoord, float2 offsetcoord)
 	const float3 sample3 = tex2Dlod(tex, float4(sourcecoord.xy + offsetcoord.xy * (1.0 + fADOF_ShapeChromaAmount), 0, 0)).xyz;
 	float4 res = (0.0, 0.0, 0.0, sample2.w);
 
-	if (iADOF_ShapeChromaMode == 0)
-	{	
-		res.xyz = float3(sample1.x, sample2.y, sample3.z);
-		return res;
-	}
-	else if (iADOF_ShapeChromaMode == 1)	
+	switch (iADOF_ShapeChromaMode)
 	{
-		res.xyz = float3(sample2.x, sample3.y, sample1.z);
-		return res;
-	}
-	else if (iADOF_ShapeChromaMode == 2)
-	{
-		res.xyz = float3(sample3.x, sample1.y, sample2.z);
-		return res;
-	}
-	else if (iADOF_ShapeChromaMode == 3)
-	{
-		res.xyz = float3(sample1.x, sample3.y, sample2.z);
-		return res;
-	}
-	else if (iADOF_ShapeChromaMode == 4)
-	{
-		res.xyz = float3(sample2.x, sample1.y, sample3.z);
-		return res;
-	}
-	else
-	{
-		res.xyz = float3(sample3.x, sample2.y, sample1.z);
-		return res;
+		case 0:
+			res.xyz = float3(sample1.x, sample2.y, sample3.z);
+			return res;
+		case 1:
+			res.xyz = float3(sample2.x, sample3.y, sample1.z);
+			return res;
+		case 2:
+			res.xyz = float3(sample3.x, sample1.y, sample2.z);
+			return res;
+		case 3:
+			res.xyz = float3(sample1.x, sample3.y, sample2.z);
+			return res;
+		case 4:
+			res.xyz = float3(sample2.x, sample1.y, sample3.z);
+			return res;
+		default:
+			res.xyz = float3(sample3.x, sample2.y, sample1.z);
+			return res;
 	}
 }
 
