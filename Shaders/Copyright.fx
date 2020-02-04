@@ -16,8 +16,8 @@
     Version 0.3
     * Added a number of copyright textures for Phantasty Star Online 2 created by Uchu Suzume.
 
-    Version 0.4
-    * Implemented seri14 DLL's preprocessor menu options to minimize loaded textures.
+    Version 0.4 by seri14 & Marot Satil
+    * Added support for the additional seri14 DLL preprocessor options to minimize loaded textures.
 
     Version 0.5 by Uchu Suzume & Marot Satil
     * Rotation added.
@@ -180,12 +180,11 @@ sampler Copyright_Sampler {
 
 #include "ReShade.fxh"
 
-void PS_cLayer(in float4 pos : SV_Position, float2 uv : TEXCOORD, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
-{
+void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) {
     const float3 pivot = float3(0.5, 0.5, 0.0);
     const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT));
     const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
-    const float3 mulUV = float3(uv.x, uv.y, 1);
+    const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
     const float2 ScaleSize = (float2(_SOURCE_COPYRIGHT_SIZE) / BUFFER_SCREEN_SIZE) * cLayer_Scale;
     const float ScaleX =  ScaleSize.x * AspectX;
     const float ScaleY =  ScaleSize.y * AspectY;
@@ -225,11 +224,11 @@ void PS_cLayer(in float4 pos : SV_Position, float2 uv : TEXCOORD, float2 texcoor
         0, 0, 1
     );
     
-    const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) + pivot * 0.1, rotateMatrix), scaleMatrix);
-    const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-    color = tex2D(Copyright_Sampler, SumUV + pivot);
-    color = lerp(back, color, color.a * cLayer_Blend);
-    color.a = back.a;
+    const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
+    const float4 backColor = tex2D(ReShade::BackBuffer, texCoord);
+    passColor = tex2D(Copyright_Sampler, float3(SumUV + pivot).rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+    passColor = lerp(backColor, passColor, passColor.a * cLayer_Blend);
+    passColor.a = backColor.a;
 }
 
 // -------------------------------------
