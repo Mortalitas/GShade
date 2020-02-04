@@ -106,7 +106,7 @@ uniform int Layer_SnapRotate <
 uniform float Layer_Rotate <
     ui_label = "Rotate";
     ui_type = "slider";
-    ui_min = 0.0;
+    ui_min = -180.0;
     ui_max = 180.0;
     ui_step = 0.01;
 > = 0;
