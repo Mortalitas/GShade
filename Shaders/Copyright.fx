@@ -2,9 +2,9 @@
 | :: Description :: |
 '-------------------/
 
-    Copyright based on Layer (version 0.3)
+    Copyright based on Layer (version 0.5)
 
-    Authors: CeeJay.dk, seri14, Marot Satil
+    Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume
     License: MIT
 
     History:
@@ -18,6 +18,9 @@
 
     Version 0.4
     * Implemented seri14 DLL's preprocessor menu options to minimize loaded textures.
+
+    Version 0.5
+    * Rotation added by Uchu Suzume and code cleaned up by Marot Satil.
 */
 
 #include "ReShade.fxh"
@@ -26,38 +29,24 @@ uniform int cLayer_Select <
     ui_label = "Layer Selection";
     ui_tooltip = "The image/texture you'd like to use.";
     ui_type = "combo";
-    ui_items= "FFXIV Horizontal\0"
-              "FFXIV Vertical\0"
-              "FFXIV Nalukai Horizontal\0"
-              "FFXIV Yomi Black Horizontal\0"
-              "FFXIV Yomi White Horizontal\0"
-              "PSO2 Horizontal\0"
-              "PSO2 Vertical\0"
-              "PSO2 with GShade Black Horizontal\0"
-              "PSO2 with GShade Black Vertical\0"
-              "PSO2 with GShade White Horizontal\0"
-              "PSO2 with GShade White Vertical\0"
-              "PSO2 with GShade Horizontal\0"
-              "PSO2 Eurostyle Left Horizontal\0"
-              "PSO2 Eurostyle Left Vertical\0"
-              "PSO2 Eurostyle Right Horizontal\0"
-              "PSO2 Eurostyle Right Vertical\0"
-              "PSO2 Futura Center Horizontal\0"
-              "PSO2 Futura Center Vertical\0"
-              "PSO2 Futura Tri Black Horizontal\0"
-              "PSO2 Futura Tri Black Vertical\0"
-              "PSO2 Futura Tri White Horizontal\0"
-              "PSO2 Futura Tri White Vertical\0"
-              "PSO2 Rockwell Nova Black Horizontal\0"
-              "PSO2 Rockwell Nova Black Vertical\0"
-              "PSO2 Rockwell Nova White Horizontal\0"
-              "PSO2 Rockwell Nova White Vertical\0"
-              "PSO2 Swis721 Square Black Horizontal\0"
-              "PSO2 Swis721 Square Black Vertical\0"
-              "PSO2 Swis721 Square White Horizontal\0"
-              "PSO2 Swis721 Square White Vertical\0"
-              "PSO2 Swiss911 Horizontal\0"
-              "PSO2 Swiss911 Vertical\0";
+    ui_items= "FFXIV\0"
+              "FFXIV Nalukai\0"
+              "FFXIV Yomi Black\0"
+              "FFXIV Yomi White\0"
+              "PSO2\0"
+              "PSO2 with GShade Black\0"
+              "PSO2 with GShade White\0"
+              "PSO2 with GShade\0"
+              "PSO2 Eurostyle Left\0"
+              "PSO2 Eurostyle Right\0"
+              "PSO2 Futura Center\0"
+              "PSO2 Futura Tri Black\0"
+              "PSO2 Futura Tri White\0"
+              "PSO2 Rockwell Nova Black\0"
+              "PSO2 Rockwell Nova White\0"
+              "PSO2 Swis721 Square Black\0"
+              "PSO2 Swis721 Square White\0"
+              "PSO2 Swiss911\0";
     // Bind to the effect-scoped preprocessor definitions
     ui_bind = "CopyrightTexture_Source";
 > = 0;
@@ -79,8 +68,8 @@ uniform float cLayer_Blend <
 uniform float cLayer_Scale <
     ui_type = "slider";
     ui_label = "Scale";
-      ui_min = 0.01; ui_max = 3.0;
-      ui_step = 0.001;
+    ui_min = 0.01; ui_max = 3.0;
+    ui_step = 0.001;
 > = 1.001;
 
 uniform float cLayer_PosX <
@@ -97,106 +86,83 @@ uniform float cLayer_PosY <
     ui_step = 0.001;
 > = 0.5;
 
-#if   CopyrightTexture_Source == 0 // FFXIV Horizontal Vanilla
-#define _SOURCE_FILE "Copyright4kH.png"
-#define _SOURCE_SIZE 411.0, 22.0
-#elif CopyrightTexture_Source == 1 // FFXIV Vertical Vanilla
-#define _SOURCE_FILE "Copyright4kV.png"
-#define _SOURCE_SIZE 22.0, 412.0
-#elif CopyrightTexture_Source == 2 // FFXIV Nalukai Horizontal
-#define _SOURCE_FILE "CopyrightF4kH.png"
-#define _SOURCE_SIZE 1162.0, 135.0
-#elif CopyrightTexture_Source == 3 // FFXIV Yomi Black Horizontal
-#define _SOURCE_FILE "CopyrightYBlH.png"
-#define _SOURCE_SIZE 1162.0, 135.0
-#elif CopyrightTexture_Source == 4 // FFXIV Yomi White Horizontal
-#define _SOURCE_FILE "CopyrightYWhH.png"
-#define _SOURCE_SIZE 1162.0, 135.0
-#elif CopyrightTexture_Source == 5 // PSO2 Horizontal
-#define _SOURCE_FILE "copyright_pso2.png"
-#define _SOURCE_SIZE 435.0, 31.0
-#elif CopyrightTexture_Source == 6 // PSO2 Vertical
-#define _SOURCE_FILE "copyright_pso2_v.png"
-#define _SOURCE_SIZE 31.0, 435.0
-#elif CopyrightTexture_Source == 7 // PSO2 with GShade Black Horizontal
-#define _SOURCE_FILE "copyright_pso2_by_gshade.png"
-#define _SOURCE_SIZE 1280.0, 66.0
-#elif CopyrightTexture_Source == 8 // PSO2 with GShade Black Vertical
-#define _SOURCE_FILE "copyright_pso2_by_gshade_v.png"
-#define _SOURCE_SIZE 66.0, 1280.0
-#elif CopyrightTexture_Source == 9 // PSO2 with GShade White Horizontal
-#define _SOURCE_FILE "copyright_pso2_by_gshade_w.png"
-#define _SOURCE_SIZE 1280.0, 66.0
-#elif CopyrightTexture_Source == 10 // PSO2 with GShade White Vertical
-#define _SOURCE_FILE "copyright_pso2_by_gshade_w_v.png"
-#define _SOURCE_SIZE 66.0, 1280.0
-#elif CopyrightTexture_Source == 11 // PSO2 with GShade
-#define _SOURCE_FILE "copyright_pso2_by_GShade_r.png"
-#define _SOURCE_SIZE 300.0, 128.0
-#elif CopyrightTexture_Source == 12 // PSO2 Eurostyle Left Horizontal
-#define _SOURCE_FILE "copyright_pso2_Eurostyle_left.png"
-#define _SOURCE_SIZE 800.0, 183.0
-#elif CopyrightTexture_Source == 13 // PSO2 Eurostyle Left Vertical
-#define _SOURCE_FILE "copyright_pso2_Eurostyle_left_v.png"
-#define _SOURCE_SIZE 183.0, 800.0
-#elif CopyrightTexture_Source == 14 // PSO2 Eurostyle Right Horizontal
-#define _SOURCE_FILE "copyright_pso2_Eurostyle_right.png"
-#define _SOURCE_SIZE 800.0, 183.0
-#elif CopyrightTexture_Source == 15 // PSO2 Eurostyle Right Vertical
-#define _SOURCE_FILE "copyright_pso2_Eurostyle_right_v.png"
-#define _SOURCE_SIZE 183.0, 800.0
-#elif CopyrightTexture_Source == 16 // PSO2 Futura Center Horizontal
-#define _SOURCE_FILE "copyright_pso2_futura_center.png"
-#define _SOURCE_SIZE 535.0, 134.0
-#elif CopyrightTexture_Source == 17 // PSO2 Futura Center Vertical
-#define _SOURCE_FILE "copyright_pso2_futura_center_v.png"
-#define _SOURCE_SIZE 134.0, 535.0
-#elif CopyrightTexture_Source == 18 // PSO2 Futura Tri Black Horizontal
-#define _SOURCE_FILE "copyright_pso2_futura_tri_b.png"
-#define _SOURCE_SIZE 319.0, 432.0
-#elif CopyrightTexture_Source == 19 // PSO2 Futura Tri Black Vertical
-#define _SOURCE_FILE "copyright_pso2_futura_tri_b_v.png"
-#define _SOURCE_SIZE 432.0, 319.0
-#elif CopyrightTexture_Source == 20 // PSO2 Futura Tri White Horizontal
-#define _SOURCE_FILE "copyright_pso2_futura_tri_w.png"
-#define _SOURCE_SIZE 319.0, 432.0
-#elif CopyrightTexture_Source == 21 // PSO2 Futura Tri White Vertical
-#define _SOURCE_FILE "copyright_pso2_futura_tri_w_v.png"
-#define _SOURCE_SIZE 432.0, 319.0
-#elif CopyrightTexture_Source == 22 // PSO2 Rockwell Nova Black Horizontal
-#define _SOURCE_FILE "copyright_pso2_Rockwell_nova_b.png"
-#define _SOURCE_SIZE 471.0, 122.0
-#elif CopyrightTexture_Source == 23 // PSO2 Rockwell Nova Black Vertical
-#define _SOURCE_FILE "copyright_pso2_Rockwell_nova_b_v.png"
-#define _SOURCE_SIZE 122.0, 471.0
-#elif CopyrightTexture_Source == 24 // PSO2 Rockwell Nova White Horizontal
-#define _SOURCE_FILE "copyright_pso2_Rockwell_nova_w.png"
-#define _SOURCE_SIZE 471.0, 122.0
-#elif CopyrightTexture_Source == 25 // PSO2 Rockwell Nova White Vertical
-#define _SOURCE_FILE "copyright_pso2_Rockwell_nova_w_v.png"
-#define _SOURCE_SIZE 122.0, 471.0
-#elif CopyrightTexture_Source == 26 // PSO2 Swis721 Square Black Horizontal
-#define _SOURCE_FILE "copyright_pso2_Swis721_square_b.png"
-#define _SOURCE_SIZE 261.0, 285.0
-#elif CopyrightTexture_Source == 27 // PSO2 Swis721 Square Black Vertical
-#define _SOURCE_FILE "copyright_pso2_Swis721_square_b_v.png"
-#define _SOURCE_SIZE 285.0, 261.0
-#elif CopyrightTexture_Source == 28 // PSO2 Swis721 Square White Horizontal
-#define _SOURCE_FILE "copyright_pso2_Swis721_square_w.png"
-#define _SOURCE_SIZE 261.0, 285.0
-#elif CopyrightTexture_Source == 29 // PSO2 Swis721 Square White Vertical
-#define _SOURCE_FILE "copyright_pso2_Swis721_square_w_v.png"
-#define _SOURCE_SIZE 285.0, 261.0
-#elif CopyrightTexture_Source == 30 // PSO2 Swiss911 Horizontal
-#define _SOURCE_FILE "copyright_pso2_Swiss911_UCm_BT_Cn.png"
-#define _SOURCE_SIZE 540.0, 54.0
-#elif CopyrightTexture_Source == 31 // PSO2 Swiss911 Vertical
-#define _SOURCE_FILE "copyright_pso2_Swiss911_UCm_BT_Cn_v.png"
-#define _SOURCE_SIZE 54.0, 540.0
+uniform int cLayer_SnapRotate <
+    ui_type = "combo";
+	ui_label = "Snap Rotation";
+    ui_items = "None\0"
+               "90 Degrees\0"
+               "-90 Degrees\0"
+               "180 Degrees\0"
+               "-180 Degrees\0";
+	ui_tooltip = "Snap rotation to a specific angle.";
+> = false;
+
+uniform float cLayer_Rotate <
+    ui_label = "Rotate";
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 180.0;
+    ui_step = 0.01;
+> = 0;
+
+#if   CopyrightTexture_Source == 0 // FFXIV Vanilla
+#define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
+#define _SOURCE_COPYRIGHT_SIZE 411.0, 22.0
+#elif CopyrightTexture_Source == 1 // FFXIV Nalukai
+#define _SOURCE_COPYRIGHT_FILE "CopyrightF4kH.png"
+#define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
+#elif CopyrightTexture_Source == 2 // FFXIV Yomi Black
+#define _SOURCE_COPYRIGHT_FILE "CopyrightYBlH.png"
+#define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
+#elif CopyrightTexture_Source == 3 // FFXIV Yomi White
+#define _SOURCE_COPYRIGHT_FILE "CopyrightYWhH.png"
+#define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
+#elif CopyrightTexture_Source == 4 // PSO2
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
+#define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
+#elif CopyrightTexture_Source == 5 // PSO2 with GShade Black
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_by_gshade.png"
+#define _SOURCE_COPYRIGHT_SIZE 1280.0, 66.0
+#elif CopyrightTexture_Source == 6 // PSO2 with GShade White
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_by_gshade_w.png"
+#define _SOURCE_COPYRIGHT_SIZE 1280.0, 66.0
+#elif CopyrightTexture_Source == 7 // PSO2 with GShade
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_by_GShade_r.png"
+#define _SOURCE_COPYRIGHT_SIZE 300.0, 128.0
+#elif CopyrightTexture_Source == 8 // PSO2 Eurostyle Left
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Eurostyle_left.png"
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 183.0
+#elif CopyrightTexture_Source == 9 // PSO2 Eurostyle Right
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Eurostyle_right.png"
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 183.0
+#elif CopyrightTexture_Source == 10 // PSO2 Futura Center
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_futura_center.png"
+#define _SOURCE_COPYRIGHT_SIZE 535.0, 134.0
+#elif CopyrightTexture_Source == 11 // PSO2 Futura Tri Black
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_futura_tri_b.png"
+#define _SOURCE_COPYRIGHT_SIZE 319.0, 432.0
+#elif CopyrightTexture_Source == 12 // PSO2 Futura Tri White
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_futura_tri_w.png"
+#define _SOURCE_COPYRIGHT_SIZE 319.0, 432.0
+#elif CopyrightTexture_Source == 13 // PSO2 Rockwell Nova Black
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Rockwell_nova_b.png"
+#define _SOURCE_COPYRIGHT_SIZE 471.0, 122.0
+#elif CopyrightTexture_Source == 14 // PSO2 Rockwell Nova White
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Rockwell_nova_w.png"
+#define _SOURCE_COPYRIGHT_SIZE 471.0, 122.0
+#elif CopyrightTexture_Source == 15 // PSO2 Swis721 Square Black
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Swis721_square_b.png"
+#define _SOURCE_COPYRIGHT_SIZE 261.0, 285.0
+#elif CopyrightTexture_Source == 16 // PSO2 Swis721 Square White
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Swis721_square_w.png"
+#define _SOURCE_COPYRIGHT_SIZE 261.0, 285.0
+#elif CopyrightTexture_Source == 17 // PSO2 Swiss911
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_Swiss911_UCm_BT_Cn.png"
+#define _SOURCE_COPYRIGHT_SIZE 540.0, 54.0
 #endif
 
 texture Copyright_Texture <
-    source = _SOURCE_FILE;
+    source = _SOURCE_COPYRIGHT_FILE;
 > {
     Width = BUFFER_WIDTH;
     Height = BUFFER_HEIGHT;
@@ -204,18 +170,64 @@ texture Copyright_Texture <
 };
 sampler CopyrightSampler { 
     Texture = Copyright_Texture;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
 };
 
 // -------------------------------------
 // Entrypoints
 // -------------------------------------
 
-#define scale(_) (_ / (float2(_SOURCE_SIZE) / BUFFER_SCREEN_SIZE * cLayer_Scale))
+#include "ReShade.fxh"
 
-void PS_cLayer(in float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
+void PS_cLayer(in float4 pos : SV_Position, float2 uv : TEXCOORD, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
+    const float3 pivot = float3(0.5, 0.5, 0.0);
+    const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT));
+    const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
+    const float3 mulUV = float3(uv.x, uv.y, 1);
+    const float2 ScaleSize = (float2(_SOURCE_COPYRIGHT_SIZE) / BUFFER_SCREEN_SIZE) * cLayer_Scale;
+    const float ScaleX =  ScaleSize.x * AspectX;
+    const float ScaleY =  ScaleSize.y * AspectY;
+    float Rotate = cLayer_Rotate * (3.1415926 / 180.0);
+
+    switch(cLayer_SnapRotate)
+    {
+        default:
+            break;
+        case 1:
+            Rotate = -90.0 * (3.1415926 / 180.0);
+            break;
+        case 2:
+            Rotate = 90.0 * (3.1415926 / 180.0);
+            break;
+        case 3:
+            Rotate = 0.0;
+            break;
+        case 4:
+            Rotate = 180.0 * (3.1415926 / 180.0);
+            break;
+    }
+
+    const float3x3 positionMatrix = float3x3 (
+        1, 0, 0,
+        0, 1, 0,
+        -cLayer_PosX, -cLayer_PosY, 1
+    );
+    const float3x3 scaleMatrix = float3x3 (
+        1/ScaleX, 0, 0,
+        0,  1/ScaleY, 0,
+        0, 0, 1
+    );
+    const float3x3 rotateMatrix = float3x3 (
+       (cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
+        (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+        0, 0, 1
+    );
+    
+    const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) + pivot * 0.1, rotateMatrix), scaleMatrix);
     const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-    color = tex2D(CopyrightSampler, scale(texcoord) + (1.0 - scale(1.0)) * float2(cLayer_PosX, cLayer_PosY));
+    color = tex2D(CopyrightSampler, SumUV + pivot);
     color = lerp(back, color, color.a * cLayer_Blend);
     color.a = back.a;
 }
