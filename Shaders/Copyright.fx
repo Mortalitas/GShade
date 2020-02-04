@@ -19,8 +19,8 @@
     Version 0.4
     * Implemented seri14 DLL's preprocessor menu options to minimize loaded textures.
 
-    Version 0.5
-    * Rotation added by Uchu Suzume and code cleaned up by Marot Satil.
+    Version 0.5 by Uchu Suzume & Marot Satil
+    * Rotation added.
 */
 
 #include "ReShade.fxh"
@@ -168,7 +168,7 @@ texture Copyright_Texture <
     Height = BUFFER_HEIGHT;
     Format = RGBA8;
 };
-sampler CopyrightSampler { 
+sampler Copyright_Sampler { 
     Texture = Copyright_Texture;
     AddressU = CLAMP;
     AddressV = CLAMP;
@@ -227,7 +227,7 @@ void PS_cLayer(in float4 pos : SV_Position, float2 uv : TEXCOORD, float2 texcoor
     
     const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) + pivot * 0.1, rotateMatrix), scaleMatrix);
     const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-    color = tex2D(CopyrightSampler, SumUV + pivot);
+    color = tex2D(Copyright_Sampler, SumUV + pivot);
     color = lerp(back, color, color.a * cLayer_Blend);
     color.a = back.a;
 }
