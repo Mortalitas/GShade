@@ -126,8 +126,14 @@ uniform float fLUT_AmountLuma <
 uniform bool fLUT_MultiLUTPass2 <
     ui_category = "Pass 2";
     ui_label = "Enable Pass 2";
+    ui_bind = "MultiLUTTexture2";
 > = 0;
 
+#ifndef MultiLUTTexture2
+#define MultiLUTTexture2 0
+#endif
+
+#if MultiLUTTexture2
 uniform int fLUT_MultiLUTSelector2 <
     ui_category = "Pass 2";
     ui_type = "combo";
@@ -173,12 +179,19 @@ uniform float fLUT_AmountLuma2 <
     ui_label = "LUT Luma Amount";
     ui_tooltip = "Intensity of luma change of the LUT.";
 > = 1.00;
+#endif
 
 uniform bool fLUT_MultiLUTPass3 <
     ui_category = "Pass 3";
     ui_label = "Enable Pass 3";
+    ui_bind = "MultiLUTTexture3";
 > = 0;
 
+#ifndef MultiLUTTexture3
+#define MultiLUTTexture3 0
+#endif
+
+#if MultiLUTTexture3
 uniform int fLUT_MultiLUTSelector3 <
     ui_category = "Pass 3";
     ui_type = "combo";
@@ -224,6 +237,7 @@ uniform float fLUT_AmountLuma3 <
     ui_label = "LUT Luma Amount";
     ui_tooltip = "Intensity of luma change of the LUT.";
 > = 1.00;
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -330,11 +344,15 @@ uniform float fLUT_AmountLuma3 <
 texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT; Format = RGBA8; };
 sampler SamplerMultiLUT { Texture = texMultiLUT; };
 
+#if MultiLUTTexture2
 texture texMultiLUT2 < source = _SOURCE_MULTILUT_FILE2; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT2; Format = RGBA8; };
 sampler SamplerMultiLUT2{ Texture = texMultiLUT2; };
+#endif
 
+#if MultiLUTTexture3
 texture texMultiLUT3 < source = _SOURCE_MULTILUT_FILE3; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT3; Format = RGBA8; };
 sampler SamplerMultiLUT3{ Texture = texMultiLUT3; };
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -354,6 +372,7 @@ float4 apply(in const float4 color, in const int tex, in const float lut)
     return lutcolor;
 }
 
+#if MultiLUTTexture2
 float4 apply2(in const float4 color, in const int tex, in const float lut)
 {
     const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
@@ -367,7 +386,9 @@ float4 apply2(in const float4 color, in const int tex, in const float lut)
     lutcolor.a = color.a;
     return lutcolor;
 }
+#endif
 
+#if MultiLUTTexture3
 float4 apply3(in const float4 color, in const int tex, in const float lut)
 {
     const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
@@ -381,6 +402,7 @@ float4 apply3(in const float4 color, in const int tex, in const float lut)
     lutcolor.a = color.a;
     return lutcolor;
 }
+#endif
 
 void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target)
 {
@@ -399,27 +421,25 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 //  Pass 2
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    if (fLUT_MultiLUTPass2)
-    {
-        res = saturate(res);
-        lutcolor = lerp(res, apply2(res, fLUT_MultiLUTSelector2, fLUT_LutSelector2), fLUT_Intensity2);
+#if MultiLUTTexture2
+    res = saturate(res);
+    lutcolor = lerp(res, apply2(res, fLUT_MultiLUTSelector2, fLUT_LutSelector2), fLUT_Intensity2);
 
-        res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma2)
-            * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma2);
-    }
+    res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma2)
+        * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma2);
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  Pass 3
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    if (fLUT_MultiLUTPass3)
-    {
-        res = saturate(res);
-        lutcolor = lerp(res, apply3(res, fLUT_MultiLUTSelector3, fLUT_LutSelector3), fLUT_Intensity3);
+#if MultiLUTTexture3
+    res = saturate(res);
+    lutcolor = lerp(res, apply3(res, fLUT_MultiLUTSelector3, fLUT_LutSelector3), fLUT_Intensity3);
 
-        res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma3)
-            * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma3);
-    }
+    res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma3)
+        * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma3);
+#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
