@@ -2,18 +2,15 @@
 | :: Description :: |
 '-------------------/
 
-    Layer (version 0.5)
+    Layer (version 0.6)
 
-    Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume
+    Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume, prod80, originalnicodr
     License: MIT
 
     About:
     Blends an image with the game.
     The idea is to give users with graphics skills the ability to create effects using a layer just like in an image editor.
     Maybe they could use this to create custom CRT effects, custom vignettes, logos, custom hud elements, toggable help screens and crafting tables or something I haven't thought of.
-
-    Ideas for future improvement:
-    * More blend modes
 
     History:
     (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
@@ -29,6 +26,9 @@
 
     Version 0.5 by Uchu Suzume & Marot Satil
     * Rotation added.
+
+    Version 0.6 by Uchu Suzume & Marot Satil
+    * Added multiple blending modes thanks to the work of Uchu Suzume, prod80, and originalnicodr.
 */
 
 #include "ReShade.fxh"
@@ -49,9 +49,41 @@
 #define TEXFORMAT RGBA8
 #endif
 
+uniform int Layer3_BlendMode <
+    ui_type = "combo";
+    ui_label = "Blending Mode";
+    ui_tooltip = "Select the blending mode applied to the layer.";
+    ui_items = "Normal\0"
+               "Multiply\0"
+               "Screen\0"
+               "Overlay\0"
+               "Darken\0"
+               "Lighten\0"
+               "Color Dodge\0"
+               "Color Burn\0"
+               "Hard Light\0"
+               "Soft Light\0"
+               "Difference\0"
+               "Exclusion\0"
+               "Hue\0"
+               "Saturation\0"
+               "Color\0"
+               "Luminosity\0"
+               "Linear Burn\0"
+               "Linear Dodge\0"
+               "Vivid Light\0"
+               "Linear Light\0"
+               "Pin Light\0"
+               "Hard Mix\0"
+               "Reflect\0"
+               "Glow\0"
+               "Grain Merge\0"
+               "Grain Extract\0";
+> = 0;
+
 uniform float Layer3_Blend <
-    ui_label = "Opacity";
-    ui_tooltip = "The transparency of the layer.";
+    ui_label = "Blending Amount";
+    ui_tooltip = "The amount of blending applied to the layer.";
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
@@ -81,13 +113,13 @@ uniform float Layer3_PosY <
 
 uniform int Layer3_SnapRotate <
     ui_type = "combo";
-	ui_label = "Snap Rotation";
+    ui_label = "Snap Rotation";
     ui_items = "None\0"
                "90 Degrees\0"
                "-90 Degrees\0"
                "180 Degrees\0"
                "-180 Degrees\0";
-	ui_tooltip = "Snap rotation to a specific angle.";
+    ui_tooltip = "Snap rotation to a specific angle.";
 > = false;
 
 uniform float Layer3_Rotate <
@@ -110,6 +142,7 @@ sampler Layer3_Sampler {
 // -------------------------------------
 
 #include "ReShade.fxh"
+#include "Blending.fxh"
 
 void PS_Layer3(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) {
     const float3 pivot = float3(0.5, 0.5, 0.0);
@@ -158,7 +191,115 @@ void PS_Layer3(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
     const float4 backColor = tex2D(ReShade::BackBuffer, texCoord);
     passColor = tex2D(Layer3_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
-    passColor = lerp(backColor, passColor, passColor.a * Layer3_Blend);
+
+    switch (Layer3_BlendMode)
+    {
+        // Normal
+        default:
+            passColor = lerp(backColor.rgb, passColor.rgb, passColor.a * Layer3_Blend);
+            break;
+        // Multiply
+        case 1:
+            passColor = lerp(backColor.rgb, Multiply(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Screen
+        case 2:
+            passColor = lerp(backColor.rgb, Screen(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Overlay
+        case 3:
+            passColor = lerp(backColor.rgb, Overlay(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Darken
+        case 4:
+            passColor = lerp(backColor.rgb, Darken(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Lighten
+        case 5:
+            passColor = lerp(backColor.rgb, Lighten(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // ColorDodge
+        case 6:
+            passColor = lerp(backColor.rgb, ColorDodge(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // ColorBurn
+        case 7:
+            passColor = lerp(backColor.rgb, ColorBurn(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // HardLight
+        case 8:
+            passColor = lerp(backColor.rgb, HardLight(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // SoftLight
+        case 9:
+            passColor = lerp(backColor.rgb, SoftLight(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Difference
+        case 10:
+            passColor = lerp(backColor.rgb, Difference(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Exclusion
+        case 11:
+            passColor = lerp(backColor.rgb, Exclusion(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Hue
+        case 12:
+            passColor = lerp(backColor.rgb, Hue(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Saturation
+        case 13:
+            passColor = lerp(backColor.rgb, Saturation(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Color
+        case 14:
+            passColor = lerp(backColor.rgb, ColorB(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Luminosity
+        case 15:
+            passColor = lerp(backColor.rgb, Luminosity(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Linear Dodge
+        case 16:
+            passColor = lerp(backColor.rgb, LinearDodge(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Linear Burn
+        case 17:
+            passColor = lerp(backColor.rgb, LinearBurn(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Vivid Light
+        case 18:
+            passColor = lerp(backColor.rgb, VividLight(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Linear Light
+        case 19:
+            passColor = lerp(backColor.rgb, LinearLight(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Pin Light
+        case 20:
+            passColor = lerp(backColor.rgb, PinLight(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Hard Mix
+        case 21:
+            passColor = lerp(backColor.rgb, HardMix(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Reflect
+        case 22:
+            passColor = lerp(backColor.rgb, Reflect(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Glow
+        case 23:
+            passColor = lerp(backColor.rgb, Glow(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Grain Merge
+        case 24:
+            passColor = lerp(backColor.rgb, GrainMerge(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+        // Grain Extract
+        case 25:
+            passColor = lerp(backColor.rgb, GrainExtract(backColor.rgb, passColor.rgb), passColor.a * Layer3_Blend);
+            break;
+    }
+
     passColor.a = backColor.a;
 }
 
