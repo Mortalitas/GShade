@@ -76,7 +76,7 @@ sampler FXAATexture
 // Pixel shaders
 
 #if !FXAA_GREEN_AS_LUMA
-float4 FXAALumaPass(float4 vpos : SV_Position, noperspective float2 texcoord : TEXCOORD) : SV_Target
+float4 FXAALumaPass(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
 	color.a = sqrt(dot(color.rgb * color.rgb, float3(0.299, 0.587, 0.114)));
@@ -84,7 +84,7 @@ float4 FXAALumaPass(float4 vpos : SV_Position, noperspective float2 texcoord : T
 }
 #endif
 
-float4 FXAAPixelShader(float4 vpos : SV_Position, noperspective float2 texcoord : TEXCOORD) : SV_Target
+float4 FXAAPixelShader(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	return FxaaPixelShader(
 		texcoord, // pos
