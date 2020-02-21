@@ -35,6 +35,7 @@
 
 
 #include "ReShade.fxh"
+#include "Blending.fxh"
 
 #define TEXFORMAT RGBA8
 
@@ -48,9 +49,41 @@
 #define STAGE3_SIZE_Y BUFFER_HEIGHT
 #endif
 
+uniform int Stage3_BlendMode <
+    ui_type = "combo";
+    ui_label = "Blending Mode";
+    ui_tooltip = "Select the blending mode applied to the layer.";
+    ui_items = "Normal\0"
+               "Multiply\0"
+               "Screen\0"
+               "Overlay\0"
+               "Darken\0"
+               "Lighten\0"
+               "Color Dodge\0"
+               "Color Burn\0"
+               "Hard Light\0"
+               "Soft Light\0"
+               "Difference\0"
+               "Exclusion\0"
+               "Hue\0"
+               "Saturation\0"
+               "Color\0"
+               "Luminosity\0"
+               "Linear Burn\0"
+               "Linear Dodge\0"
+               "Vivid Light\0"
+               "Linear Light\0"
+               "Pin Light\0"
+               "Hard Mix\0"
+               "Reflect\0"
+               "Glow\0"
+               "Grain Merge\0"
+               "Grain Extract\0";
+> = 0;
+
 uniform float Stage3_Opacity <
-    ui_label = "Opacity";
-    ui_tooltip = "Set the transparency of the image.";
+    ui_label = "Blending";
+    ui_tooltip = "The amount of blending applied to the image.";
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
@@ -161,7 +194,114 @@ void PS_StageDepth3(in float4 position : SV_Position, in float2 texCoord : TEXCO
 
         const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
         passColor = tex2D(Stage3_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
-        passColor = lerp(backColor, passColor.rgb, passColor.a * Stage3_Opacity);
+
+        switch (Stage3_BlendMode)
+        {
+            // Normal
+            default:
+                passColor = lerp(backColor.rgb, passColor.rgb, passColor.a * Stage3_Opacity);
+                break;
+            // Multiply
+            case 1:
+                passColor = lerp(backColor.rgb, Multiply(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Screen
+            case 2:
+                passColor = lerp(backColor.rgb, Screen(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Overlay
+            case 3:
+                passColor = lerp(backColor.rgb, Overlay(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Darken
+            case 4:
+                passColor = lerp(backColor.rgb, Darken(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Lighten
+            case 5:
+                passColor = lerp(backColor.rgb, Lighten(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // ColorDodge
+            case 6:
+                passColor = lerp(backColor.rgb, ColorDodge(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // ColorBurn
+            case 7:
+                passColor = lerp(backColor.rgb, ColorBurn(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // HardLight
+            case 8:
+                passColor = lerp(backColor.rgb, HardLight(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // SoftLight
+            case 9:
+                passColor = lerp(backColor.rgb, SoftLight(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Difference
+            case 10:
+                passColor = lerp(backColor.rgb, Difference(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Exclusion
+            case 11:
+                passColor = lerp(backColor.rgb, Exclusion(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Hue
+            case 12:
+                passColor = lerp(backColor.rgb, Hue(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Saturation
+            case 13:
+                passColor = lerp(backColor.rgb, Saturation(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Color
+            case 14:
+                passColor = lerp(backColor.rgb, ColorB(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Luminosity
+            case 15:
+                passColor = lerp(backColor.rgb, Luminosity(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Linear Dodge
+            case 16:
+                passColor = lerp(backColor.rgb, LinearDodge(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Linear Burn
+            case 17:
+                passColor = lerp(backColor.rgb, LinearBurn(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Vivid Light
+            case 18:
+                passColor = lerp(backColor.rgb, VividLight(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Linear Light
+            case 19:
+                passColor = lerp(backColor.rgb, LinearLight(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Pin Light
+            case 20:
+                passColor = lerp(backColor.rgb, PinLight(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Hard Mix
+            case 21:
+                passColor = lerp(backColor.rgb, HardMix(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Reflect
+            case 22:
+                passColor = lerp(backColor.rgb, Reflect(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Glow
+            case 23:
+                passColor = lerp(backColor.rgb, Glow(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Grain Merge
+            case 24:
+                passColor = lerp(backColor.rgb, GrainMerge(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+            // Grain Extract
+            case 25:
+                passColor = lerp(backColor.rgb, GrainExtract(backColor.rgb, passColor.rgb), passColor.a * Stage3_Opacity);
+                break;
+        }
     }
 }
 
