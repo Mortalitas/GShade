@@ -302,7 +302,7 @@ float3 LinearDodge(float3 c, float3 b)
 // Vivid Light Blending Mode
 float3 VividLight(float3 a, float3 b)
 {
-    return lerp(2 * a * b, b / (2 * (1 - a)), step(0.50, a));
+    return lerp(2 * a * b, b / (2 * (1.01 - a)), step(0.50, a));
 }
 
 // Linear Light Blending Mode
