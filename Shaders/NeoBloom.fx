@@ -55,6 +55,10 @@
 #define NEO_BLOOM_GHOSTING_DOWN_SCALE (NEO_BLOOM_DOWN_SCALE / 4.0)
 #endif
 
+#ifndef NEO_BLOOM_DEPTH
+#define NEO_BLOOM_DEPTH 1
+#endif
+
 // #endregion
 
 // #region Constants
@@ -90,6 +94,18 @@ static const float2 PIXEL_SCALE = float2(1.0, ReShade::AspectRatio);
 
 static const float2 PIXEL_SCALE = 1.0;
 
+// "Enum" for the debug options.
+static const int DebugOption_None = 0;
+static const int DebugOption_OnlyBloom = 1;
+static const int DebugOption_SplitTextures = 2;
+static const int DebugOption_Adaptation = 3;
+
+#if NEO_BLOOM_ADAPT
+static const int DebugOption_DepthRange = 4;
+#else
+static const int DebugOption_DepthRange = 3;
+#endif
+
 // #endregion
 
 // #region Uniforms
@@ -124,6 +140,9 @@ uniform float uSaturation <
 #if NEO_BLOOM_LENS_DIRT
 
 uniform float uLensDirtAmount <
+	ui_text =
+		"Set NEO_BLOOM_DIRT to 0 to disable this feature to reduce resource "
+		"usage.";
 	ui_label = "Amount";
 	ui_tooltip =
 		"Determines how much lens dirt is added to the bloom texture.\n"
@@ -141,6 +160,9 @@ uniform float uLensDirtAmount <
 // Adaptation
 
 uniform float uAdaptAmount <
+	ui_text =
+		"Set NEO_BLOOM_ADAPT to 0 to disable this feature to reduce resource "
+		"usage.";
 	ui_label = "Amount";
 	ui_tooltip =
 		"How much adaptation affects the image brightness.\n"
@@ -286,11 +308,12 @@ uniform float uVariance <
 // Ghosting
 
 uniform float uGhostingAmount <
+	ui_text =
+		"Set NEO_BLOOM_GHOSTING to 0 if you don't use this feature to reduce "
+		"resource usage.";
 	ui_label = "Amount";
 	ui_tooltip =
 		"Amount of ghosting applied.\n"
-		"Set NEO_BLOOM_GHOSTING to 0 if you don't use it for reducing resource "
-		"usage.\n"
 		"\nDefault: 0.0";
 	ui_category = "Ghosting";
 	ui_type = "slider";
@@ -300,12 +323,64 @@ uniform float uGhostingAmount <
 
 #endif
 
+#if NEO_BLOOM_DEPTH
+
+uniform float3 DepthMultiplier
+<
+	ui_text =
+		"Set NEO_BLOOM_DEPTH to 0 if you don't use this feature to reduce "
+		"resource usage.";
+	ui_label = "Multiplier";
+	ui_tooltip =
+		"Defines the multipliers that will be applied to each range in depth.\n"
+		" - The first value defines the multiplier for near depth.\n"
+		" - The second value defines the multiplier for middle depth.\n"
+		" - The third value defines the multiplier for far depth.\n"
+		"\nDefault: 1.0 1.0 1.0";
+	ui_category = "Depth";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 10.0;
+	ui_step = 0.01;
+> = float3(1.0, 1.0, 1.0);
+
+uniform float2 DepthRange
+<
+	ui_label = "Range";
+	ui_tooltip = 
+		"Defines the depth range for thee depth multiplier.\n"
+		" - The first value defines the start of the middle depth."
+		" - The second value defines the end of the middle depth and the start "
+		"of the far depth."
+		"\nDefault: 0.0 1.0";
+	ui_category = "Depth";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_step = 0.001;
+> = float2(0.0, 1.0);
+
+uniform float DepthSmoothness
+<
+	ui_label = "Smoothness";
+	ui_tooltip =
+		"Amount of smoothness in the transition between depth ranges.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_step = 0.001;
+> = 1.0;
+
+#endif
+
 // HDR
 
 uniform float uMaxBrightness <
 	ui_label  = "Max Brightness";
 	ui_tooltip =
-		"Determines the maximum brightness a pixel can achieve from being "
+		"tl;dr: HDR contrast.\n"
+		"\nDetermines the maximum brightness a pixel can achieve from being "
 		"'reverse-tonemapped', that is to say, when the effect attempts to "
 		"extract HDR information from the image.\n"
 		"In practice, the difference between a value of 100 and one of 1000 "
@@ -371,6 +446,9 @@ uniform float uPadding <
 // Debug
 
 uniform int uDebugOptions <
+	ui_text =
+		"Set NEO_BLOOM_DEBUG to 0 if you don't use this feature to reduce "
+		"resource usage.";
 	ui_label = "Debug Options";
 	ui_tooltip =
 		"Debug options containing:\n"
@@ -379,9 +457,6 @@ uniform int uDebugOptions <
 		"visualize.\n"
 		"  - Showing the raw internal texture used to blur all the bloom "
 		"'textures', visualizing all the blooms at once in scale.\n"
-		"\nIf you don't need debug options, you may set the macro "
-		"'NEO_BLOOM_DEBUG' to 0 in the global preprocessor definitions to "
-		"disable them for a potential performance gain.\n"
 		"\nDefault: None";
 	ui_category = "Debug";
 	ui_type = "combo";
@@ -389,6 +464,9 @@ uniform int uDebugOptions <
 		"None\0Show Only Bloom\0Show Split Textures\0"
 		#if NEO_BLOOM_ADAPT
 		"Show Adaptation\0"
+		#endif
+		#if NEO_BLOOM_DEPTH
+		"Show Depth Range\0"
 		#endif
 		;
 > = false;
@@ -609,13 +687,34 @@ float get_luma_linear(float3 color)
 
 // #region Shaders
 
-float4 DownSamplePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
+float4 DownSamplePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET 
+{
 	float4 color = tex2D(BackBuffer, uv);
-	
+
 	color.rgb = saturate(
 		lerp(get_luma_linear(color.rgb), color.rgb, uSaturation));
 	
 	color.rgb = inv_reinhard_lum(color.rgb, 1.0 / uMaxBrightness);
+
+	#if NEO_BLOOM_DEPTH
+	const float3 depth = ReShade::GetLinearizedDepth(uv);
+
+	const float is_near = smoothstep(
+		depth.x - DepthSmoothness,
+		depth.x + DepthSmoothness,
+		DepthRange.x);
+	
+	const float is_far = smoothstep(
+		DepthRange.y - DepthSmoothness,
+		DepthRange.y + DepthSmoothness, depth.x);
+	
+	const float is_middle = (1.0 - is_near) * (1.0 - is_far);
+
+	color.rgb *= lerp(1.0, DepthMultiplier.x, is_near);
+	color.rgb *= lerp(1.0, DepthMultiplier.y, is_middle);
+	color.rgb *= lerp(1.0, DepthMultiplier.z, is_far);
+
+	#endif
 	
 	return color;
 }
@@ -759,9 +858,10 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 
 	#if NEO_BLOOM_DEBUG
 
-	switch (uDebugOptions) {
-		case 1:
-			if (uBloomTextureToShow == -1)
+	switch (uDebugOptions) 
+	{
+		case DebugOption_OnlyBloom:
+			if (uBloomTextureToShow == -1) 
 			{
 				color.rgb = reinhard(bloom.rgb);
 			} else
@@ -779,7 +879,7 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 			}
 
 			return color;
-		case 2:
+		case DebugOption_SplitTextures:
 			color = tex2D(TempA, uv);
 			color.rgb = lerp(checkered_pattern(uv), color.rgb, color.a);
 			color.a = 1.0;
@@ -787,12 +887,32 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 			return color;
 		
 		#if NEO_BLOOM_ADAPT
-		case 3:
+		case DebugOption_Adaptation:
 			color = tex2Dlod(
 				DownSample,
 				float4(uv, 0.0, NEO_BLOOM_TEXTURE_MIP_LEVELS - uAdaptPrecision)
 			);
 			color.rgb = reinhard(color.rgb);
+			return color;
+		#endif
+		#if NEO_BLOOM_DEPTH
+		case DebugOption_DepthRange:
+			const float depth = ReShade::GetLinearizedDepth(uv);
+			
+			color.r = smoothstep(0.0, DepthRange.x, depth);
+			color.g = smoothstep(DepthRange.x, DepthRange.y, depth);
+			color.b = smoothstep(DepthRange.y, 1.0, depth);
+
+			color.r *= smoothstep(
+				depth - DepthSmoothness,
+				depth + DepthSmoothness,
+				DepthRange.x);
+			
+			color.g *= smoothstep(
+				depth - DepthSmoothness,
+				depth + DepthSmoothness,
+				DepthRange.y);
+
 			return color;
 		#endif
 	}
@@ -810,6 +930,7 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	#endif
 
 	color.rgb = reinhard(color.rgb);
+
 	return color;
 }
 
