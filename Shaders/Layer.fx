@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Layer (version 0.6)
+    Layer (version 0.7)
 
     Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume, prod80, originalnicodr
     License: MIT
@@ -29,6 +29,9 @@
 
     Version 0.6 by Uchu Suzume & Marot Satil
     * Added multiple blending modes thanks to the work of Uchu Suzume, prod80, and originalnicodr.
+
+    Version 0.7 by Uchu Suzume & Marot Satil
+    * Added Addition, Subtract, Divide blending modes.
 */
 
 #include "ReShade.fxh"
@@ -91,7 +94,10 @@ uniform int Layer_BlendMode <
                "Reflect\0"
                "Glow\0"
                "Grain Merge\0"
-               "Grain Extract\0";
+               "Grain Extract\0"
+               "Addition\0"
+               "Subtract\0"
+               "Divide\0";
 > = 0;
 
 uniform float Layer_Blend <
@@ -324,6 +330,18 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
         // Grain Extract
         case 25:
             passColor = lerp(backColor.rgb, GrainExtract(backColor.rgb, passColor.rgb), passColor.a * Layer_Blend);
+            break;
+        // Addition
+        case 26:
+            passColor = lerp(backColor.rgb, Addition(backColor.rgb, passColor.rgb), passColor.a * Layer_Blend);
+            break;
+        // Subtract
+        case 27:
+            passColor = lerp(backColor.rgb, Subtract(backColor.rgb, passColor.rgb), passColor.a * Layer_Blend);
+            break;
+        // Divide
+        case 28:
+            passColor = lerp(backColor.rgb, Divide(backColor.rgb, passColor.rgb), passColor.a * Layer_Blend);
             break;
     }
 

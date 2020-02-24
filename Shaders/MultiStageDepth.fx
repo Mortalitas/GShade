@@ -90,7 +90,10 @@ uniform int Stage_BlendMode <
                "Reflect\0"
                "Glow\0"
                "Grain Merge\0"
-               "Grain Extract\0";
+               "Grain Extract\0"
+               "Addition\0"
+               "Subtract\0"
+               "Divide\0";
 > = 0;
 
 uniform float Stage_Opacity <
@@ -333,6 +336,18 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
             // Grain Extract
             case 25:
                 passColor = lerp(backColor.rgb, GrainExtract(backColor.rgb, passColor.rgb), passColor.a * Stage_Opacity);
+                break;
+            // Addition
+            case 26:
+                passColor = lerp(backColor.rgb, Addition(backColor.rgb, passColor.rgb), passColor.a * Stage_Opacity);
+                break;
+            // Subtract
+            case 27:
+                passColor = lerp(backColor.rgb, Subtract(backColor.rgb, passColor.rgb), passColor.a * Stage_Opacity);
+                break;
+            // Divide
+            case 28:
+                passColor = lerp(backColor.rgb, Divide(backColor.rgb, passColor.rgb), passColor.a * Stage_Opacity);
                 break;
         }
     }
