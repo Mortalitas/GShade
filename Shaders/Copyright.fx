@@ -17,7 +17,7 @@
     
     Version 0.2 by seri14 & Marot Satil
     * Added the ability to scale and move the layer around on an x, y axis.
-    
+
     Version 0.3 by seri14
     * Reduced the problem of layer color is blending with border color
 
@@ -117,7 +117,7 @@ uniform int cLayer_BlendMode <
 
 uniform float cLayer_Blend <
     ui_label = "Blending Amount";
-    ui_tooltip = "The amount of blending applied to the cLayer.";
+    ui_tooltip = "The amount of blending applied to the copyright layer.";
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
@@ -126,22 +126,36 @@ uniform float cLayer_Blend <
 
 uniform float cLayer_Scale <
   ui_type = "slider";
-    ui_label = "Scale";
-    ui_min = 0.01; ui_max = 5.0;
+    ui_label = "Scale X & Y";
+    ui_min = 0.001; ui_max = 5.0;
     ui_step = 0.001;
 > = 1.001;
+
+uniform float cLayer_ScaleX <
+  ui_type = "slider";
+    ui_label = "Scale X";
+    ui_min = 0.001; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.0;
+
+uniform float cLayer_ScaleY <
+  ui_type = "slider";
+    ui_label = "Scale Y";
+    ui_min = 0.001; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.0;
 
 uniform float cLayer_PosX <
   ui_type = "slider";
     ui_label = "Position X";
-    ui_min = -1.0; ui_max = 1.0;
+    ui_min = -2.0; ui_max = 2.0;
     ui_step = 0.001;
 > = 0.5;
 
 uniform float cLayer_PosY <
   ui_type = "slider";
     ui_label = "Position Y";
-    ui_min = -1.0; ui_max = 1.0;
+    ui_min = -2.0; ui_max = 2.0;
     ui_step = 0.001;
 > = 0.5;
 
@@ -240,8 +254,8 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
     const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
     const float2 ScaleSize = (float2(_SOURCE_COPYRIGHT_SIZE) * cLayer_Scale / BUFFER_SCREEN_SIZE);
-    const float ScaleX =  ScaleSize.x * AspectX;
-    const float ScaleY =  ScaleSize.y * AspectY;
+    const float ScaleX =  ScaleSize.x * AspectX * cLayer_ScaleX;
+    const float ScaleY =  ScaleSize.y * AspectY * cLayer_ScaleY;
     float Rotate = cLayer_Rotate * (3.1415926 / 180.0);
 
     switch(cLayer_SnapRotate)

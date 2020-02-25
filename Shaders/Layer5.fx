@@ -98,10 +98,24 @@ uniform float Layer5_Blend <
 
 uniform float Layer5_Scale <
   ui_type = "slider";
-    ui_label = "Scale";
-    ui_min = 0.01; ui_max = 5.0;
+    ui_label = "Scale X & Y";
+    ui_min = 0.001; ui_max = 5.0;
     ui_step = 0.001;
 > = 1.001;
+
+uniform float Layer5_ScaleX <
+  ui_type = "slider";
+    ui_label = "Scale X";
+    ui_min = 0.001; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.0;
+
+uniform float Layer5_ScaleY <
+  ui_type = "slider";
+    ui_label = "Scale Y";
+    ui_min = 0.001; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.0;
 
 uniform float Layer5_PosX <
   ui_type = "slider";
@@ -156,8 +170,8 @@ void PS_Layer5(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
     const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
     const float2 ScaleSize = (float2(LAYER5_SIZE_X, LAYER5_SIZE_Y) * Layer5_Scale / BUFFER_SCREEN_SIZE);
-    const float ScaleX =  ScaleSize.x * AspectX;
-    const float ScaleY =  ScaleSize.y * AspectY;
+    const float ScaleX =  ScaleSize.x * AspectX * Layer5_ScaleX;
+    const float ScaleY =  ScaleSize.y * AspectY * Layer5_ScaleY;
     float Rotate = Layer5_Rotate * (3.1415926 / 180.0);
 
     switch(Layer5_SnapRotate)

@@ -102,10 +102,24 @@ uniform float Stage4_depth <
 
 uniform float Stage4_Scale <
   ui_type = "slider";
-    ui_label = "Scale";
-    ui_min = 0.01; ui_max = 5.0;
+    ui_label = "Scale X & Y";
+    ui_min = 0.001; ui_max = 5.0;
     ui_step = 0.001;
 > = 1.001;
+
+uniform float Stage4_ScaleX <
+  ui_type = "slider";
+    ui_label = "Scale X";
+    ui_min = 0.001; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.0;
+
+uniform float Stage4_ScaleY <
+  ui_type = "slider";
+    ui_label = "Scale Y";
+    ui_min = 0.001; ui_max = 5.0;
+    ui_step = 0.001;
+> = 1.0;
 
 uniform float Stage4_PosX <
   ui_type = "slider";
@@ -157,8 +171,8 @@ void PS_StageDepth4(in float4 position : SV_Position, in float2 texCoord : TEXCO
         const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
         const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
         const float2 ScaleSize = (float2(STAGE4_SIZE_X, STAGE4_SIZE_Y) * Stage4_Scale / BUFFER_SCREEN_SIZE);
-        const float ScaleX =  ScaleSize.x * AspectX;
-        const float ScaleY =  ScaleSize.y * AspectY;
+        const float ScaleX =  ScaleSize.x * AspectX * Stage4_ScaleX;
+        const float ScaleY =  ScaleSize.y * AspectY * Stage4_ScaleY;
         float Rotate = Stage4_Rotate * (3.1415926 / 180.0);
 
         switch(Stage4_SnapRotate)
