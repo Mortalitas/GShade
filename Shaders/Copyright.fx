@@ -181,7 +181,7 @@ uniform float cLayer_Rotate <
 
 #if   CopyrightTexture_Source == 0 // FFXIV Vanilla
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 411.0, 22.0
+#define _SOURCE_COPYRIGHT_SIZE 1363.0, 68.0
 #elif CopyrightTexture_Source == 1 // FFXIV Nalukai
 #define _SOURCE_COPYRIGHT_FILE "CopyrightF4kH.png"
 #define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
