@@ -7,7 +7,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                   //
-//  DrawText.fxh by kingreic1992   ( update: Sep.28.2019 )                                           //
+//  DrawText.fxh by kingreic1992   ( update: Mar.09.2020 )                                           //
 //                                                                                                   //
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                                                                                   //
@@ -50,9 +50,9 @@ float4 main_fragment( float4 position : POSITION,
                       float2 txcoord  : TEXCOORD) : COLOR {
     float res = 0.0;
 
-    int line0[9]  = { __D, __e, __m, __o, __Space, __T, __e, __x, __t };   //Demo Text
-    int line1[15] = { __b, __y, __Space, __k, __i, __n, __g, __e, __r, __i, __c, __1, __9, __9, __2 }; //by kingeric1992
-    int line2[6]  = { __S, __i, __z, __e, __Colon, __Space }; // Size: %d.
+    const int line0[9]  = { __D, __e, __m, __o, __Space, __T, __e, __x, __t };   //Demo Text
+    const int line1[15] = { __b, __y, __Space, __k, __i, __n, __g, __e, __r, __i, __c, __1, __9, __9, __2 }; //by kingeric1992
+    const int line2[6]  = { __S, __i, __z, __e, __Colon, __Space }; // Size: %d.
 
     DrawText_String(float2(100.0 , 100.0), 32, 1, txcoord,  line0, 9, res);
     DrawText_String(float2(100.0 , 134.0), textSize, 1, txcoord,  line1, 15, res);
@@ -186,7 +186,7 @@ sampler samplerText {
         float2 uv = (tex * float2(BUFFER_WIDTH, BUFFER_HEIGHT) - pos) / size; \
         uv.y      = saturate(uv.y); \
         uv.x     *= ratio * 2.0; \
-        float  id = array[int(trunc(uv.x))]; \
+        const float  id = array[int(trunc(uv.x))]; \
         if(uv.x  <= arrSize && uv.x >= 0.0) \
             text  = tex2D(samplerText, (frac(uv) + float2( id % 14.0, trunc(id / 14.0))) \
             / float2( _DRAWTEXT_GRID_X, _DRAWTEXT_GRID_Y) ).x; \
@@ -205,8 +205,12 @@ void DrawText_Digit( float2 pos, float size, float ratio, float2 tex, int digit,
     uv.y      = saturate(uv.y);
     uv.x     *= ratio * 2.0;
 
-    float  t  = abs(data);
-    int radix = floor(t)? ceil(log2(t)/3.32192809):0;
+    const float  t  = abs(data);
+    int radix;
+    if (floor(t))
+        radix = ceil(log2(t)/3.32192809);
+    else
+        radix = 0;
 
     //early exit:
     if(uv.x > digit+1 || -uv.x > radix+1) return;
@@ -217,8 +221,14 @@ void DrawText_Digit( float2 pos, float size, float ratio, float2 tex, int digit,
     else
         for(int i = ceil(uv.x); i<0; i++) index /= 10.;
 
-    index = (uv.x >= -radix-!radix)? index%10 : (10+step(0, data)); //adding sign
-    index = (uv.x > 0 && uv.x < 1)? 12:index; //adding dot
+    //adding sign
+    if (uv.x >= -radix-!radix)
+        index = index%10;
+    else
+        index = (10+step(0, data));
+    //adding dot
+    if (uv.x > 0 && uv.x < 1)
+        index = 12;
     index = digits[(uint)index];
 
     res  += tex2D(samplerText, (frac(uv) + float2( index % 14.0, trunc(index / 14.0))) /
