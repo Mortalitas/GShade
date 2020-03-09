@@ -322,7 +322,10 @@ float3 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 		else
 			VA_Bottom = Bottom_Right;
 		
-		return texcoord.y < 0.5 ? VA_Top : VA_Bottom;
+		if (texcoord.y < 0.5)
+			return VA_Top;
+		else
+			return VA_Bottom;
 	}
 }
 

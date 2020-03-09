@@ -441,7 +441,10 @@ float PS_GetAdapt(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
     const float last = tex2D(sMagicBloom_LastAdapt, 0.0).x;
     const float uiVisibility = tex2D(ReShade::BackBuffer, float2(0.5, 0.5)).a;
     if(bAdapt_IgnoreOccludedByUI && uiVisibility > fAdapt_IgnoreTreshold) {
-        return last == 0 ? curr : last;
+        if (last == 0)
+            return curr;
+        else
+            return last;
     }
     //Using the frametime/delta here would actually scale adaptation with the framerate.
     //We don't want that, so we don't even bother with it.

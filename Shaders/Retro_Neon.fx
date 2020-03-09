@@ -109,8 +109,14 @@ VSOUT VSMain(in uint id : SV_VertexID)
 {
     VSOUT o;
 
-    o.uv.x = (id == 2) ? 2.0 : 0.0;
-    o.uv.y = (id == 1) ? 2.0 : 0.0;
+    if (id == 2)
+        o.uv.x = 2.0;
+    else
+        o.uv.x = 0.0;
+    if (id == 1)
+        o.uv.y = 2.0;
+    else
+        o.uv.y = 0.0;
 
     o.vpos = float4(o.uv.xy * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 

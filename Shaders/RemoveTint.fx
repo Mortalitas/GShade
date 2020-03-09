@@ -85,7 +85,10 @@ namespace RemoveTint {
 				color = tex2Dfetch(RemoveTint::samplerBackBuffer, int4(x, y, 0, 0)).rgb;
 				luma = dot(color, float3(0.2126, 0.7151, 0.0721));
 				diff = saturate(pow(dot(color, fUIExcludeColor), fUIExcludeColorStrength));
-				lerpValue = bUIUseExcludeColor ?  1.0 - diff : 1.0;
+				if (bUIUseExcludeColor)
+					lerpValue = 1.0 - diff;
+				else
+					lerpValue = 1.0;
 
 				currentMaxRGB.r = lerp(currentMaxRGB.r, color.r, min(step(currentMaxRGB.r, color.r), lerpValue));
 				currentMaxRGB.g = lerp(currentMaxRGB.g, color.g, min(step(currentMaxRGB.g, color.g), lerpValue));

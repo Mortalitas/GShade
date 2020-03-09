@@ -54,7 +54,10 @@ float3 CEOGPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_
 		float ctr=ceog_ctr;
 		const float3 color_tmp=color.rgb;
 
-		ctr=(ctr < 0.0) ? max(ctr/100.0, -100.0) : min(ctr, 100.0);
+		if (ctr < 0.0)
+			ctr = max(ctr/100.0, -100.0);
+		else
+			ctr = min(ctr, 100.0);
 		color.rgb=(color.rgb-0.5)*max(ctr+1.0, 0.0)+0.5;
 
 		color.rgb=pow(saturate(color.rgb*pow(2, ceog_e)+ceog_o), 1/ceog_g);
