@@ -156,7 +156,7 @@ float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
 
 	for (int i = -WindowRadius; i <= WindowRadius; i++) {
 		for (int j = -WindowRadius; j <= WindowRadius; j++) {
-			texIJ = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE * float2(i, j)).rgb;
+			texIJ = tex2Dlod(ReShade::BackBuffer, float4(texcoord + BUFFER_PIXEL_SIZE * float2(i, j), 0.0, 0.0)).rgb;
 			weight = dot(orig - texIJ, orig - texIJ);
 
 			weight = exp(-(weight * rcp(NoiseLevel) + (i * i + j * j) * rcp(GaussianSigma)));
@@ -169,13 +169,11 @@ float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
 	}
             
 	result /= sum;
-	float lerpQ;
-	if (counter > (CounterThreshold * iWindowArea))
-		lerpQ = 1.0 - LerpCoefficeint;
-	else
-		lerpQ = LerpCoefficeint;
 
-	return lerp(result, orig, lerpQ);
+	if (counter > (CounterThreshold * iWindowArea))
+		return lerp(result, orig, 1.0 - LerpCoefficeint);
+	else
+		return lerp(result, orig, LerpCoefficeint);
 }
 
 float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET {
@@ -196,12 +194,12 @@ float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
 				
 				for (int n = -BlockRadius; n <= BlockRadius; n++) {
 					for (int m = -BlockRadius; m <= BlockRadius; m++) {              
-							texIJb = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE * float2(i + n, j + m)).rgb;
-							texIJc = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE * float2(    n,     m)).rgb;
+							texIJb = tex2Dlod(ReShade::BackBuffer, float4(texcoord + BUFFER_PIXEL_SIZE * float2(i + n, j + m), 0.0, 0.0)).rgb;
+							texIJc = tex2Dlod(ReShade::BackBuffer, float4(texcoord + BUFFER_PIXEL_SIZE * float2(    n,     m), 0.0, 0.0)).rgb;
 							weight = dot(texIJb - texIJc, texIJb - texIJc) + weight;
 					}
                 }
-				texIJc = tex2D(ReShade::BackBuffer, texcoord + BUFFER_PIXEL_SIZE * float2(i, j)).rgb;
+				texIJc = tex2Dlod(ReShade::BackBuffer, float4(texcoord + BUFFER_PIXEL_SIZE * float2(i, j), 0.0, 0.0)).rgb;
 
 				weight *= invBlockArea;
 				weight = exp(-(weight * rcp(NoiseLevel) + (i * i + j * j) * rcp(GaussianSigma)));
@@ -217,14 +215,12 @@ float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
 	float iWindowArea = 2.0 * WindowRadius + 1.0;
 	iWindowArea *= iWindowArea;
 
-	const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
-
     result /= sum;
 
 	if (counter > (CounterThreshold * iWindowArea))
-		return lerp(result, orig, 1.0 - LerpCoefficeint);
+		return lerp(result, tex2D(ReShade::BackBuffer, texcoord).rgb, 1.0 - LerpCoefficeint);
 	else
-		return lerp(result, orig, LerpCoefficeint);
+		return lerp(result, tex2D(ReShade::BackBuffer, texcoord).rgb, LerpCoefficeint);
 }
 
 technique KNearestNeighbors
