@@ -32,6 +32,9 @@
 
     Version 0.7 by Uchu Suzume & Marot Satil
     * Added Addition, Subtract, Divide blending modes.
+
+    Version 0.8 by Uchu Suzume & Marot Satil
+    * Sorted blending modes in a more logical fashion, grouping by type.
 */
 
 #include "ReShade.fxh"
@@ -57,34 +60,34 @@ uniform int Layer2_BlendMode <
     ui_label = "Blending Mode";
     ui_tooltip = "Select the blending mode applied to the layer.";
     ui_items = "Normal\0"
-               "Multiply\0"
-               "Screen\0"
-               "Overlay\0"
                "Darken\0"
-               "Lighten\0"
-               "Color Dodge\0"
+               "Multiply\0"
                "Color Burn\0"
-               "Hard Light\0"
-               "Soft Light\0"
-               "Difference\0"
-               "Exclusion\0"
-               "Hue\0"
-               "Saturation\0"
-               "Color\0"
-               "Luminosity\0"
                "Linear Burn\0"
+               "Lighten\0"
+               "Screen\0"
+               "Color Dodge\0"
                "Linear Dodge\0"
+               "Addition\0"
+               "Glow\0"
+               "Overlay\0"
+               "Soft Light\0"
+               "Hard Light\0"
                "Vivid Light\0"
                "Linear Light\0"
                "Pin Light\0"
                "Hard Mix\0"
+               "Difference\0"
+               "Exclusion\0"
+               "Subtract\0"
+               "Divide\0"
                "Reflect\0"
-               "Glow\0"
                "Grain Merge\0"
                "Grain Extract\0"
-               "Addition\0"
-               "Subtract\0"
-               "Divide\0";
+               "Hue\0"
+               "Saturation\0"
+               "Color\0"
+               "Luminosity\0";
 > = 0;
 
 uniform float Layer2_Blend <
@@ -218,117 +221,117 @@ void PS_Layer2(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
         default:
             passColor = lerp(backColor.rgb, passColor.rgb, passColor.a * Layer2_Blend);
             break;
-        // Multiply
+        // Darken
         case 1:
+            passColor = lerp(backColor.rgb, Darken(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Multiply
+        case 2:
             passColor = lerp(backColor.rgb, Multiply(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Screen
-        case 2:
-            passColor = lerp(backColor.rgb, Screen(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Overlay
+        // Color Burn
         case 3:
-            passColor = lerp(backColor.rgb, Overlay(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            passColor = lerp(backColor.rgb, ColorBurn(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Darken
+        // Linear Burn
         case 4:
-            passColor = lerp(backColor.rgb, Darken(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            passColor = lerp(backColor.rgb, LinearBurn(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Lighten
         case 5:
             passColor = lerp(backColor.rgb, Lighten(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // ColorDodge
+        // Screen
         case 6:
+            passColor = lerp(backColor.rgb, Screen(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Color Dodge
+        case 7:
             passColor = lerp(backColor.rgb, ColorDodge(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // ColorBurn
-        case 7:
-            passColor = lerp(backColor.rgb, ColorBurn(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // HardLight
-        case 8:
-            passColor = lerp(backColor.rgb, HardLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // SoftLight
-        case 9:
-            passColor = lerp(backColor.rgb, SoftLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Difference
-        case 10:
-            passColor = lerp(backColor.rgb, Difference(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Exclusion
-        case 11:
-            passColor = lerp(backColor.rgb, Exclusion(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Hue
-        case 12:
-            passColor = lerp(backColor.rgb, Hue(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Saturation
-        case 13:
-            passColor = lerp(backColor.rgb, Saturation(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Color
-        case 14:
-            passColor = lerp(backColor.rgb, ColorB(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
-        // Luminosity
-        case 15:
-            passColor = lerp(backColor.rgb, Luminosity(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
         // Linear Dodge
-        case 16:
+        case 8:
             passColor = lerp(backColor.rgb, LinearDodge(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Linear Burn
-        case 17:
-            passColor = lerp(backColor.rgb, LinearBurn(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+        // Addition
+        case 9:
+            passColor = lerp(backColor.rgb, Addition(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Glow
+        case 10:
+            passColor = lerp(backColor.rgb, Glow(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Overlay
+        case 11:
+            passColor = lerp(backColor.rgb, Overlay(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Soft Light
+        case 12:
+            passColor = lerp(backColor.rgb, SoftLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Hard Light
+        case 13:
+            passColor = lerp(backColor.rgb, HardLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Vivid Light
-        case 18:
+        case 14:
             passColor = lerp(backColor.rgb, VividLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Linear Light
-        case 19:
+        case 15:
             passColor = lerp(backColor.rgb, LinearLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Pin Light
-        case 20:
+        case 16:
             passColor = lerp(backColor.rgb, PinLight(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Hard Mix
-        case 21:
+        case 17:
             passColor = lerp(backColor.rgb, HardMix(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Difference
+        case 18:
+            passColor = lerp(backColor.rgb, Difference(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Exclusion
+        case 19:
+            passColor = lerp(backColor.rgb, Exclusion(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Subtract
+        case 20:
+            passColor = lerp(backColor.rgb, Subtract(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Divide
+        case 21:
+            passColor = lerp(backColor.rgb, Divide(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Reflect
         case 22:
             passColor = lerp(backColor.rgb, Reflect(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Glow
-        case 23:
-            passColor = lerp(backColor.rgb, Glow(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
-            break;
         // Grain Merge
-        case 24:
+        case 23:
             passColor = lerp(backColor.rgb, GrainMerge(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
         // Grain Extract
-        case 25:
+        case 24:
             passColor = lerp(backColor.rgb, GrainExtract(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Addition
+        // Hue
+        case 25:
+            passColor = lerp(backColor.rgb, Hue(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            break;
+        // Saturation
         case 26:
-            passColor = lerp(backColor.rgb, Addition(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            passColor = lerp(backColor.rgb, Saturation(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Subtract
+        // Color
         case 27:
-            passColor = lerp(backColor.rgb, Subtract(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            passColor = lerp(backColor.rgb, ColorB(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
-        // Divide
+        // Luminosity
         case 28:
-            passColor = lerp(backColor.rgb, Divide(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
+            passColor = lerp(backColor.rgb, Luminosity(backColor.rgb, passColor.rgb), passColor.a * Layer2_Blend);
             break;
     }
 
