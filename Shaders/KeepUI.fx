@@ -67,10 +67,10 @@ uniform int iBlendSource <
 
 #include "ReShade.fxh"
 
-texture FFKeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-sampler FFKeepUI_Sampler { Texture = FFKeepUI_Tex; };
+texture KeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+sampler KeepUI_Sampler { Texture = KeepUI_Tex; };
 
-void PS_FFKeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
+void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
     color = tex2D(ReShade::BackBuffer, texcoord);
 #if KeepUIType == 2
@@ -79,21 +79,18 @@ void PS_FFKeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float
 }
 
 #if KeepUIOccludeAssist
-void PS_FFOccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
+void PS_OccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-    const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
-    const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-    color = lerp(back, float4(0, 0, 0, 0), keep.a);
-    color.a = keep.a;
+    const float4 keep = tex2D(KeepUI_Sampler, texcoord);
+    color = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), float4(0, 0, 0, 0), keep.a), keep.a);
 }
 #endif
 
-void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
+void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-    const float4 keep = tex2D(FFKeepUI_Sampler, texcoord);
-    const float4 back = tex2D(ReShade::BackBuffer, texcoord);
-
 #if KeepUIDebug
+    const float4 keep = tex2D(KeepUI_Sampler, texcoord);
+
     if (bTroubleshootOpacityIssue)
     {
         if (0 == iBlendSource)
@@ -115,14 +112,14 @@ void PS_FFRestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out fl
     }
     else
     {
-        color   = lerp(back, keep, keep.a);
-        color.a = keep.a;
+        color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a), keep.a);
     }
 #elif KeepUIType == 0 // Unsupported game.
-    color = back;
+    color = tex2D(ReShade::BackBuffer, texcoord);
 #else // Supported game.
-    color   = lerp(back, keep, keep.a);
-    color.a = keep.a;
+    const float4 keep = tex2D(KeepUI_Sampler, texcoord);
+
+    color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a).rgb, keep.a);
 #endif
 }
 
@@ -134,14 +131,14 @@ technique FFKeepUI <
     pass
     {
         VertexShader = PostProcessVS;
-        PixelShader = PS_FFKeepUI;
-        RenderTarget = FFKeepUI_Tex;
+        PixelShader = PS_KeepUI;
+        RenderTarget = KeepUI_Tex;
     }
 #if KeepUIOccludeAssist
     pass
     {
         VertexShader = PostProcessVS;
-        PixelShader = PS_FFOccludeUI;
+        PixelShader = PS_OccludeUI;
     }
 #endif
 }
@@ -154,6 +151,6 @@ technique FFRestoreUI <
     pass
     {
         VertexShader = PostProcessVS;
-        PixelShader = PS_FFRestoreUI;
+        PixelShader = PS_RestoreUI;
     }
 }
