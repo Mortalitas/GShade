@@ -82,7 +82,7 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
 void PS_OccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
     const float4 keep = tex2D(KeepUI_Sampler, texcoord);
-    color = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), float4(0, 0, 0, 0), keep.a), keep.a);
+    color = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), float4(0, 0, 0, 0), keep.a).rgb, keep.a);
 }
 #endif
 
@@ -112,7 +112,7 @@ void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
     }
     else
     {
-        color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a), keep.a);
+        color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a).rgb, keep.a);
     }
 #elif KeepUIType == 0 // Unsupported game.
     color = tex2D(ReShade::BackBuffer, texcoord);
