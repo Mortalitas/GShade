@@ -3,7 +3,7 @@
 
 Note that all shaders in this repository are strictly intended for use with the current GShade release. Not all shaders will work under normal ReShade builds due to the implementation of GShade's additional features. Please refer to individual file licenses for questions about distribution and modification.
 
-**The latest release can always be found here, and use of the installer is highly recommended:** https://github.com/Mortalitas/GShade-Shaders/releases/latest
+**The latest release can always be found here, and use of the installer is highly recommended:** https://github.com/Mortalitas/GShade/releases/latest
 
 **GShade is only network-unlocked in the following online games, but will work with any game that ReShade itself can:**
 * Final Fantasy XIV
