@@ -81,7 +81,7 @@ uniform float cutoffFadeX <
 uniform float cutoffFadeY <
 	ui_type = "slider";
 	ui_min = 0.0;
-	ui_max = "0.0;
+	ui_max = 0.0;
 	ui_label = "Fisheye Cutoff Fade Y [VHSPro]";
 	ui_tooltip = "Size of the Vertical gradient cutoff.";
 > = 25.0;
