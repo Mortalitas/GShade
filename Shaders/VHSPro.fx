@@ -3,15 +3,15 @@
 	
 	Ported by Marty McFly and Matsilagi
 
-	Updated for ReShade 4+ by Marot Satil
+	Updated for ReShade 4+ by Marot Satil and Bapho
 */
 
 #include "ReShade.fxh"
 
 uniform float screenLinesNum <
 	ui_type = "slider";
-	ui_min = "1.0";
-	ui_max = "(float)BUFFER_HEIGHT";
+	ui_min = 1.0;
+	ui_max = (float)BUFFER_HEIGHT;
 	ui_label = "Screen Resolution [VHSPro]";
 	ui_tooltip = "Screen Resolution (in lines).\nChange screenLinesRes in Preprocessor Definitions to have the same value as this.";
 > = (float)BUFFER_HEIGHT;
@@ -30,8 +30,8 @@ uniform int VHS_BleedMode <
 
 uniform float bleedAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "15.0";
+	ui_min = 0.0;
+	ui_max = 15.0;
 	ui_label = "Bleed Stretch [VHSPro]";
 	ui_tooltip = "Length of the bleeding.";
 > = 1.0;
@@ -48,40 +48,40 @@ uniform bool VHS_FishEye_Hyperspace <
 
 uniform float fisheyeBend <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "50.0";
+	ui_min = 0.0;
+	ui_max = 50.0;
 	ui_label = "Fisheye Bend [VHSPro]";
 	ui_tooltip = "Curvature of the CRT.";
 > = 2.0;
 
 uniform float cutoffX <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "50.0";
+	ui_min = 0.0;
+	ui_max = 50.0;
 	ui_label = "Fisheye Cutoff X [VHSPro]";
 	ui_tooltip = "Cutoff of the Horizontal Borders.";
 > = 2.0;
 
 uniform float cutoffY <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "50.0";
+	ui_min = 0.0;
+	ui_max = 50.0;
 	ui_label = "Fisheye Cutoff Y [VHSPro]";
 	ui_tooltip = "Cutoff of the Vertical Borders.";
 > = 3.0;
 
 uniform float cutoffFadeX <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "50.0";
+	ui_min = 0.0;
+	ui_max = 50.0;
 	ui_label = "Fisheye Cutoff Fade X [VHSPro]";
 	ui_tooltip = "Size of the Horizontal gradient cutoff.";
 > = 25.0;
 
 uniform float cutoffFadeY <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "50.0";
+	ui_min = 0.0;
+	ui_max = "0.0;
 	ui_label = "Fisheye Cutoff Fade Y [VHSPro]";
 	ui_tooltip = "Size of the Vertical gradient cutoff.";
 > = 25.0;
@@ -94,32 +94,32 @@ uniform bool VHS_Vignette <
 
 uniform float vignetteAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "5.0";
+	ui_min = 0.0;
+	ui_max = 5.0;
 	ui_label = "Vignette Amount [VHSPro]";
 	ui_tooltip = "Strength of the vignette.";
 > = 1.0;
 
 uniform float vignetteSpeed <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "5.0";
+	ui_min = 0.0;
+	ui_max = 5.0;
 	ui_label = "Vignette Pulse Speed [VHSPro]";
 	ui_tooltip = "Speed of the vignette pulsing. (Setting it to 0 makes it stop pulsing)";
 > = 1.0;
 
 uniform float noiseLinesNum <
 	ui_type = "slider";
-	ui_min = "1.0";
-	ui_max = "(float)BUFFER_HEIGHT";
+	ui_min = 1.0;
+	ui_max = (float)BUFFER_HEIGHT;
 	ui_label = "Vertical Resolution [VHSPro]";
 	ui_tooltip = "Noise Resolution (in lines).\nChange noiseLinesRes in Preprocessor Definitions to have the same value as this.";
 > = 240.0;
 
 uniform float noiseQuantizeX <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.0";
+	ui_min = 0.0;
+	ui_max = 1.0;
 	ui_label = "Quantize Noise X [VHSPro]";
 	ui_tooltip = "Makes the noise longer or shorter.";
 > = 0.0;
@@ -131,8 +131,8 @@ uniform bool VHS_FilmGrain <
 
 uniform float filmGrainAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "0.1";
+	ui_min = 0.0;
+	ui_max = 0.1;
 	ui_label = "Film Grain Alpha [VHSPro]";
 	ui_tooltip = "Intensity of the Film Grain.";
 > = 0.016;
@@ -150,16 +150,16 @@ uniform int signalNoiseType <
 
 uniform float signalNoiseAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.0";
+	ui_min = 0.0;
+	ui_max = 1.0;
 	ui_label = "Signal Noise Amount [VHSPro]";
 	ui_tooltip = "Amount of the signal noise.";
 > = 0.15;
 
 uniform float signalNoisePower <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.0";
+	ui_min = 0.0;
+	ui_max = 1.0;
 	ui_label = "Signal Noise Power [VHSPro]";
 	ui_tooltip = "Power of the signal noise. Higher values will make it green, lower values will make it more pink.";
 > =  0.83;
@@ -171,16 +171,16 @@ uniform bool VHS_LineNoise <
 
 uniform float lineNoiseAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "10.0";
+	ui_min = 0.0;
+	ui_max = 10.0;
 	ui_label = "Line Noise Amount [VHSPro]";
 	ui_tooltip = "Intensity of the line noise.";
 > = 1.0;
 
 uniform float lineNoiseSpeed <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "10.0";
+	ui_min = 0.0;
+	ui_max = 10.0;
 	ui_label = "Line Noise Speed [VHSPro]";
 	ui_tooltip = "Speed of the line noise blinking delay.";
 > = 5.0;
@@ -192,24 +192,24 @@ uniform bool VHS_TapeNoise <
 
 uniform float tapeNoiseTH <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.5";
+	ui_min = 0.0;
+	ui_max = 1.5;
 	ui_label = "Tape Noise Amount [VHSPro]";
 	ui_tooltip = "Intensity of Tape Noise in the image.";
 > = 0.63;
 
 uniform float tapeNoiseAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.5";
+	ui_min = 0.0;
+	ui_max = 1.5;
 	ui_label = "Tape Noise Alpha [VHSPro]";
 	ui_tooltip = "Amount of Tape Noise in the image.";
-> = 1.0;
+> = 0.05;
 
 uniform float tapeNoiseSpeed <
 	ui_type = "slider";
-	ui_min = "-1.5";
-	ui_max = "1.5";
+	ui_min = -1.5;
+	ui_max = 1.5;
 	ui_label = "Tape Noise Speed [VHSPro]";
 	ui_tooltip = "Scrolling speed of the Tape Noise.";
 > = 1.0;
@@ -221,8 +221,8 @@ uniform bool VHS_ScanLines <
 
 uniform float scanLineWidth <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "20.0";
+	ui_min = 0.0;
+	ui_max = 20.0;
 	ui_label = "Scanlines Width [VHSPro]";
 	ui_tooltip = "Width of the Scanlines";
 > = 10.0;
@@ -234,8 +234,8 @@ uniform bool VHS_LinesFloat	<
 
 uniform float linesFloatSpeed <
 	ui_type = "slider";
-	ui_min = "-3.0";
-	ui_max = "3.0";
+	ui_min = -3.0;
+	ui_max = 3.0;
 	ui_label = "Lines Float Speed [VHSPro]";
 	ui_tooltip = "Speed (and direction) of the floating lines.";
 > = 1.0;
@@ -253,8 +253,8 @@ uniform bool VHS_Jitter_H <
 
 uniform float jitterHAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "5.0";
+	ui_min = 0.0;
+	ui_max = 5.0;
 	ui_label = "Interlacing Amount [VHSPro]";
 	ui_tooltip = "Strength of the Interlacing.";
 > = 0.5;
@@ -266,16 +266,16 @@ uniform bool VHS_Jitter_V <
 
 uniform float jitterVAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "15.0";
+	ui_min = 0.0;
+	ui_max = 15.0;
 	ui_label = "Jitter Amount [VHSPro]";
 	ui_tooltip = "Amount of the vertical jittering noise.";
 > = 1.0; 
 
 uniform float jitterVSpeed <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "5.0";
+	ui_min = 0.0;
+	ui_max = 5.0;
 	ui_label = "Jitter Speed [VHSPro]";
 	ui_tooltip = "Speed of the vertical jittering noise.";
 > = 1.0;
@@ -287,8 +287,8 @@ uniform bool VHS_Twitch_H <
 
 uniform float twitchHFreq <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "5.0";
+	ui_min = 0.0;
+	ui_max = 5.0;
 	ui_label = "Horizontal Twitch Frequency [VHSPro]";
 	ui_tooltip = "Frequency of time in which the image twitches horizontally.";
 > = 1.0;
@@ -300,8 +300,8 @@ uniform bool VHS_Twitch_V <
 
 uniform float twitchVFreq <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "5.0";
+	ui_min = 0.0;
+	ui_max = 5.0;
 	ui_label = "Vertical Twitch Frequency [VHSPro]";
 	ui_tooltip = "Frequency of time in which the image twitches vertically.";
 > = 1.0;
@@ -313,55 +313,55 @@ uniform bool VHS_SignalTweak <
 
 uniform float signalAdjustY <
 	ui_type = "slider";
-	ui_min = "-0.25";
-	ui_max = "0.25";
+	ui_min = -0.25;
+	ui_max = 0.25;
 	ui_label = "Signal Shift Y [VHSPro]";
 	ui_tooltip = "Shifts/Tweaks the Luma part of the signal.";
 > = 0.0;
 uniform float signalAdjustI <
 	ui_type = "slider";
-	ui_min = "-0.25";
-	ui_max = "0.25";
+	ui_min = -0.25;
+	ui_max = 0.25;
 	ui_label = "Signal Shift I [VHSPro]";
 	ui_tooltip = "Shifts/Tweaks the Chroma part of the signal.";
 > = 0.0;
 
 uniform float signalAdjustQ <
 	ui_type = "slider";
-	ui_min = "-0.25";
-	ui_max = "0.25";
+	ui_min = -0.25;
+	ui_max = 0.25;
 	ui_label = "Signal Shift Q [VHSPro]";
 	ui_tooltip = "Shifts/Tweaks the Chroma part of the signal.";
 > = 0.0;
 
 uniform float signalShiftY <
 	ui_type = "slider";
-	ui_min = "-2.0";
-	ui_max = "2.0";
+	ui_min = -2.0;
+	ui_max = 2.0;
 	ui_label = "Signal Adjust Y [VHSPro]";
 	ui_tooltip = "Adjusts the Luma part of the signal.";
 > = 1.0;
 
 uniform float signalShiftI <
 	ui_type = "slider";
-	ui_min = "-2.0";
-	ui_max = "2.0";
+	ui_min = -2.0;
+	ui_max = 2.0;
 	ui_label = "Signal Adjust I [VHSPro]";
 	ui_tooltip = "Adjusts the Chroma part of the signal.";
 > = 1.0;
 
 uniform float signalShiftQ <
 	ui_type = "slider";
-	ui_min = "-2.0";
-	ui_max = "2.0";
+	ui_min = -2.0;
+	ui_max = 2.0;
 	ui_label = "Signal Adjust Q [VHSPro]";
 	ui_tooltip = "Adjusts the Chroma part of the signal.";
 > = 1.0;
 
 uniform float gammaCorection <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "2.0";
+	ui_min = 0.0;
+	ui_max = 2.0;
 	ui_label = "Signal Gamma Correction [VHSPro]";
 	ui_tooltip = "Gamma corrects the image.";
 > = 1.0;
@@ -373,24 +373,24 @@ uniform bool VHS_Feedback <
 
 uniform float feedbackAmount <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "3.0";
+	ui_min = 0.0;
+	ui_max = 3.0;
 	ui_label = "Input Amount [VHSPro]";
 	ui_tooltip = "Amount of Phosphor Trails.";
 > = 2.0;
 
 uniform float feedbackFade <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.0";
+	ui_min = 0.0;
+	ui_max = 1.0;
 	ui_label = "Phosphor Fade [VHSPro]";
 	ui_tooltip = "Fade-time of the phosphor-trails.";
 > = 0.82;
 
 uniform float feedbackThresh <
 	ui_type = "slider";
-	ui_min = "0.0";
-	ui_max = "1.0";
+	ui_min = 0.0;
+	ui_max = 1.0;
 	ui_label = "Input Cutoff [VHSPro]";
 	ui_tooltip = "Cutoff of the trail.";
 > = 0.1;
@@ -409,8 +409,8 @@ uniform bool feedbackDebug <
 
 uniform int VHS_Filter <
 	ui_type = "slider";
-	ui_min ="0.0";
-	ui_max ="0.0";
+	ui_min = 0.0;
+	ui_max = 0.0;
 	ui_label = "Linear Filtering [VHSPro]";
 	ui_tooltip = "Filters the image linearly, increasing quality.\nDefine VHSLINEARFILTER in Preprocessor Definitions to take effect, this is only here as a reminder.";
 > = 0.0;
@@ -510,9 +510,9 @@ float2 hash22(float2 p) {
 	return frac(float2((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y));
 }
 
-//random hash				
+//random hash
 float4 hash42(float2 p)
-{				    
+{
 	float4 p4 = frac(float4(p.xyxy) * float4(443.8975,397.2973, 491.1871, 470.7827));
 	p4 += dot(p4.wzxy, p4 + 19.19);
 	return frac(float4(p4.x * p4.y, p4.x*p4.z, p4.y*p4.w, p4.x*p4.w));
@@ -530,13 +530,13 @@ float niq( in float3 x ){
 }
 
 float filmGrain(float2 uv, float t, float c )
-{ 					
+{
 //cheap noise - is ok atm
 	return pow(hash12( uv + 0.07*frac( t ) ), 3);
 }
 
 float2 n4rand_bw( float2 p, float t, float c )
-{			    
+{
 	t = frac( t );//that's why its sort of twitching 
 	float2 nrnd0 = hash22( p + 0.07*t );
 	c = 1.0 / (10.0*c); //iMouse.y  / iResolution.y
@@ -545,40 +545,40 @@ float2 n4rand_bw( float2 p, float t, float c )
 
 float scanLines(float2 p, float t)
 {
-			    		
+
 	//cheap (maybe make an option later)
 	// float scanLineWidth = 0.26;
 	// float scans = 0.5*(cos((p.y*screenLinesNum+t+.5)*2.0*PI) + 1.0);
-	// if(scans>scanLineWidth) scans = 1.; else scans = 0.;			        	
+	// if(scans>scanLineWidth) scans = 1.; else scans = 0.;
 
-		float t_sl = 0.0;					   	
+		float t_sl = 0.0;
 		//if lines aren't floating -> scanlines also shudn't 
 		if (VHS_LinesFloat) {
 			t_sl = t*linesFloatSpeed;
 		}
-			        	
-		//expensive but better			        	
+
+		//expensive but better
 		float scans = 0.5*(cos( (p.y*screenLinesNum+t_sl)*2.0*PI) + 1.0);
 		scans = pow(scans, scanLineWidth); 
 		return 1.0 - scans; 
-}		
+}
 
 float gcos(float2 uv, float s, float p)
 {
 	return (cos( uv.y * PI * 2.0 * s + p)+1.0)*0.5;
-}	
+}
 
 //mw - maximum width
 //wcs = widthChangeSpeed
 //lfs = line float speed = .5
 //lf phase = line float phase = .0
-float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){	
+float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
    
 	const float SLN = screenLinesNum; //TODO use only SLN
 	//width change
 	const float tt = t*wcs; //widthChangeSpeed
 	const float t2 = tt-fmod(tt, 0.5);
-					   
+
 	//float dw  = hash42( vec2(0.01, t2) ).x ; //on t and not on y
 	float w = gcos(uv, 2.0*(1.0-frac(t2)), PI-t2) * clamp( gcos(uv, frac(t2), t2) , 0.5, 1.0);
 	//w = clamp(w,0.,1.);
@@ -589,24 +589,24 @@ float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
 	ln = ln - frac(ln); 
 	// float ln = (1.-fmod(t*lfs + lfp, 1.))*SLN; 
 	// ln = ln - fmod(ln, 1.); //descreete line number
-					   
+
 	//ln = 10.;
 	//w = 4.;
-					   
+
 	//////stretching part///////
-					   
+
 	const float oy = 1.0/SLN; //TODO global
 	const float sh2 =  1.0 - fmod(ln, w)/w; // shift 0..1
 
 	// #if VHS_LINESFLOAT_ON
-	// 	float sh = fmod(t, 1.);				   	
+	// 	float sh = fmod(t, 1.);
 	//  	uv.y = floor( uv.y *SLN  +sh )/SLN - sh/SLN;
 	// #else 
 	//  	uv.y = floor( uv.y *SLN  )/SLN;
 	//  #endif
 
 	// uv.y = floor( uv.y  *SLN  )/SLN ;
-					    
+
 	const float slb = SLN / w; //screen lines big        
 
 	//TODO finish
@@ -616,10 +616,10 @@ float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
 		//     uv.y = floor( uv.y*slb +sh2 +sh )/slb - (sh2-1.)/slb - sh/slb;
 
 	//   #else
-						   
+
 		if(uv.y<oy*ln && uv.y>oy*(ln-w)) ////if(uv.y>oy*ln && uv.y<oy*(ln+w)) 
 			uv.y = floor( uv.y*slb +sh2 )/slb - (sh2-1.0)/slb ;
-				      
+
 	// #endif
 
 	return uv;
@@ -651,12 +651,12 @@ float3 yiq2rgb(float3 c)
 float3 rgbDistortion(float2 uv,  float magnitude, float t)
 {
 	magnitude *= 0.0001; // float magnitude = 0.0009;
-	float3 offsetX = float3( uv.x, uv.x, uv.x );	
+	float3 offsetX = float3( uv.x, uv.x, uv.x );
 	offsetX.r += rnd_rd(float2(t*0.03,uv.y*0.42)) * 0.001 + sin(rnd_rd(float2(t*0.2, uv.y)))*magnitude;
 	offsetX.g += rnd_rd(float2(t*0.004,uv.y*0.002)) * 0.004 + sin(t*9.0)*magnitude;
 	// offsetX.b = uv.y + rnd_rd(float2(cos(t*0.01),sin(uv.y)))*magnitude;
 	// offsetX.b = uv.y + rand_rd(float2(cos(t*0.01),sin(uv.y)))*magnitude;
-					    
+
 	float3 col = float3(0.0, 0.0, 0.0);
 	//it cud be optimized / but hm
 	col.x = rgb2yiq( tex2D( SamplerColorVHS, float2(offsetX.r, uv.y) ).rgb ).x;
@@ -675,9 +675,9 @@ float rndln(float2 p, float t)
 }
 
 float lineNoise(float2 p, float t)
-{				   
+{
 	float n = rndln(p* float2(0.5,1.0) + float2(1.0,3.0), t)*20.0;
-						
+
 	float freq = abs(sin(t));  //1.
 	float c = n*smoothstep(fmod(p.y*4.0 + t/2.0+sin(t + sin(t*0.63)),freq), 0.0,0.95);
 
@@ -724,7 +724,7 @@ float tapeNoise(float nl, float2 p, float t){
 	float nm = 	hash12( frac(p+t*float2(0.234,0.637)) ) 
 				// *hash12( frac(p+t*float2(0.123,0.867)) ) 
 				// *hash12( frac(p+t*float2(0.441,0.23)) );
-									;						
+									;
 		nm = pow(nm, 4) +0.3; //cheap and ok
 		//nm += 0.3 ; //just bit brighter or just more to threshold?
 
@@ -762,14 +762,14 @@ float2 fishEye(float2 uv, float size, float bend)
 		uv *= size*(1.0/size+bend*uv.x*uv.x*uv.y*uv.y);
 		uv += float2(0.5,0.5);
 	}
-						
+
 			if (VHS_FishEye_Hyperspace){
 
 				//http://paulbourke.net/miscellaneous/lenscorrection/
 
 				const float prop = _ScreenParams.x / _ScreenParams.y;
-				const float2 m = float2(0.5, 0.5 / prop);	
-				const float2 d = (uv*_ScreenParams.xy) /_ScreenParams.x - m;	
+				const float2 m = float2(0.5, 0.5 / prop);
+				const float2 d = (uv*_ScreenParams.xy) /_ScreenParams.x - m;
 				const float r = sqrt(dot(d, d));
 				float bind;
 
@@ -813,7 +813,7 @@ float3 t2d(float2 p)
 float3 yiqDist(float2 uv, float m, float t)
 {	
 						m *= 0.0001; // float m = 0.0009;
-						float3 offsetX = float3( uv.x, uv.x, uv.x );	
+						float3 offsetX = float3( uv.x, uv.x, uv.x );
 
 						offsetX.r += rnd_rd(float2(t*0.03, uv.y*0.42)) * 0.001 + sin(rnd_rd(float2(t*0.2, uv.y)))*m;
 						offsetX.g += rnd_rd(float2(t*0.004,uv.y*0.002)) * 0.004 + sin(t*9.0)*m;
@@ -838,7 +838,7 @@ float3 yiqDist(float2 uv, float m, float t)
 
 float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
-	const float t = Timer.x * 0.001;//_Time.y;							
+	const float t = Timer.x * 0.001;//_Time.y;
 	float2 p = txcoord.xy;
 	
 	float SLN = screenLinesNum; //TODO use only SLN
@@ -852,11 +852,11 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	SLN_Noise = noiseLinesNum; //TODO only SLN_Noise
 	if(SLN==0.0) SLN = _ScreenParams.y;
 
-	if(SLN_Noise==0 || SLN_Noise>SLN) SLN_Noise = SLN;									
-					
+	if(SLN_Noise==0 || SLN_Noise>SLN) SLN_Noise = SLN;
+
 	ONE_X = 1.0/_ScreenParams.x; //assigning works only here 
-	ONE_Y = 1.0/_ScreenParams.y; 					
-					
+	ONE_Y = 1.0/_ScreenParams.y; 
+
 
 	if (VHS_Twitch_V){
 		p = twitchVertical(0.5*twitchVFreq, p, t); 
@@ -877,7 +877,7 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		p.y = -floor( -p.y * SLN )/SLN;  //v1.3
 		// p.y = floor( p.y * SLN )/SLN; //v1.2
 	}
-					
+
 	if (VHS_Stretch){
 		p = stretch(p, t, 15.0, 1.0, 0.5, 0.0);
 		p = stretch(p, t, 8.0, 1.2, 0.45, 0.5);
@@ -889,14 +889,14 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		p.x += ONE_X*sin(t*13000.0)*jitterHAmount;
 	}
 	
-	//just init	
+	//just init
 	float3 col = float3(0.0,0.0,0.0);
 	float3 signal = float3(0.0,0.0,0.0);// rgb2yiq(col);
 
 	//gotta initiate all these things here coz of tape noise distortion
 
 	//[NOISE uv init]
-	//if SLN_Noise different from SLN->recalc linefloat 			   	
+	//if SLN_Noise different from SLN->recalc linefloat
 	float2 pn = p;
 	if(SLN!=SLN_Noise){
 		if(VHS_LineNoise){
@@ -904,8 +904,8 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 			pn.y = floor( pn.y * SLN_Noise + sh )/SLN_Noise - sh/SLN_Noise;
 		} else  {
 			pn.y = floor( pn.y * SLN_Noise )/SLN_Noise;
-		}				 
-	}  	
+		}
+	}
 
 	//SLN_X is quantization of X. goest from _ScreenParams.x to SLN_X
 	const float ScreenLinesNumX = SLN_Noise * _ScreenParams.x / _ScreenParams.y;
@@ -927,19 +927,19 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		for (int ii = 0; ii < 20 % 1023; ii++){
 
 			//this is t.n. line value at pn.y and down each pixel
-			//TODO i guess ONEXN shud be 1.0/sln noise							
+			//TODO i guess ONEXN shud be 1.0/sln noise
 			const float tnl = tex2Dlod(SamplerTape, float4(0.0,pn.y-ONEXN*ii, 0.0, 0.0)).y;
 			// float tnl = tex2D(SamplerTape, float2(0.0,pn.y-ONEXN*ii)).y;
 			// float tnl = tapeNoiseLines(float2(0.0,pn.y-ONEXN*i), t*tapeNoiseSpeed)*tapeNoiseAmount;
 
 			// float fadediff = hash12(float2(pn.x-ONEXN*i,pn.y)); 
-			if(tnl>0.55) {							
+			if(tnl>0.55) {
 					//TODO get integer part other way
 					const float sh = sin( 1.0*PI*(float(ii)/float(20))) ; //0..1								
 					p.x -= float(int(sh)*4.0*ONEXN); //displacement
 					distShift += sh ; //for 2nd part
 					// p.x +=  ONEXN * float(int(((tnl-thth)/thth)*4.0));
-					// col.x = sh;	
+					// col.x = sh;
 				}
 			}
 		}
@@ -959,11 +959,11 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	if (VHS_LineNoise || VHS_FilmGrain){
 		signal.x += tex2D(SamplerTape, pn).z;
 	}
-					   
+
 	//iq noise from yiq
 	if (VHS_YIQNoise){
 		if (signalNoiseType == 0) {
-						//TODO make cheaper noise 						
+						//TODO make cheaper noise 
 						//type 1 (best) w Y mask
 						const float2 noise = n4rand_bw( pn_,t,1.0-signalNoisePower ) ; 
 						signal.y += (noise.x*2.0-1.0)*signalNoiseAmount*signal.x;
@@ -977,7 +977,7 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 						//type 3
 						const float2 noise = n4rand_bw( pn_,t, 1.0-signalNoisePower )*signalNoiseAmount ; 
 						signal.y *= noise.x;
-						signal.z *= noise.y;	
+						signal.z *= noise.y;
 						signal.x += (noise.x*2.0-1.0)*0.05;
 				}
 			}
@@ -1012,12 +1012,12 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 			fadediff = tex2D(SamplerTape, d).a; //hash12(d);
 		}
 
-		if( tn > 0.8 ){								
+		if( tn > 0.8 ){
 			float nsx =  0.0; //new signal x
 			const float newlength = float(tailLength)*(1.0-fadediff); //tail lenght diff
 			if( jj <= newlength ) nsx = 1.0-( jj/ newlength ); //tail
-			signal.x = bms(signal.x, nsx*tapeNoiseAmount).x;									
-		}				
+			signal.x = bms(signal.x, nsx*tapeNoiseAmount).x;
+		}
 	}
 
 	//tape noise color shift
@@ -1036,7 +1036,7 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 
 	//TODO put it into 2nd pass
 	if (VHS_ScanLines){
-		col *= scanLines(txcoord.xy, t); 						
+		col *= scanLines(txcoord.xy, t);
 	}
 
 	//fisheye cutoff / outside fisheye
@@ -1054,24 +1054,24 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 			col = float3(0.0,0.0,0.0);
 		} else { 
 			//fades
-							
+
 			if( //X
 				(p.x>(0.0+hco.x) && p.x<(0.0+(sco.x+hco.x) )) || (p.x>(1.0-(sco.x+hco.x)) && p.x<(1.0-hco.x)) 
 			){	
-				if(p.x<0.5)	far = (0.0-hco.x+p.x)/(sco.x);									
-				else			
+				if(p.x<0.5)	far = (0.0-hco.x+p.x)/(sco.x);
+				else
 				far = (1.0-hco.x-p.x)/(sco.x);
-								
+
 				col *= float(far).xxx;
 			}; 
 
 				if( //Y
 					(p.y>(0.0+hco.y) 			 && p.y<(0.0+(sco.y+hco.y) )) || (p.y>(1.0-(sco.y+hco.y)) && p.y<(1.0-hco.y)) 
 				){
-					if(p.y<0.5)	far = (0.0-hco.y+p.y)/(sco.y);									
+					if(p.y<0.5)	far = (0.0-hco.y+p.y)/(sco.y);
 					else
 					far = (1.0-hco.y-p.y)/(sco.y);
-								
+
 					col *= float(far).xxx;
 				}
 			}
@@ -1085,8 +1085,8 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 
 float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
-	const float t = Timer.x * 0.001;//_Time.y;					
-	float2 p = txcoord.xy;	
+	const float t = Timer.x * 0.001;//_Time.y;
+	float2 p = txcoord.xy;
 	float SLN = screenLinesNum; //TODO use only SLN
 
 	//basically if its 0 -> set it to fullscreen
@@ -1097,7 +1097,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
     // ONE_X = 1.0 / screenLinesNum;
 
 	float ONE_X = 1.0 / _ScreenParams.x;  // 1px
-    ONE_X *= bleedAmount; // longer tails, more bleeding, default 1.				    
+    ONE_X *= bleedAmount; // longer tails, more bleeding, default 1.
 
 	//distortions
 	if (VHS_FishEye){
@@ -1111,7 +1111,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	{
 		bleedLength = 25;
 	}
-					  
+
 	if((VHS_BleedMode == 2 || VHS_BleedMode == 4))
 	{
 		bleedLength = 32;
@@ -1400,7 +1400,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		luma_filter[30] =  0.139044281;
 		luma_filter[31] =  0.168055832;
 		luma_filter[32] =  0.178571429;
-			
+
 		chroma_filter[0] =   0.001384762;
 		chroma_filter[1] =   0.001678312;
 		chroma_filter[2] =   0.002021715;
@@ -1441,7 +1441,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	float3 signal = float3(0.0,0.0,0.0);
 
 	if (VHS_Bleed){
-						
+
 		float3 norm = 	float3(0.0,0.0,0.0);
 		float3 adj = 	float3(0.0,0.0,0.0);
 		
@@ -1459,7 +1459,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 
 			signal += sums * adj;
 			norm += adj;
-					        
+
 		}
 
 		adj = float3(luma_filter[taps], chroma_filter[taps], chroma_filter[taps]);
@@ -1474,7 +1474,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 
 	//[Signal Tweak]
 	if (VHS_SignalTweak){
-					    
+
 		//adjust
 		signal.x += signalAdjustY; 
 		signal.y += signalAdjustI; 
@@ -1502,7 +1502,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		//signal.z = frac( (signal.z +1.0)*0.5f )*2.0f - 1.0f ;
 	}
 				    
-	float3 rgb = yiq2rgb(signal);					
+	float3 rgb = yiq2rgb(signal);
 				   
 	if (VHS_SignalTweak){
 		if(gammaCorection!=1.0) rgb = pow(abs(rgb), gammaCorection); //float3(gammaCorection).rgb
@@ -1513,7 +1513,7 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	// 	rgb *= 0.0;
 	// }
 
-	//TODO maybe on yiq channel				    
+	//TODO maybe on yiq channel
 	if (VHS_Vignette){
 		rgb *= vignette(p, t*vignetteSpeed); //TODO params //txcoord.xy
 	}
@@ -1531,7 +1531,7 @@ void PS_VHS3(float4 vpos     : SV_Position, out float4 feedbackoutput   : SV_Tar
 	float2 p = texcoord.xy;
 	const float one_x = 1.0/_ScreenParams.x;
     float3 fc = tex2D( SamplerColorVHS, texcoord).rgb;    // curent frame
-	
+
     //new feedback
     const float3 fl = tex2D( VHS_InputB, texcoord).rgb;    //last frame without feedback
     float  diff = abs(fl.x-fc.x + fl.y-fc.y + fl.z-fc.z)/3.0; //dfference between frames
@@ -1573,7 +1573,7 @@ float4 PS_VHS4(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 			col = fbb;
 		}
 	}
-				   
+
 	return float4(col, 1.0); 
 }
 
