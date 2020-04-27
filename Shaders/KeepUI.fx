@@ -39,10 +39,10 @@
 	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
 #endif
 
-#if __APPLICATION__ == 0x6f24790f // Final Fantasy XIV
+#if __APPLICATION__ == 0x6f24790f && KeepUIType == 0 // Final Fantasy XIV
 	#undef KeepUIType
 	#define KeepUIType 1
-#elif __APPLICATION__ == 0x21050ce9 // Phantasy Star Online
+#elif __APPLICATION__ == 0x21050ce9 && KeepUIType == 0 // Phantasy Star Online
 	#undef KeepUIType
 	#define KeepUIType 2
 #endif
