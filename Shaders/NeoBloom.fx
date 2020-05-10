@@ -122,7 +122,7 @@ static const float DirtAspectRatioInv = 1.0 / DirtAspectRatio;
 
 static const int DebugOption_None = 0;
 static const int DebugOption_OnlyBloom = 1;
-static const int DebugOption_SplitTextures = 2;
+static const int DebugOptions_TextureAtlas = 2;
 static const int DebugOption_Adaptation = 3;
 
 #if NEO_BLOOM_ADAPT
@@ -583,15 +583,23 @@ uniform float uSigma <
 uniform float uPadding <
 	ui_label = "Padding";
 	ui_tooltip =
-		"Specifies an additional padding that is added around each bloom "
-		"texture internally during the blurring process.\n"
-		"This serves to reduce the 'vignette-like' effect that can occur "
-		"around the screen edges in the bloom textures, where brightness is "
-		"lost near the edges. With padding however this is counteracted as it "
-		"can simulate there being more color information beyond the edges.\n"
-		"Be aware that this works by effectively reducing the bloom texture's "
-		"sizes, so it can lead to loss of detail or pixelation when values "
-		"specified are too high.\n"
+		"Specifies additional padding around the bloom textures in the "
+		"internal texture atlas, which is used during the blurring process.\n"
+		"The reason for this is to reduce the loss of bloom brightness around "
+		"the screen edges, due to the way the blurring works.\n"
+		"\n"
+		"If desired, it can be set to zero to purposefully reduce the "
+		"amount of bloom around the edges.\n"
+		"It may be necessary to increase this parameter when increasing the "
+		"blur sigma, samples and/or bloom down scale.\n"
+		"\n"
+		"Due to the way it works, it's recommended to keep the value as low "
+		"as necessary, since it'll cause the blurring process to work in a "
+		"\"lower\" resolution.\n"
+		"\n"
+		"If you're still confused about this parameter, try viewing the "
+		"texture atlas with debug mode and watch what happens when it is "
+		"increased.\n"
 		"\nDefault: 0.1";
 	ui_category = "Blur";
 	ui_type = "slider";
@@ -614,13 +622,20 @@ uniform int uDebugOptions <
 		"  - Showing only the bloom texture. The 'bloom texture to show' "
 		"parameter can be used to determine which bloom texture(s) to "
 		"visualize.\n"
-		"  - Showing the raw internal texture used to blur all the bloom "
-		"'textures', visualizing all the blooms at once in scale.\n"
+		"  - Showing the raw internal texture atlas used to blur all the bloom "
+		"\"textures\", visualizing all the blooms at once in scale.\n"
+		#if NEO_BLOOM_ADAPT
+		"  - Showing the adaptation texture directly.\n"
+		#endif
+		#if NEO_BLOOM_DEPTH
+		"  - Showing the depth ranges texture, displaying the near range as "
+		"red, middle as green and far as blue.\n"
+		#endif
 		"\nDefault: None";
 	ui_category = "Debug";
 	ui_type = "combo";
 	ui_items =
-		"None\0Show Only Bloom\0Show Split Textures\0"
+		"None\0Show Only Bloom\0Show Texture Atlas\0"
 		#if NEO_BLOOM_ADAPT
 		"Show Adaptation\0"
 		#endif
@@ -660,7 +675,7 @@ sampler BackBuffer
 	SRGBTexture = true;
 };
 
-texture NeoBloom_DownSample
+texture NeoBloom_DownSample <pooled="true";>
 {
 	Width = NEO_BLOOM_TEXTURE_SIZE;
 	Height = NEO_BLOOM_TEXTURE_SIZE;
@@ -672,31 +687,35 @@ sampler DownSample
 	Texture = NeoBloom_DownSample;
 };
 
-texture NeoBloom_TempA
+texture NeoBloom_AtlasA <pooled="true";>
 {
 	Width = BUFFER_WIDTH / NEO_BLOOM_DOWN_SCALE;
 	Height = BUFFER_HEIGHT / NEO_BLOOM_DOWN_SCALE;
 	Format = RGBA16F;
 };
-sampler TempA
+sampler AtlasA
 {
-	Texture = NeoBloom_TempA;
+	Texture = NeoBloom_AtlasA;
+	AddressU = BORDER;
+	AddressV = BORDER;
 };
 
-texture NeoBloom_TempB
+texture NeoBloom_AtlasB <pooled="true";>
 {
 	Width = BUFFER_WIDTH / NEO_BLOOM_DOWN_SCALE;
 	Height = BUFFER_HEIGHT / NEO_BLOOM_DOWN_SCALE;
 	Format = RGBA16F;
 };
-sampler TempB
+sampler AtlasB
 {
-	Texture = NeoBloom_TempB;
+	Texture = NeoBloom_AtlasB;
+	AddressU = BORDER;
+	AddressV = BORDER;
 };
 
 #if NEO_BLOOM_ADAPT
 
-texture NeoBloom_Adapt
+texture NeoBloom_Adapt <pooled="true";>
 {
 	Format = R16F;
 };
@@ -705,6 +724,7 @@ sampler Adapt
 	Texture = NeoBloom_Adapt;
 	MinFilter = POINT;
 	MagFilter = POINT;
+	MipFilter = POINT;
 };
 
 texture NeoBloom_LastAdapt
@@ -716,6 +736,7 @@ sampler LastAdapt
 	Texture = NeoBloom_LastAdapt;
 	MinFilter = POINT;
 	MagFilter = POINT;
+	MipFilter = POINT;
 };
 
 #endif
@@ -962,7 +983,7 @@ float GetDepthPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 #endif
 
-float4 DownSamplePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET 
+float4 DownSamplePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
 	float4 color = tex2D(BackBuffer, uv);
 	color.rgb = saturate(apply_saturation(color.rgb, uSaturation));
@@ -1022,12 +1043,12 @@ float4 SplitPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 float4 BlurXPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	return blur(TempA, uv, PixelScale * float2(1.0, 0.0) * NEO_BLOOM_DOWN_SCALE);
+	return blur(AtlasA, uv, PixelScale * float2(1.0, 0.0) * NEO_BLOOM_DOWN_SCALE);
 }
 
 float4 BlurYPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	return blur(TempB, uv, PixelScale * float2(0.0, 1.0) * NEO_BLOOM_DOWN_SCALE);
+	return blur(AtlasB, uv, PixelScale * float2(0.0, 1.0) * NEO_BLOOM_DOWN_SCALE);
 }
 
 #if NEO_BLOOM_ADAPT
@@ -1086,7 +1107,7 @@ float4 JoinBloomsPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 		rect_uv = scale_uv(rect_uv + rect.xy / rect.z, rect.z, 0.0);
 
 		float weight = normal_distribution(i, uMean, uVariance);
-		bloom += tex2D(TempA, rect_uv) * weight;
+		bloom += tex2D(AtlasA, rect_uv) * weight;
 		accum += weight;
 	}
 	bloom /= accum;
@@ -1112,7 +1133,7 @@ float4 SaveLastBloomPS(
 	#endif
 
 	#if NEO_BLOOM_GHOSTING
-		color.rgb = tex2D(TempB, uv).rgb;
+		color.rgb = tex2D(AtlasB, uv).rgb;
 	#endif
 
 	return color;
@@ -1145,7 +1166,7 @@ float4 BlendPS(BlendPassParams p) : SV_TARGET
 	color.rgb = inv_tonemap(color.rgb);
 
 	#if NEO_BLOOM_GHOSTING
-		float4 bloom = tex2D(TempB, uv);
+		float4 bloom = tex2D(AtlasB, uv);
 	#else
 		float4 bloom = JoinBloomsPS(p.p, uv);
 	#endif
@@ -1173,13 +1194,13 @@ float4 BlendPS(BlendPassParams p) : SV_TARGET
 					);
 
 					rect_uv = scale_uv(rect_uv + rect.xy / rect.z, rect.z, 0.0);
-					color = tex2D(TempA, rect_uv);
+					color = tex2D(AtlasA, rect_uv);
 					color.rgb = tonemap(color.rgb);
 				}
 
 				return color;
-			case DebugOption_SplitTextures:
-				color = tex2D(TempA, uv);
+			case DebugOptions_TextureAtlas:
+				color = tex2D(AtlasA, uv);
 				color.rgb = lerp(checkered_pattern(uv), color.rgb, color.a);
 				color.a = 1.0;
 
@@ -1280,19 +1301,19 @@ technique NeoBloom
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = SplitPS;
-		RenderTarget = NeoBloom_TempA;
+		RenderTarget = NeoBloom_AtlasA;
 	}
 	pass BlurX
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = BlurXPS;
-		RenderTarget = NeoBloom_TempB;
+		RenderTarget = NeoBloom_AtlasB;
 	}
 	pass BlurY
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = BlurYPS;
-		RenderTarget = NeoBloom_TempA;
+		RenderTarget = NeoBloom_AtlasA;
 	}
 
 	#if NEO_BLOOM_ADAPT
@@ -1315,7 +1336,7 @@ technique NeoBloom
 		{
 			VertexShader = PostProcessVS;
 			PixelShader = JoinBloomsPS;
-			RenderTarget = NeoBloom_TempB;
+			RenderTarget = NeoBloom_AtlasB;
 		}
 		pass SaveLastBloom
 		{
