@@ -83,9 +83,7 @@ struct BlendPassParams
 	float2 uv : TEXCOORD0;
 
 	#if NEO_BLOOM_LENS_DIRT
-
-	float2 lens_uv : TEXCOORD1;
-
+		float2 lens_uv : TEXCOORD1;
 	#endif
 };
 
@@ -1141,8 +1139,14 @@ float4 SaveLastBloomPS(
 
 #endif
 
-void BlendVS(uint id : SV_VERTEXID, out BlendPassParams p)
+// As a workaround for a bug in the current ReShade DirectX 9 code generator,
+// we have to return the parameters instead of using out.
+// If we don't do that, the DirectX 9 half pixel offset bug is not automatically
+// corrected by the code generator, which leads to a slightly blurry image.
+BlendPassParams BlendVS(uint id : SV_VERTEXID)
 {
+	BlendPassParams p;
+
 	PostProcessVS(id, p.p, p.uv);
 
 	#if NEO_BLOOM_LENS_DIRT && NEO_BLOOM_LENS_DIRT_ASPECT_RATIO_CORRECTION
@@ -1156,6 +1160,8 @@ void BlendVS(uint id : SV_VERTEXID, out BlendPassParams p)
 
 		p.lens_uv = scale_uv(p.uv, float2(1.0, ratio), 0.5);
 	#endif
+
+	return p;
 }
 
 float4 BlendPS(BlendPassParams p) : SV_TARGET
