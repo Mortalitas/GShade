@@ -1080,7 +1080,7 @@ float4 CalcAdaptPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 	if (uAdaptUseLimits)
 		gs = clamp(gs, uAdaptLimits.x, uAdaptLimits.y);
-	gs = lerp(tex2D(LastAdapt, 0.0).r, gs, (FrameTime * 0.001) / uAdaptTime);
+	gs = lerp(tex2D(LastAdapt, 0.0).r, gs, saturate((FrameTime * 0.001) / max(uAdaptTime, 0.001)));
 
 	return float4(gs, 0.0, 0.0, 1.0);
 }
