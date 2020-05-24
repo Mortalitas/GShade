@@ -444,13 +444,13 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	{
 		base.xyz *= saturate((1.0f - adapt * 0.75f * alAdaptBaseMult * pow(abs(1.0f - (base.x + base.y + base.z) / 3), alAdaptBaseBlackLvL)));
 		const float4 highSampleMix = (1.0 - ((1.0 - base) * (1.0 - high * 1.0))) + dither;
-		const float4 baseSample = lerp(base, highSampleMix, max(0.0f, alInt - adapt));
+		const float4 baseSample = lerp(base, highSampleMix, saturate(alInt - adapt));
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 
 		if (baseSampleMix > 0.008)
 			return baseSample;
 		else
-			return lerp(base, highSampleMix, max(0.0f, (alInt - adapt) * 0.85f) * baseSampleMix);
+			return lerp(base, highSampleMix, saturate((alInt - adapt) * 0.85f) * baseSampleMix);
 	}
 	else
 	{
@@ -461,7 +461,7 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 		if (baseSampleMix > 0.008)
 			return baseSample;
 		else
-			return lerp(base, highSampleMix, max(0.0f, alInt * 0.85f) * baseSampleMix);
+			return lerp(base, highSampleMix, saturate(alInt * 0.85f) * baseSampleMix);
 	}
 }
 
