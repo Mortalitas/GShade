@@ -1,5 +1,5 @@
 /*
-	PandaFX version 2.2.1 for ReShade 4
+	PandaFX version 2.2.2 for ReShade 4
 	by Jukka Korhonen aka Loadus ~ twitter.com/thatbonsaipanda
 	November 2018
 	jukka.korhonen@gmail.com
@@ -15,18 +15,8 @@
 
 #include "ReShade.fxh"
 
-// ------------------------------------
-
-uniform float Blend_Amount <
-	ui_label = "Blend Amount";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Blend the effect with the original image.";
-> = 1.0;
-
-// ------------------------------------
-
+// UNIFORMS
+//------------------------------------
 uniform bool Enable_Diffusion <
 	ui_label = "Enable the lens diffusion effect";
 	ui_tooltip = "Enable a light diffusion that emulates the glare of a camera lens.";
@@ -37,13 +27,39 @@ uniform bool Enable_Bleach_Bypass <
 	ui_tooltip = "Enable a cinematic contrast effect that emulates a bleach bypass on film. Used a lot in war movies and gives the image a grittier feel.";
 > = true;
 
+	uniform bool Enable_Static_Dither <
+		ui_label = "Apply static dither";
+		ui_tooltip = "Dither the diffusion. Only applies a static dither image texture.";
+	> = true;
+
 uniform bool Enable_Dither <
-	ui_label = "Dither";
-	ui_tooltip = "Dither the final result.";
-> = true;
+	ui_label = "Dither the final output";
+	ui_tooltip = "Dither the final result of the shader.";
+> = false;
 
+uniform float Dither_Amount <
+    ui_label = "Dither Amount";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the amount of the dither on the diffusion layers (to smooth out banding).";
+> = 0.15;
 
-// ------------------------------------
+uniform float Blend_Amount <
+	ui_label = "Blend Amount";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Blend the effect with the original image.";
+> = 1.0;
+
+uniform float Bleach_Bypass_Amount <
+	ui_label = "Bleach Bypass Amount";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the amount of the third diffusion layer.";
+> = 0.5;
 
 uniform float Contrast_R <
     ui_label = "Contrast (Red)";
@@ -93,30 +109,12 @@ uniform float Gamma_B <
 	ui_tooltip = "Apply Gamma to blue.";
 > = 1.0;
 
-// ------------------------------------
-
 uniform float Diffusion_1_Amount <
     ui_label = "Diffusion 1 Amount";
 	ui_type = "slider";
 	ui_min = 0.0;
 	ui_max = 1.0;
 	ui_tooltip = "Adjust the amount of the first diffusion layer.";
-> = 0.5;
-
-uniform float Diffusion_2_Amount <
-    ui_label = "Diffusion 2 Amount";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the amount of the second diffusion layer.";
-> = 0.5;
-
-uniform float Diffusion_3_Amount <
-    ui_label = "Diffusion 3 Amount";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the amount of the third diffusion layer.";
 > = 0.5;
 
 uniform int Diffusion_1_Radius <
@@ -127,22 +125,6 @@ uniform int Diffusion_1_Radius <
 	ui_tooltip = "Set the radius of the first diffusion layer.";
 > = 8;
 
-uniform int Diffusion_2_Radius <
-	ui_label = "Diffusion 2 Radius";
-	ui_type = "slider";
-	ui_min = 5;
-	ui_max = 20;
-	ui_tooltip = "Set the radius of the second diffusion layer.";
-> = 8;
-
-uniform int Diffusion_3_Radius <
-	ui_label = "Diffusion 3 Radius";
-	ui_type = "slider";
-	ui_min = 5;
-	ui_max = 20;
-	ui_tooltip = "Set the radius of the third diffusion layer.";
-> = 8;
-
 uniform float Diffusion_1_Gamma <
     ui_label = "Diffusion 1 Gamma";
 	ui_type = "slider";
@@ -150,70 +132,6 @@ uniform float Diffusion_1_Gamma <
 	ui_max = 5.0;
 	ui_tooltip = "Apply Gamma to first diffusion layer.";
 > = 2.2;
-
-uniform float Diffusion_2_Gamma <
-    ui_label = "Diffusion 2 Gamma";
-	ui_type = "slider";
-	ui_min = 0.02;
-	ui_max = 5.0;
-	ui_tooltip = "Apply Gamma to second diffusion layer.";
-> = 1.3;
-
-uniform float Diffusion_3_Gamma <
-    ui_label = "Diffusion 3 Gamma";
-	ui_type = "slider";
-	ui_min = 0.02;
-	ui_max = 5.0;
-	ui_tooltip = "Apply Gamma to third diffusion layer.";
-> = 1.0;
-
-// ------------------------------------
-
-uniform float Bleach_Bypass_Amount <
-	ui_label = "Bleach Bypass Amount";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the amount of the third diffusion layer.";
-> = 0.5;
-
-// ------------------------------------
-
-uniform float Dither_Amount <
-    ui_label = "Dither Amount";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the amount of the dither on the diffusion layers (to smooth out banding).";
-> = 0.15;
-
-// ------------------------------------
-
-uniform float Diffusion_1_Desaturate <
-    ui_label = "Diffusion 1 desaturation";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the saturation of the first diffusion layer.";
-> = 0.0;
-
-uniform float Diffusion_2_Desaturate <
-    ui_label = "Diffusion 2 desaturation";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the saturation of the second diffusion layer.";
-> = 0.5;
-
-uniform float Diffusion_3_Desaturate <
-    ui_label = "Diffusion 3 desaturation";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-	ui_tooltip = "Adjust the saturation of the third diffusion layer.";
-> = 0.75;
-
-// ------------------------------------
 
 uniform float Diffusion_1_Quality <
 	ui_label = "Diffusion 1 sampling quality";
@@ -223,6 +141,38 @@ uniform float Diffusion_1_Quality <
 	ui_tooltip = "Set the quality of the first diffusion layer. Number is the divider of how many times the texture size is divided in half. Lower number = higher quality, but more processing needed. (No need to adjust this.)";
 > = 2;
 
+uniform float Diffusion_1_Desaturate <
+    ui_label = "Diffusion 1 desaturation";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the saturation of the first diffusion layer.";
+> = 0.0;
+
+uniform float Diffusion_2_Amount <
+    ui_label = "Diffusion 2 Amount";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the amount of the second diffusion layer.";
+> = 0.5;
+
+uniform int Diffusion_2_Radius <
+	ui_label = "Diffusion 2 Radius";
+	ui_type = "slider";
+	ui_min = 5;
+	ui_max = 20;
+	ui_tooltip = "Set the radius of the second diffusion layer.";
+> = 8;
+
+uniform float Diffusion_2_Gamma <
+    ui_label = "Diffusion 2 Gamma";
+	ui_type = "slider";
+	ui_min = 0.02;
+	ui_max = 5.0;
+	ui_tooltip = "Apply Gamma to second diffusion layer.";
+> = 1.3;
+
 uniform float Diffusion_2_Quality <
 	ui_label = "Diffusion 2 sampling quality";
 	// ui_type = "slider";
@@ -230,6 +180,38 @@ uniform float Diffusion_2_Quality <
 	// ui_max = 64;
 	ui_tooltip = "Set the quality of the second diffusion layer. Number is the divider of how many times the texture size is divided in half. Lower number = higher quality, but more processing needed. (No need to adjust this.)";
 > = 16;
+
+uniform float Diffusion_2_Desaturate <
+    ui_label = "Diffusion 2 desaturation";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the saturation of the second diffusion layer.";
+> = 0.5;
+
+uniform float Diffusion_3_Amount <
+    ui_label = "Diffusion 3 Amount";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the amount of the third diffusion layer.";
+> = 0.5;
+
+uniform int Diffusion_3_Radius <
+	ui_label = "Diffusion 3 Radius";
+	ui_type = "slider";
+	ui_min = 5;
+	ui_max = 20;
+	ui_tooltip = "Set the radius of the third diffusion layer.";
+> = 8;
+
+uniform float Diffusion_3_Gamma <
+    ui_label = "Diffusion 3 Gamma";
+	ui_type = "slider";
+	ui_min = 0.02;
+	ui_max = 5.0;
+	ui_tooltip = "Apply Gamma to third diffusion layer.";
+> = 1.0;
 
 uniform float Diffusion_3_Quality <
 	ui_label = "Diffusion 3 sampling quality";
@@ -239,16 +221,22 @@ uniform float Diffusion_3_Quality <
 	ui_tooltip = "Set the quality of the third diffusion layer. Number is the divider of how many times the texture size is divided in half. Lower number = higher quality, but more processing needed. (No need to adjust this.)";
 > = 64;
 
-// ------------------------------------
+uniform float Diffusion_3_Desaturate <
+    ui_label = "Diffusion 3 desaturation";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_tooltip = "Adjust the saturation of the third diffusion layer.";
+> = 0.75;
+
+uniform float framecount < source = "framecount"; >;
 
 
-
+// TEXTURES
+//--------------------------------------------
 // Provide a noise texture, basically a gray surface with grain:
 texture NoiseTex <source = "hd_noise.png"; > { Width = 1920; Height = 1080; Format = RGBA8; };
-sampler NoiseSampler { Texture = NoiseTex; };
-
 texture prePassLayer { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
-
 texture blurLayerHorizontal { Width = BUFFER_WIDTH / 2; Height = BUFFER_HEIGHT / 2; Format = RGBA8; };
 texture blurLayerVertical { Width = BUFFER_WIDTH / 2; Height = BUFFER_HEIGHT / 2; Format = RGBA8; };
 texture blurLayerHorizontalMedRes { Width = BUFFER_WIDTH / 16; Height = BUFFER_HEIGHT / 16; Format = RGBA8; };
@@ -256,10 +244,10 @@ texture blurLayerVerticalMedRes { Width = BUFFER_WIDTH / 16; Height = BUFFER_HEI
 texture blurLayerHorizontalLoRes { Width = BUFFER_WIDTH / 64; Height = BUFFER_HEIGHT / 64; Format = RGBA8; };
 texture blurLayerVerticalLoRes { Width = BUFFER_WIDTH / 64; Height = BUFFER_HEIGHT / 64; Format = RGBA8; };
 
-uniform float framecount < source = "framecount"; >;
-
+// SAMPLERS
+//--------------------------------------------
+sampler NoiseSampler { Texture = NoiseTex; };
 sampler2D PFX_PrePassLayer { Texture = prePassLayer; };
-
 // ------- samplers for large radius blur
 sampler2D PFX_blurHorizontalLayer {	Texture = blurLayerHorizontal; };
 sampler2D PFX_blurVerticalLayer { Texture = blurLayerVertical; };
@@ -269,6 +257,8 @@ sampler2D PFX_blurHorizontalLayerLoRes { Texture = blurLayerHorizontalLoRes; };
 sampler2D PFX_blurVerticalLayerLoRes { Texture = blurLayerVerticalLoRes; };
 
 
+// FUNCTIONS
+//--------------------------------------------
 float AdjustableSigmoidCurve (float value, float amount) {
 
 	float curve = 1.0; 
@@ -382,7 +372,7 @@ void PS_PrePass (float4 pos : SV_Position,
 		blue = clamp(blue, 0.0, 1.0);
 
 		A = A * (1.0 - red * 0.6);
-		A = A * (1.0 - green * 0.8);	
+		A = A * (1.0 - green * 0.8);
 		A = A * (1.0 - blue * 0.3);
 		
 		// A.r = AdjustableSigmoidCurve(A.r, 1.4);
@@ -476,6 +466,14 @@ float4 PandaComposition (float4 vpos : SV_Position,
 				blurLayer = pow(abs(blurLayer), Diffusion_1_Gamma);
 				blurLayerMedRes = pow(abs(blurLayerMedRes), Diffusion_2_Gamma);
 				blurLayerLoRes = pow(abs(blurLayerLoRes), Diffusion_3_Gamma);
+
+			if (Enable_Static_Dither)
+			{
+				const float3 hd_noise = 1.0 - (tex2D(NoiseSampler, uv).rgb * 0.01);
+				blurLayer.rgb = 1.0 - hd_noise * (1.0 - blurLayer.rgb);
+				blurLayerMedRes.rgb = 1.0 - hd_noise * (1.0 - blurLayerMedRes.rgb);
+				blurLayerLoRes.rgb = 1.0 - hd_noise * (1.0 - blurLayerLoRes.rgb);
+			}
 	}
 
 
@@ -551,6 +549,9 @@ float4 PandaComposition (float4 vpos : SV_Position,
 	return lerp(O, A, Blend_Amount);
 }
 
+
+// TECHNIQUES
+//--------------------------------------------
 technique PandaFX 
 {
 		pass PreProcess	
