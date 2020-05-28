@@ -8,13 +8,10 @@ and then reintroduce the fog over the image.
 
 
 
-This code was inspired by the following papers:
+This code was inspired by the following paper:
 
-M. J. Abbaspour, M. Yazdi, and M. Masnadi-Shirazi, “A new fast method for foggy image enhancement,” 
-2016 24th Iranian Conference on Electrical Engineering (ICEE), 2016.
-
-W. Sun, “A new single-image fog removal algorithm based on physical model,” 
-Optik, vol. 124, no. 21, pp. 4770–4775, 2013.
+B. Cai, X. Xu, K. Jia, C. Qing, and D. Tao, “DehazeNet: An End-to-End System for Single Image Haze Removal,”
+IEEE Transactions on Image Processing, vol. 25, no. 11, pp. 5187–5198, 2016.
 
 
 
@@ -140,10 +137,12 @@ this CC0 or use of the Work.
 */
 
 
-#include "Reshade.fxh"
-#define euler	2.71828
 
-uniform float STRENGTH <
+#include "ReShade.fxh"
+
+
+
+uniform float STRENGTH<
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Strength";
@@ -155,183 +154,195 @@ uniform float STRENGTH <
 #define FOGREMOVALSTRENGTH 1.0
 #endif
 
-uniform bool USEDEPTH <
+uniform float X<
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Depth Curve";
+	ui_bind = "FOGREMOVALDEPTHCURVE";
+> = 0.0;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef FOGREMOVALDEPTHCURVE
+#define FOGREMOVALDEPTHCURVE 0.0
+#endif
+
+uniform float K<
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "K-Level";
+	ui_tooltip = "Make sure this feature is not set too high or too low" ;
+	ui_bind = "FOGREMOVALKLEVEL";
+> = 0.3;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef FOGREMOVALKLEVEL
+#define FOGREMOVALKLEVEL 0.3
+#endif
+
+uniform bool USEDEPTH<
 	ui_label = "Ignore the sky";
 	ui_tooltip = "Useful for shaders such as RTGI that rely on skycolor";
-	ui_bind = "FOGREMOVALDEPTH";
+	ui_bind = "FOGREMOVALUSEDEPTH";
 > = 0;
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef FOGREMOVALDEPTH
-#define FOGREMOVALDEPTH 0
+#ifndef FOGREMOVALUSEDEPTH
+#define FOGREMOVALUSEDEPTH 0
 #endif
 
-texture Veil {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16F;};
-sampler sVeil {Texture = Veil;};
-
-texture Erosion <pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16F;};
-sampler sErosion {Texture = Erosion;};
-
-texture OpenedVeil {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16F;};
-sampler sOpenedVeil {Texture = OpenedVeil;};
 
 
+texture ColorAttenuation {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sColorAttenuation {Texture = ColorAttenuation;};
+texture HueDisparity {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sHueDisparity {Texture = HueDisparity;};
+texture DarkChannel {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sDarkChannel {Texture = DarkChannel;};
+texture MaxContrast {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sMaxContrast {Texture = MaxContrast;};
+texture GaussianH {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sGaussianH {Texture = GaussianH;};
+texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sTransmission {Texture = Transmission;};
 
-void VeilPass(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float output : SV_Target)
+
+
+float Hue(float3 color)
 {
-	const float3 a = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, -2)).rgb;
-    const float3 b = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, -1)).rgb;
-    const float3 c = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-2, 0)).rgb;
-    const float3 d = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, 0)).rgb;
-    const float3 e = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 0)).rgb;
-    const float3 f = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, 0)).rgb;
-    const float3 g = tex2Doffset(ReShade::BackBuffer, texcoord, int2(2, 0)).rgb;
-    const float3 h = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 1)).rgb;
-    const float3 i = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 2)).rgb;
-	
-	//Find the smallest single rgb value out of all the pixels
-	float minimum = min(a.r, b.r);
-	minimum = min(minimum, c.r);
-	minimum = min(minimum, d.r);
-	minimum = min(minimum, e.r);
-	minimum = min(minimum, f.r);
-	minimum = min(minimum, g.r);
-	minimum = min(minimum, h.r);
-	minimum = min(minimum, i.r);
-	minimum = min(minimum, a.g);
-	minimum = min(minimum, c.g);
-	minimum = min(minimum, d.g);
-	minimum = min(minimum, e.g);
-	minimum = min(minimum, f.g);
-	minimum = min(minimum, g.g);
-	minimum = min(minimum, h.g);
-	minimum = min(minimum, i.g);
-	minimum = min(minimum, a.b);
-	minimum = min(minimum, c.b);
-	minimum = min(minimum, d.b);
-	minimum = min(minimum, e.b);
-	minimum = min(minimum, f.b);
-	minimum = min(minimum, g.b);
-	minimum = min(minimum, h.b);
-	minimum = min(minimum, i.b);
-	
-	output = minimum;
+	return atan((0.8660254 * (color.g - color.b)) / (color.r - 0.5 * (color.g + color.b)));
 }
 
-void ErosionPass(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float output : SV_Target)
+float colorToLuma(float3 color)
 {
-	const float a = tex2Doffset(sVeil, texcoord, int2(0, -2)).r;
-    const float b = tex2Doffset(sVeil, texcoord, int2(0, -1)).r;
-    const float c = tex2Doffset(sVeil, texcoord, int2(-2, 0)).r;
-    const float d = tex2Doffset(sVeil, texcoord, int2(-1, 0)).r;
-    const float e = tex2Doffset(sVeil, texcoord, int2(0, 0)).r;
-    const float f = tex2Doffset(sVeil, texcoord, int2(1, 0)).r;
-    const float g = tex2Doffset(sVeil, texcoord, int2(2, 0)).r;
-    const float h = tex2Doffset(sVeil, texcoord, int2(0, 1)).r;
-    const float i = tex2Doffset(sVeil, texcoord, int2(0, 2)).r;
-	
-	//Find the smallest single value out of all the pixels
-	float minimum = min(a, b);
-	minimum = min(minimum, c);
-	minimum = min(minimum, d);
-	minimum = min(minimum, e);
-	minimum = min(minimum, f);
-	minimum = min(minimum, g);
-	minimum = min(minimum, h);
-	minimum = min(minimum, i);
-	
-	output = minimum;
+	return dot(color, (0.333, 0.333, 0.333)) * 3;
 }
 
-void DilationPass(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float output : SV_Target)
+
+
+void FeaturesPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float colorAttenuation : SV_Target0, out float hueDisparity : SV_Target1, out float darkChannel : SV_Target2, out float maxContrast : SV_Target3)
 {
-    const float a = tex2Doffset(sErosion, texcoord, int2(0, -2)).r;
-    const float b = tex2Doffset(sErosion, texcoord, int2(0, -1)).r;
-    const float c = tex2Doffset(sErosion, texcoord, int2(-2, 0)).r;
-    const float d = tex2Doffset(sErosion, texcoord, int2(-1, 0)).r;
-    const float e = tex2Doffset(sErosion, texcoord, int2(0, 0)).r;
-    const float f = tex2Doffset(sErosion, texcoord, int2(1, 0)).r;
-    const float g = tex2Doffset(sErosion, texcoord, int2(2, 0)).r;
-    const float h = tex2Doffset(sErosion, texcoord, int2(0, 1)).r;
-    const float i = tex2Doffset(sErosion, texcoord, int2(0, 2)).r;
+	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	const float value = max(max(color.r, color.g), color.b);
+	colorAttenuation = value - ((value - min(min(color.r, color.g), color.b)) / rcp(value));
+	hueDisparity = Hue(float3(max(color.r, 1 - color.r), max(color.g, 1 - color.g), max(color.b, 1 - color.b))) - Hue(color);
+	darkChannel = 1;
+	const float luma = colorToLuma(color);
+	float luma1;
+	float sum;
+	maxContrast = 0;
+	for(int i = -2; i <= 2; i++)
+	{
+		sum = 0;
+		for(int j = -2; j <= 2; j++)
+		{
+			color = tex2Doffset(ReShade::BackBuffer, texcoord, int2(i, j)).rgb;
+			darkChannel = min(min(color.r, color.g), min(color.b, darkChannel));
+			luma1 = colorToLuma(color);
+			sum += ((luma - luma1) * (luma - luma1));
+		}
+		maxContrast = max(maxContrast, sum);
+	}
+	maxContrast = sqrt(0.2 * maxContrast);
 	
-	//Find the largest single value out of all the pixels
-	float maximum = max(a, b);
-	maximum = max(maximum, c);
-	maximum = max(maximum, d);
-	maximum = max(maximum, e);
-	maximum = max(maximum, f);
-	maximum = max(maximum, g);
-	maximum = max(maximum, h);
-	maximum = max(maximum, i);
-	
-	output = maximum;
 }
 
-void ReflectivityPass(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float3 output : SV_Target)
+void GaussianHPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float gaussianH : SV_Target0)
 {
-	const float depth = tex2D(ReShade::DepthBuffer, texcoord).x;
+	gaussianH = 0;
+	static const float kernel[5] = {0.187691, 0.206038, 0.212543, 0.206038, 0.187691};
+	for (int i = -2; i <= 2; i++)
+	{
+		gaussianH += tex2Doffset(sMaxContrast, texcoord, int2(i, 0)).r * kernel[i + 2];
+	}
+}
 
-#if FOGREMOVALDEPTH == 1
+void GaussianVPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float gaussianV : SV_Target0)
+{
+	gaussianV = 0;
+	static const float kernel[5] = {0.187691, 0.206038, 0.212543, 0.206038, 0.187691};
+	for (int i = -2; i <= 2; i++)
+	{
+		gaussianV += tex2Doffset(sGaussianH, texcoord, int2(0, i)).r * kernel[i + 2];
+	}
+}
+
+void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float transmission : SV_Target0)
+{
+	const float darkChannel = tex2D(sDarkChannel, texcoord).r;
+	const float colorAttenuation = tex2D(sColorAttenuation, texcoord).r;
+	transmission = (darkChannel * (1-colorAttenuation) * rcp(colorAttenuation)) + 2 * tex2D(sMaxContrast, texcoord).r;
+	transmission = saturate(darkChannel - K * saturate(transmission));
+
+}
+void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
+{
+	const float transmission = tex2D(sTransmission, texcoord).r;
+	const float depth = tex2D(ReShade::DepthBuffer, texcoord).r;
+#if FOGREMOVALUSEDEPTH
 	if(depth >= 1) discard;
 #endif
-	float a = tex2D(sOpenedVeil, texcoord).r;
-	if(depth >= 1)
-		a = a - 0.1171875;
-	const float v = tex2D(sVeil, texcoord).r;
-	a = max(a, 0.0001);
-	output = max(((1 - FOGREMOVALSTRENGTH * v.rrr) * rcp(a.rrr)), 0.001);
-	output = (tex2D(ReShade::BackBuffer, texcoord).rgb - FOGREMOVALSTRENGTH * v.rrr) * rcp(output);
-	output = saturate(output * rcp(a.rrr));
+	const float strength = saturate((pow(depth, 100*X)) * STRENGTH);
+	output = saturate((tex2D(ReShade::BackBuffer, texcoord).rgb - strength * transmission) * rcp(max(((1 - strength * transmission)), 0.001)));
 }
 
-
-void ReintroductionPass(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float3 output : SV_Target)
+void FogReintroductionPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
 {
-#if FOGREMOVALDEPTH == 1
-	const float depth = tex2D(ReShade::DepthBuffer, texcoord).x;
-
+	const float depth = tex2D(ReShade::DepthBuffer, texcoord).r;
+#if FOGREMOVALUSEDEPTH
 	if(depth >= 1) discard;
 #endif
-	const float3 fogLevel = tex2D(sVeil, texcoord).rrr;
-	output = tex2D(ReShade::BackBuffer, texcoord).rgb * (1 - FOGREMOVALSTRENGTH * fogLevel) + FOGREMOVALSTRENGTH * fogLevel;
+	const float transmission = tex2D(sTransmission, texcoord).r;
+	const float strength = saturate((pow(depth, 100 * X)) * STRENGTH);
+	output = tex2D(ReShade::BackBuffer, texcoord).rgb * max(((1 - strength * transmission)), 0.001) + strength * transmission;
 }
+
+
 
 technique FogRemoval <ui_tooltip = "Place this before shaders that you want to be rendered without fog";>
 {
-	pass VeilDetection
+	pass Features
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = VeilPass;
-		RenderTarget0 = Veil;
+		PixelShader = FeaturesPS;
+		RenderTarget0 = ColorAttenuation;
+		RenderTarget1 = HueDisparity;
+		RenderTarget2 = DarkChannel;
+		RenderTarget3 = MaxContrast;
 	}
 	
-	pass ErodeVeil
+	pass GaussianH
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = ErosionPass;
-		RenderTarget0 = Erosion;
+		PixelShader = GaussianHPS;
+		RenderTarget0 = GaussianH;
 	}
 	
-	pass OpenVeil
+	pass GaussianV
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = DilationPass;
-		RenderTarget0 = OpenedVeil;
+		PixelShader = GaussianVPS;
+		RenderTarget0 = MaxContrast;
 	}
 	
-	pass ReflectivityAndRemoval
+	pass Transmission
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = ReflectivityPass;
+		PixelShader = TransmissionPS;
+		RenderTarget0 = Transmission;
+	}
+	
+	pass FogRemoval
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = FogRemovalPS;
 	}
 }
 
 technique FogReintroduction <ui_tooltip = "Place this after the shaders you want to be rendered without fog";>
 {
-	pass FogReintroduction
+	pass Reintroduction
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = ReintroductionPass;
+		PixelShader = FogReintroductionPS;
 	}
 }
