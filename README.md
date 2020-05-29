@@ -10,7 +10,7 @@ Note that all shaders in this repository are strictly intended for use with the 
 * Black Desert Online
 * Elder Scrolls Online
 * Guild Wars 2
-* Phantasy Star Online 2 (Japan)
+* Phantasy Star Online 2 (Japan/North America)
 * Second Life (Official, Firestorm, Black Dragon)
 * TERA Online
 * Warframe
