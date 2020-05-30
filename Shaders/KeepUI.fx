@@ -42,7 +42,7 @@
 #if __APPLICATION__ == 0x6f24790f && KeepUIType == 0 // Final Fantasy XIV
 	#undef KeepUIType
 	#define KeepUIType 1
-#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829) && KeepUIType == 0 // Phantasy Star Online
+#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
 	#undef KeepUIType
 	#define KeepUIType 2
 #endif
