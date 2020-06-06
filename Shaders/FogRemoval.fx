@@ -10,7 +10,7 @@ and then reintroduce the fog over the image.
 
 This code was inspired by the following paper:
 
-B. Cai, X. Xu, K. Jia, C. Qing, and D. Tao, “DehazeNet: An End-to-End System for Single Image Haze Removal,”
+B. Cai, X. X, K. Jia, C. Qing, and D. Tao, “DehazeNet: An End-to-End System for Single Image Haze Removal,”
 IEEE Transactions on Image Processing, vol. 25, no. 11, pp. 5187–5198, 2016.
 
 
@@ -138,6 +138,18 @@ this CC0 or use of the Work.
 
 
 
+#undef SAMPLEDISTANCE
+#define SAMPLEDISTANCE 15
+
+#define SAMPLEDISTANCE_SQUARED (SAMPLEDISTANCE*SAMPLEDISTANCE)
+#define SAMPLEHEIGHT (BUFFER_HEIGHT / SAMPLEDISTANCE)
+#define SAMPLEWIDTH (BUFFER_WIDTH / SAMPLEDISTANCE)
+#define SAMPLECOUNT (SAMPLEHEIGHT * SAMPLEWIDTH)
+#define SAMPLECOUNT_RCP (1/SAMPLECOUNT)
+#define HISTOGRAMPIXELSIZE (1/255)
+
+
+
 #include "ReShade.fxh"
 
 
@@ -146,15 +158,16 @@ uniform float STRENGTH<
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Strength";
+	ui_tooltip = "Setting strength to high is known to cause bright regions to turn black before reintroduction.";
 	ui_bind = "FOGREMOVALSTRENGTH";
-> = 1.0;
+> = 0.950;
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
 #ifndef FOGREMOVALSTRENGTH
-#define FOGREMOVALSTRENGTH 1.0
+#define FOGREMOVALSTRENGTH 0.950
 #endif
 
-uniform float X<
+uniform float DEPTHCURVE<
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Depth Curve";
@@ -166,17 +179,49 @@ uniform float X<
 #define FOGREMOVALDEPTHCURVE 0.0
 #endif
 
-uniform float K<
+uniform float REMOVALCAP<
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
-	ui_label = "K-Level";
-	ui_tooltip = "Make sure this feature is not set too high or too low" ;
-	ui_bind = "FOGREMOVALKLEVEL";
-> = 0.3;
+	ui_label = "Fog Removal Cap";
+	ui_tooltip = "Prevents fog removal from trying to extract more details than can actually be removed, \n"
+		"also helps preserve textures or lighting that may be detected as fog.";
+	ui_bind = "FOGREMOVALCAP";
+> = 0.35;
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef FOGREMOVALKLEVEL
-#define FOGREMOVALKLEVEL 0.3
+#ifndef FOGREMOVALCAP
+#define FOGREMOVALCAP 0.35
+#endif
+
+uniform float2 MEDIANBOUNDS<
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Average Light Levels";
+	ui_tooltip = "The number to the left should correspond to the average amount of light at night, \n"
+		"the number to the right should correspond to the amount of light during the day.";
+	ui_bind = "FOGREMOVALMEDIANBOUNDS";
+> = float2(0.2, 0.8);
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef FOGREMOVALMEDIANBOUNDS
+#define FOGREMOVALMEDIANBOUNDS float2(0.2, 0.8)
+#endif
+
+uniform float2 SENSITIVITYBOUNDS<
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Fog Sensitivity";
+	ui_tooltip = "This number adjusts how sensitive the shader is to fog, a lower number means that \n"
+		"it will detect more fog in the scene, but will also be more vulnerable to false positives.\n"
+		"A higher number means that it will detect less fog in the scene but will also be more \n"
+		"likely to fail at detecting fog. The number on the left corresponds to the value used at night, \n"
+		"while the number on the right corresponds to the value used during the day.";
+		ui_bind = "FOGREMOVALSENSITIVITYBOUNDS";
+> = float2(0.2, 0.75);
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef FOGREMOVALSENSITIVITYBOUNDS
+#define FOGREMOVALSENSITIVITYBOUNDS float2(0.2, 0.75)
 #endif
 
 uniform bool USEDEPTH<
@@ -189,139 +234,148 @@ uniform bool USEDEPTH<
 #ifndef FOGREMOVALUSEDEPTH
 #define FOGREMOVALUSEDEPTH 0
 #endif
-
-
-
+	
 texture ColorAttenuation {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
 sampler sColorAttenuation {Texture = ColorAttenuation;};
-texture HueDisparity {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-sampler sHueDisparity {Texture = HueDisparity;};
 texture DarkChannel {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
 sampler sDarkChannel {Texture = DarkChannel;};
-texture MaxContrast {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-sampler sMaxContrast {Texture = MaxContrast;};
-texture GaussianH {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-sampler sGaussianH {Texture = GaussianH;};
 texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
 sampler sTransmission {Texture = Transmission;};
+texture LumaHistogram {Width = 256; Height = 1; Format = R32F;};
+sampler sLumaHistogram {Texture = LumaHistogram;};
+texture MedianLuma {Width = 1; Height = 1; Format = R8;};
+sampler sMedianLuma {Texture = MedianLuma;};
 
 
 
-float Hue(float3 color)
+void HistogramVS(uint id : SV_VERTEXID, out float4 pos : SV_POSITION)
 {
-	return atan((0.8660254 * (color.g - color.b)) / (color.r - 0.5 * (color.g + color.b)));
+	uint xpos = id % SAMPLEWIDTH;
+	uint ypos = id / SAMPLEWIDTH;
+	xpos *= SAMPLEDISTANCE;
+	ypos *= SAMPLEDISTANCE;
+	float color = dot(tex2Dfetch(ReShade::BackBuffer, int4(abs(xpos), abs(ypos), 0, 0)).rgb, (0.3333, 0.3333, 0.3333));
+	color = (color * 255 + 0.5) / 256.0;
+	pos = float4(color * 2 - 1.0, 0.0, 0.0, 1.0);
 }
 
-float colorToLuma(float3 color)
+
+
+void HistogramPS(float4 pos : SV_POSITION, out float col : SV_TARGET )
 {
-	return dot(color, (0.333, 0.333, 0.333)) * 3;
+	col = 1.0;
 }
 
+void MedianLumaPS(float4 pos : SV_Position, out float output : SV_Target0)
+{
+	const int fifty = abs(0.5 * SAMPLECOUNT);
+	int sum = 0;
+	int i = 0;
+	while (sum < fifty)
+	{
+		sum = sum + tex2Dfetch(sLumaHistogram, int4(i%256, 0, 0, 0)).x;
+		i++;
+		if (i >= 255) sum = fifty;
+	}
+	output = i;
+	output = output / 255;
+}
 
-
-void FeaturesPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float colorAttenuation : SV_Target0, out float hueDisparity : SV_Target1, out float darkChannel : SV_Target2, out float maxContrast : SV_Target3)
+void FeaturesPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float colorAttenuation : SV_Target0, out float darkChannel : SV_Target1)
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	const float value = max(max(color.r, color.g), color.b);
-	colorAttenuation = value - ((value - min(min(color.r, color.g), color.b)) / rcp(value));
-	hueDisparity = Hue(float3(max(color.r, 1 - color.r), max(color.g, 1 - color.g), max(color.b, 1 - color.b))) - Hue(color);
+	const float minimum = min(min(color.r, color.g), color.b);
+	colorAttenuation = value - ((value - minimum) / (value));
 	darkChannel = 1;
-	const float luma = colorToLuma(color);
-	float luma1;
-	float sum;
-	maxContrast = 0;
+	const float depth = ReShade::GetLinearizedDepth(texcoord);
+	float2 pixSize = tex2Dsize(ReShade::DepthBuffer, 0);
+	pixSize.x = 1.0 / pixSize.x;
+	pixSize.y = 1.0 / pixSize.y;
+	float depthContrast = 0.0;
 	for(int i = -2; i <= 2; i++)
 	{
-		sum = 0;
+		float depthSum = 0;
 		for(int j = -2; j <= 2; j++)
 		{
 			color = tex2Doffset(ReShade::BackBuffer, texcoord, int2(i, j)).rgb;
 			darkChannel = min(min(color.r, color.g), min(color.b, darkChannel));
-			luma1 = colorToLuma(color);
-			sum += ((luma - luma1) * (luma - luma1));
+			float depthSubtract = depth - ReShade::GetLinearizedDepth(float2(texcoord.x + pixSize.x * i, texcoord.y + pixSize.y * j));
+			depthSum += depthSubtract * depthSubtract;
 		}
-		maxContrast = max(maxContrast, sum);
+		depthContrast = max(depthContrast, depthSum);
 	}
-	maxContrast = sqrt(0.2 * maxContrast);
-	
-}
-
-void GaussianHPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float gaussianH : SV_Target0)
-{
-	gaussianH = 0;
-	static const float kernel[5] = {0.187691, 0.206038, 0.212543, 0.206038, 0.187691};
-	for (int i = -2; i <= 2; i++)
-	{
-		gaussianH += tex2Doffset(sMaxContrast, texcoord, int2(i, 0)).r * kernel[i + 2];
-	}
-}
-
-void GaussianVPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float gaussianV : SV_Target0)
-{
-	gaussianV = 0;
-	static const float kernel[5] = {0.187691, 0.206038, 0.212543, 0.206038, 0.187691};
-	for (int i = -2; i <= 2; i++)
-	{
-		gaussianV += tex2Doffset(sGaussianH, texcoord, int2(0, i)).r * kernel[i + 2];
-	}
+	depthContrast = sqrt(0.2 * depthContrast);
+	darkChannel = lerp(darkChannel, minimum, saturate(2.0 * depthContrast));
 }
 
 void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float transmission : SV_Target0)
 {
 	const float darkChannel = tex2D(sDarkChannel, texcoord).r;
-	const float colorAttenuation = tex2D(sColorAttenuation, texcoord).r;
-	transmission = (darkChannel * (1-colorAttenuation) * rcp(colorAttenuation)) + 2 * tex2D(sMaxContrast, texcoord).r;
-	transmission = saturate(darkChannel - K * saturate(transmission));
-
+	transmission = (darkChannel / (1 - tex2D(sColorAttenuation, texcoord).r));
+	const float v = (clamp(tex2Dfetch(sMedianLuma, int4(0, 0, 0, 0)).x, FOGREMOVALMEDIANBOUNDS.x, FOGREMOVALMEDIANBOUNDS.y) - FOGREMOVALMEDIANBOUNDS.x) * ((FOGREMOVALSENSITIVITYBOUNDS.x - FOGREMOVALSENSITIVITYBOUNDS.y) / (FOGREMOVALMEDIANBOUNDS.x - FOGREMOVALMEDIANBOUNDS.y)) + FOGREMOVALSENSITIVITYBOUNDS.x;
+	transmission = saturate(transmission - v * (darkChannel + darkChannel));
+	transmission = clamp(transmission * (1.0 - v), 0, FOGREMOVALCAP);
 }
+
 void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
 {
 	const float transmission = tex2D(sTransmission, texcoord).r;
+#if FOGREMOVALUSEDEPTH == 1
 	const float depth = tex2D(ReShade::DepthBuffer, texcoord).r;
-#if FOGREMOVALUSEDEPTH
 	if(depth >= 1) discard;
+	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+#else
+	const float strength = saturate((pow(tex2D(ReShade::DepthBuffer, texcoord).r, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
 #endif
-	const float strength = saturate((pow(depth, 100*X)) * STRENGTH);
-	output = saturate((tex2D(ReShade::BackBuffer, texcoord).rgb - strength * transmission) * rcp(max(((1 - strength * transmission)), 0.001)));
+	output = saturate((tex2D(ReShade::BackBuffer, texcoord).rgb - strength * transmission) * rcp(max(((1 - strength * transmission)), 0.01)));
 }
 
 void FogReintroductionPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
 {
+#if FOGREMOVALUSEDEPTH == 1
 	const float depth = tex2D(ReShade::DepthBuffer, texcoord).r;
-#if FOGREMOVALUSEDEPTH
 	if(depth >= 1) discard;
+	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+#else
+	const float strength = saturate((pow(tex2D(ReShade::DepthBuffer, texcoord).r, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
 #endif
 	const float transmission = tex2D(sTransmission, texcoord).r;
-	const float strength = saturate((pow(depth, 100 * X)) * STRENGTH);
-	output = tex2D(ReShade::BackBuffer, texcoord).rgb * max(((1 - strength * transmission)), 0.001) + strength * transmission;
+	output = tex2D(ReShade::BackBuffer, texcoord).rgb * max(((1 - strength * transmission)), 0.01) + strength * transmission;
 }
 
 
 
-technique FogRemoval <ui_tooltip = "Place this before shaders that you want to be rendered without fog";>
+technique FogRemoval
 {
+	pass Histogram
+	{
+		PixelShader = HistogramPS;
+		VertexShader = HistogramVS;
+		PrimitiveTopology = POINTLIST;
+		VertexCount = SAMPLECOUNT;
+		RenderTarget0 = LumaHistogram;
+		ClearRenderTargets = true; 
+		BlendEnable = true; 
+		SrcBlend = ONE; 
+		DestBlend = ONE;
+		BlendOp = ADD;
+	}
+	
+	pass MedianLuma
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = MedianLumaPS;
+		RenderTarget0 = MedianLuma;
+		ClearRenderTargets = true;
+	}
+	
 	pass Features
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FeaturesPS;
 		RenderTarget0 = ColorAttenuation;
-		RenderTarget1 = HueDisparity;
-		RenderTarget2 = DarkChannel;
-		RenderTarget3 = MaxContrast;
-	}
-	
-	pass GaussianH
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = GaussianHPS;
-		RenderTarget0 = GaussianH;
-	}
-	
-	pass GaussianV
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = GaussianVPS;
-		RenderTarget0 = MaxContrast;
+		RenderTarget1 = DarkChannel;
 	}
 	
 	pass Transmission
