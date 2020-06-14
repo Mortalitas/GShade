@@ -2,6 +2,7 @@
 
 #include "ReShade.fxh"
 #include "ColorLab.fxh"
+#include "FXShadersCommon.fxh"
 
 //#endregion
 
@@ -91,8 +92,6 @@ struct BlendPassParams
 
 //#region Constants
 
-static const float Pi = 3.14159;
-
 // Each bloom means: (x, y, scale, miplevel).
 static const int BloomCount = 5;
 static const float4 BloomLevels[] =
@@ -107,7 +106,6 @@ static const float4 BloomLevels[] =
 static const int MaxBloomLevel = BloomCount - 1;
 
 static const int BlurSamples = NEO_BLOOM_BLUR_SAMPLES;
-static const float BlurHalfSamples = BlurSamples * 0.5;
 
 static const float2 PixelScale = 1.0;
 
@@ -142,66 +140,59 @@ static const int BloomBlendMode_Screen = 2;
 
 // Bloom
 
-uniform int _Help
-<
-	ui_text =
-		"NeoBloom has many options and may be difficult to setup or may look "
-		"bad at first, but it's designed to be very flexible to adapt to many "
-		"different cases.\n"
-		"Make sure to take a look at the preprocessor definitions at the "
-		"bottom!\n"
-		"For more specific descriptions, move the mouse cursor over the name "
-		"of the option you need help with.\n"
-		"\n"
-		"Here's a general description of the features:\n"
-		"\n"
-		"  Bloom:\n"
-		"    Basic options for controlling the look of bloom itself.\n"
-		"\n"
-		"  Adaptation:\n"
-		"    Used to dynamically increase or reduce the image brightness "
-		"depending on the scene, giving an HDR look.\n"
-		"    Looking at a bright object, like a lamp, would cause the image to "
-		"darken; lookinng at a dark spot, like a cave, would cause the "
-		"image to brighten.\n"
-		"\n"
-		"  Blending:\n"
-		"    Used to control how the different bloom textures are blended, "
-		"each representing a different level-of-detail.\n"
-		"    Can be used to simulate an old mid-2000s bloom, ambient light "
-		"etc.\n"
-		"\n"
-		"  Ghosting:\n"
-		"    Smoothens the bloom between frames, causing a \"motion blur\" or "
-		"\"trails\" effect.\n"
-		"\n"
-		"  Depth:\n"
-		"    Used to increase or decrease the brightness of parts of the image "
-		"depending on depth.\n"
-		"    Can be used for effects like brightening the sky.\n"
-		"    An optional anti-flicker feature is available to help with games "
-		"with depth flickering problems, which can cause bloom to flicker as "
-		"well with the depth feature enabled.\n"
-		"\n"
-		"  HDR:\n"
-		"    Options for controlling the high dynamic range simulation.\n"
-		"    Useful for simulating a more foggy bloom, like an old soap opera, "
-		"a high-contrast sunny look etc.\n"
-		"\n"
-		"  Blur:\n"
-		"    Options for controlling the blurring effect used to generate the "
-		"bloom textures.\n"
-		"    Mostly can be left untouched.\n"
-		"\n"
-		"  Debug:\n"
-		"    Enables testing options, like viewing the bloom texture alone, "
-		"before mixing with the image.\n"
-		;
-	ui_category = "Help";
-	ui_category_closed = true;
-	ui_label = " ";
-	ui_type = "radio";
->;
+FXSHADERS_CREATE_HELP(
+	"NeoBloom has many options and may be difficult to setup or may look "
+	"bad at first, but it's designed to be very flexible to adapt to many "
+	"different cases.\n"
+	"Make sure to take a look at the preprocessor definitions at the "
+	"bottom!\n"
+	"For more specific descriptions, move the mouse cursor over the name "
+	"of the option you need help with.\n"
+	"\n"
+	"Here's a general description of the features:\n"
+	"\n"
+	"  Bloom:\n"
+	"    Basic options for controlling the look of bloom itself.\n"
+	"\n"
+	"  Adaptation:\n"
+	"    Used to dynamically increase or reduce the image brightness "
+	"depending on the scene, giving an HDR look.\n"
+	"    Looking at a bright object, like a lamp, would cause the image to "
+	"darken; lookinng at a dark spot, like a cave, would cause the "
+	"image to brighten.\n"
+	"\n"
+	"  Blending:\n"
+	"    Used to control how the different bloom textures are blended, "
+	"each representing a different level-of-detail.\n"
+	"    Can be used to simulate an old mid-2000s bloom, ambient light "
+	"etc.\n"
+	"\n"
+	"  Ghosting:\n"
+	"    Smoothens the bloom between frames, causing a \"motion blur\" or "
+	"\"trails\" effect.\n"
+	"\n"
+	"  Depth:\n"
+	"    Used to increase or decrease the brightness of parts of the image "
+	"depending on depth.\n"
+	"    Can be used for effects like brightening the sky.\n"
+	"    An optional anti-flicker feature is available to help with games "
+	"with depth flickering problems, which can cause bloom to flicker as "
+	"well with the depth feature enabled.\n"
+	"\n"
+	"  HDR:\n"
+	"    Options for controlling the high dynamic range simulation.\n"
+	"    Useful for simulating a more foggy bloom, like an old soap opera, "
+	"a high-contrast sunny look etc.\n"
+	"\n"
+	"  Blur:\n"
+	"    Options for controlling the blurring effect used to generate the "
+	"bloom textures.\n"
+	"    Mostly can be left untouched.\n"
+	"\n"
+	"  Debug:\n"
+	"    Enables testing options, like viewing the bloom texture alone, "
+	"before mixing with the image.\n"
+);
 
 uniform float uIntensity <
 	ui_label = "Intensity";
@@ -795,101 +786,6 @@ sampler Depth
 
 //#region Functions
 
-float2 scale_uv(float2 uv, float2 scale, float2 center)
-{
-	return (uv - center) * scale + center;
-}
-float2 scale_uv(float2 uv, float2 scale)
-{
-	return scale_uv(uv, scale, 0.5);
-}
-
-float gaussian(float x, float o)
-{
-	o *= o;
-	return (1.0 / sqrt(2.0 * Pi * o)) * exp(-((x * x) / (2.0 * o)));
-}
-
-float4 blur(sampler sp, float2 uv, float2 dir)
-{
-	float4 color = 0.0;
-	float accum = 0.0;
-
-	uv -= BlurHalfSamples * dir * ReShade::PixelSize;
-
-	[unroll]
-	for (int i = 1; i < BlurSamples; ++i)
-	{
-		float weight = gaussian(i - BlurHalfSamples, uSigma);
-
-		uv += dir * ReShade::PixelSize;
-		color += tex2D(sp, uv) * weight;
-		accum += weight;
-	}
-
-	return color / accum;
-}
-
-float3 inv_reinhard(float3 color, float inv_max)
-{
-	return (color / max(1.0 - color, inv_max));
-}
-
-float3 inv_reinhard_lum(float3 color, float inv_max)
-{
-	const float lum = max(color.r, max(color.g, color.b));
-	return color * (lum / max(1.0 - lum, inv_max));
-}
-
-float3 reinhard(float3 color)
-{
-	return color / (1.0 + color);
-}
-
-float3 checkered_pattern(float2 uv)
-{
-	static const float cSize = 32.0;
-	static const float3 cColorA = pow(0.15, 2.2);
-	static const float3 cColorB = pow(0.5, 2.2);
-
-	uv *= ReShade::ScreenSize;
-	uv %= cSize;
-
-	const float half_size = cSize * 0.5;
-	const float checkered = step(uv.x, half_size) == step(uv.y, half_size);
-	return (cColorA * checkered) + (cColorB * (1.0 - checkered));
-}
-
-float normal_distribution(float x, float u, float o)
-{
-	o *= o;
-
-	float b = x - u;
-	b *= b;
-	b /= 2.0 * o;
-
-	return (1.0 / sqrt(2.0 * Pi * o)) * exp(-(b));
-}
-
-float get_luma_gamma(float3 color)
-{
-	return dot(color, float3(0.299, 0.587, 0.114));
-}
-
-float get_luma_linear(float3 color)
-{
-	return dot(color, float3(0.2126, 0.7152, 0.0722));
-}
-
-float3 blend_mode_screen(float3 a, float3 b, float w, float m)
-{
-	return m - (m - a) * (m - b * w);
-}
-float3 blend_mode_screen(float3 a, float3 b, float w)
-{
-	return blend_mode_screen(a, b, w, 1.0);
-}
-
 float3 blend_bloom(float3 color, float3 bloom)
 {
 	float w;
@@ -909,23 +805,6 @@ float3 blend_bloom(float3 color, float3 bloom)
 		case BloomBlendMode_Screen:
 			return blend_mode_screen(color, bloom, w);
 	}
-}
-
-float3 uncharted2_tonemap(float3 col, float exposure) {
-    static const float A = 0.15; //shoulder strength
-    static const float B = 0.50; //linear strength
-	static const float C = 0.10; //linear angle
-	static const float D = 0.20; //toe strength
-	static const float E = 0.02; //toe numerator
-	static const float F = 0.30; //toe denominator
-	static const float W = 11.2; //linear white point value
-
-    col *= exposure;
-
-    col = ((col * (A * col + C * B) + D * E) / (col * (A * col + B) + D * F)) - E / F;
-    static const float white = 1.0 / (((W * (A * W + C * B) + D * E) / (W * (A * W + B) + D * F)) - E / F);
-    col *= white;
-    return col;
 }
 
 float3 inv_tonemap_bloom(float3 color)
@@ -950,12 +829,6 @@ float3 tonemap(float3 color)
 		return color;
 
 	return reinhard(color);
-}
-
-float3 apply_saturation(float3 color, float amount)
-{
-	const float gray = get_luma_linear(color);
-	return gray + (color - gray) * amount;
 }
 
 //#endregion
@@ -1041,12 +914,12 @@ float4 SplitPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 float4 BlurXPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	return blur(AtlasA, uv, PixelScale * float2(1.0, 0.0) * NEO_BLOOM_DOWN_SCALE);
+	return gaussian_blur1D(AtlasA, uv, PixelScale * float2(BUFFER_RCP_WIDTH, 0.0) * NEO_BLOOM_DOWN_SCALE, uSigma, BlurSamples);
 }
 
 float4 BlurYPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	return blur(AtlasB, uv, PixelScale * float2(0.0, 1.0) * NEO_BLOOM_DOWN_SCALE);
+	return gaussian_blur1D(AtlasB, uv, PixelScale * float2(0.0, BUFFER_RCP_HEIGHT) * NEO_BLOOM_DOWN_SCALE, uSigma, BlurSamples);
 }
 
 #if NEO_BLOOM_ADAPT
