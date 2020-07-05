@@ -106,6 +106,18 @@ uniform float alLensInt <
 
 #include "ReShade.fxh"
 
+#ifndef ALightLensTex
+#define ALightLensTex "LensDBA.png"
+#endif
+
+#ifndef ALightLensTexX
+#define ALightLensTexX 1920
+#endif
+
+#ifndef ALightLensTexY
+#define ALightLensTexY 1080
+#endif
+
 uniform float2 AL_t < source = "pingpong"; min = 0.0f; max = 6.28f; step = float2(0.1f, 0.2f); >;
 
 #define GEMFX_PIXEL_SIZE float2(1.0f / (BUFFER_WIDTH / 16.0f), 1.0f / (BUFFER_HEIGHT / 16.0f))
@@ -120,7 +132,7 @@ sampler detectLowColor { Texture = detectLowTex; };
 texture dirtTex    < source = "DirtA.png";    > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture dirtOVRTex < source = "DirtOVR.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture dirtOVBTex < source = "DirtOVB.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
-texture lensDBTex  < source = "LensDBA.png";  > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
+texture lensDBTex  < source = ALightLensTex;  > { Width = ALightLensTexX; Height = ALightLensTexY; MipLevels = 1; Format = RGBA8; };
 texture lensDB2Tex < source = "LensDB2.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture lensDOVTex < source = "LensDOV.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture lensDUVTex < source = "LensDUV.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
