@@ -181,7 +181,7 @@ texture texSSDOC < pooled = true; >
 };
 
 // *** EXTERNAL TEXTURES ***
-texture texNoise < source = "ssdonoise.png"; >
+texture texSSDONoise < source = "ssdonoise.png"; >
 {
 	Width = 4;
 	Height = 4;
@@ -224,9 +224,9 @@ sampler SamplerSSDOC
 };
 
 // *** EXTERNAL TEXTURES ***
-sampler SamplerNoise
+sampler SamplerSSDONoise
 {
-	Texture = texNoise;
+	Texture = texSSDONoise;
 	MipFilter = POINT;
 	MinFilter = POINT;
 	MagFilter = POINT;
@@ -293,7 +293,7 @@ float4 viewSpace(float2 txCoords)
 		const float4	vsOrig = tex2D(SamplerViewSpace,txCoords);
 		float3	ssdo = 0.0;
 		
-		const float	randomDir = tex2D(SamplerNoise,frac(txCoords*NOISE_SCREENSCALE)).x;
+		const float	randomDir = tex2D(SamplerSSDONoise,frac(txCoords*NOISE_SCREENSCALE)).x;
 		const float2	stepSize = (pSSDOSampleRange/(pSSDOSampleAmount*sourceAxisDiv))*texelSize;
 
 		for (float offs=1.0;offs<=pSSDOSampleAmount;offs++)
