@@ -109,13 +109,21 @@ uniform float alLensInt <
 #ifndef ALightLensTex
 #define ALightLensTex "LensDBA.png"
 #endif
-
 #ifndef ALightLensTexX
 #define ALightLensTexX 1920
 #endif
-
 #ifndef ALightLensTexY
 #define ALightLensTexY 1080
+#endif
+
+#ifndef ALightLensTex2
+#define ALightLensTex2 "LensDB2.png"
+#endif
+#ifndef ALightLensTex2X
+#define ALightLensTex2X 1920
+#endif
+#ifndef ALightLensTex2Y
+#define ALightLensTex2Y 1080
 #endif
 
 uniform float2 AL_t < source = "pingpong"; min = 0.0f; max = 6.28f; step = float2(0.1f, 0.2f); >;
@@ -133,7 +141,7 @@ texture dirtTex    < source = "DirtA.png";    > { Width = 1920; Height = 1080; M
 texture dirtOVRTex < source = "DirtOVR.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture dirtOVBTex < source = "DirtOVB.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture lensDBTex  < source = ALightLensTex;  > { Width = ALightLensTexX; Height = ALightLensTexY; MipLevels = 1; Format = RGBA8; };
-texture lensDB2Tex < source = "LensDB2.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
+texture lensDB2Tex < source = ALightLensTex2; > { Width = ALightLensTex2X; Height = ALightLensTex2Y; MipLevels = 1; Format = RGBA8; };
 texture lensDOVTex < source = "LensDOV.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 texture lensDUVTex < source = "LensDUV.png"; > { Width = 1920; Height = 1080; MipLevels = 1; Format = RGBA8; };
 
