@@ -212,10 +212,10 @@ uniform float2 SENSITIVITYBOUNDS<
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Fog Sensitivity";
 	ui_tooltip = "This number adjusts how sensitive the shader is to fog, a lower number means that \n"
-		"it will detect more fog in the scene, but will also be more vulnerable to false positives.\n"
-		"A higher number means that it will detect less fog in the scene but will also be more \n"
-		"likely to fail at detecting fog. The number on the left corresponds to the value used at night, \n"
-		"while the number on the right corresponds to the value used during the day.";
+			"it will detect more fog in the scene, but will also be more vulnerable to false positives.\n"
+			"A higher number means that it will detect less fog in the scene but will also be more \n"
+			"likely to fail at detecting fog. The number on the left corresponds to the value used at night, \n"
+			"while the number on the right corresponds to the value used during the day.";
 		ui_bind = "FOGREMOVALSENSITIVITYBOUNDS";
 > = float2(0.2, 0.75);
 
@@ -234,7 +234,9 @@ uniform bool USEDEPTH<
 #ifndef FOGREMOVALUSEDEPTH
 #define FOGREMOVALUSEDEPTH 0
 #endif
-	
+
+
+
 texture ColorAttenuation {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
 sampler sColorAttenuation {Texture = ColorAttenuation;};
 texture DarkChannel {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
@@ -245,18 +247,16 @@ texture LumaHistogram {Width = 256; Height = 1; Format = R32F;};
 sampler sLumaHistogram {Texture = LumaHistogram;};
 texture MedianLuma {Width = 1; Height = 1; Format = R8;};
 sampler sMedianLuma {Texture = MedianLuma;};
+texture FogRemoved {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;};
+sampler sFogRemoved {Texture = FogRemoved;};
+texture TruncatedPrecision {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;};
+sampler sTruncatedPrecision {Texture = TruncatedPrecision;};
 
 
 
 void HistogramVS(uint id : SV_VERTEXID, out float4 pos : SV_POSITION)
 {
-	uint xpos = id % SAMPLEWIDTH;
-	uint ypos = id / SAMPLEWIDTH;
-	xpos *= SAMPLEDISTANCE;
-	ypos *= SAMPLEDISTANCE;
-	float color = dot(tex2Dfetch(ReShade::BackBuffer, int4(abs(xpos), abs(ypos), 0, 0)).rgb, (0.3333, 0.3333, 0.3333));
-	color = (color * 255 + 0.5) / 256.0;
-	pos = float4(color * 2 - 1.0, 0.0, 0.0, 1.0);
+	pos = float4(((dot(tex2Dfetch(ReShade::BackBuffer, int4(abs(uint((id % SAMPLEWIDTH * SAMPLEDISTANCE))), abs(uint((id / SAMPLEWIDTH) * SAMPLEDISTANCE)), 0, 0)).rgb, float3(0.3333, 0.3333, 0.3333)) * 255 + 0.5) / 256) * 2 - 1, 0, 0, 1);
 }
 
 
@@ -270,13 +270,14 @@ void MedianLumaPS(float4 pos : SV_Position, out float output : SV_Target0)
 {
 	const int fifty = abs(0.5 * SAMPLECOUNT);
 	int sum = 0;
-	int i = 0;
+	uint i = 0;
 	while (sum < fifty)
 	{
-		sum = sum + tex2Dfetch(sLumaHistogram, int4(i%256, 0, 0, 0)).x;
+		sum += tex2Dfetch(sLumaHistogram, int4(i, 0, 0, 0)).r;
 		i++;
 		if (i >= 255) sum = fifty;
 	}
+
 	output = i;
 	output = output / 255;
 }
@@ -287,15 +288,15 @@ void FeaturesPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float 
 	const float value = max(max(color.r, color.g), color.b);
 	const float minimum = min(min(color.r, color.g), color.b);
 	colorAttenuation = value - ((value - minimum) / (value));
-	darkChannel = 1;
+	darkChannel = 1.0;
 	const float depth = ReShade::GetLinearizedDepth(texcoord);
-	float2 pixSize = tex2Dsize(ReShade::DepthBuffer, 0);
+	float2 pixSize = tex2Dsize(ReShade::BackBuffer, 0.0);
 	pixSize.x = 1.0 / pixSize.x;
 	pixSize.y = 1.0 / pixSize.y;
 	float depthContrast = 0.0;
 	for(int i = -2; i <= 2; i++)
 	{
-		float depthSum = 0;
+		float depthSum = 0.0;
 		for(int j = -2; j <= 2; j++)
 		{
 			color = tex2Doffset(ReShade::BackBuffer, texcoord, int2(i, j)).rgb;
@@ -312,36 +313,50 @@ void FeaturesPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float 
 void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float transmission : SV_Target0)
 {
 	const float darkChannel = tex2D(sDarkChannel, texcoord).r;
-	transmission = (darkChannel / (1 - tex2D(sColorAttenuation, texcoord).r));
-	const float v = (clamp(tex2Dfetch(sMedianLuma, int4(0, 0, 0, 0)).x, FOGREMOVALMEDIANBOUNDS.x, FOGREMOVALMEDIANBOUNDS.y) - FOGREMOVALMEDIANBOUNDS.x) * ((FOGREMOVALSENSITIVITYBOUNDS.x - FOGREMOVALSENSITIVITYBOUNDS.y) / (FOGREMOVALMEDIANBOUNDS.x - FOGREMOVALMEDIANBOUNDS.y)) + FOGREMOVALSENSITIVITYBOUNDS.x;
+	transmission = darkChannel / (1.0 - tex2D(sColorAttenuation, texcoord).r);
+	const float v = (clamp(tex2Dfetch(sMedianLuma, int4(0, 0, 0, 0)).r, FOGREMOVALMEDIANBOUNDS.x, FOGREMOVALMEDIANBOUNDS.y) - FOGREMOVALMEDIANBOUNDS.x) * ((FOGREMOVALSENSITIVITYBOUNDS.x - FOGREMOVALSENSITIVITYBOUNDS.y) / (FOGREMOVALMEDIANBOUNDS.x - FOGREMOVALMEDIANBOUNDS.y)) + FOGREMOVALSENSITIVITYBOUNDS.x;
 	transmission = saturate(transmission - v * (darkChannel + darkChannel));
 	transmission = clamp(transmission * (1.0 - v), 0, FOGREMOVALCAP);
 }
 
-void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
+void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float4 output : SV_Target0)
 {
 	const float transmission = tex2D(sTransmission, texcoord).r;
+	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
 #if FOGREMOVALUSEDEPTH == 1
-	const float depth = tex2D(ReShade::DepthBuffer, texcoord).r;
-	if(depth >= 1) discard;
-	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
-#else
-	const float strength = saturate((pow(tex2D(ReShade::DepthBuffer, texcoord).r, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+	if(depth >= 1.0) discard;
 #endif
-	output = saturate((tex2D(ReShade::BackBuffer, texcoord).rgb - strength * transmission) * rcp(max(((1 - strength * transmission)), 0.01)));
+	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+	output = float4((tex2D(ReShade::BackBuffer, texcoord).rgb - strength * transmission) / max(((1 - strength * transmission)), 0.01), 1.0);
+}
+
+void BackBufferPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
+{
+#if FOGREMOVALUSEDEPTH == 1
+	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+	if(depth >= 1.0) discard;
+#endif
+	output = tex2D(sFogRemoved, texcoord).rgb;
+}
+
+void TruncatedPrecisionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float4 output : SV_Target0)
+{
+#if FOGREMOVALUSEDEPTH == 1
+	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+	if(depth >= 1.0) discard;
+#endif
+	output = float4((tex2D(sFogRemoved, texcoord).rgb - tex2D(ReShade::BackBuffer, texcoord).rgb), 1);
 }
 
 void FogReintroductionPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
 {
+	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
 #if FOGREMOVALUSEDEPTH == 1
-	const float depth = tex2D(ReShade::DepthBuffer, texcoord).r;
-	if(depth >= 1) discard;
-	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
-#else
-	const float strength = saturate((pow(tex2D(ReShade::DepthBuffer, texcoord).r, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+	if(depth >= 1.0) discard;
 #endif
-	const float transmission = tex2D(sTransmission, texcoord).r;
-	output = tex2D(ReShade::BackBuffer, texcoord).rgb * max(((1 - strength * transmission)), 0.01) + strength * transmission;
+	float transmission = tex2D(sTransmission, texcoord).r;
+	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+	output = tex2D(ReShade::BackBuffer, texcoord).rgb + tex2D(sTruncatedPrecision, texcoord).rgb * max(((1 - strength * transmission)), 0.01) + strength * transmission;
 }
 
 
@@ -389,6 +404,20 @@ technique FogRemoval
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FogRemovalPS;
+		RenderTarget0 = FogRemoved;
+	}
+	
+	pass BackBuffer
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = BackBufferPS;
+	}
+	
+	pass TruncatedPrecision
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = TruncatedPrecisionPS;
+		RenderTarget0 = TruncatedPrecision;
 	}
 }
 
