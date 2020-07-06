@@ -193,35 +193,62 @@ uniform float REMOVALCAP<
 #define FOGREMOVALCAP 0.35
 #endif
 
-uniform float2 MEDIANBOUNDS<
+uniform float MEDIANBOUNDSX<
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
-	ui_label = "Average Light Levels";
-	ui_tooltip = "The number to the left should correspond to the average amount of light at night, \n"
-		"the number to the right should correspond to the amount of light during the day.";
-	ui_bind = "FOGREMOVALMEDIANBOUNDS";
-> = float2(0.2, 0.8);
+	ui_label = "Average Light Level (Day)";
+	ui_tooltip = "This number should correspond to the average amount of light during the day.";
+	ui_bind = "FOGREMOVALMEDIANBOUNDSX";
+> = 0.2;
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef FOGREMOVALMEDIANBOUNDS
-#define FOGREMOVALMEDIANBOUNDS float2(0.2, 0.8)
+#ifndef FOGREMOVALMEDIANBOUNDSX
+#define FOGREMOVALMEDIANBOUNDSX 0.2
 #endif
 
-uniform float2 SENSITIVITYBOUNDS<
+uniform float MEDIANBOUNDSY<
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
-	ui_label = "Fog Sensitivity";
+	ui_label = "Average Light Level (Night)";
+	ui_tooltip = "This number should correspond to the average amount of light at night.";
+	ui_bind = "FOGREMOVALMEDIANBOUNDSY";
+> = 0.8;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef FOGREMOVALMEDIANBOUNDSY
+#define FOGREMOVALMEDIANBOUNDSY 0.8
+#endif
+
+uniform float SENSITIVITYBOUNDSX<
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Fog Sensitivity (Day)";
 	ui_tooltip = "This number adjusts how sensitive the shader is to fog, a lower number means that \n"
 			"it will detect more fog in the scene, but will also be more vulnerable to false positives.\n"
 			"A higher number means that it will detect less fog in the scene but will also be more \n"
-			"likely to fail at detecting fog. The number on the left corresponds to the value used at night, \n"
-			"while the number on the right corresponds to the value used during the day.";
-		ui_bind = "FOGREMOVALSENSITIVITYBOUNDS";
-> = float2(0.2, 0.75);
+			"likely to fail at detecting fog.";
+	ui_bind = "FOGREMOVALSENSITIVITYBOUNDSX";
+> = 0.2;
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef FOGREMOVALSENSITIVITYBOUNDS
-#define FOGREMOVALSENSITIVITYBOUNDS float2(0.2, 0.75)
+#ifndef FOGREMOVALSENSITIVITYBOUNDSX
+#define FOGREMOVALSENSITIVITYBOUNDSX 0.2
+#endif
+
+uniform float SENSITIVITYBOUNDSY<
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Fog Sensitivity (Night)";
+	ui_tooltip = "This number adjusts how sensitive the shader is to fog, a lower number means that \n"
+			"it will detect more fog in the scene, but will also be more vulnerable to false positives.\n"
+			"A higher number means that it will detect less fog in the scene but will also be more \n"
+			"likely to fail at detecting fog.";
+	ui_bind = "FOGREMOVALSENSITIVITYBOUNDSY";
+> = 0.75;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef FOGREMOVALSENSITIVITYBOUNDSY
+#define FOGREMOVALSENSITIVITYBOUNDSY 0.75
 #endif
 
 uniform bool USEDEPTH<
@@ -256,7 +283,7 @@ sampler sTruncatedPrecision {Texture = TruncatedPrecision;};
 
 void HistogramVS(uint id : SV_VERTEXID, out float4 pos : SV_POSITION)
 {
-	pos = float4(((dot(tex2Dfetch(ReShade::BackBuffer, int4(abs(uint((id % SAMPLEWIDTH * SAMPLEDISTANCE))), abs(uint((id / SAMPLEWIDTH) * SAMPLEDISTANCE)), 0, 0)).rgb, float3(0.3333, 0.3333, 0.3333)) * 255 + 0.5) / 256) * 2 - 1, 0, 0, 1);
+	pos = float4(((dot(tex2Dfetch(ReShade::BackBuffer, int4((id % SAMPLEWIDTH) * SAMPLEDISTANCE, (id / SAMPLEWIDTH) * SAMPLEDISTANCE, 0.0, 0.0)).rgb, float3(0.3333, 0.3333, 0.3333)) * 255 + 0.5) / 256.0) * 2.0 - 1.0, 0.0, 0.0, 1.0);
 }
 
 
@@ -287,7 +314,7 @@ void FeaturesPS(float4 pos : SV_Position, float2 texcoord : TexCoord, out float 
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	const float value = max(max(color.r, color.g), color.b);
 	const float minimum = min(min(color.r, color.g), color.b);
-	colorAttenuation = value - ((value - minimum) / (value));
+	colorAttenuation = value - ((value - minimum) / value);
 	darkChannel = 1.0;
 	const float depth = ReShade::GetLinearizedDepth(texcoord);
 	float2 pixSize = tex2Dsize(ReShade::BackBuffer, 0.0);
@@ -314,9 +341,8 @@ void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out flo
 {
 	const float darkChannel = tex2D(sDarkChannel, texcoord).r;
 	transmission = darkChannel / (1.0 - tex2D(sColorAttenuation, texcoord).r);
-	const float v = (clamp(tex2Dfetch(sMedianLuma, int4(0, 0, 0, 0)).r, FOGREMOVALMEDIANBOUNDS.x, FOGREMOVALMEDIANBOUNDS.y) - FOGREMOVALMEDIANBOUNDS.x) * ((FOGREMOVALSENSITIVITYBOUNDS.x - FOGREMOVALSENSITIVITYBOUNDS.y) / (FOGREMOVALMEDIANBOUNDS.x - FOGREMOVALMEDIANBOUNDS.y)) + FOGREMOVALSENSITIVITYBOUNDS.x;
-	transmission = saturate(transmission - v * (darkChannel + darkChannel));
-	transmission = clamp(transmission * (1.0 - v), 0, FOGREMOVALCAP);
+	const float v = (clamp(tex2Dfetch(sMedianLuma, int4(0, 0, 0, 0)).r, FOGREMOVALMEDIANBOUNDSX, FOGREMOVALMEDIANBOUNDSY) - FOGREMOVALMEDIANBOUNDSX) * ((FOGREMOVALSENSITIVITYBOUNDSX - FOGREMOVALSENSITIVITYBOUNDSY) / (FOGREMOVALMEDIANBOUNDSX - FOGREMOVALMEDIANBOUNDSY)) + FOGREMOVALSENSITIVITYBOUNDSX;
+	transmission = clamp(saturate(transmission - v * (darkChannel + darkChannel)) * (1.0 - v), 0, FOGREMOVALCAP);
 }
 
 void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float4 output : SV_Target0)
@@ -326,7 +352,7 @@ void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float
 #if FOGREMOVALUSEDEPTH == 1
 	if(depth >= 1.0) discard;
 #endif
-	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+	const float strength = saturate((pow(depth, 100.0 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
 	output = float4((tex2D(ReShade::BackBuffer, texcoord).rgb - strength * transmission) / max(((1 - strength * transmission)), 0.01), 1.0);
 }
 
@@ -355,7 +381,7 @@ void FogReintroductionPS(float4 pos : SV_Position, float2 texcoord : TexCoord, o
 	if(depth >= 1.0) discard;
 #endif
 	float transmission = tex2D(sTransmission, texcoord).r;
-	const float strength = saturate((pow(depth, 100 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
+	const float strength = saturate((pow(depth, 100.0 * FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
 	output = tex2D(ReShade::BackBuffer, texcoord).rgb + tex2D(sTruncatedPrecision, texcoord).rgb * max(((1 - strength * transmission)), 0.01) + strength * transmission;
 }
 
