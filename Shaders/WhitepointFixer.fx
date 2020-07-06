@@ -2,6 +2,7 @@
 
 #include "ReShade.fxh"
 #include "FXShadersCommon.fxh"
+#include "FXShadersMath.fxh"
 
 /*
 	0: Manual
@@ -57,7 +58,7 @@ static const int GrayscaleFormula_Luma = 2;
 
 //#region Uniforms
 
-FXSHADERS_CREATE_HELP(
+FXSHADERS_HELP(
 	"The different modes can be used by setting WHITEPOINT_FIXER_MODE to:\n"
 	"  0: Manual color selection, using a parameter.\n"
 	"  1: Use a color picker on the image to select the whitepoint color.\n"
@@ -238,7 +239,7 @@ float GetGrayscale(float3 color)
 		case GrayscaleFormula_Max:
 			return max(color.r, max(color.g, color.b));
 		case GrayscaleFormula_Luma:
-			return get_luma_gamma(color);
+			return GetLumaGamma(color);
 	}
 
 	return 0.0;

@@ -2,7 +2,10 @@
 
 #include "ReShade.fxh"
 #include "ColorLab.fxh"
+#include "FXShadersBlending.fxh"
 #include "FXShadersCommon.fxh"
+#include "FXShadersConvolution.fxh"
+#include "FXShadersTonemap.fxh"
 
 //#endregion
 
@@ -140,7 +143,7 @@ static const int BloomBlendMode_Screen = 2;
 
 // Bloom
 
-FXSHADERS_CREATE_HELP(
+FXSHADERS_HELP(
 	"NeoBloom has many options and may be difficult to setup or may look "
 	"bad at first, but it's designed to be very flexible to adapt to many "
 	"different cases.\n"
@@ -803,7 +806,7 @@ float3 blend_bloom(float3 color, float3 bloom)
 		case BloomBlendMode_Addition:
 			return color + bloom * w * 3.0;
 		case BloomBlendMode_Screen:
-			return blend_mode_screen(color, bloom, w);
+			return BlendScreen(color, bloom, w);
 	}
 }
 
@@ -812,7 +815,7 @@ float3 inv_tonemap_bloom(float3 color)
 	if (MagicMode)
 		return pow(abs(color), uMaxBrightness * 0.01);
 
-	return inv_reinhard_lum(color, 1.0 / uMaxBrightness);
+	return ReinhardInvLum(color, 1.0 / uMaxBrightness);
 }
 
 float3 inv_tonemap(float3 color)
@@ -820,7 +823,7 @@ float3 inv_tonemap(float3 color)
 	if (MagicMode)
 		return color;
 
-	return inv_reinhard(color, 1.0 / uMaxBrightness);
+	return ReinhardInv(color, 1.0 / uMaxBrightness);
 }
 
 float3 tonemap(float3 color)
@@ -828,7 +831,7 @@ float3 tonemap(float3 color)
 	if (MagicMode)
 		return color;
 
-	return reinhard(color);
+	return Reinhard(color);
 }
 
 //#endregion
@@ -857,7 +860,7 @@ float GetDepthPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 float4 DownSamplePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
 	float4 color = tex2D(BackBuffer, uv);
-	color.rgb = saturate(apply_saturation(color.rgb, uSaturation));
+	color.rgb = saturate(ApplySaturation(color.rgb, uSaturation));
 	color.rgb *= ColorFilter;
 	color.rgb = inv_tonemap_bloom(color.rgb);
 
@@ -914,12 +917,12 @@ float4 SplitPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 float4 BlurXPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	return gaussian_blur1D(AtlasA, uv, PixelScale * float2(BUFFER_RCP_WIDTH, 0.0) * NEO_BLOOM_DOWN_SCALE, uSigma, BlurSamples);
+	return GaussianBlur1D(AtlasA, uv, PixelScale * float2(BUFFER_RCP_WIDTH, 0.0) * NEO_BLOOM_DOWN_SCALE, uSigma, BlurSamples);
 }
 
 float4 BlurYPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	return gaussian_blur1D(AtlasB, uv, PixelScale * float2(0.0, BUFFER_RCP_HEIGHT) * NEO_BLOOM_DOWN_SCALE, uSigma, BlurSamples);
+	return GaussianBlur1D(AtlasB, uv, PixelScale * float2(0.0, BUFFER_RCP_HEIGHT) * NEO_BLOOM_DOWN_SCALE, uSigma, BlurSamples);
 }
 
 #if NEO_BLOOM_ADAPT
@@ -942,10 +945,10 @@ float4 CalcAdaptPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 			gs = max(color.r, max(color.g, color.b));
 			break;
 		case 2:
-			gs = get_luma_gamma(color);
+			gs = GetLumaGamma(color);
 			break;
 		case 3:
-			gs = get_luma_linear(color);
+			gs = GetLumaLinear(color);
 			break;
 	}
 
@@ -977,7 +980,7 @@ float4 JoinBloomsPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 		float2 rect_uv = scale_uv(uv, 1.0 / (1.0 + uPadding * (i + 1)), 0.5);
 		rect_uv = scale_uv(rect_uv + rect.xy / rect.z, rect.z, 0.0);
 
-		float weight = normal_distribution(i, uMean, uVariance);
+		float weight = NormalDistribution(i, uMean, uVariance);
 		bloom += tex2D(AtlasA, rect_uv) * weight;
 		accum += weight;
 	}
@@ -1129,7 +1132,7 @@ float4 BlendPS(BlendPassParams p) : SV_TARGET
 		float exposure = lerp(1.0, exp(uAdaptExposure) / max(tex2D(Adapt, 0.0).r, 0.001), uAdaptAmount);
 
 		if (MagicMode)
-			bloom = uncharted2_tonemap(bloom.rgb, exposure * 0.1);
+			bloom.rgb = Uncharted2Tonemap(bloom.rgb * exposure * 0.1);
 
 		switch (AdaptMode)
 		{
@@ -1144,9 +1147,9 @@ float4 BlendPS(BlendPassParams p) : SV_TARGET
 		}
 	#else
 		if (MagicMode)
-			bloom.rgb = uncharted2_tonemap(bloom.rgb, 10.0);
+			bloom.rgb = Uncharted2Tonemap(bloom.rgb * 10.0);
 
-		color = blend_bloom(color.rgb, bloom.rgb);
+		color.rgb = blend_bloom(color.rgb, bloom.rgb);
 	#endif
 
 	if (!MagicMode)
