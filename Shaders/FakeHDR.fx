@@ -25,38 +25,42 @@ uniform float fradius2 <
 
 #include "ReShade.fxh"
 
+// !!! modified - Craig - Jul 6th, 2020
 float3 fHDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	
+	// !!! pre-calc radius * BPS values
+	const float2 rad1 = fradius1 * BUFFER_PIXEL_SIZE;
+	const float2 rad2 = fradius2 * BUFFER_PIXEL_SIZE;
 
-	float3 bloom_sum1 = tex2D(ReShade::BackBuffer, texcoord + float2(1.5, -1.5) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2(-1.5, -1.5) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2( 1.5,  1.5) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2(-1.5,  1.5) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2( 0.0, -2.5) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2( 0.0,  2.5) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2(-2.5,  0.0) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum1 += tex2D(ReShade::BackBuffer, texcoord + float2( 2.5,  0.0) * fradius1 * BUFFER_PIXEL_SIZE).rgb;
+	// !!! updated to use new pre-calc'ed rad value
+	const float3 bloom_sum1  = (
+		tex2D(ReShade::BackBuffer, texcoord + float2( 1.5, -1.5) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2(-1.5, -1.5) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 1.5,  1.5) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2(-1.5,  1.5) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 0.0, -2.5) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 0.0,  2.5) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2(-2.5,  0.0) * rad1).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 2.5,  0.0) * rad1).rgb
+		) * 0.005;
 
-	bloom_sum1 *= 0.005;
+	// !!! updated to use new pre-calc'ed rad value
+	const float3 bloom_sum2  = (
+		tex2D(ReShade::BackBuffer, texcoord + float2( 1.5, -1.5) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2(-1.5, -1.5) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 1.5,  1.5) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2(-1.5,  1.5) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 0.0, -2.5) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 0.0,  2.5) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2(-2.5,  0.0) * rad2).rgb +
+		tex2D(ReShade::BackBuffer, texcoord + float2( 2.5,  0.0) * rad2).rgb
+		) * 0.01;
 
-	float3 bloom_sum2 = tex2D(ReShade::BackBuffer, texcoord + float2(1.5, -1.5) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2(-1.5, -1.5) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2( 1.5,  1.5) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2(-1.5,  1.5) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2( 0.0, -2.5) * fradius2 * BUFFER_PIXEL_SIZE).rgb;	
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2( 0.0,  2.5) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2(-2.5,  0.0) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-	bloom_sum2 += tex2D(ReShade::BackBuffer, texcoord + float2( 2.5,  0.0) * fradius2 * BUFFER_PIXEL_SIZE).rgb;
-
-	bloom_sum2 *= 0.010;
-
-	const float dist = fradius2 - fradius1;
-	const float3 HDR = (color + (bloom_sum2 - bloom_sum1)) * dist;
-	const float3 blend = HDR + color;
-
-	// pow - don't use fractions for fHDRpower
-	return saturate(pow(abs(blend), fHDRPower) + HDR);
+	const float3 HDR = (color + (bloom_sum2 - bloom_sum1)) * (fradius2 - fradius1);
+	
+	return saturate(pow(abs(HDR + color), abs(fHDRPower)) + HDR); // pow - don't use fractions for HDRpower
 }
 
 technique FakeHDR

@@ -42,28 +42,25 @@ uniform float3 FogColor <
 
 float3 TonemapPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	color = saturate(color - Defog * FogColor * 2.55); // Defog
+	float3 color = saturate(tex2D(ReShade::BackBuffer, texcoord).rgb - Defog * FogColor * 2.55); // Defog
 	color *= pow(2.0f, Exposure); // Exposure
 	color = pow(color, Gamma); // Gamma
 
-	const float3 coefLuma = float3(0.2126, 0.7152, 0.0722);
-	float lum = dot(coefLuma, color);
-	
-	const float L = saturate(10.0 * (lum - 0.45));
+	const float lum = dot(float3(0.2126, 0.7152, 0.0722), color);
+
 	const float3 A2 = Bleach * color;
 
-	const float3 result1 = 2.0f * color * lum;
-	const float3 result2 = 1.0f - 2.0f * (1.0f - lum) * (1.0f - color);
-	
-	const float3 newColor = lerp(result1, result2, L);
-	const float3 mixRGB = A2 * newColor;
-	color += ((1.0f - A2) * mixRGB);
-	
-	const float3 middlegray = dot(color, (1.0 / 3.0));
-	const float3 diffcolor = color - middlegray;
-	
-	return (color + diffcolor * Saturation) / (1 + (diffcolor * Saturation)); // Saturation
+	color += ((1.0f - A2) * (A2 * lerp(2.0f * color * lum, 1.0f - 2.0f * (1.0f - lum) * (1.0f - color), saturate(10.0 * (lum - 0.45)))));
+
+	// !!! could possibly branch this with fast_ops
+	// !!! to pre-calc 1.0/3.0 and skip calc'ing it each pass
+	// !!! and have fast_ops != 1 have it calc each pass.
+	// !!! can pre-calc once to use twice below
+	const float3 diffcolor = (color - dot(color, (1.0 / 3.0))) * Saturation;
+
+	color = (color + diffcolor) / (1 + diffcolor); // Saturation
+
+	return color;
 }
 
 technique Tonemap

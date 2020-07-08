@@ -130,11 +130,63 @@ sampler AS_Pass0Sampler { Texture = AS_Pass0Tex; };
 #define soft_if(a,b,c) ( saturate((a + b + c + 0.056)*rcp(abs(maxedge) + 0.03) - 0.85) )
 
 // Soft limit, modified tanh
+
+// modified - Craig - Jul 5th, 2020
+// !!! lot of redundant math in the tokenized func,
+// !!! and we can use overloaded funcs. so just
+// !!! make an optimized, overloaded func for each
+// !!! float type. more code, but less calc's.
+
+// Soft limit, modified tanh
 #if (fast_ops == 1) // Tanh approx
-	#define soft_lim(v,s)  ( saturate(abs(v/s)*(27 + sqr(v/s))/(27 + 9*sqr(v/s)))*s )
+	float soft_lim( float v, float s )
+	{
+		const float vs = v / s;
+		const float vs2 = sqr(vs);
+		return saturate( abs(vs) * ( 27 + vs2 ) / ( 27 + 9 * vs2 ) ) * s;
+	}
+	float2 soft_lim( float2 v, float2 s )
+	{
+		const float2 vs = v / s;
+		const float2 vs2 = sqr(vs);
+		return saturate( abs(vs) * ( 27 + vs2 ) / ( 27 + 9 * vs2 ) ) * s;
+	}
+	float3 soft_lim( float3 v, float3 s )
+	{
+		const float3 vs = v / s;
+		const float3 vs2 = sqr(vs);
+		return saturate( abs(vs) * ( 27 + vs2 ) / ( 27 + 9 * vs2 ) ) * s;
+	}
+	float4 soft_lim( float4 v, float4 s )
+	{
+		const float4 vs = v / s;
+		const float4 vs2 = sqr(vs);
+		return saturate( abs(vs) * ( 27 + vs2 ) / ( 27 + 9 * vs2 ) ) * s;
+	}
 #else
-	#define soft_lim(v,s)  ( (exp(2*min(abs(v), s*24)/s) - 1)/(exp(2*min(abs(v), s*24)/s) + 1)*s )
+	float soft_lim( float v, float s )
+	{
+		const float sv = exp( 2 * min( abs(v), s * 24 ) / s );
+		return ( sv - 1 ) / ( sv + 1 ) * s;
+	}
+	float2 soft_lim( float2 v, float2 s )
+	{
+		const float2 sv = exp( 2 * min( abs(v), s * 24 ) / s );
+		return ( sv - 1 ) / ( sv + 1 ) * s;
+	}
+	float3 soft_lim( float3 v, float3 s )
+	{
+		const float3 sv = exp( 2 * min( abs(v), s * 24 ) / s );
+		return ( sv - 1 ) / ( sv + 1 ) * s;
+	}
+	float4 soft_lim( float4 v, float4 s )
+	{
+		const float4 sv = exp( 2 * min( abs(v), s * 24 ) / s );
+		return ( sv - 1 ) / ( sv + 1 ) * s;
+	}
 #endif
+
+
 
 // Weighted power mean
 #define wpmean(a,b,w)  ( pow(abs(w)*pow(abs(a), pm_p) + abs(1-w)*pow(abs(b), pm_p), (1.0/pm_p)) )
@@ -180,6 +232,12 @@ float2 AdaptiveSharpenP0(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_
 	const float3 blur = (2*(c[2]+c[4]+c[5]+c[7]) + (c[1]+c[3]+c[6]+c[8]) + 4*c[0])/16;
 
 	// Contrast compression, center = 0.5, scaled to 1/3
+	// !!! could pre-calc the static value math here (eg: 4.0/15.0 = 0.2666666666666667)
+	// !!! but might lead to decimal rounding / truncation (like MS Calculator did above).
+	// !!! but the rounding might be within tolerance. Pre-calc'ing 4/15 & -37/15 would
+	// !!! save 2 calc's per call here. Maybe have it pre-calc if fast_ops flag is
+	// !!! set, that way fast_ops will trim calculation cycles while fast_ops false
+	// !!! will try to go with more detail by doing the calculations on-the-fly each time?
 	const float c_comp = saturate(4.0/15.0 + 0.9*exp2(dot(blur, -37.0/15.0)));
 
 	// Edge detection
@@ -285,20 +343,27 @@ float3 AdaptiveSharpenP1(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_
 	float lowthrsum   = 0;
 	float weightsum   = 0;
 	float neg_laplace = 0;
-
-	[loop] for (int pix = 0; pix < 12; ++pix)
+	
+	// modified - Craig - Jul 5th, 2020
+	[unroll] for (int pix = 0; pix < 12; ++pix)
 	{
+		// !!! pre-calc (weights[pix]*lowthr) once,
+		// !!! then use twice to save an extra calc per-loop
 		#if (fast_ops == 1)
-			const float lowthr = clamp((13.2*d[pix + 1].x - 0.221), 0.01, 1);
-
-			neg_laplace += sqr(luma[pix + 1])*(weights[pix]*lowthr);
+			float lowthr = clamp((13.2*d[pix + 1].x - 0.221), 0.01, 1);
+			float weighted_lowthr = weights[pix] * lowthr;
+//			neg_laplace += sqr(luma[pix + 1])*(weights[pix]*lowthr);
+			neg_laplace += sqr(luma[pix + 1])*weighted_lowthr;
 		#else
-			const float t = saturate((d[pix + 1].x - 0.01)/0.09);
-			const float lowthr = t*t*(2.97 - 1.98*t) + 0.01; // t*t*(3 - a*3 - (2 - a*2)*t) + a
-
-			neg_laplace += pow(abs(luma[pix + 1]) + 0.06, 2.4)*(weights[pix]*lowthr);
+			float t = saturate((d[pix + 1].x - 0.01)/0.09);
+			float lowthr = t*t*(2.97 - 1.98*t) + 0.01; // t*t*(3 - a*3 - (2 - a*2)*t) + a
+			float weighted_lowthr = weights[pix] * lowthr;
+//			neg_laplace += pow(abs(luma[pix + 1]) + 0.06, 2.4)*(weights[pix]*lowthr);
+			neg_laplace += pow(abs(luma[pix + 1]) + 0.06, 2.4)*weighted_lowthr;
 		#endif
-		weightsum += weights[pix]*lowthr;
+
+//		weightsum += weights[pix]*lowthr;
+		weightsum += weighted_lowthr;
 		lowthrsum += lowthr/12;
 	}
 
@@ -359,13 +424,13 @@ float3 AdaptiveSharpenP1(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_
 			}
 
 			#if (fast_ops != 1) // 3rd iteration
-				[loop] for (i = 2; i < 22; i += 2)
+				[unroll] for (i = 2; i < 22; i += 2)
 				{
 					temp = luma[i];
 					luma[i]   = min(luma[i], luma[i+1]);
 					luma[i+1] = max(temp, luma[i+1]);
 				}
-				[loop] for (ii = 22; ii > 2; ii -= 2)
+				[unroll] for (ii = 22; ii > 2; ii -= 2)
 				{
 					temp = luma[2];
 					luma[2]    = min(luma[2], luma[ii]);
@@ -392,22 +457,27 @@ float3 AdaptiveSharpenP1(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_
 
 			const float min_dist  = min(abs(nmax - d[0].y), abs(d[0].y - nmin));
 			float pos_scale = min_dist + min(L_overshoot, 1.0001 - min_dist - d[0].y);
-			const float neg_scale = min_dist + min(D_overshoot, 0.0001 + d[0].y - min_dist);
+			float neg_scale = min_dist + min(D_overshoot, 0.0001 + d[0].y - min_dist);
 		#endif
 
-		pos_scale = min(pos_scale, scale_lim*(1 - scale_cs) + pos_scale*scale_cs);
-		neg_scale = min(neg_scale, scale_lim*(1 - scale_cs) + neg_scale*scale_cs);
-
-		// Soft limited anti-ringing with tanh, wpmean to control compression slope
-		sharpdiff = wpmean( max(sharpdiff, 0), soft_lim( max(sharpdiff, 0), pos_scale ), cs.x )
-		          - wpmean( min(sharpdiff, 0), soft_lim( min(sharpdiff, 0), neg_scale ), cs.y );
+		// modified - Craig - Jul 5th, 2020
+		// !!! pre-calc scale_lim_temp once, use twice
+		const float scale_lim_temp = scale_lim * (1 - scale_cs);
+		pos_scale = min(pos_scale, scale_lim_temp + pos_scale*scale_cs);
+		neg_scale = min(neg_scale, scale_lim_temp + neg_scale*scale_cs);
+		
+		// modified - Craig - Jul 5th, 2020
+		// pre-calc min / max sharpdiff used twice each below
+		const float maxsharpdiff = max(sharpdiff, 0);
+		const float minsharpdiff = min(sharpdiff, 0);
+		sharpdiff = wpmean( maxsharpdiff, soft_lim( maxsharpdiff, pos_scale ), cs.x )
+		          - wpmean( minsharpdiff, soft_lim( minsharpdiff, neg_scale ), cs.y );
 	}
 
 	// Compensate for saturation loss/gain while making pixels brighter/darker
 	const float sharpdiff_lim = saturate(d[0].y + sharpdiff) - d[0].y;
-	const float satmul = (d[0].y + max(sharpdiff_lim*0.9, sharpdiff_lim)*1.03 + 0.03)/(d[0].y + 0.03);
 
-	return saturate(d[0].y + (sharpdiff_lim*3 + sharpdiff)/4 + (origsat - d[0].y)*satmul);
+	return saturate(d[0].y + (sharpdiff_lim*3 + sharpdiff)/4 + (origsat - d[0].y)*((d[0].y + max(sharpdiff_lim*0.9, sharpdiff_lim)*1.03 + 0.03)/(d[0].y + 0.03)));
 }
 
 technique AdaptiveSharpen
