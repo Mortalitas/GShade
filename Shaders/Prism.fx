@@ -1,25 +1,21 @@
 /*
 Copyright (c) 2018 Jacob Maximilian Fober
 
-This work is licensed under the Creative Commons 
-Attribution-NonCommercial-ShareAlike 4.0 International License. 
-To view a copy of this license, visit 
+This work is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License.
+To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc-sa/4.0/.
 
 Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 */
 
-// Chromatic Aberration PS (Prism) v1.2.6
+// Chromatic Aberration PS (Prism) v1.3.0
 // inspired by Marty McFly YACA shader
 
 
 	  ////////////
 	 /// MENU ///
 	////////////
-
-#ifndef PrismLimit
-	#define PrismLimit 48 // Maximum sample count
-#endif
 
 uniform int Aberration <
 	ui_label = "Aberration scale in pixels";
@@ -59,8 +55,7 @@ uniform int SampleCount <
 float3 Spectrum(float Hue)
 {
 	const float Hue4 = Hue * 4.0;
-	float3 HueColor = abs(Hue4 - float3(1.0, 2.0, 1.0));
-	HueColor = saturate(1.5 - HueColor);
+	float3 HueColor = saturate(1.5 - abs(Hue4 - float3(1.0, 2.0, 1.0)));
 	HueColor.xz += saturate(Hue4 - 3.5);
 	HueColor.z = 1.0 - HueColor.z;
 	return HueColor;
@@ -76,49 +71,42 @@ sampler SamplerColor
 
 void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord, out float3 BluredImage : SV_Target)
 {
-	// Grab Aspect Ratio
-	float Aspect = ReShade::AspectRatio;
-	// Grab Pixel V size
-	float Pixel = ReShade::PixelSize.y;
-
 	// Adjust number of samples
-	// IF Automatic IS True Ceil odd numbers to even with minimum 6, else Clamp odd numbers to even
 	float Samples;
 	if (Automatic)
-		Samples = max(6.0, 2.0 * ceil(abs(Aberration) * 0.5) + 2.0);
+		Samples = clamp(2.0 * ceil(abs(Aberration) * 0.5) + 2.0, 6.0, 48.0); // Ceil odd numbers to even with minimum 6, maximum 48
 	else
-		Samples = floor(SampleCount * 0.5) * 2.0;
-	// Clamp maximum sample count
-	Samples = min(Samples, PrismLimit);
+		Samples = floor(SampleCount * 0.5) * 2.0; // Clamp odd numbers to even
+
 	// Calculate sample offset
 	const float Sample = 1.0 / Samples;
 
 	// Convert UVs to centered coordinates with correct Aspect Ratio
 	float2 RadialCoord = texcoord - 0.5;
-	RadialCoord.x *= Aspect;
+	RadialCoord.x *= BUFFER_ASPECT_RATIO;
 
 	// Generate radial mask from center (0) to the corner of the screen (1)
-	const float Mask = pow(2.0 * length(RadialCoord) * rsqrt(Aspect * Aspect + 1.0), Curve);
+	const float Mask = pow(2.0 * length(RadialCoord) * rsqrt(BUFFER_ASPECT_RATIO * BUFFER_ASPECT_RATIO + 1.0), Curve);
 
-	const float OffsetBase = Mask * Aberration * Pixel * 2.0;
-	
+	const float OffsetBase = Mask * Aberration * BUFFER_RCP_HEIGHT * 2.0;
+
 	// Each loop represents one pass
-	if(abs(OffsetBase) < Pixel) BluredImage = tex2D(SamplerColor, texcoord).rgb;
+	if(abs(OffsetBase) < BUFFER_RCP_HEIGHT)
+		BluredImage = tex2D(SamplerColor, texcoord).rgb;
 	else
 	{
 		BluredImage = 0.0;
 		for (float P = 0.0; P < Samples; P++)
 		{
-			const float Progress = P * Sample;
-			const float Offset = OffsetBase * (Progress - 0.5) + 1.0;
-	
+			float Progress = P * Sample;
+
 			// Scale UVs at center
-			float2 Position = RadialCoord / Offset;
+			float2 Position = RadialCoord / (OffsetBase * (Progress - 0.5) + 1.0);
 			// Convert aspect ratio back to square
-			Position.x /= Aspect;
+			Position.x /= BUFFER_ASPECT_RATIO;
 			// Convert centered coordinates to UV
 			Position += 0.5;
-	
+
 			// Multiply texture sample by HUE color
 			BluredImage += Spectrum(Progress) * tex2Dlod(SamplerColor, float4(Position, 0.0, 0.0)).rgb;
 		}
