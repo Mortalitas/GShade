@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 3.3.0
+/** Perfect Perspective PS, version 3.3.1
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -94,7 +94,7 @@ uniform float Vertical <
 	ui_type = "slider";
 	ui_label = "Vertical distortion";
 	ui_tooltip = "Cylindrical perspective <<>> Spherical perspective";
-	ui_min = 0.001; ui_max = 1.0;
+	ui_min = 0.0; ui_max = 1.0;
 	ui_category = "Perspective";
 	ui_text = "Global settings";
 > = 1.0;

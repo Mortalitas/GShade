@@ -9,7 +9,7 @@ http://creativecommons.org/licenses/by-nc-sa/4.0/.
 Modified by Marot for ReShade 4.0 compatibility and lightly optimized for the GShade project.
 */
 
-// Chromatic Aberration PS (Prism) v1.2.5
+// Chromatic Aberration PS (Prism) v1.2.6
 // inspired by Marty McFly YACA shader
 
 
@@ -77,9 +77,9 @@ sampler SamplerColor
 void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord, out float3 BluredImage : SV_Target)
 {
 	// Grab Aspect Ratio
-	const float Aspect = BUFFER_ASPECT_RATIO;
+	float Aspect = ReShade::AspectRatio;
 	// Grab Pixel V size
-	const float Pixel = BUFFER_RCP_HEIGHT;
+	float Pixel = ReShade::PixelSize.y;
 
 	// Adjust number of samples
 	// IF Automatic IS True Ceil odd numbers to even with minimum 6, else Clamp odd numbers to even
@@ -109,7 +109,7 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 		BluredImage = 0.0;
 		for (float P = 0.0; P < Samples; P++)
 		{
-			const float Progress = P / Samples;	
+			const float Progress = P * Sample;
 			const float Offset = OffsetBase * (Progress - 0.5) + 1.0;
 	
 			// Scale UVs at center
@@ -122,7 +122,7 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 			// Multiply texture sample by HUE color
 			BluredImage += Spectrum(Progress) * tex2Dlod(SamplerColor, float4(Position, 0.0, 0.0)).rgb;
 		}
-		BluredImage *= 2.0 / Samples;
+		BluredImage *= 2.0 * Sample;
 	}
 }
 
