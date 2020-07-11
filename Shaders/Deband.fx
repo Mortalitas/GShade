@@ -40,19 +40,25 @@
  *        iterations/ranges should now yield higher quality debanding without too much decrease
  *        in quality.
  *        Changed licensing text and original source code URL
+ * 2.0b - Implemented optional depth slider and used the ui_bind annotation and preprocessor
+ *        logic to further optimize performance.
  */
 
-#include "ReShade.fxh"
-
 uniform int threshold_preset <
-	ui_type = "combo";
+    ui_type = "combo";
     ui_label = "Debanding strength";
     ui_items = "Low\0Medium\0High\0Custom\0";
     ui_tooltip = "Debanding presets. Use Custom to be able to use custom thresholds in the advanced section.";
+    ui_bind = "DEBANDPRESET";
 > = 3;
 
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef DEBANDPRESET
+#define DEBANDPRESET 3
+#endif
+
 uniform float Range <
-	ui_type = "slider";
+    ui_type = "slider";
     ui_min = 1.0;
     ui_max = 128.0;
     ui_step = 1.0;
@@ -61,15 +67,44 @@ uniform float Range <
 > = 128.0;
 
 uniform int Iterations <
-	ui_type = "slider";
+    ui_type = "slider";
     ui_min = 1;
     ui_max = 16;
     ui_label = "Iterations";
     ui_tooltip = "The number of debanding steps to perform per sample. Each step reduces a bit more banding, but takes time to compute.";
 > = 1;
 
+uniform bool sky_only <
+    ui_type = "radio";
+    ui_label = "Use depth";
+    ui_tooltip = "Enable to have deband apply only at a specific distance. Works well for targeting exclusively the sky.";
+    ui_bind = "DEBANDDEPTH";
+> = 0;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef DEBANDDEPTH
+#define DEBANDDEPTH 0
+#endif
+
+#if DEBANDDEPTH
+uniform float depth_distance <
+    ui_type = "slider";
+    ui_min = 0.0;
+    ui_max = 1.0;
+    ui_step = 0.001;
+    ui_label = "Depth threshold";
+    ui_tooltip = "Distance from the camera where debanding is applied. 1.0 is generally the skybox.";
+    ui_bind = "DEBANDDEPTHVAL";
+> = 1.0;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef DEBANDDEPTHVAL
+#define DEBANDDEPTHVAL 1.0
+#endif
+#endif
+
 uniform float custom_avgdiff <
-	ui_type = "slider";
+    ui_type = "slider";
     ui_min = 0.0;
     ui_max = 255.0;
     ui_step = 0.1;
@@ -79,7 +114,7 @@ uniform float custom_avgdiff <
 > = 255.0;
 
 uniform float custom_maxdiff <
-	ui_type = "slider";
+    ui_type = "slider";
     ui_min = 0.0;
     ui_max = 255.0;
     ui_step = 0.1;
@@ -89,7 +124,7 @@ uniform float custom_maxdiff <
 > = 10.0;
 
 uniform float custom_middiff <
-	ui_type = "slider";
+    ui_type = "slider";
     ui_min = 0.0;
     ui_max = 255.0;
     ui_step = 0.1;
@@ -99,13 +134,22 @@ uniform float custom_middiff <
 > = 255.0;
 
 uniform bool debug_output <
+    ui_type = "radio";
     ui_label = "Debug view";
     ui_tooltip = "Shows the low-pass filtered (blurred) output. Could be useful when making sure that range and iterations capture all of the banding in the picture.";
     ui_category = "Advanced";
-> = false;
+    ui_bind = "DEBANDDEBUG";
+> = 0;
+
+// Set default value(see above) by source code if the preset has not modified yet this variable/definition
+#ifndef DEBANDDEBUG
+#define DEBANDDEBUG 0
+#endif
+
+#include "ReShade.fxh"
 
 // Reshade uses C rand for random, max cannot be larger than 2^15-1
-uniform float drandom < source = "random"; min = 0; max = 32767.0; >;
+uniform int drandom < source = "random"; min = 0; max = 32767; >;
 
 float rand(float x)
 {
@@ -155,37 +199,33 @@ void analyze_pixels(float3 ori, sampler2D tex, float2 texcoord, float2 _range, f
 
 float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-    // Settings
+    const float3 ori = tex2Dlod(ReShade::BackBuffer, float4(texcoord, 0.0, 0.0)).rgb; // Original pixel
 
-    float avgdiff;
-    float maxdiff;
-    float middiff;
+#if DEBANDDEPTH
+    if (ReShade::GetLinearizedDepth(texcoord) < DEBANDDEPTHVAL)
+        return ori;
+#endif
 
-    if (threshold_preset == 0) {
-        avgdiff = 0.6;
-        maxdiff = 1.9;
-        middiff = 1.2;
-    }
-    else if (threshold_preset == 1) {
-        avgdiff = 1.8;
-        maxdiff = 4.0;
-        middiff = 2.0;
-    }
-    else if (threshold_preset == 2) {
-        avgdiff = 3.4;
-        maxdiff = 6.8;
-        middiff = 3.3;
-    }
-    else if (threshold_preset == 3) {
-        avgdiff = custom_avgdiff;
-        maxdiff = custom_maxdiff;
-        middiff = custom_middiff;
-    }
+    float3 res; // Final pixel
 
-    // Normalize
-    avgdiff /= 255.0;
-    maxdiff /= 255.0;
-    middiff /= 255.0;
+    // Settings & Normalization
+#if DEBANDPRESET == 0 // Low
+    const float avgdiff = 0.6 / 255.0;
+    const float maxdiff = 1.9 / 255.0;
+    const float middiff = 1.2 / 255.0;
+#elif DEBANDPRESET == 1 // Medium
+    const float avgdiff = 1.8 / 255.0;
+    const float maxdiff = 4.0 / 255.0;
+    const float middiff = 2.0 / 255.0;
+#elif DEBANDPRESET == 2 // High
+    const float avgdiff = 3.4 / 255.0;
+    const float maxdiff = 6.8 / 255.0;
+    const float middiff = 3.3 / 255.0;
+#elif DEBANDPRESET == 3 // Custom
+    const float avgdiff = custom_avgdiff / 255.0;
+    const float maxdiff = custom_maxdiff / 255.0;
+    const float middiff = custom_middiff / 255.0;
+#endif
 
     // Initialize the PRNG by hashing the position + a random uniform
     float h = permute(permute(permute(texcoord.x) + texcoord.y) + drandom / 32767.0);
@@ -196,17 +236,14 @@ float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
     float3 ref_mid_diff1; // The difference between the average of SE and NW reference pixels and the original pixel
     float3 ref_mid_diff2; // The difference between the average of NE and SW reference pixels and the original pixel
 
-    const float3 ori = tex2Dlod(ReShade::BackBuffer, float4(texcoord, 0.0, 0.0)).rgb; // Original pixel
-    float3 res; // Final pixel
-
     // Compute a random angle
     const float dir  = rand(permute(h)) * 6.2831853;
     const float2 o = float2(cos(dir), sin(dir));
 
     for (int i = 1; i <= Iterations; ++i) {
         // Compute a random distance
-        const float dist = rand(h) * Range * i;
-        const float2 pt = dist * BUFFER_PIXEL_SIZE;
+        float dist = rand(h) * Range * i;
+        float2 pt = dist * BUFFER_PIXEL_SIZE;
 
         analyze_pixels(ori, ReShade::BackBuffer, texcoord, pt, o,
                        ref_avg,
@@ -215,45 +252,40 @@ float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
                        ref_mid_diff1,
                        ref_mid_diff2);
 
-        const float3 ref_avg_diff_threshold = avgdiff * i;
-        const float3 ref_max_diff_threshold = maxdiff * i;
-        const float3 ref_mid_diff_threshold = middiff * i;
+        float3 ref_avg_diff_threshold = avgdiff * i;
+        float3 ref_max_diff_threshold = maxdiff * i;
+        float3 ref_mid_diff_threshold = middiff * i;
 
         // Fuzzy logic based pixel selection
-        const float3 factor = pow(saturate(3.0 * (1.0 - ref_avg_diff  / ref_avg_diff_threshold)) *
+        float3 factor = pow(saturate(3.0 * (1.0 - ref_avg_diff  / ref_avg_diff_threshold)) *
                             saturate(3.0 * (1.0 - ref_max_diff  / ref_max_diff_threshold)) *
                             saturate(3.0 * (1.0 - ref_mid_diff1 / ref_mid_diff_threshold)) *
                             saturate(3.0 * (1.0 - ref_mid_diff2 / ref_mid_diff_threshold)), 0.1);
 
-        if (debug_output)
-            res = ref_avg;
-        else
-            res = lerp(ori, ref_avg, factor);
-
+#if DEBANDDEBUG
+        res = ref_avg;
+#else
+        res = lerp(ori, ref_avg, factor);
+#endif
         h = permute(h);
     }
 
-	const float dither_bit = 8.0; //Number of bits per channel. Should be 8 for most monitors.
+    const float dither_bit = 8.0; //Number of bits per channel. Should be 8 for most monitors.
 
-	/*------------------------.
-	| :: Ordered Dithering :: |
-	'------------------------*/
-	//Calculate grid position
-	const float grid_position = frac(dot(texcoord, (BUFFER_SCREEN_SIZE * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
+    /*------------------------.
+    | :: Ordered Dithering :: |
+    '------------------------*/
+    //Calculate grid position
+    const float grid_position = frac(dot(texcoord, (BUFFER_SCREEN_SIZE * float2(1.0 / 16.0, 10.0 / 36.0)) + 0.25));
 
-	//Calculate how big the shift should be
-	const float dither_shift = 0.25 * (1.0 / (pow(2, dither_bit) - 1.0));
+    //Calculate how big the shift should be
+    const float dither_shift = 0.25 * (1.0 / (pow(2, dither_bit) - 1.0));
 
-	//Shift the individual colors differently, thus making it even harder to see the dithering pattern
-	float3 dither_shift_RGB = float3(dither_shift, -dither_shift, dither_shift); //subpixel dithering
-
-	//modify shift acording to grid position.
-	dither_shift_RGB = lerp(2.0 * dither_shift_RGB, -2.0 * dither_shift_RGB, grid_position); //shift acording to grid position.
-
-	//shift the color by dither_shift
-	res += dither_shift_RGB;
-
-    return res;
+    //Shift the individual colors differently, thus making it even harder to see the dithering pattern
+    //modify shift acording to grid position.
+    //shift acording to grid position.
+    //shift the color by dither_shift
+    return res + lerp(2.0 * float3(dither_shift, -dither_shift, dither_shift), -2.0 * float3(dither_shift, -dither_shift, dither_shift), grid_position);
 }
 
 technique Deband <
