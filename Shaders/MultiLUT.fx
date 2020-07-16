@@ -54,6 +54,9 @@
 #ifndef fLUT_NENTextureName
     #define fLUT_NENTextureName "MultiLut_Neneko.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
+#ifndef fLUT_YAETextureName
+    #define fLUT_YAETextureName "MultiLut_yaes.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
+#endif
 #ifndef fLUT_TileSizeXY
     #define fLUT_TileSizeXY 32
 #endif
@@ -80,7 +83,7 @@
 uniform int fLUT_MultiLUTSelector <
     ui_category = "Pass 1";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "Set this to whatever build your preset was made with!";
     ui_bind = "MultiLUTTexture_Source";
@@ -137,7 +140,7 @@ uniform bool fLUT_MultiLUTPass2 <
 uniform int fLUT_MultiLUTSelector2 <
     ui_category = "Pass 2";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "The MultiLUT table to use on Pass 2.";
     ui_bind = "MultiLUTTexture2_Source";
@@ -195,7 +198,7 @@ uniform bool fLUT_MultiLUTPass3 <
 uniform int fLUT_MultiLUTSelector3 <
     ui_category = "Pass 3";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "The MultiLUT table to use on Pass 3.";
     ui_bind = "MultiLUTTexture3_Source";
@@ -275,6 +278,9 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture_Source == 9 
 #define _SOURCE_MULTILUT_FILE fLUT_NENTextureName // Neneko MultiLut_Neneko.png
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
+#elif MultiLUTTexture_Source == 10 
+#define _SOURCE_MULTILUT_FILE fLUT_YAETextureName // Yaes MultiLut_yaes.png
+#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #endif
 
 #if   MultiLUTTexture2_Source == 0 // GShade/Angelite MultiLut_GShade.png
@@ -307,6 +313,9 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture2_Source == 9 
 #define _SOURCE_MULTILUT_FILE2 fLUT_NENTextureName // Neneko MultiLut_Neneko.png
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
+#elif MultiLUTTexture2_Source == 10 
+#define _SOURCE_MULTILUT_FILE2 fLUT_YAETextureName // Yaes MultiLut_yaes.png
+#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #endif
 
 #if   MultiLUTTexture3_Source == 0 // GShade/Angelite MultiLut_GShade.png
@@ -338,6 +347,9 @@ uniform float fLUT_AmountLuma3 <
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #elif MultiLUTTexture3_Source == 9 
 #define _SOURCE_MULTILUT_FILE3 fLUT_NENTextureName // Neneko MultiLut_Neneko.png
+#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
+#elif MultiLUTTexture3_Source == 10 
+#define _SOURCE_MULTILUT_FILE3 fLUT_YAETextureName // Yaes MultiLut_yaes.png
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #endif
 
