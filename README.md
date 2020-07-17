@@ -43,4 +43,8 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 
 A **Visual Guide/Manual** for GShade can be found here: https://drive.google.com/file/d/18TQUmdzs3sJDYNVmHDaZ_4wigJU0ul4j/
 
+For preset creators looking to distribute their work independently, an **easily customizable preset installer** written in C# can be found here: https://github.com/Mortalitas/GShade-Preset-Installer
+
+A **Linux Installation Bash Script** for GShade can be found here: https://github.com/HereInPlainSight/gshade_installer
+
 For troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/gposers
