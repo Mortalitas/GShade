@@ -357,23 +357,21 @@ float4 MainPS(
 	#if WHITEPOINT_FIXER_MODE == 1
 		if (RunColorPicker && MouseRightDown)
 		{
-			{
-				const float size = ColorPickerCrosshairThickness * 0.5;
+			const float size = ColorPickerCrosshairThickness * 0.5;
 
-				color.rgb = lerp(
-					color.rgb,
-					1.0 - color.rgb,
-					saturate(
-						Contains(size, MousePoint.x, coord.x) +
-						Contains(size, MousePoint.y, coord.y)));
-			}
+			color.rgb = lerp(
+				color.rgb,
+				1.0 - color.rgb,
+				saturate(
+					Contains(size, MousePoint.x, coord.x) +
+					Contains(size, MousePoint.y, coord.y)));
 
 			float2 picker_pos = MousePoint;
 			const float2 offset = ColorPickerTooltipOffset;
 
 			// Make the tooltip always visible on the screen by flipping the
 			// offset if it's gone outside the screen bounds.
-			if (picker_pos + offset < 0.0 || picker_pos + offset > res)
+			if (picker_pos.x + offset.x < 0.0 || picker_pos.y + offset.y < 0.0 || picker_pos.x + offset.x > res.x || picker_pos.y + offset.y > res.y)
 				picker_pos += -offset;
 			else
 				picker_pos += offset;
