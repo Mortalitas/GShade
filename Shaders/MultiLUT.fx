@@ -274,12 +274,12 @@ uniform float fLUT_AmountLuma3 <
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLower
 #elif MultiLUTTexture_Source == 8 // Yomi MultiLut_Yomi.png
 #define _SOURCE_MULTILUT_FILE fLUT_YOMTextureName
+#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountEx
+#elif MultiLUTTexture_Source == 9 // Neneko MultiLut_Neneko.png
+#define _SOURCE_MULTILUT_FILE fLUT_NENTextureName
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
-#elif MultiLUTTexture_Source == 9 
-#define _SOURCE_MULTILUT_FILE fLUT_NENTextureName // Neneko MultiLut_Neneko.png
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
-#elif MultiLUTTexture_Source == 10 
-#define _SOURCE_MULTILUT_FILE fLUT_YAETextureName // Yaes MultiLut_yaes.png
+#elif MultiLUTTexture_Source == 10 // Yaes MultiLut_yaes.png
+#define _SOURCE_MULTILUT_FILE fLUT_YAETextureName
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #endif
 
@@ -309,12 +309,12 @@ uniform float fLUT_AmountLuma3 <
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLower
 #elif MultiLUTTexture2_Source == 8 // Yomi MultiLut_Yomi.png
 #define _SOURCE_MULTILUT_FILE2 fLUT_YOMTextureName
+#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountEx
+#elif MultiLUTTexture2_Source == 9 // Neneko MultiLut_Neneko.png
+#define _SOURCE_MULTILUT_FILE2 fLUT_NENTextureName
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
-#elif MultiLUTTexture2_Source == 9 
-#define _SOURCE_MULTILUT_FILE2 fLUT_NENTextureName // Neneko MultiLut_Neneko.png
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
-#elif MultiLUTTexture2_Source == 10 
-#define _SOURCE_MULTILUT_FILE2 fLUT_YAETextureName // Yaes MultiLut_yaes.png
+#elif MultiLUTTexture2_Source == 10 // Yaes MultiLut_yaes.png
+#define _SOURCE_MULTILUT_FILE2 fLUT_YAETextureName
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #endif
 
@@ -344,12 +344,12 @@ uniform float fLUT_AmountLuma3 <
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLower
 #elif MultiLUTTexture3_Source == 8 // Yomi MultiLut_Yomi.png
 #define _SOURCE_MULTILUT_FILE3 fLUT_YOMTextureName
+#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountEx
+#elif MultiLUTTexture3_Source == 9 // Neneko MultiLut_Neneko.png
+#define _SOURCE_MULTILUT_FILE3 fLUT_NENTextureName
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
-#elif MultiLUTTexture3_Source == 9 
-#define _SOURCE_MULTILUT_FILE3 fLUT_NENTextureName // Neneko MultiLut_Neneko.png
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
-#elif MultiLUTTexture3_Source == 10 
-#define _SOURCE_MULTILUT_FILE3 fLUT_YAETextureName // Yaes MultiLut_yaes.png
+#elif MultiLUTTexture3_Source == 10 // Yaes MultiLut_yaes.png
+#define _SOURCE_MULTILUT_FILE3 fLUT_YAETextureName
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #endif
 
