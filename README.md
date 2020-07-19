@@ -25,6 +25,13 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * World of Warcraft Classic
 
 **The installer version also includes:**
+* Multi-language Support:
+  * English
+  * 日本語
+  * 한국어
+  * Deutsch
+  * Français
+  * Italiano
 * [Presets created by our community!](https://github.com/Mortalitas/GShade-Presets)
 * Control Panel which includes:
   * One-click Updates
