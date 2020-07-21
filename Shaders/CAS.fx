@@ -34,15 +34,28 @@
 //     replaced tex2D with tex2Doffset intrinsic (address offset by immediate integer)
 //     47 -> 43 instructions
 //     9 -> 8 registers
+//Further modified by OopyDoopy and Lord of Lunacy:
+//		Changed wording in the UI for the existing variable and added a new variable and relevant code to adjust sharpening strength.
+//Fix by Lord of Lunacy:
+//		Made the shader use a linear colorspace rather than sRGB, as recommended by the original AMD documentation from FidelityFX.
 
-uniform float Sharpness <
+uniform float Contrast <
 	ui_type = "slider";
-    ui_label = "Sharpening strength";
-    ui_tooltip = "0 := no sharpening, to 1 := full sharpening.\nScaled by the sharpness knob while being transformed to a negative lobe (values from -1/5 to -1/8 for A=1)";
+    ui_label = "Contrast Adaptation";
+    ui_tooltip = "Adjusts the range the shader adapts to high contrast (0 is not all the way off).  Higher values = more high contrast sharpening.";
 	ui_min = 0.0; ui_max = 1.0;
 > = 0.0;
 
+uniform float Sharpening <
+	ui_type = "slider";
+    ui_label = "Sharpening intensity";
+    ui_tooltip = "Adjusts sharpening intensity by averaging the original pixels to the sharpened result.  1.0 is the unmodified default.";
+	ui_min = 0.0; ui_max = 1.0;
+> = 1.0;
+
 #include "ReShade.fxh"
+texture TexCASColor : COLOR;
+sampler sTexCASColor {Texture = TexCASColor; SRGBTexture = true;};
 
 float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {    
@@ -50,15 +63,15 @@ float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
     //  a b c
     //  d(e)f
     //  g h i
-    const float3 a = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, -1)).rgb;
-    const float3 b = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, -1)).rgb;
-    const float3 c = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, -1)).rgb;
-    const float3 d = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, 0)).rgb;
-    const float3 e = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 0)).rgb;
-    const float3 f = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, 0)).rgb;
-    const float3 g = tex2Doffset(ReShade::BackBuffer, texcoord, int2(-1, 1)).rgb;
-    const float3 h = tex2Doffset(ReShade::BackBuffer, texcoord, int2(0, 1)).rgb;
-    const float3 i = tex2Doffset(ReShade::BackBuffer, texcoord, int2(1, 1)).rgb;
+    const float3 a = tex2Doffset(sTexCASColor, texcoord, int2(-1, -1)).rgb;
+    const float3 b = tex2Doffset(sTexCASColor, texcoord, int2(0, -1)).rgb;
+    const float3 c = tex2Doffset(sTexCASColor, texcoord, int2(1, -1)).rgb;
+    const float3 d = tex2Doffset(sTexCASColor, texcoord, int2(-1, 0)).rgb;
+    const float3 e = tex2Doffset(sTexCASColor, texcoord, int2(0, 0)).rgb;
+    const float3 f = tex2Doffset(sTexCASColor, texcoord, int2(1, 0)).rgb;
+    const float3 g = tex2Doffset(sTexCASColor, texcoord, int2(-1, 1)).rgb;
+    const float3 h = tex2Doffset(sTexCASColor, texcoord, int2(0, 1)).rgb;
+    const float3 i = tex2Doffset(sTexCASColor, texcoord, int2(1, 1)).rgb;
   
 	// Soft min and max.
 	//  a b c             b
@@ -74,24 +87,13 @@ float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
     mxRGB += mxRGB2;
 
     // Smooth minimum distance to signal limit divided by smooth max.
-    const float3 rcpMRGB = rcp(mxRGB);
-    float3 ampRGB = saturate(min(mnRGB, 2.0 - mxRGB) * rcpMRGB);    
-    
     // Shaping amount of sharpening.
-    ampRGB = rsqrt(ampRGB);
-
-    const float peak = 8.0 - 3.0 * Sharpness;
-    const float3 wRGB = -rcp(ampRGB * peak);
-
-    const float3 rcpWeightRGB = rcp(1.0 + 4.0 * wRGB);
+    const float3 wRGB = -rcp(rsqrt(saturate(min(mnRGB, 2.0 - mxRGB) * rcp(mxRGB))) * (8.0 - 3.0 * Contrast));
 
     //                          0 w 0
     //  Filter shape:           w 1 w
     //                          0 w 0  
-    const float3 window = (b + d) + (f + h);
-    const float3 outColor = saturate((window * wRGB + e) * rcpWeightRGB);
-
-    return outColor;
+    return lerp(e, saturate((((b + d) + (f + h)) * wRGB + e) * rcp(1.0 + 4.0 * wRGB)), Sharpening);
 }
 
 technique ContrastAdaptiveSharpen
@@ -100,5 +102,6 @@ technique ContrastAdaptiveSharpen
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = CASPass;
+		SRGBWriteEnable = true;
 	}
 }
