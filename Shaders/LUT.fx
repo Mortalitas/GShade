@@ -49,6 +49,9 @@
 #ifndef fLUT_FE_TextureName
     #define fLUT_FE_TextureName "lut_Feli.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
+#ifndef fLUT_LE_TextureName
+    #define fLUT_LE_TextureName "lut_Legacy.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -56,7 +59,7 @@
 
 uniform int fLUT_Selector <
   ui_type = "combo";
-  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0Sleeps_Hungry\0Feli\0";
+  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0Sleeps_Hungry\0Feli\0Lufreine Legacy\0";
   ui_label = "The LUT file to use.";
   ui_tooltip = "Set this to whichever your preset requires!";
   ui_bind = "LUTTexture_Source";
@@ -113,6 +116,10 @@ uniform float fLUT_AmountLuma <
 #define _SOURCE_LUT_AMOUNT fLUT_W_TileAmount
 #elif LUTTexture_Source == 6 // Feli LUT
 #define _SOURCE_LUT_FILE fLUT_FE_TextureName
+#define _SOURCE_LUT_SIZE fLUT_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#elif LUTTexture_Source == 7 // Lufreine Legacy LUT
+#define _SOURCE_LUT_FILE fLUT_LE_TextureName
 #define _SOURCE_LUT_SIZE fLUT_TileSizeXY
 #define _SOURCE_LUT_AMOUNT fLUT_TileAmount
 #endif
