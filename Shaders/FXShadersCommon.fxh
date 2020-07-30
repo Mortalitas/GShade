@@ -6,6 +6,8 @@
 	Defines various general utilities for use in different shaders.
 */
 
+#include "FXShadersMath.fxh"
+
 namespace FXShaders
 {
 
@@ -79,6 +81,8 @@ FXSHADERS_MESSAGE( \
 #define FXSHADERS_INTERPOLATE(a, b, t, dt) \
 lerp(a, b, saturate((dt) / max(t, FloatEpsilon)))
 
+#define FXSHADERS_GET_MAX_MIP(w, h) \
+(FXSHADERS_LOG2(FXSHADERS_MAX(w, h)) + 1)
 
 /**
  * Returns the current resolution.

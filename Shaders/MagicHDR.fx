@@ -1,5 +1,6 @@
 //#region Includes
 
+#include "FXShadersCanvas.fxh"
 #include "FXShadersCommon.fxh"
 #include "FXShadersConvolution.fxh"
 #include "FXShadersMath.fxh"
@@ -7,7 +8,7 @@
 
 //#endregion
 
-//#region Preprocessor
+//#region Preprocessor Directives
 
 #ifndef MAGIC_HDR_BLUR_SAMPLES
 #define MAGIC_HDR_BLUR_SAMPLES 21
@@ -25,6 +26,18 @@
 	#error "Downsample cannot be less than 1x"
 #endif
 
+#ifndef MAGIC_HDR_SRGB_INPUT
+#define MAGIC_HDR_SRGB_INPUT 1
+#endif
+
+#ifndef MAGIC_HDR_SRGB_OUTPUT
+#define MAGIC_HDR_SRGB_OUTPUT 1
+#endif
+
+#ifndef MAGIC_HDR_ENABLE_ADAPTATION
+#define MAGIC_HDR_ENABLE_ADAPTATION 0
+#endif
+
 //#endregion
 
 namespace FXShaders
@@ -36,11 +49,23 @@ static const int2 DownsampleAmount = MAGIC_HDR_DOWNSAMPLE;
 
 static const int BlurSamples = MAGIC_HDR_BLUR_SAMPLES;
 
-static const int InvTonemap_Reinhard = 0;
+static const float2 AdaptFocusPointDebugSize = 10.0;
 
-static const int Tonemap_Reinhard = 0;
-static const int Tonemap_BakingLabACES = 1;
-static const int Tonemap_Uncharted2Filmic = 2;
+static const int
+	InvTonemap_Reinhard = 0,
+	InvTonemap_Lottes = 1,
+	InvTonemap_Unreal3 = 2,
+	InvTonemap_NarkowiczACES = 3,
+	InvTonemap_Uncharted2Filmic = 4,
+	InvTonemap_BakingLabACES = 5;
+
+static const int
+	Tonemap_Reinhard = 0,
+	Tonemap_Lottes = 1,
+	Tonemap_Unreal3 = 2,
+	Tonemap_NarkowiczACES = 3,
+	Tonemap_Uncharted2Filmic = 4,
+	Tonemap_BakingLabACES = 5;
 
 //#endregion
 
@@ -78,52 +103,23 @@ FXSHADERS_HELP(
 	"  Values too high may introduce flickering.\n"
 );
 
-uniform float BloomAmount
-<
-	ui_category = "Bloom Appearance";
-	ui_label = "Bloom Amount";
-	ui_tooltip =
-		"Amount of bloom to apply to the image.\n"
-		"\nDefault: 0.2";
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.0;
-> = 0.2;
-
-uniform float BlurSize
-<
-	ui_category = "Blur Appearance";
-	ui_label = "Blur Size";
-	ui_tooltip =
-		"The size of the gaussian blur applied to create the bloom effect.\n"
-		"This value is directly influenced by the values of "
-		"MAGIC_HDR_BLUR_SAMPLES and MAGIC_HDR_DOWNSAMPLE.\n"
-		"\nDefault: 1.0";
-	ui_type = "slider";
-	ui_min = 0.01;
-	ui_max = 1.0;
-> = 1.0;
-
-uniform float Whitepoint
+uniform float InputExposure
 <
 	ui_category = "Tonemapping";
-	ui_label = "Whitepoint";
+	ui_label = "Input Exposure";
 	ui_tooltip =
-		"The whitepoint of the HDR image.\n"
-		"Anything with this brightness is pure white.\n"
-		"It controls how bright objects are perceived after inverse "
-		"tonemapping, with higher values leading to a brighter bloom effect.\n"
-		"\nDefault: 2";
+		"Approximate exposure of the original image.\n"
+		"This value is measured in f-stops.\n"
+		"\nDefault: 1.0";
 	ui_type = "slider";
-	ui_min = 1;
-	ui_max = 10;
-	ui_step = 1;
-> = 2;
+	ui_min = -3.0;
+	ui_max = 3.0;
+> = 0.0;
 
 uniform float Exposure
 <
 	ui_category = "Tonemapping";
-	ui_label = "Exposure";
+	ui_label = "Output Exposure";
 	ui_tooltip =
 		"Exposure applied at the end of the effect.\n"
 		"This value is measured in f-stops.\n"
@@ -136,25 +132,216 @@ uniform float Exposure
 uniform int InvTonemap
 <
 	ui_category = "Tonemapping";
-	ui_label = "Inverse Tonemapper";
+	ui_label = "Input Tonemapper";
 	ui_tooltip =
 		"The inverse tonemapping operator used at the beginning of the "
 		"effect.\n"
 		"\nDefault: Reinhard";
 	ui_type = "combo";
-	ui_items = "Reinhard\0";
-> = 0;
+	ui_items =
+		"Reinhard\0Lottes\0Unreal 3\0Narkowicz ACES\0Uncharted 2 Filmic\0Baking Lab ACES\0";
+> = InvTonemap_Reinhard;
 
 uniform int Tonemap
 <
 	ui_category = "Tonemapping";
-	ui_label = "Tonemapper";
+	ui_label = "Output Tonemapper";
 	ui_tooltip =
 		"The tonemapping operator used at the end of the effect.\n"
 		"\nDefault: Baking Lab ACES";
 	ui_type = "combo";
-	ui_items = "Reinhard\0Baking Lab ACES\0Uncharted 2 Filmic\0";
-> = 1;
+	ui_items =
+		"Reinhard\0Lottes\0Unreal 3\0Narkowicz ACES\0Uncharted 2 Filmic\0Baking Lab ACES\0";
+> = Tonemap_BakingLabACES;
+
+uniform float BloomAmount
+<
+	ui_category = "Bloom";
+	ui_category_closed = true;
+	ui_label = "Amount";
+	ui_tooltip =
+		"The amount of bloom to apply to the image.\n"
+		"\nDefault: 0.2";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 0.2;
+
+uniform float BloomBrightness
+<
+	ui_category = "Bloom";
+	ui_label = "Brightness";
+	ui_tooltip =
+		"This value is used to multiply the bloom texture brightness.\n"
+		"This is different from the amount in it directly affects the "
+		"brightness, rather than acting as a percentage of blending between "
+		"the HDR color and the bloom color.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 1.0;
+	ui_max = 5.0;
+> = 1.0;
+
+uniform float BloomSaturation
+<
+	ui_category = "Bloom";
+	ui_label = "Saturation";
+	ui_tooltip =
+		"Determines the saturation of bloom.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 2.0;
+> = 1.0;
+
+uniform float BlurSize
+<
+	ui_category = "Bloom - Advanced";
+	ui_category_closed = true;
+	ui_label = "Blur Size";
+	ui_tooltip =
+		"The size of the gaussian blur applied to create the bloom effect.\n"
+		"This value is directly influenced by the values of "
+		"MAGIC_HDR_BLUR_SAMPLES and MAGIC_HDR_DOWNSAMPLE.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 0.01;
+	ui_max = 1.0;
+> = 1.0;
+
+uniform float BlendingAmount
+<
+	ui_category = "Bloom - Advanced";
+	ui_label = "Blending Amount";
+	ui_tooltip =
+		"How much to blend the various bloom textures used internally.\n"
+		"Reducing this value will make the bloom more uniform, with less "
+		"variation.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 0.1;
+	ui_max = 1.0;
+> = 1.0;
+
+uniform float BlendingBase
+<
+	ui_category = "Bloom - Advanced";
+	ui_label = "Blending Base";
+	ui_tooltip =
+		"Determines the base bloom size when blending.\n"
+		"It's more effective with a lower Blending Amount.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 1.0;
+
+#if MAGIC_HDR_ENABLE_ADAPTATION
+
+uniform float AdaptTime
+<
+	ui_category = "Adaptation";
+	ui_category_closed = true;
+	ui_label = "Delay";
+	ui_tooltip =
+		"Determines the time in seconds it takes for adaptation to transition "
+		"between the previous value and the next.\n"
+		"\nDefault: 1.0";
+	ui_type = "drag";
+	ui_min = 0.0;
+	ui_max = 10.0;
+	ui_step = 0.001;
+> = 1.0;
+
+uniform float2 AdaptMinMax
+<
+	ui_category = "Adaptation";
+	ui_label = "Range";
+	ui_tooltip =
+		"Determines the minimum and maximum values for adaptation, "
+		"respectively.\n"
+		"Increasing the minimum will reduce how bright the image can become.\n"
+		"Decreasing the maximum will reduce how dark the image can become.\n"
+		"\nDefault: 0.0 1.0";
+	ui_type = "drag";
+	ui_min = 0.0;
+	ui_max = 3.0;
+	ui_step = 0.001;
+> = float2(0.0, 1.0);
+
+uniform float AdaptSensitivity
+<
+	ui_category = "Adaptation - Advanced";
+	ui_category_closed = true;
+	ui_label = "Sensitivity";
+	ui_tooltip =
+		"Determines the sensitivity of adaptation towards bright objects.\n"
+		"\nDefault: 1.0";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 2.0;
+> = 1.0;
+
+uniform float AdaptPrecision
+<
+	ui_category = "Adaptation - Advanced";
+	ui_label = "Precision";
+	ui_tooltip =
+		"Determines which parts of the image influence adaptation more.\n"
+		"At 0.0, adaptation is influenced by the entire image equally.\n"
+		"At 1.0, adaptation will be influenced by objects closer to the Focus "
+		"Point more than the rest of the scene.\n"
+		"\nDefault: 0.0";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 0.0;
+
+uniform float2 AdaptPoint
+<
+	ui_category = "Adaptation - Advanced";
+	ui_label = "Focus Point";
+	ui_tooltip =
+		"Determines the point on the screen that is used for determining the "
+		"adaptation value.\n"
+		"The first value determines the horizontal position, from left to "
+		"right.\n"
+		"The second value determines the vertical position, from top to "
+		"bottom.\n"
+		"(0.5, 0.5) is the screen center.\n"
+		"\nDefault: 0.5 0.5";
+	ui_type = "drag";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_step = 0.001;
+> = 0.5;
+
+uniform float FrameTime <source = "frametime";>;
+
+#endif
+
+uniform bool ShowBloom
+<
+	ui_category = "Debug";
+	ui_category_closed = true;
+	ui_label = "Show Bloom";
+	ui_tooltip =
+		"Displays the bloom texture.\n"
+		"\nDefault: Off";
+> = false;
+
+#if MAGIC_HDR_ENABLE_ADAPTATION
+
+uniform bool ShowAdapt
+<
+	ui_category = "Debug";
+	ui_label = "Show Adaptation";
+	ui_tooltip =
+		"Displays the texture used for adaptation and the focus point.\n"
+		"\nDefault: Off";
+> = false;
+
+#endif
 
 //#endregion
 
@@ -165,133 +352,126 @@ texture ColorTex : COLOR;
 sampler Color
 {
 	Texture = ColorTex;
-	SRGBTexture = true;
+
+	#if MAGIC_HDR_SRGB_INPUT
+		SRGBTexture = true;
+	#endif
 };
 
-// TODO: Try to figure out a way to get rid of the need for this texture.
-texture DownsampledTex <pooled = true;>
+#define DEF_DOWNSAMPLED_TEX(name, downscale, maxMip) \
+texture name##Tex <pooled = true;> \
+{ \
+	Width = BUFFER_WIDTH / DownsampleAmount.x / downscale; \
+	Height = BUFFER_HEIGHT / DownsampleAmount.y / downscale; \
+	Format = RGBA16F; \
+	MipLevels = maxMip; \
+}; \
+\
+sampler name \
+{ \
+	Texture = name##Tex; \
+}
+
+// This texture is used as a sort of "HDR backbuffer".
+DEF_DOWNSAMPLED_TEX(Temp, 1, 1);
+
+// These are the textures in which the many bloom LODs are stored.
+DEF_DOWNSAMPLED_TEX(Bloom0, 1, 1);
+DEF_DOWNSAMPLED_TEX(Bloom1, 2, 1);
+DEF_DOWNSAMPLED_TEX(Bloom2, 4, 1);
+DEF_DOWNSAMPLED_TEX(Bloom3, 8, 1);
+DEF_DOWNSAMPLED_TEX(Bloom4, 16, 1);
+DEF_DOWNSAMPLED_TEX(Bloom5, 32, 1);
+
+#if MAGIC_HDR_ENABLE_ADAPTATION
+	DEF_DOWNSAMPLED_TEX(
+		Bloom6,
+		64,
+		FXSHADERS_GET_MAX_MIP(BUFFER_WIDTH / 64, BUFFER_HEIGHT / 64));
+#else
+	DEF_DOWNSAMPLED_TEX(Bloom6, 64, 1);
+#endif
+
+#if MAGIC_HDR_ENABLE_ADAPTATION
+
+texture AdaptTex
 {
-	Width = BUFFER_WIDTH / DownsampleAmount.x;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y;
-	Format = RGBA16F;
+	Format = R32F;
 };
 
-sampler Downsampled
+sampler Adapt
 {
-	Texture = DownsampledTex;
+	Texture = AdaptTex;
 };
 
-texture TempTex <pooled = true;>
+texture LastAdaptTex
 {
-	Width = BUFFER_WIDTH / DownsampleAmount.x;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y;
-	Format = RGBA16F;
+	Format = R32F;
 };
 
-sampler Temp
+sampler LastAdapt
 {
-	Texture = TempTex;
+	Texture = LastAdaptTex;
 };
 
-texture Bloom0Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y;
-	Format = RGBA16F;
-};
-
-sampler Bloom0
-{
-	Texture = Bloom0Tex;
-};
-
-texture Bloom1Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x / 2;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y / 2;
-	Format = RGBA16F;
-};
-
-sampler Bloom1
-{
-	Texture = Bloom1Tex;
-};
-
-texture Bloom2Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x / 4;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y / 4;
-	Format = RGBA16F;
-};
-
-sampler Bloom2
-{
-	Texture = Bloom2Tex;
-};
-
-texture Bloom3Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x / 8;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y / 8;
-	Format = RGBA16F;
-};
-
-sampler Bloom3
-{
-	Texture = Bloom3Tex;
-};
-
-texture Bloom4Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x / 16;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y / 16;
-	Format = RGBA16F;
-};
-
-sampler Bloom4
-{
-	Texture = Bloom4Tex;
-};
-
-texture Bloom5Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x / 32;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y / 32;
-	Format = RGBA16F;
-};
-
-sampler Bloom5
-{
-	Texture = Bloom5Tex;
-};
-
-texture Bloom6Tex <pooled = true;>
-{
-	Width = BUFFER_WIDTH / DownsampleAmount.x / 64;
-	Height = BUFFER_HEIGHT / DownsampleAmount.y / 64;
-	Format = RGBA16F;
-};
-
-sampler Bloom6
-{
-	Texture = Bloom6Tex;
-};
+#endif
 
 //#endregion
 
 //#region Functions
 
-float3 ApplyInverseTonemap(float3 color)
-{
-	float w = max(Whitepoint, FloatEpsilon);
-	w = exp2(w);
 
-	// TODO: Add more inverse tonemappers.
+float3 ApplyInverseTonemap(float3 color, float2 uv)
+{
 	switch (InvTonemap)
 	{
 		case InvTonemap_Reinhard:
-			color = ReinhardInv(color, rcp(w));
+			color = Tonemap::Reinhard::Inverse(color);
 			break;
+		case InvTonemap_Lottes:
+			color = Tonemap::Lottes::Inverse(color);
+			break;
+		case InvTonemap_Unreal3:
+			color = Tonemap::Unreal3::Inverse(color);
+			break;
+		case InvTonemap_NarkowiczACES:
+			color = Tonemap::NarkowiczACES::Inverse(color);
+			break;
+		case InvTonemap_Uncharted2Filmic:
+			color = Tonemap::Uncharted2Filmic::Inverse(color);
+			break;
+		case InvTonemap_BakingLabACES:
+			color = Tonemap::BakingLabACES::Inverse(color);
+			break;
+	}
+
+	color /= exp(InputExposure);
+
+	return color;
+}
+
+float3 ApplyTonemap(float3 color, float2 uv)
+{
+	#if MAGIC_HDR_ENABLE_ADAPTATION
+		const float exposure = exp(Exposure) / tex2Dfetch(Adapt, 0).x;
+	#else
+		const float exposure = exp(Exposure);
+	#endif
+
+	switch (Tonemap)
+	{
+		case Tonemap_Reinhard:
+			return Tonemap::Reinhard::Apply(color * exposure);
+		case Tonemap_Lottes:
+			return Tonemap::Lottes::Apply(color * exposure);
+		case Tonemap_Unreal3:
+			return Tonemap::Unreal3::Apply(color * exposure);
+		case Tonemap_NarkowiczACES:
+			return Tonemap::NarkowiczACES::Apply(color * exposure);
+		case Tonemap_Uncharted2Filmic:
+			return Tonemap::Uncharted2Filmic::Apply(color * exposure);
+		case Tonemap_BakingLabACES:
+			return Tonemap::BakingLabACES::Apply(color * exposure);
 	}
 
 	return color;
@@ -317,122 +497,131 @@ float4 InverseTonemapPS(
 	float4 p : SV_POSITION,
 	float2 uv : TEXCOORD) : SV_TARGET
 {
-	const float4 color = tex2D(Color, uv);
+	float4 color = tex2D(Color, uv);
+
+	float saturation;
+	if (BloomSaturation > 1.0)
+		saturation = pow(abs(BloomSaturation), 2.0);
+	else
+		saturation = BloomSaturation;
+
+	color.rgb = saturate(ApplySaturation(color.rgb, saturation));
+
+	color.rgb = ApplyInverseTonemap(color.rgb, uv);
 
 	// TODO: Saturation and other color filtering options?
+	color.rgb *= exp(BloomBrightness);
 
-	return float4(ApplyInverseTonemap(color.rgb), color.a);
+	return color;
 }
 
-// TODO: Create a blur shader macro?
-float4 Blur0PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
+#define DEF_BLUR_SHADER(x, y, input, scale) \
+float4 Blur##x##PS( \
+	float4 p : SV_POSITION, \
+	float2 uv : TEXCOORD) : SV_TARGET \
+{ \
+	return Blur(input, uv, float2(scale, 0.0)); \
+} \
+\
+float4 Blur##y##PS( \
+	float4 p : SV_POSITION, \
+	float2 uv : TEXCOORD) : SV_TARGET \
+{ \
+	return Blur(Temp, uv, float2(0.0, scale)); \
+}
+
+DEF_BLUR_SHADER(0, 1, Bloom0, 1)
+DEF_BLUR_SHADER(2, 3, Bloom0, 2)
+DEF_BLUR_SHADER(4, 5, Bloom1, 4)
+DEF_BLUR_SHADER(6, 7, Bloom2, 8)
+DEF_BLUR_SHADER(8, 9, Bloom3, 16)
+DEF_BLUR_SHADER(10, 11, Bloom4, 32)
+DEF_BLUR_SHADER(12, 13, Bloom5, 64)
+
+#if MAGIC_HDR_ENABLE_ADAPTATION
+
+float4 CalcAdaptPS(
+	float4 p : SV_POSITION,
+	float2 uv : TEXCOORD) : SV_TARGET
 {
-	return Blur(Downsampled, uv, float2(1.0, 0.0));
+	float mip = FXSHADERS_GET_MAX_MIP(
+		BUFFER_WIDTH / 64,
+		BUFFER_HEIGHT / 64) * AdaptPrecision;
+
+	float2 minMax = AdaptMinMax;
+	if (minMax.x > minMax.y)
+		minMax = minMax.yx;
+
+	const adapt = clamp(lerp(0.5, GetLumaLinear(tex2Dlod(Bloom6, float4(AdaptPoint, 0.0, mip)).rgb), AdaptSensitivity), max(minMax.x, 0.001), minMax.y);
+
+	if (AdaptTime > 0.001)
+	{
+		float last = tex2Dfetch(LastAdapt, 0).x;
+		float dt = FrameTime * 0.001;
+
+		adapt = lerp(last, adapt, saturate(dt / max(AdaptTime, 0.001)));
+	}
+
+	return adapt;
 }
 
-float4 Blur1PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
+float4 SaveAdaptPS(
+	float4 p : SV_POSITION,
+	float2 uv : TEXCOORD) : SV_TARGET
 {
-	return Blur(Temp, uv, float2(0.0, 1.0));
+	return tex2Dfetch(Adapt, 0);
 }
 
-float4 Blur2PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Bloom0, uv, float2(2.0, 0.0));
-}
-
-float4 Blur3PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Temp, uv, float2(0.0, 2.0));
-}
-
-float4 Blur4PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Bloom1, uv, float2(4.0, 0.0));
-}
-
-float4 Blur5PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Temp, uv, float2(0.0, 4.0));
-}
-
-float4 Blur6PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Bloom2, uv, float2(8.0, 0.0));
-}
-
-float4 Blur7PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Temp, uv, float2(0.0, 8.0));
-}
-
-float4 Blur8PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Bloom3, uv, float2(16.0, 0.0));
-}
-
-float4 Blur9PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Temp, uv, float2(0.0, 16.0));
-}
-
-float4 Blur10PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Bloom4, uv, float2(32.0, 0.0));
-}
-
-float4 Blur11PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Temp, uv, float2(0.0, 32.0));
-}
-
-float4 Blur12PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Bloom5, uv, float2(64.0, 0.0));
-}
-
-float4 Blur13PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	return Blur(Temp, uv, float2(0.0, 64.0));
-}
+#endif
 
 float4 TonemapPS(
 	float4 p : SV_POSITION,
 	float2 uv : TEXCOORD) : SV_TARGET
 {
+	#if MAGIC_HDR_ENABLE_ADAPTATION
+		if (ShowAdapt)
+		{
+			const float mip = FXSHADERS_GET_MAX_MIP(
+				BUFFER_WIDTH / 64,
+				BUFFER_HEIGHT / 64) * AdaptPrecision;
+
+			float4 color = tex2Dlod(Bloom6, float4(uv, 0.0, mip));
+			color.rgb = lerp(0.5, color.rgb, AdaptSensitivity);
+
+			const float2 res = GetResolution();
+
+			float4 pointColor = float4(1.0 - color.rgb, color.a);
+			if (abs(pointColor.rgb - color.rgb) < 0.1)
+				pointColor.rgb = pointColor.rgb * 1.5;
+
+			FillRect(color, uv * res, ConvertToRect(AdaptPoint * res, AdaptFocusPointDebugSize), pointColor);
+
+			return color;
+		}
+	#endif
+
 	float4 color = tex2D(Color, uv);
-	color.rgb = ApplyInverseTonemap(color.rgb);
+	color.rgb = ApplyInverseTonemap(color.rgb, uv);
 
-	// TODO: Maybe implement normal distribution?
+	const float mean = BlendingBase * 7;
+	const float variance = BlendingAmount * 7;
 
-	float4 bloom =
-		tex2D(Bloom0, uv) +
-		tex2D(Bloom1, uv) +
-		tex2D(Bloom2, uv) +
-		tex2D(Bloom3, uv) +
-		tex2D(Bloom4, uv) +
-		tex2D(Bloom5, uv) +
-		tex2D(Bloom6, uv);
+	const float4 bloom = (
+		tex2D(Bloom0, uv) * NormalDistribution(1, mean, variance) +
+		tex2D(Bloom1, uv) * NormalDistribution(2, mean, variance) +
+		tex2D(Bloom2, uv) * NormalDistribution(3, mean, variance) +
+		tex2D(Bloom3, uv) * NormalDistribution(4, mean, variance) +
+		tex2D(Bloom4, uv) * NormalDistribution(5, mean, variance) +
+		tex2D(Bloom5, uv) * NormalDistribution(6, mean, variance) +
+		tex2D(Bloom6, uv) * NormalDistribution(7, mean, variance)
+		) / 7;
 
-	bloom /= 7;
+	if (ShowBloom)
+		color.rgb = bloom.rgb;
+	else
+		color.rgb = lerp(color.rgb, bloom.rgb, log10(BloomAmount + 1.0));
 
-	color.rgb = lerp(color.rgb, bloom.rgb, log10(BloomAmount + 1.0));
-
-	// TODO: Implement adaptation.
-	float exposure = exp(Exposure);
-
-	// TODO: Add more tonemappers.
-	switch (Tonemap)
-	{
-		case Tonemap_Reinhard:
-			color.rgb = Reinhard(color.rgb * exposure);
-			break;
-		case Tonemap_BakingLabACES:
-			color.rgb = BakingLabACESTonemap(color.rgb * exposure);
-			break;
-		case Tonemap_Uncharted2Filmic:
-			color.rgb = Uncharted2Tonemap(color.rgb * exposure);
-			break;
-	}
+	color.rgb = ApplyTonemap(color.rgb, uv);
 
 	return color;
 }
@@ -447,98 +636,54 @@ technique MagicHDR <ui_tooltip = "FXShaders - Bloom and tonemapping effect.";>
 	{
 		VertexShader = ScreenVS;
 		PixelShader = InverseTonemapPS;
-		RenderTarget = DownsampledTex;
-	}
-	// TODO: Create a blur pass macro?
-	pass Blur0
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur0PS;
-		RenderTarget = TempTex;
-	}
-	pass Blur1
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur1PS;
 		RenderTarget = Bloom0Tex;
 	}
-	pass Blur2
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur2PS;
-		RenderTarget = TempTex;
+
+	#define DEF_BLUR_PASS(index, x, y) \
+	pass Blur##x \
+	{ \
+		VertexShader = ScreenVS; \
+		PixelShader = Blur##x##PS; \
+		RenderTarget = TempTex; \
+	} \
+	pass Blur##y \
+	{ \
+		VertexShader = ScreenVS; \
+		PixelShader = Blur##y##PS; \
+		RenderTarget = Bloom##index##Tex; \
 	}
-	pass Blur3
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur3PS;
-		RenderTarget = Bloom1Tex;
-	}
-	pass Blur4
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur4PS;
-		RenderTarget = TempTex;
-	}
-	pass Blur5
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur5PS;
-		RenderTarget = Bloom2Tex;
-	}
-	pass Blur6
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur6PS;
-		RenderTarget = TempTex;
-	}
-	pass Blur7
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur7PS;
-		RenderTarget = Bloom3Tex;
-	}
-	pass Blur8
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur8PS;
-		RenderTarget = TempTex;
-	}
-	pass Blur9
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur9PS;
-		RenderTarget = Bloom4Tex;
-	}
-	pass Blur10
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur10PS;
-		RenderTarget = TempTex;
-	}
-	pass Blur11
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur11PS;
-		RenderTarget = Bloom5Tex;
-	}
-	pass Blur12
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur12PS;
-		RenderTarget = TempTex;
-	}
-	pass Blur13
-	{
-		VertexShader = ScreenVS;
-		PixelShader = Blur13PS;
-		RenderTarget = Bloom6Tex;
-	}
+
+	DEF_BLUR_PASS(0, 0, 1)
+	DEF_BLUR_PASS(1, 2, 3)
+	DEF_BLUR_PASS(2, 4, 5)
+	DEF_BLUR_PASS(3, 6, 7)
+	DEF_BLUR_PASS(4, 8, 9)
+	DEF_BLUR_PASS(5, 10, 11)
+	DEF_BLUR_PASS(6, 12, 13)
+
+	#if MAGIC_HDR_ENABLE_ADAPTATION
+		pass CalcAdapt
+		{
+			VertexShader = ScreenVS;
+			PixelShader = CalcAdaptPS;
+			RenderTarget = AdaptTex;
+		}
+		pass SaveAdapt
+		{
+			VertexShader = ScreenVS;
+			PixelShader = SaveAdaptPS;
+			RenderTarget = LastAdaptTex;
+		}
+	#endif
+
 	pass Tonemap
 	{
 		VertexShader = ScreenVS;
 		PixelShader = TonemapPS;
-		SRGBWriteEnable = true;
+
+		#if MAGIC_HDR_SRGB_OUTPUT
+			SRGBWriteEnable = true;
+		#endif
 	}
 }
 

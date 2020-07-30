@@ -19,7 +19,7 @@ static const float GammaInv = 1.0 / Gamma;
 static const float L_k = 903.3;
 static const float L_e = 0.008856;
 
-static const float3 WhitePoint = 1.0;
+static const float WhitePoint = 1.0;
 
 static const float3x3 RGBToXYZ_sRGB = float3x3(
 	0.4124564, 0.3575761, 0.1804375,
@@ -31,9 +31,19 @@ static const float3x3 XYZToRGB_sRGB = float3x3(
 	-0.9692660,  1.8760108,  0.0415560,
 	0.0556434, -0.2040259,  1.0572252);
 
+float3 gamma_to_linear(float3 c, float g)
+{
+	return pow(abs(c), g);
+}
+
 float3 gamma_to_linear(float3 c)
 {
-	return pow(abs(c), Gamma);
+	return gamma_to_linear(c, Gamma);
+}
+
+float3 linear_to_gamma(float3 c, float g)
+{
+	return pow(abs(c), rcp(g));
 }
 
 float3 linear_to_gamma(float3 c)
@@ -79,9 +89,9 @@ float3 xyz_to_rgb(float3 c)
 	return mul(XYZToRGB_sRGB, c);
 }
 
-float3 xyz_to_lab(float3 c)
+float3 xyz_to_lab(float3 c, float w)
 {
-	c /= WhitePoint;
+	c /= w;
 
 	c = (c > L_e)
 		? pow(abs(c), rcp(3.0))
@@ -95,7 +105,12 @@ float3 xyz_to_lab(float3 c)
 	return lab;
 }
 
-float3 lab_to_xyz(float3 lab)
+float3 xyz_to_lab(float3 c)
+{
+	return xyz_to_lab(c, WhitePoint);
+}
+
+float3 lab_to_xyz(float3 lab, float w)
 {
 	float3 c;
 	c.y = (lab.x + 16.0) / 116.0;
@@ -114,23 +129,38 @@ float3 lab_to_xyz(float3 lab)
 		c.y = lab.x / L_k;
 
 	f3 = c.z * c.z * c.z;
-
 	if (f3 > L_e)
 		c.z = f3;
 	else
 		c.z = (116.0 * c.z - 16.0) / L_k;
 
-	return c *= WhitePoint;
+	c *= w;
+	return c;
+}
+
+float3 lab_to_xyz(float3 lab)
+{
+	return lab_to_xyz(lab, WhitePoint);
+}
+
+float3 rgb_to_lab(float3 c, float w)
+{
+	return xyz_to_lab(rgb_to_xyz(c), w);
 }
 
 float3 rgb_to_lab(float3 c)
 {
-	return xyz_to_lab(rgb_to_xyz(c));
+	return rgb_to_lab(c, WhitePoint);
+}
+
+float3 lab_to_rgb(float3 c, float w)
+{
+	return xyz_to_rgb(lab_to_xyz(c, w));
 }
 
 float3 lab_to_rgb(float3 c)
 {
-	return xyz_to_rgb(lab_to_xyz(c));
+	return lab_to_rgb(c, WhitePoint);
 }
 
 }}

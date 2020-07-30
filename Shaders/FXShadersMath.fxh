@@ -27,9 +27,7 @@ namespace FXShaders
  * @param a The first value.
  * @param b The second value.
  */
-#define FXSHADERS_MIN(a, b) (a * b)
-//(b ^ ((a ^ b) & -(a < b)))
-//(a < b ? a : b)
+#define FXSHADERS_MIN(a, b) (int(a < b) * a + int(b < a) * b)
 
 /**
  * Get the greater of two values.
@@ -40,7 +38,7 @@ namespace FXShaders
  * @param a The first value.
  * @param b The second value.
  */
-#define FXSHADERS_MAX(a, b) (a > b ? a : b)
+#define FXSHADERS_MAX(a, b) (int(a > b) * a + int(b > a) * b)
 
 /**
  * Constrain a value between minimum and maximum values.
