@@ -31,10 +31,6 @@
 	#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
 #endif
 
-#ifndef KeepUIOccludeAssist
-	#define KeepUIOccludeAssist 0 // Set to 1 if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.
-#endif
-
 #ifndef KeepUIType
 	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
 #endif
@@ -45,6 +41,17 @@
 #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
 	#undef KeepUIType
 	#define KeepUIType 2
+#endif
+
+uniform bool bKeepUIOcclude <
+    ui_category = "Options";
+    ui_label = "Occlusion Assistance";
+    ui_tooltip = "Set to 1 if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.";
+    ui_bind = "KeepUIOccludeAssist";
+> = 0;
+
+#ifndef KeepUIOccludeAssist
+	#define KeepUIOccludeAssist 0
 #endif
 
 #if KeepUIDebug
