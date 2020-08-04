@@ -88,7 +88,7 @@ namespace Uncharted2Filmic
 		return abs(
 			((B * C * F - B * E - B * F * color) -
 			sqrt(
-				pow(-B * C * F + B * E + B * F * color, 2.0) -
+				pow(abs(-B * C * F + B * E + B * F * color), 2.0) -
 				4.0 * D * (F * F) * color * (A * E + A * F * color - A * F))) /
 			(2.0 * A * (E + F * color - F)));
 	}
@@ -150,7 +150,7 @@ namespace BakingLabACES
 		return abs(
 			((A - D * color) -
 			sqrt(
-				pow(D * color - A, 2.0) -
+				pow(abs(D * color - A), 2.0) -
 				4.0 * (C * color - 1.0) * (B + E * color))) /
 			(2.0 * (C * color - 1.0)));
 	}
@@ -165,7 +165,7 @@ namespace Lottes
 
 	float3 Inverse(float3 color)
 	{
-		return color * rcp(max(1.0 - max(color.r, max(color.g, color.b)), 0.01));
+		return color * rcp(max(1.0 - max(color.r, max(color.g, color.b)), 0.1));
 	}
 }
 

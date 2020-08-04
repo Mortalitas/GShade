@@ -79,10 +79,30 @@ FXSHADERS_MESSAGE( \
  * @param dt The delta time in seconds.
  */
 #define FXSHADERS_INTERPOLATE(a, b, t, dt) \
-lerp(a, b, saturate((dt) / max(t, FloatEpsilon)))
+lerp((a), (b), saturate((dt) / max((t), FloatEpsilon)))
 
+/**
+ * Get the maximum mipmap level that can be generated from a resolution.
+ *
+ * @param w The resolution width.
+ * @param h The resolution height.
+ */
 #define FXSHADERS_GET_MAX_MIP(w, h) \
-(FXSHADERS_LOG2(FXSHADERS_MAX(w, h)) + 1)
+(FXSHADERS_LOG2(FXSHADERS_MAX((w), (h))) + 1)
+
+/**
+ * Get the power of two value closest to the given integer.
+ *
+ * @param x An integer number to find the POT value it's closest to.
+ */
+#define FXSHADERS_NPOT(x) (\
+( \
+	((x - 1) >> 1) | \
+	((x - 1) >> 2) | \
+	((x - 1) >> 4) | \
+	((x - 1) >> 8) | \
+	((x - 1) >> 16) \
+) + 1)
 
 /**
  * Returns the current resolution.
