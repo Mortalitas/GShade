@@ -1,9 +1,9 @@
 #include "ReShade.fxh"
 
-#define getColor(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
-#define getBlur(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
-#define getDepth(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
-#define diff3t(v1,v2,t) (abs(v1.x-v2.x)>t || abs(v1.y-v2.y)>t || abs(v1.z-v2.z)>t)
+#define getColor_DHa(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
+#define getBlur_DHa(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
+#define getDepth_DHa(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
+#define diff3t_DHa(v1,v2,t) (abs(v1.x-v2.x)>t || abs(v1.y-v2.y)>t || abs(v1.z-v2.z)>t)
 
 namespace DHAnime {
 
@@ -72,9 +72,9 @@ namespace DHAnime {
 		const float2 posNorth  = posCenter - offset.zy;
 		const float2 posEast   = posCenter + offset.xz;
 
-		const float3 vertCenter = float3(posCenter - 0.5, 1) * getDepth(posCenter);
+		const float3 vertCenter = float3(posCenter - 0.5, 1) * getDepth_DHa(posCenter);
 
-		return normalize(cross(vertCenter - float3(posNorth - 0.5,  1) * getDepth(posNorth), vertCenter - float3(posEast - 0.5,   1) * getDepth(posEast)));
+		return normalize(cross(vertCenter - float3(posNorth - 0.5,  1) * getDepth_DHa(posNorth), vertCenter - float3(posEast - 0.5,   1) * getDepth_DHa(posEast)));
 	}
 
 	
@@ -138,11 +138,11 @@ namespace DHAnime {
 					int d = dot(delta,delta);
 					if(d<=iSurfaceBlur*iSurfaceBlur) {
 						const float2 searchCoords = coords+BUFFER_PIXEL_SIZE*delta;
-						const float searchDepth = getDepth(searchCoords);
-						const float dRatio = getDepth(coords)/searchDepth;
+						const float searchDepth = getDepth_DHa(searchCoords);
+						const float dRatio = getDepth_DHa(coords)/searchDepth;
 						
 						if(dRatio>=0.95 && dRatio<=1.05) {
-							sum += getColor(searchCoords);
+							sum += getColor_DHa(searchCoords);
 							count++;
 						}
 					}
@@ -150,7 +150,7 @@ namespace DHAnime {
 			}
 			outBlur = sum/count;
 		} else {
-			outBlur = getColor(coords);
+			outBlur = getColor_DHa(coords);
 		}
 	}
 
@@ -163,10 +163,10 @@ namespace DHAnime {
 				for(delta.y=-iBlackLineThickness;delta.y<=iBlackLineThickness;delta.y++) {
 					if(dot(delta,delta)<=iBlackLineThickness*iBlackLineThickness) {
 						const float2 searchCoords = coords+BUFFER_PIXEL_SIZE*delta;
-						const float searchDepth = getDepth(searchCoords);
+						const float searchDepth = getDepth_DHa(searchCoords);
 						const float3 searchNormal = loadNormal(searchCoords);
 
-						if(getDepth(coords)/searchDepth<=fBlackLineThreshold && diff3t(loadNormal(coords),searchNormal,0.1)) {
+						if(getDepth_DHa(coords)/searchDepth<=fBlackLineThreshold && diff3t_DHa(loadNormal(coords),searchNormal,0.1)) {
 							outPixel = float4(0.0,0.0,0.0,1.0);
 							return;
 						}
@@ -175,7 +175,7 @@ namespace DHAnime {
 			}
 		}
 
-		float3 color = getBlur(coords).rgb;
+		float3 color = getBlur_DHa(coords).rgb;
 		float3 hsl = RGBtoHSL(color);
 		
 		// shading steps
