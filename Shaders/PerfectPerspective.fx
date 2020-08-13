@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 3.4.2
+/** Perfect Perspective PS, version 3.5.1
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -103,7 +103,7 @@ uniform float Vertical <
 	ui_text = "Global adjustment";
 	ui_label = "Vertical distortion";
 	ui_tooltip = "Cylindrical perspective <<>> Spherical perspective";
-	ui_min = 0.0; ui_max = 1.0;
+	ui_min = 0.0; ui_max = 1.0; ui_step = 0.01;
 > = 1.0;
 
 uniform float VerticalScale <
@@ -111,13 +111,20 @@ uniform float VerticalScale <
 	ui_category = "Perspective";
 	ui_label = "Vertical proportions";
 	ui_tooltip = "Adjust anamorphic correction for cylindrical perspective";
-	ui_min = 0.8; ui_max = 1.0;
-> = 1.0;
+	ui_min = 0.8; ui_max = 1.0; ui_step = 0.01;
+> = 0.98;
+
+uniform bool Vignette <
+	ui_type = "input";
+	ui_category = "Border";
+	ui_category_closed = true;
+	ui_label = "use Vignette";
+	ui_tooltip = "Create lens-correct natural vignette effect";
+> = true;
 
 uniform float Zooming <
 	ui_type = "slider";
 	ui_category = "Border";
-	ui_category_closed = true;
 	ui_label = "Border scale";
 	ui_tooltip = "Adjust image scale and cropped area";
 	ui_min = 0.5; ui_max = 2.0; ui_step = 0.001;
@@ -192,8 +199,8 @@ float grayscale(float3 Color)
 { return max(max(Color.r, Color.g), Color.b); }
 
 // Linear pixel step function for anti-aliasing
-float pixelStep(float x)
-{ return clamp(x/fwidth(x), 0.0, 1.0); }
+float pixStep(float x)
+{ return saturate(x/fwidth(x)); }
 
 /*Universal perspective model by Jakub Max Fober,
 Gnomonic to custom perspective variant.
@@ -206,36 +213,70 @@ Input data:
 	k -> distortion parameter (from -1, to 1).
 	l -> vertical distortion parameter (from 0, to 1).
 	s -> anamorphic correction parameter (from 0.8, to 1)
+Output data:
+	vignette -> vignetting mask in linear space
+	scrCoord -> texture lookup perspective coordinates
 */
-float2 univPerspective(float k, float l, float s, float2 scrCoord)
+float univPerspVignette(float k, float l, float s, in out float2 scrCoord)
 {
 	// Bypass
-	if (k >= 1.0 || FOV == 0) return scrCoord;
+	if (FOV==0 || k==1.0 && !Vignette && (l==1.0 || s==1.0))
+		return 1.0;
 
 	// Get radius
-	float R = (l == 1.0) ?
+	float R = (l==1.0)?
 		length(scrCoord) : // Spherical
-		length(float2(scrCoord.x, scrCoord.y*l)); // Cylindrical
+		length( float2(scrCoord.x, sqrt(l)*scrCoord.y) ); // Cylindrical
 
 	// Get half field of view
 	const float halfOmega = radians(FOV*0.5);
+	// Radius for gnomonic projection wrapping
+	const float tanHalfOmega = tan(halfOmega);
 
 	// Get incident angle
 	float theta;
-	if (k>0.0)
-		theta = atan(R*tan(k*halfOmega))/k;
-	else if (k<0.0)
-		theta = asin(R*sin(k*halfOmega))/k;
-	else // k==0.0
-		theta = R*halfOmega;
+	     if (k>0.0) theta = atan(tan(k*halfOmega)*R)/k;
+	else if (k<0.0) theta = asin(sin(k*halfOmega)*R)/k;
+	else /*k==0.0*/ theta = halfOmega*R;
+
+	// Generate vignette
+	float vignetteMask;
+	if (Vignette)
+	{
+		// Limit FOV span, k+- in [0.5, 1] range
+		float thetaLimit = max(abs(k), 0.5)*theta;
+		// Create spherical vignette
+		vignetteMask = lerp(
+			cos(thetaLimit), // Cosine law of illumination
+			rcp(pow(tan(thetaLimit), 2)+1.0), // Inverse square law
+			clamp(k+0.5, 0.0, 1.0) // k in [-0.5, 0.5] range
+		);
+		// Cylinder vignette
+		if (l!=1.0)
+		{
+			// Get cylinder 3D vector
+			float3 perspVec;
+			perspVec.xy = sin(theta)/R*scrCoord;
+			perspVec.z = cos(theta);
+			// Inverse square law
+			vignetteMask /= dot(perspVec, perspVec);
+		}
+	}
+	else // Bypass
+		vignetteMask = 1.0;
 
 	// Anamorphic correction for non-spherical perspective
-	if (s != 1.0 && l != 1.0) scrCoord.y /= lerp(s, 1.0, l);
+	if (s!=1.0 && l!=1.0) scrCoord.y /= lerp(s, 1.0, l);
 
+	// Normalize to FOV
+	scrCoord /= tanHalfOmega;
 	// Transform screen coordinates
-	const float tanOmega = tan(halfOmega);
-	return scrCoord*tan(theta)/(tanOmega*R);
+	scrCoord *= tan(theta)/R;
+
+	// Return vignette
+	return vignetteMask;
 }
+
 
 // Get reciprocal screen aspect ratio (1/x)
 #define RCP_ASPECT (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
@@ -245,13 +286,13 @@ float2 univPerspective(float k, float l, float s, float2 scrCoord)
  /// SHADER ///
 //////////////
 
-// Border mask shader
+// Border mask shader with rounded corners
 float BorderMaskPS(float2 sphCoord)
 {
 	float borderMask;
 
 	if (BorderCorner == 0.0) // If sharp corners
-		borderMask = pixelStep(max(abs(sphCoord.x), abs(sphCoord.y)) -1.0);
+		borderMask = max(abs(sphCoord.x), abs(sphCoord.y));
 	else // If round corners
 	{
 		// Get coordinates for each corner
@@ -261,13 +302,11 @@ float BorderMaskPS(float2 sphCoord)
 			borderCoord.x = borderCoord.x*BUFFER_ASPECT_RATIO + 1.0-BUFFER_ASPECT_RATIO;
 		else if (BUFFER_ASPECT_RATIO < 1.0) // If in portrait mode
 			borderCoord.y = borderCoord.y*RCP_ASPECT + 1.0-RCP_ASPECT;
-
 		// Generate mask
-		borderMask = length(max(borderCoord +BorderCorner -1.0, 0.0)) / BorderCorner;
-		borderMask = pixelStep(borderMask-1.0);
+		borderMask = length( max(borderCoord +BorderCorner-1.0, 0.0) ) /BorderCorner;
 	}
 
-	return borderMask;
+	return pixStep(borderMask-1.0);
 }
 
 
@@ -280,14 +319,14 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 	radialCoord.yw *= RCP_ASPECT;
 
 	// Define Mapping color
-	const float3 underSmpl = float3(1.0, 0.0, 0.2); // Red
-	const float3 superSmpl = float3(0.0, 1.0, 0.5); // Green
+	const float3   underSmpl = float3(1.0, 0.0, 0.2); // Red
+	const float3   superSmpl = float3(0.0, 1.0, 0.5); // Green
 	const float3 neutralSmpl = float3(0.0, 0.5, 1.0); // Blue
 
 	// Calculate Pixel Size difference...
 	float pixelScaleMap = fwidth( length(radialCoord.xy) );
 	// ...and simulate Dynamic Super Resolution (DSR) scalar
-	pixelScaleMap *= ResScale.x / (fwidth( length(radialCoord.zw) ) * ResScale.y);
+	pixelScaleMap *= ResScale.x / (fwidth( length(radialCoord.zw) )*ResScale.y);
 	pixelScaleMap -= 1.0;
 
 	// Generate super-sampled/under-sampled color map
@@ -298,27 +337,31 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 	);
 
 	// Create black-white gradient mask of scale-neutral pixels
-	pixelScaleMap = 1.0 - abs(pixelScaleMap);
-	pixelScaleMap = saturate(pixelScaleMap * 4.0 - 3.0); // Clamp to more representative values
+	pixelScaleMap = 1.0-abs(pixelScaleMap);
+	pixelScaleMap = saturate(pixelScaleMap*4.0 -3.0); // Clamp to more representative values
 
 	// Color neutral scale pixels
 	resMap = lerp(resMap, neutralSmpl, pixelScaleMap);
 
 	// Blend color map with display image
-	return normalize(resMap) * (0.8 * grayscale(display) + 0.2);
+	return normalize(resMap) * (0.8*grayscale(display) +0.2);
 }
 
 
-// Main shader pass
+// Main perspective shader pass
 float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_Target
 {
 	// Convert FOV type..
 	float FovType; switch(Type)
 	{
-		case 0: FovType = 1.0; break; // Horizontal
-		case 1: FovType = sqrt(RCP_ASPECT*RCP_ASPECT + 1.0); break; // Diagonal
-		case 2: FovType = RCP_ASPECT; break; // Vertical
-		case 3: FovType = 4.0/3.0*RCP_ASPECT; break; // Horizontal 4:3
+		// Horizontal
+		case 0: FovType = 1.0; break;
+		// Diagonal
+		case 1: FovType = sqrt(RCP_ASPECT*RCP_ASPECT +1.0); break;
+		// Vertical
+		case 2: FovType = RCP_ASPECT; break;
+		// Horizontal 4:3
+		case 3: FovType = 4.0/3.0 * RCP_ASPECT; break;
 	}
 
 	// Convert UV to centered coordinates
@@ -331,13 +374,17 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	// Choose projection type
 	float k; switch (Projection)
 	{
-		case 0: k = 0.5; break;		// Stereographic
-		case 1: k = 0.0; break;		// Equidistant
-		case 2: k = -0.5; break;	// Equisolid
-		default: k = clamp(K, -1.0, 1.0); break; // Manual perspective
+		case 0:  k =  0.5; break; // Stereographic
+		case 1:  k =  0.0; break; // Equidistant
+		case 2:  k = -0.5; break; // Equisolid
+		// Manual perspective
+		default: k = clamp(K, -1.0, 1.0); break;
 	}
-	// Perspective transform and FOV type (pass 2 of 2)
-	sphCoord = univPerspective(k, Vertical, VerticalScale, sphCoord) *FovType;
+	// Perspective transform and create vignette
+	float vignetteMask = univPerspVignette(k, Vertical, VerticalScale, sphCoord);
+
+	// FOV type (pass 2 of 2)
+	sphCoord *= FovType;
 
 	// Aspect Ratio back to square
 	sphCoord.y *= BUFFER_ASPECT_RATIO;
@@ -353,14 +400,14 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 
 	// Mask outside-border pixels or mirror
 	display = lerp(
-		display,
+		Vignette? // Apply Vignette with sRGB gamma
+			display*pow(abs(vignetteMask), rcp(2.2)) : display,
 		lerp(
-			MirrorBorder ? display : tex2D(BackBuffer, texCoord).rgb,
+			MirrorBorder?
+				display : tex2D(BackBuffer, texCoord).rgb,
 			BorderColor.rgb,
 			BorderColor.a
-		),
-		borderMask
-	);
+		), borderMask);
 
 	// Output type choice
 	if (DebugPreview) return DebugViewModePS(display, texCoord, sphCoord);
@@ -375,7 +422,7 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 technique PerfectPerspective <
 	ui_label = "Perfect Perspective";
 	ui_tooltip = "Adjust perspective for distortion-free picture\n"
-		"(fish-eye, panini shader)"; >
+		"(fish-eye, panini shader and vignetting)"; >
 {
 	pass
 	{
