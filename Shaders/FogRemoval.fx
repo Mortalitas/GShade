@@ -424,9 +424,7 @@ void ColorCorrectedPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out f
 
 void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float transmission : SV_Target0)
 {
-#if FOGREMOVALUSEDEPTH == 1 || FOGREMOVALPRESERVEDETAIL == 1
 	const float depth = ReShade::GetLinearizedDepth(texcoord);
-#endif
 
 #if FOGREMOVALUSEDEPTH == 1
 	if (depth >= 1)
