@@ -307,35 +307,14 @@ float4 GaussBlur22(float2 coord, sampler tex, float mult, float lodlevel, bool i
 	return sum;
 }
 
-// modified - Craig - Jul 7th, 2020
-// !!! original was returning a float3, but all calc's
-// !!! we're processing a single float value returned
-// !!! as float3. The calling methods were using .r,
-// !!! .g or .b as if they were different, but they
-// !!! were all the same return value. So, we cut down
-// !!! on calc's by just processing a float and returning
-// !!! it.
-
-float GetDnB(sampler tex, float2 coords)
+float3 GetDnB(sampler tex, float2 coords)
 {
-	float color;
-	float4 texcoords = float4(coords.xy, 0, 0);
-
 #if CHAPMAN_DEPTH_CHECK
-	texcoords.w = 3;		// set lod
-
-	if (tex2Dlod(ReShade::DepthBuffer, texcoords).x < 0.99999)
-		color = 0;
-	else
+	if (tex2Dlod(ReShade::DepthBuffer, float4(coords.xy, 0, 3)).x < 0.99999)
+		return 0;
 #endif
-	{
-		texcoords.w = 4;	// set lod
-		color = (max(0, dot(tex2Dlod(tex, texcoords).rgb, 0.333)) - fChapFlareTreshold) * fChapFlareIntensity;
-	}
-	return color;
+	return max(0, dot(tex2Dlod(tex, float4(coords.xy, 0, 4)).rgb, 0.333) - fChapFlareTreshold) * fChapFlareIntensity;
 }
-
-// !!! stripped .r, .g, .b from end of GetDnB() calls now that it returns float only
 float3 GetDistortedTex(sampler tex, float2 sample_center, float2 sample_vector, float3 distortion)
 {
 	const float2 final_vector = sample_center + sample_vector * min(min(distortion.r, distortion.g), distortion.b);
@@ -344,9 +323,9 @@ float3 GetDistortedTex(sampler tex, float2 sample_center, float2 sample_vector, 
 		return float3(0, 0, 0);
 	else
 		return float3(
-			GetDnB(tex, sample_center + sample_vector * distortion.r),
-			GetDnB(tex, sample_center + sample_vector * distortion.g),
-			GetDnB(tex, sample_center + sample_vector * distortion.b));
+			GetDnB(tex, sample_center + sample_vector * distortion.r).r,
+			GetDnB(tex, sample_center + sample_vector * distortion.g).g,
+			GetDnB(tex, sample_center + sample_vector * distortion.b).b);
 }
 
 float3 GetBrightPass(float2 coords)
