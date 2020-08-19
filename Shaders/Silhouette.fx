@@ -56,12 +56,13 @@ uniform bool SEnable_Foreground_Color <
     ui_tooltip = "Enable this to use a color instead of a texture for the foreground!";   
 > = false;
 
-uniform int3 SForeground_Color <
+uniform float3 SForeground_Color <
+    ui_type = "color";
     ui_label = "Foreground Color (If Enabled)";
     ui_tooltip = "If you enabled foreground color, use this to select the color.";
     ui_min = 0;
     ui_max = 255;
-> = int3(0, 0, 0);
+> = float3(0, 0, 0);
 
 uniform float SForeground_Stage_Opacity <
     ui_label = "Foreground Opacity";
@@ -88,12 +89,13 @@ uniform bool SEnable_Background_Color <
     ui_tooltip = "Enable this to use a color instead of a texture for the background!";   
 > = false;
 
-uniform int3 SBackground_Color <
+uniform float3 SBackground_Color <
+    ui_type = "color";
     ui_label = "Background Color (If Enabled)";
     ui_tooltip = "If you enabled background color, use this to select the color.";
     ui_min = 0;
     ui_max = 255;
-> = int3(0, 0, 0);
+> = float3(0, 0, 0);
 
 uniform float SBackground_Stage_Opacity <
     ui_label = "Background Opacity";
@@ -163,7 +165,7 @@ void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoor
 
     if (SEnable_Foreground_Color == true)
     {
-        color = lerp(color, SForeground_Color.rgb * 0.00392, SForeground_Stage_Opacity);
+        color = lerp(color, SForeground_Color.rgb, SForeground_Stage_Opacity);
     }
     else
     {
@@ -179,7 +181,7 @@ void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoor
 
     if ((SEnable_Background_Color == true) && (depth < SBackground_Stage_depth))
     {
-        color = lerp(color, SBackground_Color.rgb * 0.00392, SBackground_Stage_Opacity);
+        color = lerp(color, SBackground_Color.rgb, SBackground_Stage_Opacity);
     }
     else if (depth < SBackground_Stage_depth)	
     {
