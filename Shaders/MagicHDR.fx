@@ -12,7 +12,7 @@
 //#region Preprocessor Directives
 
 #ifndef MAGIC_HDR_BLUR_SAMPLES
-#define MAGIC_HDR_BLUR_SAMPLES 21
+#define MAGIC_HDR_BLUR_SAMPLES 13
 #endif
 
 #if MAGIC_HDR_BLUR_SAMPLES < 1
@@ -20,7 +20,7 @@
 #endif
 
 #ifndef MAGIC_HDR_DOWNSAMPLE
-#define MAGIC_HDR_DOWNSAMPLE 1
+#define MAGIC_HDR_DOWNSAMPLE 4
 #endif
 
 #if MAGIC_HDR_DOWNSAMPLE < 1
@@ -128,15 +128,14 @@ uniform float Exposure
 	ui_type = "slider";
 	ui_min = -3.0;
 	ui_max = 3.0;
-> = 1.0;
+> = 0.0;
 
 uniform int InvTonemap
 <
 	ui_category = "Tonemapping";
-	ui_label = "Input Tonemapper";
+	ui_label = "Inverse Tonemapper";
 	ui_tooltip =
-		"The inverse tonemapping operator used at the beginning of the "
-		"effect.\n"
+		"The inverse tonemapping operator used to obtain HDR information.\n"
 		"\nDefault: Reinhard";
 	ui_type = "combo";
 	ui_items =
@@ -148,7 +147,7 @@ uniform int Tonemap
 	ui_category = "Tonemapping";
 	ui_label = "Output Tonemapper";
 	ui_tooltip =
-		"The tonemapping operator used at the end of the effect.\n"
+		"The tonemapping operator applied at the end of the effect.\n"
 		"\nDefault: Baking Lab ACES";
 	ui_type = "combo";
 	ui_items =
@@ -162,11 +161,11 @@ uniform float BloomAmount
 	ui_label = "Amount";
 	ui_tooltip =
 		"The amount of bloom to apply to the image.\n"
-		"\nDefault: 0.2";
+		"\nDefault: 0.3";
 	ui_type = "slider";
 	ui_min = 0.0;
 	ui_max = 1.0;
-> = 0.2;
+> = 0.3;
 
 uniform float BloomBrightness
 <
@@ -177,11 +176,11 @@ uniform float BloomBrightness
 		"This is different from the amount in it directly affects the "
 		"brightness, rather than acting as a percentage of blending between "
 		"the HDR color and the bloom color.\n"
-		"\nDefault: 1.0";
+		"\nDefault: 3.0";
 	ui_type = "slider";
 	ui_min = 1.0;
 	ui_max = 5.0;
-> = 1.0;
+> = 3.0;
 
 uniform float BloomSaturation
 <
@@ -204,11 +203,11 @@ uniform float BlurSize
 		"The size of the gaussian blur applied to create the bloom effect.\n"
 		"This value is directly influenced by the values of "
 		"MAGIC_HDR_BLUR_SAMPLES and MAGIC_HDR_DOWNSAMPLE.\n"
-		"\nDefault: 1.0";
+		"\nDefault: 0.5";
 	ui_type = "slider";
 	ui_min = 0.01;
 	ui_max = 1.0;
-> = 1.0;
+> = 0.5;
 
 uniform float BlendingAmount
 <
@@ -218,11 +217,11 @@ uniform float BlendingAmount
 		"How much to blend the various bloom textures used internally.\n"
 		"Reducing this value will make the bloom more uniform, with less "
 		"variation.\n"
-		"\nDefault: 1.0";
+		"\nDefault: 0.5";
 	ui_type = "slider";
 	ui_min = 0.1;
 	ui_max = 1.0;
-> = 1.0;
+> = 0.5;
 
 uniform float BlendingBase
 <
@@ -231,11 +230,11 @@ uniform float BlendingBase
 	ui_tooltip =
 		"Determines the base bloom size when blending.\n"
 		"It's more effective with a lower Blending Amount.\n"
-		"\nDefault: 1.0";
+		"\nDefault: 0.8";
 	ui_type = "slider";
 	ui_min = 0.0;
 	ui_max = 1.0;
-> = 1.0;
+> = 0.8;
 
 #if MAGIC_HDR_ENABLE_ADAPTATION
 

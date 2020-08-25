@@ -40,6 +40,22 @@ float Gaussian1D(float x, float o)
 }
 
 /**
+ * One dimensional alternative gaussian distribution formula with less
+ * instructions.
+ *
+ * @param x The value to distribute.
+ * @param o The distribution sigma.
+ *          This parameter is squared in this function, so there's no need to
+ *          square it beforehand.
+ */
+float Gaussian1DFast(float x, float o)
+{
+	// NOTE: It does not seem to actually make the code noticeably faster.
+
+	return exp(-(x * x) / (2.0 * o * o));
+}
+
+/**
  * Two dimensional gaussian distribution formula.
  *
  * @param i The x and y values to distribute.
@@ -84,7 +100,7 @@ float4 GaussianBlur1D(
 	[unroll]
 	for (int i = 0; i < samples; ++i)
 	{
-		float weight = Gaussian1D(i - half_samples, sigma);
+		float weight = Gaussian1DFast(i - half_samples, sigma);
 
 		color += tex2D(sp, uv) * weight;
 		accum += weight;
