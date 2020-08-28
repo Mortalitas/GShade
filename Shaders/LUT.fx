@@ -14,6 +14,10 @@
 // lut_Feli.png was provided by Feli!
 // You can find them here: https://twitter.com/ffxivfeli
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// lut_IpsusuGameplay.png was provided by Ipsusu!
+// You can find them here: https://twitter.com/ipsusu
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef fLUT_TextureName
