@@ -24,6 +24,9 @@
 // MultiLut_seri14.png was created by seri14!
 // Follow their work on Github here: https://github.com/seri14
 // And follow them on Twitter here: https://twitter.com/seri_haruna
+//
+// MultiLut_Ipsusu.png was provided by Ipsusu!
+// You can find them here: https://twitter.com/ipsusu
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
@@ -57,6 +60,9 @@
 #ifndef fLUT_YAETextureName
     #define fLUT_YAETextureName "MultiLut_yaes.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
+#ifndef fLUT_IPSTextureName
+    #define fLUT_IPSTextureName "MultiLut_Ipsusu.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
+#endif
 #ifndef fLUT_TileSizeXY
     #define fLUT_TileSizeXY 32
 #endif
@@ -83,7 +89,7 @@
 uniform int fLUT_MultiLUTSelector <
     ui_category = "Pass 1";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "Set this to whatever build your preset was made with!";
     ui_bind = "MultiLUTTexture_Source";
@@ -97,8 +103,32 @@ uniform int fLUT_MultiLUTSelector <
 uniform int fLUT_LutSelector < 
     ui_category = "Pass 1";
     ui_type = "combo";
+#if MultiLUTTexture_Source == 0 // GShade/Angelite
+    ui_items = "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture_Source == 1 || MultiLUTTexture_Source == 2 // ReShade 3 & 4
+    ui_items = "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture_Source == 3 // Johto
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0Color17\0";
+#elif MultiLUTTexture_Source == 4 // Espresso Glow
+    ui_items = "Neutral\0Darklite (Realism, Day, Outdoors)\0Shadownite (Realism, Night, Indoors)\0Ambient Memories (Bright, Warm)\0Faded Memories (Desaturated, Dark)\0Pastel Memories (Cartoony, Colorful, Bright)\0Nostalgic \ Radiance (Bright, Colorful, Studio, Lights)\0";
+#elif MultiLUTTexture_Source == 5 // MS
+    ui_items = "Neutral\0Lela\0Brienne\0Color3\0Light\0Pink\0Angelite\0Cool Light\0Flat & Green\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture_Source == 6 // ninjafada
+    ui_items = "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0";
+#elif MultiLUTTexture_Source == 7 // seri14
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0";
+#elif MultiLUTTexture_Source == 8 // Yomi
+    ui_items = "Neutral\0Nature's Call\0Cherry Blossom\0Bleach\0Golden Hour\0Vibrant Sands\0Azure\0Macaron\0Vintage Film\0Bubble Gum\0Fountain\0Clear Skies\0Action\0Pastel Purity\0Lens Clarity\0Heart\0Teal and Orange\0Haunt\0";
+#elif MultiLUTTexture_Source == 9 // Neneko
+    ui_items = "Neutral\0Cinnamon\0Autumn\0Pumpkin Spice\0Harley\0Banshee\0Forsaken\0Blood\0Vampire\0Curse\0Poison Ivy\0Monster\0";
+#elif MultiLUTTexture_Source == 10 // Yaes
+    ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
+#elif MultiLUTTexture_Source == 11 // Ipsusu
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+#else
     ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
-    ui_label = "LUT to use. Names may not be accurate.";
+#endif
+    ui_label = "LUT to use.";
     ui_tooltip = "LUT to use for color transformation. ReShade 4's 'Neutral' doesn't do any color transformation.";
 > = 0;
 
@@ -140,7 +170,7 @@ uniform bool fLUT_MultiLUTPass2 <
 uniform int fLUT_MultiLUTSelector2 <
     ui_category = "Pass 2";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "The MultiLUT table to use on Pass 2.";
     ui_bind = "MultiLUTTexture2_Source";
@@ -154,8 +184,32 @@ uniform int fLUT_MultiLUTSelector2 <
 uniform int fLUT_LutSelector2 < 
     ui_category = "Pass 2";
     ui_type = "combo";
+#if MultiLUTTexture2_Source == 0 // GShade/Angelite
+    ui_items = "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture2_Source == 1 || MultiLUTTexture_Source == 2 // ReShade 3 & 4
+    ui_items = "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture2_Source == 3 // Johto
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0Color17\0";
+#elif MultiLUTTexture2_Source == 4 // Espresso Glow
+    ui_items = "Neutral\0Darklite (Realism, Day, Outdoors)\0Shadownite (Realism, Night, Indoors)\0Ambient Memories (Bright, Warm)\0Faded Memories (Desaturated, Dark)\0Pastel Memories (Cartoony, Colorful, Bright)\0Nostalgic \ Radiance (Bright, Colorful, Studio, Lights)\0";
+#elif MultiLUTTexture2_Source == 5 // MS
+    ui_items = "Neutral\0Lela\0Brienne\0Color3\0Light\0Pink\0Angelite\0Cool Light\0Flat & Green\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture2_Source == 6 // ninjafada
+    ui_items = "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0";
+#elif MultiLUTTexture2_Source == 7 // seri14
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0";
+#elif MultiLUTTexture2_Source == 8 // Yomi
+    ui_items = "Neutral\0Nature's Call\0Cherry Blossom\0Bleach\0Golden Hour\0Vibrant Sands\0Azure\0Macaron\0Vintage Film\0Bubble Gum\0Fountain\0Clear Skies\0Action\0Pastel Purity\0Lens Clarity\0Heart\0Teal and Orange\0Haunt\0";
+#elif MultiLUTTexture2_Source == 9 // Neneko
+    ui_items = "Neutral\0Cinnamon\0Autumn\0Pumpkin Spice\0Harley\0Banshee\0Forsaken\0Blood\0Vampire\0Curse\0Poison Ivy\0Monster\0";
+#elif MultiLUTTexture2_Source == 10 // Yaes
+    ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
+#elif MultiLUTTexture2_Source == 11 // Ipsusu
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+#else
     ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
-    ui_label = "LUT to use. Names may not be accurate.";
+#endif
+    ui_label = "LUT to use.";
     ui_tooltip = "LUT to use for color transformation on Pass 2. ReShade 4's 'Neutral' doesn't do any color transformation.";
 > = 0;
 
@@ -198,7 +252,7 @@ uniform bool fLUT_MultiLUTPass3 <
 uniform int fLUT_MultiLUTSelector3 <
     ui_category = "Pass 3";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "The MultiLUT table to use on Pass 3.";
     ui_bind = "MultiLUTTexture3_Source";
@@ -212,8 +266,32 @@ uniform int fLUT_MultiLUTSelector3 <
 uniform int fLUT_LutSelector3 < 
     ui_category = "Pass 3";
     ui_type = "combo";
+#if MultiLUTTexture3_Source == 0 // GShade/Angelite
+    ui_items = "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture3_Source == 1 || MultiLUTTexture_Source == 2 // ReShade 3 & 4
+    ui_items = "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture3_Source == 3 // Johto
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0Color17\0";
+#elif MultiLUTTexture3_Source == 4 // Espresso Glow
+    ui_items = "Neutral\0Darklite (Realism, Day, Outdoors)\0Shadownite (Realism, Night, Indoors)\0Ambient Memories (Bright, Warm)\0Faded Memories (Desaturated, Dark)\0Pastel Memories (Cartoony, Colorful, Bright)\0Nostalgic \ Radiance (Bright, Colorful, Studio, Lights)\0";
+#elif MultiLUTTexture3_Source == 5 // MS
+    ui_items = "Neutral\0Lela\0Brienne\0Color3\0Light\0Pink\0Angelite\0Cool Light\0Flat & Green\0Sepia\0\B&W mid constrast\0\B&W high contrast\0";
+#elif MultiLUTTexture3_Source == 6 // ninjafada
+    ui_items = "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0";
+#elif MultiLUTTexture3_Source == 7 // seri14
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0";
+#elif MultiLUTTexture3_Source == 8 // Yomi
+    ui_items = "Neutral\0Nature's Call\0Cherry Blossom\0Bleach\0Golden Hour\0Vibrant Sands\0Azure\0Macaron\0Vintage Film\0Bubble Gum\0Fountain\0Clear Skies\0Action\0Pastel Purity\0Lens Clarity\0Heart\0Teal and Orange\0Haunt\0";
+#elif MultiLUTTexture3_Source == 9 // Neneko
+    ui_items = "Neutral\0Cinnamon\0Autumn\0Pumpkin Spice\0Harley\0Banshee\0Forsaken\0Blood\0Vampire\0Curse\0Poison Ivy\0Monster\0";
+#elif MultiLUTTexture3_Source == 10 // Yaes
+    ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
+#elif MultiLUTTexture3_Source == 11 // Ipsusu
+    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+#else
     ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
-    ui_label = "LUT to use. Names may not be accurate.";
+#endif
+    ui_label = "LUT to use.";
     ui_tooltip = "LUT to use for color transformation on Pass 3. ReShade 4's 'Neutral' doesn't do any color transformation.";
 > = 0;
 
@@ -251,13 +329,10 @@ uniform float fLUT_AmountLuma3 <
 #if   MultiLUTTexture_Source == 0 // GShade/Angelite MultiLut_GShade.png
 #define _SOURCE_MULTILUT_FILE fLUT_GSTextureName
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
-#elif MultiLUTTexture_Source == 1 // ReShade 4 MultiLut_atlas4.png
+#elif MultiLUTTexture_Source == 1 || MultiLUTTexture_Source == 2 // ReShade 3 & 4 MultiLut_atlas4.png
 #define _SOURCE_MULTILUT_FILE fLUT_RESTextureName
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
-#elif MultiLUTTexture_Source == 2 // ReShade 3 MultiLut_atlas4.png
-#define _SOURCE_MULTILUT_FILE fLUT_RESTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
-#elif MultiLUTTexture_Source == 3 // ReShade 3 MultiLut_atlas4.png
+#elif MultiLUTTexture_Source == 3 // Johto MultiLut_Johto.png
 #define _SOURCE_MULTILUT_FILE fLUT_JOHTextureName
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountEx
 #elif MultiLUTTexture_Source == 4 // Espresso Glow FFXIVLUTAtlas.png
@@ -281,18 +356,18 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture_Source == 10 // Yaes MultiLut_yaes.png
 #define _SOURCE_MULTILUT_FILE fLUT_YAETextureName
 #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
+#elif MultiLUTTexture_Source == 11 // Ipsusu MultiLut_Ipsusu.png
+#define _SOURCE_MULTILUT_FILE fLUT_IPSTextureName
+#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
 #endif
 
 #if   MultiLUTTexture2_Source == 0 // GShade/Angelite MultiLut_GShade.png
 #define _SOURCE_MULTILUT_FILE2 fLUT_GSTextureName
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
-#elif MultiLUTTexture2_Source == 1 // ReShade 4 MultiLut_atlas4.png
+#elif MultiLUTTexture2_Source == 1 || MultiLUTTexture2_Source == 2 // ReShade 3 & 4 MultiLut_atlas4.png
 #define _SOURCE_MULTILUT_FILE2 fLUT_RESTextureName
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
-#elif MultiLUTTexture2_Source == 2 // ReShade 3 MultiLut_atlas4.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_RESTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
-#elif MultiLUTTexture2_Source == 3 // ReShade 3 MultiLut_atlas4.png
+#elif MultiLUTTexture2_Source == 3 // Johto MultiLut_Johto.png
 #define _SOURCE_MULTILUT_FILE2 fLUT_JOHTextureName
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountEx
 #elif MultiLUTTexture2_Source == 4 // Espresso Glow FFXIVLUTAtlas.png
@@ -316,18 +391,18 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture2_Source == 10 // Yaes MultiLut_yaes.png
 #define _SOURCE_MULTILUT_FILE2 fLUT_YAETextureName
 #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
+#elif MultiLUTTexture2_Source == 11 // Ipsusu MultiLut_Ipsusu.png
+#define _SOURCE_MULTILUT_FILE2 fLUT_IPSTextureName
+#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
 #endif
 
 #if   MultiLUTTexture3_Source == 0 // GShade/Angelite MultiLut_GShade.png
 #define _SOURCE_MULTILUT_FILE3 fLUT_GSTextureName
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
-#elif MultiLUTTexture3_Source == 1 // ReShade 4 MultiLut_atlas4.png
+#elif MultiLUTTexture3_Source == 1 || MultiLUTTexture3_Source == 2 // ReShade 3 & 4 MultiLut_atlas4.png
 #define _SOURCE_MULTILUT_FILE3 fLUT_RESTextureName
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
-#elif MultiLUTTexture3_Source == 2 // ReShade 3 MultiLut_atlas4.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_RESTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
-#elif MultiLUTTexture3_Source == 3 // ReShade 3 MultiLut_atlas4.png
+#elif MultiLUTTexture3_Source == 3 // Johto MultiLut_Johto.png
 #define _SOURCE_MULTILUT_FILE3 fLUT_JOHTextureName
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountEx
 #elif MultiLUTTexture3_Source == 4 // Espresso Glow FFXIVLUTAtlas.png
@@ -351,6 +426,9 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture3_Source == 10 // Yaes MultiLut_yaes.png
 #define _SOURCE_MULTILUT_FILE3 fLUT_YAETextureName
 #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
+#elif MultiLUTTexture3_Source == 11 // Ipsusu MultiLut_Ipsusu.png
+#define _SOURCE_MULTILUT_FILE3 fLUT_IPSTextureName
+#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
 #endif
 
 texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT; Format = RGBA8; };
@@ -378,10 +456,8 @@ float4 apply(in const float4 color, in const int tex, in const float lut)
     const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT + lutcoord.y / _SOURCE_MULTILUT_AMOUNT;
-    float4 lutcolor   = lerp(tex2D(SamplerMultiLUT, lutcoord.xy), tex2D(SamplerMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
-    
-    lutcolor.a = color.a;
-    return lutcolor;
+
+    return float4(lerp(tex2D(SamplerMultiLUT, lutcoord.xy), tex2D(SamplerMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact).rgb, color.a);
 }
 
 #if MultiLUTTexture2
@@ -393,10 +469,8 @@ float4 apply2(in const float4 color, in const int tex, in const float lut)
     const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT2 + lutcoord.y / _SOURCE_MULTILUT_AMOUNT2;
-    float4 lutcolor = lerp(tex2D(SamplerMultiLUT2, lutcoord.xy), tex2D(SamplerMultiLUT2, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 
-    lutcolor.a = color.a;
-    return lutcolor;
+    return float4(lerp(tex2D(SamplerMultiLUT2, lutcoord.xy), tex2D(SamplerMultiLUT2, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact).rgb, color.a);
 }
 #endif
 
@@ -409,10 +483,8 @@ float4 apply3(in const float4 color, in const int tex, in const float lut)
     const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT3 + lutcoord.y / _SOURCE_MULTILUT_AMOUNT3;
-    float4 lutcolor = lerp(tex2D(SamplerMultiLUT3, lutcoord.xy), tex2D(SamplerMultiLUT3, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact);
 
-    lutcolor.a = color.a;
-    return lutcolor;
+    return float4(lerp(tex2D(SamplerMultiLUT3, lutcoord.xy), tex2D(SamplerMultiLUT3, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact).rgb, color.a);
 }
 #endif
 
@@ -424,7 +496,11 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 //  Pass 1
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#if !MultiLUTTexture2 && !MultiLUTTexture3
+    const float4 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
+#else
     float4 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
+#endif
 
     res = lerp(normalize(color), normalize(lutcolor), fLUT_AmountChroma)
         * lerp(   length(color),    length(lutcolor),   fLUT_AmountLuma);
