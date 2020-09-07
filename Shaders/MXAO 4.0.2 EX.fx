@@ -468,7 +468,9 @@ void PS_StencilSetup(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
             || 0.25 * 0.5 * MXAO_SAMPLE_RADIUS / (tex2D(sMXAO_DepthTex,MXAO.scaledcoord.xy).x + 2.0) * BUFFER_HEIGHT < 1.0
             || MXAO.scaledcoord.x > 1.0
             || MXAO.scaledcoord.y > 1.0
-            || !GetCullingMask(MXAO)        
+#if !(__RENDERER__ & 0x20000) // Disable CullingMask under Vulkan
+            || !GetCullingMask(MXAO)
+#endif
             ) discard;
 
         color = 1.0;
