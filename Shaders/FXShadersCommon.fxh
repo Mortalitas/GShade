@@ -105,6 +105,21 @@ lerp((a), (b), saturate((dt) / max((t), FloatEpsilon)))
 ) + 1)
 
 /**
+ * Utility macro for transforming an expression into a string constant.
+ *
+ * @param x The expression to be stringified.
+ */
+#define FXSHADERS_STRING(x) (#x)
+
+/**
+ * Utility macro for concatenating two expressions.
+ *
+ * @param a The left expression.
+ * @param b The right expression.
+ */
+#define FXSHADERS_CONCAT(a, b) (a##b)
+
+/**
  * Returns the current resolution.
  */
 float2 GetResolution()
@@ -121,6 +136,14 @@ float2 GetPixelSize()
 }
 
 /**
+ * Returns the aspect ratio of the current resolution.
+ */
+float GetAspectRatio()
+{
+	return BUFFER_WIDTH * BUFFER_RCP_HEIGHT;
+}
+
+/**
  * Returns the current resolution and pixel size in a float4.
  */
 float4 GetScreenParams()
@@ -129,8 +152,8 @@ float4 GetScreenParams()
 }
 
 /**
- * Applies scaling to a coordinate while preserving it's position relative to
- * a specified pivot.
+ * Applies scaling to a coordinate while preserving its position relative to a
+ * specified pivot.
  *
  * @param uv The screen coordinate to scale.
  * @param scale The value to be multiplied to the coordinate.
@@ -139,22 +162,22 @@ float4 GetScreenParams()
  * @param pivot A 0.0<->1.0 2D pivot to use when scaling the coordinate.
  *              If set to 0.5 on both axes, it'll be centered.
  */
-float2 scale_uv(float2 uv, float2 scale, float2 pivot)
+float2 ScaleCoord(float2 uv, float2 scale, float2 pivot)
 {
 	return (uv - pivot) * scale + pivot;
 }
 
 /**
- * Overload for scale_uv() but with the pivot set to 0.5 (centered).
+ * Overload for ScaleCoord() but with the pivot set to 0.5 (centered).
  *
  * @param uv The screen coordinate to scale.
  * @param scale The value to be multiplied to the coordinate.
  *              Values above 1.0 will "zoom out", those below 1.0 will
  *              "zoom in".
  */
-float2 scale_uv(float2 uv, float2 scale)
+float2 ScaleCoord(float2 uv, float2 scale)
 {
-	return scale_uv(uv, scale, 0.5);
+	return ScaleCoord(uv, scale, 0.5);
 }
 
 /**
@@ -271,6 +294,30 @@ void ScreenVS(
 		uv.y = 0.0;
 
 	pos = float4(uv * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
+}
+
+/**
+ * Apply CSS-style "cover" scaling to a normalized coordinate based on the
+ * aspect ratios of the source and destination images.
+ *
+ * @param uv A normalized coordinate to be scaled.
+ * @param a The source image's aspect ratio.
+ * @param b The destination image's aspect ratio.
+ */
+float2 CorrectAspectRatio(float2 uv, float a, float b)
+{
+	if (a > b)
+	{
+		// Source is wider.
+
+		return ScaleCoord(uv, float2(1.0 / a, 1.0));
+	}
+	else
+	{
+		// Destination is wider.
+
+		return ScaleCoord(uv, float2(1.0, 1.0 / b));
+	}
 }
 
 } // Namespace.

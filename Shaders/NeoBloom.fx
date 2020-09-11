@@ -920,12 +920,12 @@ float4 SplitPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 	for (int i = 0; i < BloomCount; ++i)
 	{
 		float4 rect = BloomLevels[i];
-		float2 rect_uv = scale_uv(uv - rect.xy, 1.0 / rect.z, 0.0);
+		float2 rect_uv = ScaleCoord(uv - rect.xy, 1.0 / rect.z, 0.0);
 		float inbounds =
 			step(0.0, rect_uv.x) * step(rect_uv.x, 1.0) *
 			step(0.0, rect_uv.y) * step(rect_uv.y, 1.0);
 
-		rect_uv = scale_uv(rect_uv, 1.0 + uPadding * (i + 1), 0.5);
+		rect_uv = ScaleCoord(rect_uv, 1.0 + uPadding * (i + 1), 0.5);
 
 		float4 pixel = tex2Dlod(DownSample, float4(rect_uv, 0, rect.w));
 		pixel.rgb *= inbounds;
@@ -999,8 +999,8 @@ float4 JoinBloomsPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 	for (int i = 0; i < BloomCount; ++i)
 	{
 		float4 rect = BloomLevels[i];
-		float2 rect_uv = scale_uv(uv, 1.0 / (1.0 + uPadding * (i + 1)), 0.5);
-		rect_uv = scale_uv(rect_uv + rect.xy / rect.z, rect.z, 0.0);
+		float2 rect_uv = ScaleCoord(uv, 1.0 / (1.0 + uPadding * (i + 1)), 0.5);
+		rect_uv = ScaleCoord(rect_uv + rect.xy / rect.z, rect.z, 0.0);
 
 		float weight = NormalDistribution(i, uMean, uVariance);
 		bloom += tex2D(AtlasA, rect_uv) * weight;
@@ -1056,7 +1056,7 @@ BlendPassParams BlendVS(uint id : SV_VERTEXID)
 			ar * DirtAspectRatioInv,
 			is_horizontal);
 
-		p.lens_uv = scale_uv(p.uv, float2(1.0, ratio), 0.5);
+		p.lens_uv = ScaleCoord(p.uv, float2(1.0, ratio), 0.5);
 	#endif
 
 	return p;
@@ -1098,13 +1098,13 @@ float4 BlendPS(BlendPassParams p) : SV_TARGET
 				else
 				{
 					float4 rect = BloomLevels[uBloomTextureToShow];
-					float2 rect_uv = scale_uv(
+					float2 rect_uv = ScaleCoord(
 						uv,
 						1.0 / (1.0 + Padding * (uBloomTextureToShow + 1)),
 						0.5
 					);
 
-					rect_uv = scale_uv(rect_uv + rect.xy / rect.z, rect.z, 0.0);
+					rect_uv = ScaleCoord(rect_uv + rect.xy / rect.z, rect.z, 0.0);
 					color = tex2D(AtlasA, rect_uv);
 					color.rgb = tonemap(color.rgb);
 				}

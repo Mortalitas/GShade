@@ -27,7 +27,7 @@ namespace FXShaders
  * @param a The first value.
  * @param b The second value.
  */
-#define FXSHADERS_MIN(a, b) (int(a < b) * a + int(b < a) * b)
+#define FXSHADERS_MIN(a, b) (int((a) < (b)) * (a) + int((b) < (a)) * (b))
 
 /**
  * Get the greater of two values.
@@ -38,7 +38,7 @@ namespace FXShaders
  * @param a The first value.
  * @param b The second value.
  */
-#define FXSHADERS_MAX(a, b) (int(a > b) * a + int(b > a) * b)
+#define FXSHADERS_MAX(a, b) (int((a) > (b)) * (a) + int((b) > (a)) * (b))
 
 /**
  * Constrain a value between minimum and maximum values.
@@ -50,7 +50,7 @@ namespace FXShaders
  * @param a The minimum value.
  * @param b The maximum value.
  */
-#define FXSHADERS_CLAMP(x, a, b) (FXSHADERS_MAX(a, FXSHADERS_MIN(x, b)))
+#define FXSHADERS_CLAMP(x, a, b) (FXSHADERS_MAX((a), FXSHADERS_MIN((x), (b))))
 
 /**
  * Constrain a value between 0 and 1.
@@ -60,7 +60,7 @@ namespace FXShaders
  *
  * @param x The value to constrain.
  */
-#define FXSHADERS_SATURATE(x) (FXSHADERS_CLAMP(x, 0, 1))
+#define FXSHADERS_SATURATE(x) (FXSHADERS_CLAMP((x), 0, 1))
 
 /**
  * The Pi constant.
@@ -124,6 +124,25 @@ float2 ClampMagnitude(float2 v, float2 minMax) {
 		else
 			return (v / mag) * min(mag, minMax.y);
 	}
+}
+
+/**
+ * Apply rotation to a x/y point.
+ *
+ * @param uv The point to rotate.
+ * @param angle The rotation angle in degrees.
+ * @param pivot The origin point.
+ */
+float2 RotatePoint(float2 uv, float angle, float2 pivot)
+{
+	float2 sc;
+	sincos(DegreesToRadians * angle, sc.x, sc.y);
+
+	uv -= pivot;
+	uv = uv.x * sc.yx + float2(-uv.y, uv.y) * sc;
+	uv += pivot;
+
+	return uv;
 }
 
 }
