@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 3.6.0
+/** Perfect Perspective PS, version 3.7.0
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -34,7 +34,6 @@ uniform int FOV <
 	ui_category = "Field of View";
 	ui_label = "Game field of view";
 	ui_tooltip = "This setting should match your in-game FOV (in degrees)";
-	ui_step = 0.2;
 	ui_min = 0; ui_max = 170;
 > = 90;
 
@@ -47,15 +46,17 @@ uniform int Type <
 		"change it to 'Diagonal'.\n"
 		"When proportions are distorted at the periphery\n"
 		"(too low FOV), choose 'Vertical' or '4:3'.\n"
-		"\nAdjust so that round objects are still round \n"
-		"in the corners, and not oblong.\n"
+		"For ultra-wide display you may want '16:9' instead.\n"
+		"\nAdjust so that round objects are still round in\n"
+		"the corners, and not oblong.\n"
 		"\n*This method works only in 'navigation' preset,\n"
 		"or k=0.5 on manual.";
 	ui_items =
 		"Horizontal FOV\0"
 		"Diagonal FOV\0"
 		"Vertical FOV\0"
-		"4:3 FOV\0";
+		"4:3 FOV\0"
+		"16:9 FOV\0";
 > = 0;
 
 uniform int Projection <
@@ -147,6 +148,13 @@ uniform float4 BorderColor <
 	ui_tooltip = "Use Alpha to change transparency";
 > = float4(0.027, 0.027, 0.027, 0.784);
 
+uniform bool BorderVignette <
+	ui_type = "input";
+	ui_category = "Border";
+	ui_label = "borders with Vignette";
+	ui_tooltip = "Affect borders with vignetting effect";
+> = false;
+
 uniform float BorderCorner <
 	ui_type = "slider";
 	ui_category = "Border";
@@ -209,8 +217,8 @@ float grayscale(float3 Color)
 { return max(max(Color.r, Color.g), Color.b); }
 
 // Linear pixel step function for anti-aliasing
-float pixStep(float x)
-{ return saturate(x/fwidth(x)); }
+float pixStep(float t)
+{ return saturate(t/fwidth(t)); }
 
 /*Universal perspective model by Jakub Max Fober,
 Gnomonic to custom perspective variant.
@@ -266,8 +274,8 @@ float univPerspVignette(float k, float l, float s, in out float2 scrCoord)
 		{
 			// Get cylinder 3D vector
 			float3 perspVec;
-			perspVec.xy = sin(theta)/R*scrCoord;
-			perspVec.z = cos(theta);
+			perspVec.xy = (sin(theta)/R)*scrCoord;
+			perspVec.z  = cos(theta);
 			// Inverse square law
 			vignetteMask /= dot(perspVec, perspVec);
 		}
@@ -278,10 +286,8 @@ float univPerspVignette(float k, float l, float s, in out float2 scrCoord)
 	// Anamorphic correction for non-spherical perspective
 	if (s!=1.0 && l!=1.0) scrCoord.y /= lerp(s, 1.0, l);
 
-	// Normalize to FOV
-	scrCoord /= tanHalfOmega;
-	// Transform screen coordinates
-	scrCoord *= tan(theta)/R;
+	// Transform screen coordinates and normalize to FOV
+	scrCoord *= tan(theta)/R/tanHalfOmega;
 
 	// Return vignette
 	return vignetteMask;
@@ -309,9 +315,9 @@ float BorderMaskPS(float2 sphCoord)
 		float2 borderCoord = abs(sphCoord);
 		// Correct corner aspect ratio
 		if (BUFFER_ASPECT_RATIO > 1.0) // If in landscape mode
-			borderCoord.x = borderCoord.x*BUFFER_ASPECT_RATIO + 1.0-BUFFER_ASPECT_RATIO;
+			borderCoord.x = borderCoord.x*BUFFER_ASPECT_RATIO +(1.0-BUFFER_ASPECT_RATIO);
 		else if (BUFFER_ASPECT_RATIO < 1.0) // If in portrait mode
-			borderCoord.y = borderCoord.y*RCP_ASPECT + 1.0-RCP_ASPECT;
+			borderCoord.y = borderCoord.y*RCP_ASPECT +(1.0-RCP_ASPECT);
 		// Generate mask
 		borderMask = length( max(borderCoord +BorderCorner-1.0, 0.0) ) /BorderCorner;
 	}
@@ -365,21 +371,22 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	float FovType; switch(Type)
 	{
 		// Horizontal
-		case 0: FovType = 1.0; break;
+		default: FovType = 1.0; break;
 		// Diagonal
 		case 1: FovType = sqrt(RCP_ASPECT*RCP_ASPECT +1.0); break;
 		// Vertical
 		case 2: FovType = RCP_ASPECT; break;
 		// Horizontal 4:3
-		case 3: FovType = 4.0/3.0 * RCP_ASPECT; break;
+		case 3: FovType = (4.0/3.0) *RCP_ASPECT; break;
+		// Horizontal 16:9
+		case 4: FovType = (16.0/9.0) *RCP_ASPECT; break;
 	}
 
 	// Convert UV to centered coordinates
 	float2 sphCoord = texCoord*2.0 -1.0;
-	// Aspect Ratio correction
-	sphCoord.y *= RCP_ASPECT;
 	// View center offset
-	sphCoord -= float2(Offset.y, -Offset.x);
+	sphCoord.x -= Offset.y; // Aspect Ratio correction
+	sphCoord.y  = Offset.x+ sphCoord.y*RCP_ASPECT;
 	// Zoom in image and adjust FOV type (pass 1 of 2)
 	sphCoord *= clamp(Zooming, 0.5, 2.0) / FovType; // Anti-cheat clamp
 
@@ -410,16 +417,27 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	// Sample display image
 	float3 display = tex2D(BackBuffer, sphCoord).rgb;
 
+	// Apply sRGB gamma
+	vignetteMask = Vignette && !DebugPreview? pow(abs(vignetteMask), rcp(2.2)) : 1.0;
+
 	// Mask outside-border pixels or mirror
-	display = lerp(
-		Vignette && !DebugPreview? // Apply Vignette with sRGB gamma
-			display*pow(abs(vignetteMask), rcp(2.2)) : display,
-		lerp(
-			MirrorBorder?
-				display : tex2D(BackBuffer, texCoord).rgb,
-			BorderColor.rgb,
-			BorderColor.a
-		), borderMask);
+	if (BorderVignette)
+		display = vignetteMask*lerp(
+			display,
+			lerp(
+				MirrorBorder? display : tex2D(BackBuffer, texCoord).rgb,
+				BorderColor.rgb,
+				BorderColor.a
+			), borderMask
+		);
+	else display = lerp(
+			vignetteMask*display,
+			lerp(
+				MirrorBorder? display : tex2D(BackBuffer, texCoord).rgb,
+				BorderColor.rgb,
+				BorderColor.a
+			), borderMask
+		);
 
 	// Output type choice
 	if (DebugPreview) return DebugViewModePS(display, texCoord, sphCoord);
