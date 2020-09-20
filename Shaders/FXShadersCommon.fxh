@@ -211,9 +211,9 @@ float GetLumaLinear(float3 color)
  */
 float3 checkered_pattern(float2 uv, float size, float color_a, float color_b)
 {
-	static const float cSize = 32.0;
-	static const float3 cColorA = pow(0.15, 2.2);
-	static const float3 cColorB = pow(0.5, 2.2);
+	const float cSize = 32.0;
+	const float3 cColorA = pow(0.15, 2.2);
+	const float3 cColorB = pow(0.5, 2.2);
 
 	uv *= GetResolution();
 	uv %= cSize;
@@ -231,9 +231,9 @@ float3 checkered_pattern(float2 uv, float size, float color_a, float color_b)
  */
 float3 checkered_pattern(float2 uv)
 {
-	static const float Size = 32.0;
-	static const float ColorA = pow(0.15, 2.2);
-	static const float ColorB = pow(0.5, 2.2);
+	const float Size = 32.0;
+	const float ColorA = pow(0.15, 2.2);
+	const float ColorB = pow(0.5, 2.2);
 
 	return checkered_pattern(uv, Size, ColorA, ColorB);
 }
@@ -261,12 +261,12 @@ float3 ApplySaturation(float3 color, float amount)
  */
 float GetRandom(float2 uv)
 {
-	// static const float A = 12.9898;
-	// static const float B = 78.233;
-	// static const float C = 43758.5453;
-	static const float A = 23.2345;
-	static const float B = 84.1234;
-	static const float C = 56758.9482;
+	// const float A = 12.9898;
+	// const float B = 78.233;
+	// const float C = 43758.5453;
+	const float A = 23.2345;
+	const float B = 84.1234;
+	const float C = 56758.9482;
 
     return frac(sin(dot(uv, float2(A, B))) * C);
 }

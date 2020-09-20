@@ -90,7 +90,7 @@ float4 GaussianBlur1D(
 	float sigma,
 	int samples)
 {
-	static const float half_samples = samples * 0.5;
+	const float half_samples = samples * 0.5;
 
 	float4 color = 0.0;
 	float accum = 0.0;
@@ -131,7 +131,7 @@ float4 GaussianBlur2D(
 	float sigma,
 	int2 samples)
 {
-	static const float2 half_samples = samples * 0.5;
+	const float2 half_samples = samples * 0.5;
 
 	float4 color = 0.0;
 	float accum = 0.0;
