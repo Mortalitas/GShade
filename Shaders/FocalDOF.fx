@@ -117,7 +117,7 @@ float4 GetFocusPS(
 	float focus : TEXCOORD1) : SV_TARGET
 {
 	#if !FOCAL_DOF_USE_TEX2D_IN_VS
-		return saturate(lerp(tex2Dfetch(LastFocus, float4(0, 0, 0, 0)).x, ReShade::GetLinearizedDepth(FocusPoint), FrameTime / FocusTime));
+		return saturate(lerp(tex2Dfetch(LastFocus, float2(0, 0), 0).x, ReShade::GetLinearizedDepth(FocusPoint), FrameTime / FocusTime));
 	#else
 		return focus;
 	#endif
@@ -129,7 +129,7 @@ float4 SaveFocusPS(
 	float focus : TEXCOORD1) : SV_TARGET
 {
 	#if !FOCAL_DOF_USE_TEX2D_IN_VS
-		return tex2Dfetch(Focus, float4(0, 0, 0, 0)).x;
+		return tex2Dfetch(Focus, float2(0, 0), 0).x;
 	#else
 		return focus;
 	#endif

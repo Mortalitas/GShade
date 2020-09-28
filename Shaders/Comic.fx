@@ -410,18 +410,18 @@ namespace Comic {
             3. Calculate the chroma of all nine pixels and save that colors value
             4. Get all nine depth values
         ******************************************************************************/
-        const float3 colorC = tex2Dfetch(s, int4(vpos, 0, 0)).rgb;//C
+        const float3 colorC = tex2Dfetch(s, vpos, 0).rgb;//C
         const float3 color1[4] = {
-            tex2Dfetch(s, int4(vpos + int2( 0, -1), 0, 0)).rgb,//N
-            tex2Dfetch(s, int4(vpos + int2( 1, -1), 0, 0)).rgb,//NE
-            tex2Dfetch(s, int4(vpos + int2( 1,  0), 0, 0)).rgb,//E
-            tex2Dfetch(s, int4(vpos + int2( 1,  1), 0, 0)).rgb,//SE
+            tex2Dfetch(s, vpos + int2( 0, -1), 0).rgb,//N
+            tex2Dfetch(s, vpos + int2( 1, -1), 0).rgb,//NE
+            tex2Dfetch(s, vpos + int2( 1,  0), 0).rgb,//E
+            tex2Dfetch(s, vpos + int2( 1,  1), 0).rgb,//SE
         };
         const float3 color2[4] = {    
-            tex2Dfetch(s, int4(vpos + int2( 0,  1), 0, 0)).rgb,//S
-            tex2Dfetch(s, int4(vpos + int2(-1,  1), 0, 0)).rgb,//SW
-            tex2Dfetch(s, int4(vpos + int2(-1,  0), 0, 0)).rgb,//W
-            tex2Dfetch(s, int4(vpos + int2(-1, -1), 0, 0)).rgb //NW
+            tex2Dfetch(s, vpos + int2( 0,  1), 0).rgb,//S
+            tex2Dfetch(s, vpos + int2(-1,  1), 0).rgb,//SW
+            tex2Dfetch(s, vpos + int2(-1,  0), 0).rgb,//W
+            tex2Dfetch(s, vpos + int2(-1, -1), 0).rgb //NW
         };
 
         const float lumaC = dot(colorC, LumaCoeff);

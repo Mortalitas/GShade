@@ -63,15 +63,15 @@ float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
     //  a b c
     //  d(e)f
     //  g h i
-    const float3 a = tex2Doffset(sTexCASColor, texcoord, int2(-1, -1)).rgb;
-    const float3 b = tex2Doffset(sTexCASColor, texcoord, int2(0, -1)).rgb;
-    const float3 c = tex2Doffset(sTexCASColor, texcoord, int2(1, -1)).rgb;
-    const float3 d = tex2Doffset(sTexCASColor, texcoord, int2(-1, 0)).rgb;
-    const float3 e = tex2Doffset(sTexCASColor, texcoord, int2(0, 0)).rgb;
-    const float3 f = tex2Doffset(sTexCASColor, texcoord, int2(1, 0)).rgb;
-    const float3 g = tex2Doffset(sTexCASColor, texcoord, int2(-1, 1)).rgb;
-    const float3 h = tex2Doffset(sTexCASColor, texcoord, int2(0, 1)).rgb;
-    const float3 i = tex2Doffset(sTexCASColor, texcoord, int2(1, 1)).rgb;
+    const float3 a = tex2D(sTexCASColor, texcoord, int2(-1, -1)).rgb;
+    const float3 b = tex2D(sTexCASColor, texcoord, int2(0, -1)).rgb;
+    const float3 c = tex2D(sTexCASColor, texcoord, int2(1, -1)).rgb;
+    const float3 d = tex2D(sTexCASColor, texcoord, int2(-1, 0)).rgb;
+    const float3 e = tex2D(sTexCASColor, texcoord, int2(0, 0)).rgb;
+    const float3 f = tex2D(sTexCASColor, texcoord, int2(1, 0)).rgb;
+    const float3 g = tex2D(sTexCASColor, texcoord, int2(-1, 1)).rgb;
+    const float3 h = tex2D(sTexCASColor, texcoord, int2(0, 1)).rgb;
+    const float3 i = tex2D(sTexCASColor, texcoord, int2(1, 1)).rgb;
   
 	// Soft min and max.
 	//  a b c             b

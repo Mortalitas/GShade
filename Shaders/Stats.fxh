@@ -16,13 +16,13 @@ namespace Stats {
 
 	texture2D shared_texStatsAvgColor { Format = RGBA8; };
 	sampler2D shared_SamplerStatsAvgColor { Texture = shared_texStatsAvgColor; };
-	float3 AverageColor() { return tex2Dfetch(shared_SamplerStatsAvgColor, int4(0, 0, 0, 0)).rgb; }
+	float3 AverageColor() { return tex2Dfetch(shared_SamplerStatsAvgColor, int2(0, 0), 0).rgb; }
 
 	texture2D shared_texStatsAvgLuma { Format = R16F; };
 	sampler2D shared_SamplerStatsAvgLuma { Texture = shared_texStatsAvgLuma; };
-	float AverageLuma() { return tex2Dfetch(shared_SamplerStatsAvgLuma, int4(0, 0, 0, 0)).r; }
+	float AverageLuma() { return tex2Dfetch(shared_SamplerStatsAvgLuma, int2(0, 0), 0).r; }
 
 	texture2D shared_texStatsAvgColorTemp { Format = R16F; };
 	sampler2D shared_SamplerStatsAvgColorTemp { Texture = shared_texStatsAvgColorTemp; };
-	float AverageColorTemp() { return tex2Dfetch(shared_SamplerStatsAvgColorTemp, int4(0, 0, 0, 0)).r; }
+	float AverageColorTemp() { return tex2Dfetch(shared_SamplerStatsAvgColorTemp, int2(0, 0), 0).r; }
 }

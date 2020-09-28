@@ -261,7 +261,7 @@ namespace Tools {
             for(int m = 0; m < 3; m++) {
                 [unroll]
                 for(int n = 0; n < 3; n++) {
-                    acc += kernel[n + (m*3)] * tex2Dfetch(s, int4( (vpos.x - 1 + n), (vpos.y - 1 + m), 0, 0)).rgb;
+                    acc += kernel[n + (m*3)] * tex2Dfetch(s, int2( (vpos.x - 1 + n), (vpos.y - 1 + m)), 0).rgb;
                 }
             }
 
@@ -386,7 +386,7 @@ namespace Tools {
             for(int m = 0; m < size; m++) {
                 [unroll]
                 for(int n = 0; n < size; n++) {
-                    acc += tex2Dfetch(s, int4( (vpos.x - size / 3 + n), (vpos.y - size / 3 + m), 0, 0)).rgb;
+                    acc += tex2Dfetch(s, int2( (vpos.x - size / 3 + n), (vpos.y - size / 3 + m)), 0).rgb;
                 }
             }
 

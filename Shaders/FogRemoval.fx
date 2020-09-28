@@ -335,26 +335,26 @@ sampler sTruncatedPrecision {Texture = TruncatedPrecision;};
 void HistogramVS(uint id : SV_VERTEXID, out float4 pos : SV_POSITION)
 {
 	const uint iteration = (id % 4);
-	const int4 texturePos = int4((uint(id / 4) % SAMPLEWIDTH) * SAMPLEDISTANCE, (uint(id / 4) / SAMPLEWIDTH) * SAMPLEDISTANCE, 0, 0);
+	const int2 texturePos = int2((uint(id / 4) % SAMPLEWIDTH) * SAMPLEDISTANCE, (uint(id / 4) / SAMPLEWIDTH) * SAMPLEDISTANCE);
 	float color;
 	float y;
 	
 	switch (iteration)
 	{
 		case 0:
-			color = dot(tex2Dfetch(ReShade::BackBuffer, texturePos).rgb, float3(0.33333333, 0.33333333, 0.33333333));
+			color = dot(tex2Dfetch(ReShade::BackBuffer, texturePos, 0).rgb, float3(0.33333333, 0.33333333, 0.33333333));
 			y = 0.75;
 			break;
 		case 1:
-			color = tex2Dfetch(ReShade::BackBuffer, texturePos).r;
+			color = tex2Dfetch(ReShade::BackBuffer, texturePos, 0).r;
 			y = 0.25;
 			break;
 		case 2:
-			color = tex2Dfetch(ReShade::BackBuffer, texturePos).g;
+			color = tex2Dfetch(ReShade::BackBuffer, texturePos, 0).g;
 			y = -0.25;
 			break;
 		case 3:
-			color = tex2Dfetch(ReShade::BackBuffer, texturePos).b;
+			color = tex2Dfetch(ReShade::BackBuffer, texturePos, 0).b;
 			y = -0.75;
 			break;
 	}
@@ -380,9 +380,9 @@ void HistogramInfoPS(float4 pos : SV_Position, out float4 output : SV_Target0)
 	while((sum.r <= SAMPLECOUNT || sum.g <= SAMPLECOUNT || sum.b <= SAMPLECOUNT || sum.a <= SAMPLECOUNT) && i >= 0)
 	{
 #if	FOGREMOVALCORRECTCOLOR == 1
-		sum.r -= tex2Dfetch(sFogRemovalHistogram, int4(i, 4, 0, 0)).r;
-		sum.g -= tex2Dfetch(sFogRemovalHistogram, int4(i, 7, 0, 0)).r;
-		sum.b -= tex2Dfetch(sFogRemovalHistogram, int4(i, 10, 0, 0)).r;
+		sum.r -= tex2Dfetch(sFogRemovalHistogram, int2(i, 4), 0).r;
+		sum.g -= tex2Dfetch(sFogRemovalHistogram, int2(i, 7), 0).r;
+		sum.b -= tex2Dfetch(sFogRemovalHistogram, int2(i, 10), 0).r;
 		if (sum.r < usedMax)
 		{
 			sum.r = 2 * SAMPLECOUNT;
@@ -401,7 +401,7 @@ void HistogramInfoPS(float4 pos : SV_Position, out float4 output : SV_Target0)
 #else
 		sum.rgb = -SAMPLECOUNT;
 #endif
-		sum.a -= tex2Dfetch(sFogRemovalHistogram, int4(i, 1, 0, 0)).r;
+		sum.a -= tex2Dfetch(sFogRemovalHistogram, int2(i, 1), 0).r;
 		if (sum.a < fifty)
 		{
 			sum.a =  2 * SAMPLECOUNT;
@@ -416,7 +416,7 @@ void HistogramInfoPS(float4 pos : SV_Position, out float4 output : SV_Target0)
 void ColorCorrectedPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float4 colorCorrected : SV_Target0)
 {
 #if FOGREMOVALCORRECTCOLOR == 1
-	colorCorrected = float4(tex2D(ReShade::BackBuffer, texcoord).rgb * tex2Dfetch(sHistogramInfo, float4(0, 0, 0, 0)).rgb, 1);
+	colorCorrected = float4(tex2D(ReShade::BackBuffer, texcoord).rgb * tex2Dfetch(sHistogramInfo, float2(0, 0), 0).rgb, 1);
 #else
 	colorCorrected = float4(tex2D(ReShade::BackBuffer, texcoord).rgb, 1);
 #endif
@@ -450,7 +450,7 @@ void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out flo
 		float depthSum = 0;
 		[unroll]for(int j = -2; j <= 2; j++)
 		{
-			color = tex2Doffset(sColorCorrected, texcoord, int2(i, j)).rgb;
+			color = tex2D(sColorCorrected, texcoord, int2(i, j)).rgb;
 			darkChannel = min(min(color.r, color.g), min(color.b, darkChannel));
 			float2 matrixCoord;
 			matrixCoord.x = texcoord.x + pixSize.x * i;
@@ -464,7 +464,7 @@ void TransmissionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out flo
 	darkChannel = lerp(darkChannel, minimum, saturate(2 * depthContrast));
 #endif
 
-	const float v = (clamp(tex2Dfetch(sHistogramInfo, int4(0, 0, 0, 0)).a, FOGREMOVALMEDIANBOUNDSX, FOGREMOVALMEDIANBOUNDSY) - FOGREMOVALMEDIANBOUNDSX) * ((FOGREMOVALSENSITIVITYBOUNDSX - FOGREMOVALSENSITIVITYBOUNDSY) / (FOGREMOVALMEDIANBOUNDSX - FOGREMOVALMEDIANBOUNDSY)) + FOGREMOVALSENSITIVITYBOUNDSX;
+	const float v = (clamp(tex2Dfetch(sHistogramInfo, int2(0, 0), 0).a, FOGREMOVALMEDIANBOUNDSX, FOGREMOVALMEDIANBOUNDSY) - FOGREMOVALMEDIANBOUNDSX) * ((FOGREMOVALSENSITIVITYBOUNDSX - FOGREMOVALSENSITIVITYBOUNDSY) / (FOGREMOVALMEDIANBOUNDSX - FOGREMOVALMEDIANBOUNDSY)) + FOGREMOVALSENSITIVITYBOUNDSX;
 	transmission = clamp(saturate((darkChannel / (1 - (value - ((value - minimum) / (value))))) - v * (darkChannel + darkChannel)) * (1 - v), 0, FOGREMOVALREMOVALCAP) * saturate((pow(depth, 100*FOGREMOVALDEPTHCURVE)) * FOGREMOVALSTRENGTH);
 }
 
@@ -473,7 +473,7 @@ void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float
 	const float transmission = tex2D(sTransmission, texcoord).r;
 	output.rgb = (tex2D(sColorCorrected, texcoord).rgb - transmission) / max(((1 - transmission)), 0.01);
 #if FOGREMOVALCORRECTCOLOR == 1
-	output.rgb /= tex2Dfetch(sHistogramInfo, float4(0, 0, 0, 0)).rgb;
+	output.rgb /= tex2Dfetch(sHistogramInfo, float2(0, 0), 0).rgb;
 #endif
 
 	output = float4(output.rgb, 1);
@@ -505,13 +505,13 @@ void FogReintroductionPS(float4 pos : SV_Position, float2 texcoord : TexCoord, o
 	float3 original = tex2D(ReShade::BackBuffer, texcoord).rgb + tex2D(sTruncatedPrecision, texcoord).rgb;
 
 #if FOGREMOVALCORRECTCOLOR == 1
-	original *= tex2Dfetch(sHistogramInfo, float4(0, 0, 0, 0)).rgb;
+	original *= tex2Dfetch(sHistogramInfo, float2(0, 0), 0).rgb;
 #endif
 
 	output = original * max(((1 - transmission)), 0.01) + transmission;
 
 #if FOGREMOVALCORRECTCOLOR == 1
-	output /= tex2Dfetch(sHistogramInfo, float4(0, 0, 0, 0)).rgb;
+	output /= tex2Dfetch(sHistogramInfo, float2(0, 0), 0).rgb;
 #endif
 
 #if FOGREMOVALDEBUG > 0

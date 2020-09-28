@@ -66,7 +66,7 @@ namespace RemoveTint {
 	}
 
 	void BackBuffer_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 backbuffer : SV_Target0) {
-		backbuffer = tex2Dfetch(ReShade::BackBuffer, int4(vpos.xy * REMOVE_TINT_MIPLEVEL_EXP2, 0, 0));
+		backbuffer = tex2Dfetch(ReShade::BackBuffer, int2(vpos.xy * REMOVE_TINT_MIPLEVEL_EXP2), 0);
 	}
 
 	void MinMaxRGB_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 resultMinRGB : SV_Target0, out float4 resultMaxRGB : SV_Target1) {
@@ -82,7 +82,7 @@ namespace RemoveTint {
 
 		for(int y = 0; y < size.y; y++) {
 			for(int x = 0; x < size.x; x++) {
-				color = tex2Dfetch(RemoveTint::samplerBackBuffer, int4(x, y, 0, 0)).rgb;
+				color = tex2Dfetch(RemoveTint::samplerBackBuffer, int2(x, y), 0).rgb;
 				luma = dot(color, float3(0.2126, 0.7151, 0.0721));
 				diff = saturate(pow(dot(color, fUIExcludeColor), fUIExcludeColorStrength));
 				if (bUIUseExcludeColor)
@@ -100,8 +100,8 @@ namespace RemoveTint {
 			}
 		}
 
-		const float4 lastMinRGB = tex2Dfetch(RemoveTint::samplerMinRGBLastFrame, int4(0, 0, 0, 0));
-		const float4 lastMaxRGB = tex2Dfetch(RemoveTint::samplerMaxRGBLastFrame, int4(0, 0, 0, 0));
+		const float4 lastMinRGB = tex2Dfetch(RemoveTint::samplerMinRGBLastFrame, int2(0, 0), 0);
+		const float4 lastMaxRGB = tex2Dfetch(RemoveTint::samplerMaxRGBLastFrame, int2(0, 0), 0);
 
 		resultMinRGB = saturate(lerp(lastMinRGB, currentMinRGB, saturate(fUISpeed * frametime * 0.01)));
 		resultMaxRGB = saturate(lerp(lastMaxRGB, currentMaxRGB, saturate(fUISpeed * frametime * 0.01)));
@@ -110,14 +110,14 @@ namespace RemoveTint {
 	}
 
 	void MinMaxRGBBackup_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 currentMinRGB : SV_Target0, out float4 currentMaxRGB : SV_Target1) {
-		currentMinRGB = tex2Dfetch(RemoveTint::samplerMinRGB, int4(0, 0, 0, 0));
-		currentMaxRGB = tex2Dfetch(RemoveTint::samplerMaxRGB, int4(0, 0, 0, 0));
+		currentMinRGB = tex2Dfetch(RemoveTint::samplerMinRGB, int2(0, 0), 0);
+		currentMaxRGB = tex2Dfetch(RemoveTint::samplerMaxRGB, int2(0, 0), 0);
 	}
 
 	float4 Apply_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 		const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-		const float3 MinRGB = tex2Dfetch(RemoveTint::samplerMinRGB, int4(0, 0, 0, 0)).rgb;
-		const float3 MaxRGB = tex2Dfetch(RemoveTint::samplerMaxRGB, int4(0, 0, 0, 0)).rgb;
+		const float3 MinRGB = tex2Dfetch(RemoveTint::samplerMinRGB, int2(0, 0), 0).rgb;
+		const float3 MaxRGB = tex2Dfetch(RemoveTint::samplerMaxRGB, int2(0, 0), 0).rgb;
 		const float3 colorNormalize = (color - MinRGB) / (MaxRGB-MinRGB);
 		float3 tintRemoved = colorNormalize;
 		//Preserve brighness

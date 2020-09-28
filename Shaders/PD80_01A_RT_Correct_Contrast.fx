@@ -147,7 +147,7 @@ namespace pd80_correctcontrast
         {
             for( int x = start.x; x < stop.x; ++x )
             {
-                currColor    = tex2Dfetch( ReShade::BackBuffer, int4( x, y, 0, 0 )).xyz;
+                currColor    = tex2Dfetch( ReShade::BackBuffer, int2( x, y ), 0 ).xyz;
                 // Dark color detection methods
                 minValue.xyz = min( minValue.xyz, currColor.xyz );
                 // Light color detection methods
@@ -174,10 +174,10 @@ namespace pd80_correctcontrast
             for( int x = 0; x < SampleRes; ++x )
             {   
                 // Dark color detection methods
-                minColor     = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
+                minColor     = tex2Dfetch( samplerDS_1_Min, int2( x, y ), 0 ).xyz;
                 minValue.xyz = min( minValue.xyz, minColor.xyz );
                 // Light color detection methods
-                maxColor     = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
+                maxColor     = tex2Dfetch( samplerDS_1_Max, int2( x, y ), 0 ).xyz;
                 maxValue.xyz = max( maxColor.xyz, maxValue.xyz );
             }
         }

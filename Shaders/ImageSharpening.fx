@@ -72,15 +72,15 @@ void PS_ImageSharpening(in float4 i_pos : SV_POSITION, in float2 i_uv : TEXCOORD
 
     const float lx = GetLuma(x);
 
-    const float la = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(-1, 0)));
-    const float lb = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(1, 0)));
-    const float lc = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(0, 1)));
-    const float ld = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(0, -1)));
+    const float la = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(-1, 0)));
+    const float lb = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(1, 0)));
+    const float lc = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(0, 1)));
+    const float ld = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(0, -1)));
 
-    const float le = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(-1, -1)));
-    const float lf = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(1, 1)));
-    const float lg = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(-1, 1)));
-    const float lh = GetLuma(tex2Doffset(ReShade::BackBuffer, i_uv, int2(1, -1)));
+    const float le = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(-1, -1)));
+    const float lf = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(1, 1)));
+    const float lg = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(-1, 1)));
+    const float lh = GetLuma(tex2D(ReShade::BackBuffer, i_uv, int2(1, -1)));
 
     // cross min/max
     const float ncmin = min(min(le, lf), min(lg, lh));

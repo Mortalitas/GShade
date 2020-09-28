@@ -51,19 +51,14 @@ namespace pd80_correctcolor
     //// DEFINES ////////////////////////////////////////////////////////////////////
 #if( RT_PRECISION_LEVEL_0_TO_4 == 0 )
     #define RT_RES      1
-    #define RT_MIPLVL   0
 #elif( RT_PRECISION_LEVEL_0_TO_4 == 1 )
     #define RT_RES      2
-    #define RT_MIPLVL   1
 #elif( RT_PRECISION_LEVEL_0_TO_4 == 2 )
     #define RT_RES      4
-    #define RT_MIPLVL   2
 #elif( RT_PRECISION_LEVEL_0_TO_4 == 3 )
     #define RT_RES      8
-    #define RT_MIPLVL   3
 #else
     #define RT_RES      16
-    #define RT_MIPLVL   4
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     /*
@@ -291,7 +286,7 @@ namespace pd80_correctcolor
         {
             for( int x = start.x; x < stop.x && x < stexSize.x; x += OFFSET )
             {
-                currColor      = tex2Dfetch( samplerColor, int4( x, y, 0, RT_MIPLVL )).xyz;
+                currColor      = tex2Dfetch( samplerColor, int2( x, y ), 0 ).xyz;
                 // Dark color detection methods
                 // Per channel
                 minMethod0.xyz = min( minMethod0.xyz, currColor.xyz );
@@ -342,7 +337,7 @@ namespace pd80_correctcolor
             for( int x = 0; x < SampleRes.x; ++x )
             {   
                 // Dark color detection methods
-                minColor       = tex2Dfetch( samplerDS_1_Min, int4( x, y, 0, 0 )).xyz;
+                minColor       = tex2Dfetch( samplerDS_1_Min, int2( x, y ), 0 ).xyz;
                 // Per channel
                 minMethod0.xyz = min( minMethod0.xyz, minColor.xyz );
                 // By color
@@ -350,10 +345,10 @@ namespace pd80_correctcolor
                 getMin2        = max( max( minMethod1.x, minMethod1.y ), minMethod1.z ) + dot( minMethod1.xyz, 1.0f );
                 minMethod1.xyz = ( getMin2 >= getMin ) ? minColor.xyz : minMethod1.xyz;
                 // Mid point detection
-                midColor       += tex2Dfetch( samplerDS_1_Mid, int4( x, y, 0, 0 )).xyz;
+                midColor       += tex2Dfetch( samplerDS_1_Mid, int2( x, y ), 0 ).xyz;
                 Sigma          += 1.0f;
                 // Light color detection methods
-                maxColor       = tex2Dfetch( samplerDS_1_Max, int4( x, y, 0, 0 )).xyz;
+                maxColor       = tex2Dfetch( samplerDS_1_Max, int2( x, y ), 0 ).xyz;
                 // Per channel
                 maxMethod0.xyz = max( maxColor.xyz, maxMethod0.xyz );
                 // By color

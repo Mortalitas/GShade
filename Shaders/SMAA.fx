@@ -113,7 +113,7 @@ uniform int DebugOutput <
 #define SMAATexturePass2D(tex) tex
 #define SMAASampleLevelZero(tex, coord) tex2Dlod(tex, float4(coord, coord))
 #define SMAASampleLevelZeroPoint(tex, coord) SMAASampleLevelZero(tex, coord)
-#define SMAASampleLevelZeroOffset(tex, coord, offset) tex2Dlodoffset(tex, float4(coord, coord), offset)
+#define SMAASampleLevelZeroOffset(tex, coord, offset) tex2Dlod(tex, float4(coord, coord), offset)
 #define SMAASample(tex, coord) tex2D(tex, coord)
 #define SMAASamplePoint(tex, coord) SMAASample(tex, coord)
 #define SMAASampleOffset(tex, coord, offset) tex2Doffset(tex, coord, offset)
