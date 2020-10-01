@@ -71,17 +71,15 @@ namespace ReShade
 #endif
 		texcoord.x /= RESHADE_DEPTH_INPUT_X_SCALE;
 		texcoord.y /= RESHADE_DEPTH_INPUT_Y_SCALE;
-#if RESHADE_DEPTH_INPUT_X_OFFSET != 0
+#if RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET
+		texcoord.x -= RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET * BUFFER_RCP_WIDTH;
+#else // Do not check RESHADE_DEPTH_INPUT_X_OFFSET, since it may be a decimal number, which the preprocessor cannot handle
 		texcoord.x -= RESHADE_DEPTH_INPUT_X_OFFSET / 2.000000001;
 #endif
-#if RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET != 0
-		texcoord.x -= RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET * BUFFER_RCP_WIDTH;
-#endif
-#if RESHADE_DEPTH_INPUT_Y_OFFSET != 0
-		texcoord.y += RESHADE_DEPTH_INPUT_Y_OFFSET / 2.000000001;
-#endif
-#if RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET != 0
+#if RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET
 		texcoord.y += RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET * BUFFER_RCP_HEIGHT;
+#else
+		texcoord.y += RESHADE_DEPTH_INPUT_Y_OFFSET / 2.000000001;
 #endif
 		float depth = tex2Dlod(DepthBuffer, float4(texcoord, 0, 0)).x * RESHADE_DEPTH_MULTIPLIER;
 
