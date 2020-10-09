@@ -1,9 +1,10 @@
-/** Perfect Perspective PS, version 3.7.0
+/**
+Perfect Perspective PS, version 3.7.1
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
-under the Creative Commons CC BY-NC-ND 4.0 license available online at
-http://creativecommons.org/licenses/by-nc-nd/4.0/.
+under the Creative Commons CC BY-NC-ND 3.0 license available online at
+http://creativecommons.org/licenses/by-nc-nd/3.0/.
 The Author further grants permission for reuse of screen-shots and game-play
 recordings derived from the Work, provided that the reuse is for the purpose of
 promoting and/or summarizing the Work or is a part of an online forum post or
@@ -14,13 +15,17 @@ For inquiries please contact jakub.m.fober@pm.me
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders/
 
-This shader version is based upon research paper by
-Fober, J. M.
+This shader version is based upon research papers
+by Fober, J. M.
 	Perspective picture from Visual Sphere:
 	a new approach to image rasterization
-
 	arXiv: 2003.10558 [cs.GR] (2020)
-available online at https://arxiv.org/abs/2003.10558
+	https://arxiv.org/abs/2003.10558
+and
+	Temporally-smooth Antialiasing and Lens Distortion
+	with Rasterization Map
+	arXiv: 2010.04077 [cs.GR] (2020)
+	https://arxiv.org/abs/2010.04077
 */
 
 
@@ -216,14 +221,23 @@ sampler BackBuffer
 float grayscale(float3 Color)
 { return max(max(Color.r, Color.g), Color.b); }
 
-// Linear pixel step function for anti-aliasing
-float pixStep(float t)
-{ return saturate(t/fwidth(t)); }
+/**
+Linear pixel step function for anti-aliasing by Jakub Max Fober.
+This algorithm is a part of scientific paper:
+	arXiv: 2010.04077 [cs.GR] (2020)
+*/
+float pixStep(float grad)
+{
+	float2 Del = float2(ddx(grad), ddy(grad));
+	return saturate(rsqrt(dot(Del, Del))*grad);
+}
 
-/*Universal perspective model by Jakub Max Fober,
+/**
+Universal perspective model by Jakub Max Fober,
 Gnomonic to custom perspective variant.
 This algorithm is a part of scientific paper:
 	arXiv: 2003.10558 [cs.GR] (2020)
+	arXiv: 2010.04077 [cs.GR] (2020)
 Input data:
 	FOV -> Camera Field of View in degrees.
 	scrCoord -> screen coordinates (from -1, to 1),
