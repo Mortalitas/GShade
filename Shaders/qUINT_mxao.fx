@@ -558,9 +558,9 @@ void PS_qSpatialFilter2(qMXAO_VSOUT MXAO, out float4 color : SV_Target0)
 #endif
 
 #if(MXAO_HQ == 0)
-	ssil_ssao.w  = 1.0 - pow(1.0 - ssil_ssao.w, qMXAO_SSAO_AMOUNT * 2.0);
+	ssil_ssao.w  = 1.0 - pow(abs(1.0 - ssil_ssao.w), qMXAO_SSAO_AMOUNT * 2.0);
 #else
-    ssil_ssao.w  = 1.0 - pow(1.0 - ssil_ssao.w, qMXAO_SSAO_AMOUNT);
+    ssil_ssao.w  = 1.0 - pow(abs(1.0 - ssil_ssao.w), qMXAO_SSAO_AMOUNT);
 #endif
     ssil_ssao    *= 1.0 - smoothstep(qMXAO_FADE_DEPTH_START, qMXAO_FADE_DEPTH_END, scenedepth * float4(2.0, 2.0, 2.0, 1.0));
 
