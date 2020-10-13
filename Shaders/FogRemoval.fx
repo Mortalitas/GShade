@@ -319,8 +319,8 @@ uniform int DEBUG<
 
 texture ColorCorrected {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;};
 sampler sColorCorrected {Texture = ColorCorrected;};
-texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-sampler sTransmission {Texture = Transmission;};
+texture fTransmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+sampler sTransmission {Texture = fTransmission;};
 texture FogRemovalHistogram {Width = 256; Height = 12; Format = R32F;};
 sampler sFogRemovalHistogram {Texture = FogRemovalHistogram;};
 texture HistogramInfo {Width = 1; Height = 1; Format = RGBA8;};
@@ -556,7 +556,7 @@ technique FogRemoval
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = TransmissionPS;
-		RenderTarget0 = Transmission;
+		RenderTarget0 = fTransmission;
 	}
 
 	pass FogRemoval
