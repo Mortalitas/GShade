@@ -19,19 +19,15 @@ static const float4x4 psx_dither_table = float4x4
 //if desired, this can also be stored as an int4x4
 
 //col - your high-precision color input
-//p - screen position in pixel space
 float3 DitherCrunch(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
     float3 col = tex2D(ReShade::BackBuffer, texcoord).rgb * 255.0; //extrapolate 16bit color float to 16bit integer space
-#if __RENDERER__ > 0x9300
-    const int2 p = int2(texcoord);
     if(useDither)
     {
-        const float dither = psx_dither_table[p.x % 4][p.y % 4];
+        const float dither = psx_dither_table[uint(texcoord.x) % 4][uint(texcoord.y) % 4];
         col += (dither / 2.0 - 4.0); //dithering process as described in PSYDEV SDK documentation
     }
     col = lerp((uint3(col) & 0xf8), 0xf8, step(0xf8, col));
-#endif
     //truncate to 5bpc precision via bitwise AND operator, and limit value max to prevent wrapping.
     //PS1 colors in default color mode have a maximum integer value of 248 (0xf8)
     return col / 255.0; //bring color back to floating point number space

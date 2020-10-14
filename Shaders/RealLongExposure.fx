@@ -95,7 +95,8 @@ namespace RealisticLongExposure {
 		if (StartExposure) {
 			if (abs(timer - decodeTimer(tex2D(samplerTimer, float2(0.25, 0.5)).r)) < 1000 * RealExposureDuration)
 			{
-				fragment.rgb = tex2D(samplerExposureCopy, texcoord).rgb + getExposure(tex2D(ReShade::BackBuffer, texcoord), true).rgb;
+				fragment = tex2D(samplerExposureCopy, texcoord);
+				fragment.rgb += getExposure(tex2D(ReShade::BackBuffer, texcoord), true).rgb;
 			}
 		}
 		else 

@@ -309,19 +309,14 @@ namespace DirectionalDepthBlur
 	void PS_Combiner(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)
 	{
 		const float colorDepth = ReShade::GetLinearizedDepth(pixelInfo.texCoords);
-		const float4 realColor = tex2Dlod(ReShade::BackBuffer, float4(pixelInfo.texCoords, 0, 0));
+		fragment = tex2Dlod(ReShade::BackBuffer, float4(pixelInfo.texCoords, 0, 0));
 		if(colorDepth <= pixelInfo.focusPlane || (BlurLength <= 0.0))
-		{
-			fragment = realColor;
 			return;
-		}
 		const float rangeEnd = (pixelInfo.focusPlane+pixelInfo.focusRange);
-		float blendFactor;
-		if (rangeEnd < colorDepth)
-			blendFactor = 1.0;
-		else
+		float blendFactor = 1.0;
+		if (rangeEnd > colorDepth)
 			blendFactor = smoothstep(0, 1, 1-((rangeEnd-colorDepth) / pixelInfo.focusRange));
-		fragment.rgb = lerp(realColor.rgb, tex2Dlod(samplerBlurDestination, float4(pixelInfo.texCoords, 0, 0)).rgb, blendFactor);
+		fragment.rgb = lerp(fragment.rgb, tex2Dlod(samplerBlurDestination, float4(pixelInfo.texCoords, 0, 0)).rgb, blendFactor);
 	}
 	
 	void PS_DownSample(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)

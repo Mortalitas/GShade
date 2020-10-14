@@ -303,10 +303,12 @@ if(DEBUG_LINE_MODE)
 {
    float3 blurred = 0;
 
+    [unroll]
     for(int x = -2; x<=2; x++)
+	[unroll]
     for(int y = -2; y<=2; y++)
     {
-        blurred += tex2D(sTempTex0, i.uv, int2(x, y)).xyz;
+        blurred += tex2Doffset(sTempTex0, i.uv, int2(x, y)).xyz;
     }
 
     o = dot(normalize(blurred), tex2D(sTempTex0, i.uv).xyz);
@@ -318,10 +320,12 @@ if(DEBUG_LINE_MODE)
 
     float3 sobelx = 0, sobely = 0;
 
+    [unroll]
     for(int x = 0; x < 3; x++)
+    [unroll]
     for(int y = 0; y < 3; y++)
     {
-        float3 n = tex2D(sTempTex0, i.uv, int2(x - 1, y - 1)).xyz;
+        float3 n = tex2Doffset(sTempTex0, i.uv, int2(x - 1, y - 1)).xyz;
         sobelx += n * sobel[x][y];
         sobely += n * sobel[y][x];
     }

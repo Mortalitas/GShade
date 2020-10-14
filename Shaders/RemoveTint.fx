@@ -84,7 +84,7 @@ namespace RemoveTint {
 			for(int x = 0; x < size.x; x++) {
 				color = tex2Dfetch(RemoveTint::samplerBackBuffer, int2(x, y), 0).rgb;
 				luma = dot(color, float3(0.2126, 0.7151, 0.0721));
-				diff = saturate(pow(dot(color, fUIExcludeColor), fUIExcludeColorStrength));
+				diff = saturate(pow(abs(dot(color, fUIExcludeColor)), fUIExcludeColorStrength));
 				if (bUIUseExcludeColor)
 					lerpValue = 1.0 - diff;
 				else
@@ -123,7 +123,7 @@ namespace RemoveTint {
 		//Preserve brighness
 		tintRemoved = normalize(tintRemoved) * length(color).rrr;
 		//Don't apply fUIExcludeColor
-		tintRemoved = lerp(tintRemoved, color, saturate(pow(dot(color, fUIExcludeColor), fUIExcludeColorStrength)));
+		tintRemoved = lerp(tintRemoved, color, saturate(pow(abs(dot(color, fUIExcludeColor)), fUIExcludeColorStrength)));
 
 		return float4(saturate(lerp(color, tintRemoved, fUIStrength)).rgb, 1.0);
 	}

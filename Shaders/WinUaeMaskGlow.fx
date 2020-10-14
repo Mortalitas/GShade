@@ -119,7 +119,7 @@ sampler Shinra03SL { Texture = Shinra03L; MinFilter = Linear; MagFilter = Linear
 
 float4 PASS_SH0(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {
-	return float4 (pow(tex2D(ReShade::BackBuffer, uv).rgb, float3(1.0, 1.0, 1.0) * MaskGamma),1.0);
+	return float4 (pow(abs(tex2D(ReShade::BackBuffer, uv).rgb), float3(1.0, 1.0, 1.0) * MaskGamma),1.0);
 }
 
 
@@ -298,7 +298,7 @@ float SlotMask(float2 pos, float3 c)
 	
 	pos = floor(pos/float(smasksize));
 	
-	const float mx = pow(max(max(c.r,c.g),c.b),1.33);
+	const float mx = pow(abs(max(max(c.r,c.g),c.b)),1.33);
 	const float px = frac(pos.x/(float(slotwidth)*2.0));
 	const float py = floor(frac(pos.y/(2.0*double_slot))*2.0*double_slot);
 	const float slot_dark = lerp(1.0-slotmask, 1.0-0.80*slotmask, mx);
@@ -317,15 +317,15 @@ float3 WMASK(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	
 	const float2 pos1 = floor(uv/ReShade::PixelSize);
 	
-	const float3 cmask = Mask(pos1, pow(color, float3(1.0,1.0,1.0)/MaskGamma));
+	const float3 cmask = Mask(pos1, pow(abs(color), float3(1.0,1.0,1.0)/MaskGamma));
 	
 	const float3 orig1 = color;
 	
-	if (shadowMask == 0 || shadowMask == 1 || shadowMask == 3) color = pow(color, float3(1.0,1.0,1.0)/MaskGamma);
+	if (shadowMask == 0 || shadowMask == 1 || shadowMask == 3) color = pow(abs(color), float3(1.0,1.0,1.0)/MaskGamma);
 	
 	color*=cmask;
 
-	if (shadowMask == 0 || shadowMask == 1 || shadowMask == 3) color = pow(color, float3(1.0,1.0,1.0)*MaskGamma);
+	if (shadowMask == 0 || shadowMask == 1 || shadowMask == 3) color = pow(abs(color), float3(1.0,1.0,1.0)*MaskGamma);
 	
 	color = min(color, 1.0);
 	
@@ -346,7 +346,7 @@ float3 WMASK(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	
 	color = min(color, lerp(min(cmask,1.0),float3(1.0,1.0,1.0),0.6));
 	
-	color = pow(color, float3(1.0,1.0,1.0)/MaskGamma);
+	color = pow(abs(color), float3(1.0,1.0,1.0)/MaskGamma);
 	
 	return color;
 }

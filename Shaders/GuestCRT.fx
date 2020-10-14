@@ -550,7 +550,7 @@ float3 declip(float3 c, float b)
 
 float4 LinearizePS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
 {
-	return float4(pow(tex2D(Sampler3GCRT, texcoord), gamma_in));
+	return float4(pow(abs(tex2D(Sampler3GCRT, texcoord)), gamma_in));
 }
 
 float4 ScanlinesPS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
@@ -668,7 +668,7 @@ float4 GuestPS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
 	float3 scolor1 = color1;
 
 	scolor1 = (sl2 * wl2 + sl1 * wl1 + sr1 * wr1 + sr2 * wr2) * wt;
-	scolor1 = pow(scolor1, gtmp);
+	scolor1 = pow(abs(scolor1), gtmp);
 	const float3 mcolor1 = scolor1;
 	scolor1 = lerp(color1, scolor1, spike);
 
@@ -697,7 +697,7 @@ float4 GuestPS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
 	float3 scolor2 = color2;
 
 	scolor2 = (sl2 * wl2 + sl1 * wl1 + sr1 * wr1 + sr2 * wr2) * wt;
-	scolor2 = pow(scolor2, gtmp);float3 mcolor2 = scolor2;
+	scolor2 = pow(abs(scolor2), gtmp);float3 mcolor2 = scolor2;
 	scolor2 = lerp(color2, scolor2, spike);
 
 	float3 color0 = color1;
@@ -733,7 +733,7 @@ float4 GuestPS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
 	float3 ctmp = (color1 * wt1 + color2 * wt2) / (wt1 + wt2);
 	const float3 sctmp = (scolor1 * wt1 + scolor2 * wt2) / (wt1 + wt2);
 
-	const float3 tmp = pow(ctmp, 1.0 / gamma_out);
+	const float3 tmp = pow(abs(ctmp), 1.0 / gamma_out);
 	mcolor = clamp(lerp(ctmp, mcolor, 1.5), 0.0, 1.0);
 	mcolor = pow(mcolor, 1.4 / gamma_out);
 
@@ -815,7 +815,7 @@ float4 GuestPS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
 	if(interm < 0.5 || inter > lerp(InputSizeGCRT.y, InputSizeGCRT.x, TATE))
 		color = declip(color, pow(max(max(w1.r, w1.g), w1.b), 0.5));
 
-	return float4(pow(min(color, lerp(cmask, 1.0, 0.5)) + glow * Bloom1, 1.0 / gamma_out) * corner(pos), 1.0);
+	return float4(pow(abs(min(color, lerp(cmask, 1.0, 0.5)) + glow * Bloom1), 1.0 / gamma_out) * corner(pos), 1.0);
 }
 
 technique GuestCRT

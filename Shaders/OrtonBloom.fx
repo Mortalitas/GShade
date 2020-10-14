@@ -46,7 +46,7 @@ sampler GaussianBlurSampler2 { Texture = GaussianBlurTex2; };
 float CalcLuma(float3 color)
 {
 	if (GammaCorrectionEnable)
-		return pow((color.r*2 + color.b + color.g*3) / 6, 1/2.2);
+		return pow(abs((color.r*2 + color.b + color.g*3) / 6), 1/2.2);
 	
 	return (color.r*2 + color.b + color.g*3) / 6;
 }

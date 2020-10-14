@@ -123,7 +123,7 @@ float4 PS_3DFX(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	ohyes += DITHERBIAS;
 
 	colord.r = color.r + ohyes;
-	colord.g = color.g + (ohyes / 2);
+	colord.g = color.g + (float(ohyes) / 2.0);
 	colord.b = color.b + ohyes;
 	colorInput.rgb = colord.rgb * 0.003921568627451; // divide by 255, i don't trust em
 

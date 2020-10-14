@@ -887,7 +887,7 @@ namespace pd80_selectivecolorv2
     {
         float s = sign( x - 0.5f );
         float o = ( 1.0f + s ) / 2.0f;
-        return o - 0.5f * s * pow( 2.0f * ( o - s * x ), k );
+        return o - 0.5f * s * pow( abs( 2.0f * ( o - s * x ) ), k );
     }
 
     float curve( float x )

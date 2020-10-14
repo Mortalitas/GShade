@@ -475,6 +475,7 @@ namespace CinematicDOF
 		float minCoC = 10;
 		float coc;
 		float2 coordOffset = float2(0, BUFFER_PIXEL_SIZE.y);
+		[unroll]
 		for(float i = 0; i <= tileSize; ++i) 
 		{
 			coc = tex2Dlod(source, float4(texcoord + coordOffset, 0, 0)).r;

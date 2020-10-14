@@ -244,9 +244,9 @@ namespace primitiveColor
 
 	void sort_color(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 	{
-		int row = tid.y*COLOR_HEIGHT / THREAD_HEIGHT;
+		int row = tid.y*uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
 		int interval_start = row + tid.x*COLOR_HEIGHT;
-		int interval_end = row - 1 + COLOR_HEIGHT / THREAD_HEIGHT + tid.x*COLOR_HEIGHT;
+		int interval_end = row - 1 + uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT) + tid.x*COLOR_HEIGHT;
 		int i;
 		//masking
 		if (tid.y == 0)
@@ -257,8 +257,8 @@ namespace primitiveColor
 			for (i = 0; i < COLOR_HEIGHT; i++)
 			{
 				colortable[i + tid.x*COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i), 0);
-				float scenedepth = ReShade::GetLinearizedDepth(float2((id.x+0.5) / BUFFER_WIDTH, (i+0.5) / COLOR_HEIGHT));
-				is_focus = inFocus(colortable[i + tid.x*COLOR_HEIGHT], scenedepth, float2((id.x + 0.5) / BUFFER_WIDTH, (i + 0.5) / COLOR_HEIGHT));
+				float scenedepth = ReShade::GetLinearizedDepth(float2((id.x+0.5) / float(BUFFER_WIDTH), (i+0.5) / float(COLOR_HEIGHT)));
+				is_focus = inFocus(colortable[i + tid.x*COLOR_HEIGHT], scenedepth, float2((id.x + 0.5) / float(BUFFER_WIDTH), (i + 0.5) / float(COLOR_HEIGHT)));
 
 				if (!(is_focus && was_focus))
 					maskval++;
@@ -273,7 +273,7 @@ namespace primitiveColor
 		//combine
 		float4 key[THREAD_HEIGHT];
 		float4 key_sorted[THREAD_HEIGHT];
-		float4 sorted_array[2 * COLOR_HEIGHT / THREAD_HEIGHT];
+		float4 sorted_array[2 * uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT)];
 		for (i = 1; i < THREAD_HEIGHT; i = 2 * i) // the amount of merges, just like a normal merge sort
 		{
 			barrier();
@@ -282,13 +282,14 @@ namespace primitiveColor
 			for (int j = 0; j < groupsize; j++) //probably redundancy between threads. optimzable
 			{
 				int curr = tid.y - (tid.y % groupsize) + j;
-				key[curr] = colortable[curr * COLOR_HEIGHT / THREAD_HEIGHT + tid.x*COLOR_HEIGHT];
+				int ct = uint(curr * COLOR_HEIGHT) / uint(THREAD_HEIGHT);
+				key[curr] = colortable[ct + tid.x*COLOR_HEIGHT];
 			}
 			//sort keys
 			int idy_sorted;
-			int even = tid.y - (tid.y % groupsize);
+			int even = tid.y - (tid.y % uint(groupsize));
 			int k = even;
-			int mid = even + groupsize / 2 - 1;
+			int mid = even + uint(groupsize) / uint(2) - 1;
 			int odd = mid + 1;
 			int to = even + groupsize - 1;
 			while (even <= mid && odd <= to)
@@ -316,19 +317,19 @@ namespace primitiveColor
 				key_sorted[k++] = key[odd++];
 			}
 			// calculate the real distance
-			int diff_sorted = (idy_sorted%groupsize) - (tid.y % (groupsize / 2));
-			int pos1 = tid.y *COLOR_HEIGHT / THREAD_HEIGHT;
-			bool is_even = (tid.y%groupsize) < groupsize / 2;
+			int diff_sorted = (uint(idy_sorted)%uint(groupsize)) - (tid.y % (uint(groupsize) / uint(2)));
+			int pos1 = tid.y *uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
+			bool is_even = (tid.y%uint(groupsize)) < uint(groupsize) / uint(2);
 			if (is_even)
 			{
 				evenblock[idy_sorted + tid.x*THREAD_HEIGHT] = pos1;
 				if (diff_sorted == 0)
 				{
-					oddblock[idy_sorted + tid.x*THREAD_HEIGHT] = (tid.y - (tid.y%groupsize) + groupsize / 2)*COLOR_HEIGHT / THREAD_HEIGHT;
+					oddblock[idy_sorted + tid.x*THREAD_HEIGHT] = (tid.y - (tid.y%uint(groupsize)) + uint(groupsize) / uint(2))*uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
 				}
 				else
 				{
-					int odd_block_search_start = (tid.y - (tid.y%groupsize) + groupsize / 2 + diff_sorted - 1)*COLOR_HEIGHT / THREAD_HEIGHT;
+					int odd_block_search_start = (tid.y - (tid.y%uint(groupsize)) + uint(groupsize) / uint(2) + diff_sorted - 1)*uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
 					for (int i2 = 0; i2 < COLOR_HEIGHT / THREAD_HEIGHT; i2++)
 					{ // n pls make logn in future
 						oddblock[idy_sorted + tid.x*THREAD_HEIGHT] = odd_block_search_start + i2;
@@ -348,12 +349,12 @@ namespace primitiveColor
 				oddblock[idy_sorted + tid.x*THREAD_HEIGHT] = pos1;
 				if (diff_sorted == 0)
 				{
-					evenblock[idy_sorted + tid.x*THREAD_HEIGHT] = (tid.y - (tid.y%groupsize))*COLOR_HEIGHT / THREAD_HEIGHT;
+					evenblock[idy_sorted + tid.x*THREAD_HEIGHT] = (tid.y - (tid.y%uint(groupsize)))*uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
 				}
 				else
 				{
-					int even_block_search_start = (tid.y - (tid.y%groupsize) + diff_sorted - 1)*COLOR_HEIGHT / THREAD_HEIGHT;
-					for (int i2 = 0; i2 < COLOR_HEIGHT / THREAD_HEIGHT; i2++) {
+					int even_block_search_start = (tid.y - (tid.y%uint(groupsize)) + diff_sorted - 1)*uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
+					for (int i2 = 0; i2 < uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT); i2++) {
 						evenblock[idy_sorted + tid.x*THREAD_HEIGHT] = even_block_search_start + i2;
 						if (min_color(key_sorted[idy_sorted], colortable[even_block_search_start + i2 + tid.x*COLOR_HEIGHT]))
 						{
@@ -371,10 +372,10 @@ namespace primitiveColor
 			int even_start, even_end, odd_start, odd_end;
 			even_start = evenblock[tid.y + tid.x*THREAD_HEIGHT];
 			odd_start = oddblock[tid.y + tid.x*THREAD_HEIGHT];
-			if ((tid.y + 1) % groupsize == 0)
+			if ((tid.y + 1) % uint(groupsize) == 0)
 			{
-				even_end = (tid.y - (tid.y%groupsize) + groupsize / 2) *COLOR_HEIGHT / THREAD_HEIGHT;
-				odd_end = (tid.y - (tid.y%groupsize) + groupsize) * COLOR_HEIGHT / THREAD_HEIGHT;
+				even_end = (tid.y - (tid.y%uint(groupsize)) + uint(groupsize) / uint(2)) *uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
+				odd_end = (tid.y - (tid.y%uint(groupsize)) + groupsize) * uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
 			}
 			else
 			{
@@ -405,14 +406,14 @@ namespace primitiveColor
 			//replace
 			barrier();
 			int sorted_array_size = cc;
-			int global_position = odd_start + even_start - (tid.y - (tid.y%groupsize) + groupsize / 2) *COLOR_HEIGHT / THREAD_HEIGHT;
+			int global_position = odd_start + even_start - (tid.y - (tid.y%uint(groupsize)) + uint(groupsize) / uint(2)) *uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT);
 			for (int w = 0; w < cc; w++)
 			{
 				colortable[global_position + w + tid.x*COLOR_HEIGHT] = sorted_array[w];
 			}
 		}
 		barrier();
-		for (i = 0; i < COLOR_HEIGHT / THREAD_HEIGHT; i++)
+		for (i = 0; i < uint(COLOR_HEIGHT) / uint(THREAD_HEIGHT); i++)
 		{
 			colortable[row + i + tid.x*COLOR_HEIGHT].a = colortable[row + i + tid.x*COLOR_HEIGHT].a % 1;
 			tex2Dstore(texColorSortStorage, float2(id.x, row + i), float4(colortable[row + i + tid.x*COLOR_HEIGHT]));
