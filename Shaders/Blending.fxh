@@ -199,7 +199,7 @@ float3 ColorBurn(float3 a, float3 b)
 // Linear Burn Blending Mode
 float3 LinearBurn(float3 a, float3 b)
 {
-    return max(a+b-1.0f, 0.0f);
+    return max(a + b - 1.0f, 0.0f);
 }
 
 // Lighten Blending Mode
