@@ -1,14 +1,23 @@
+/*
+    LayerCake - v1.2
+    by Packetdancer
+
+    This shader allows you to slice apart an image and save it into separate texture buffers
+    to be restored later. In practical terms, this lets you apply different shader combinations
+    to different layers of the image all in a single preset.
+*/
+
 
 #include "ReShade.fxh"
 #include "Blending.fxh"
 #include "pkd_Color.fxh"
 
-#define LAYERCAKE_LAYER_CONFIG(label, textureName, sampleName, depthVar, blendVar, opacityVar, shouldMaskVar, colorMaskVar, colorMaskBlendVar) \
+#define LAYERCAKE_LAYER_CONFIG(label, textureName, sampleName, depthVar, blendVar, opacityVar, shouldMaskVar, colorMaskVar, colorMaskBlendVar, alphaBlendVar, alphaBlendDepthVar) \
 		uniform float2 depthVar < \
 			ui_type = "slider"; \
 			ui_category = label; \
 			ui_label = "Depth Range"; \
-			ui_min = 0.0; ui_max = 1.0; ui_step = 0.01; \
+			ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; \
 		> = float2(0.0, 1.0); \
 \
 		uniform int blendVar < \
@@ -44,13 +53,26 @@
 			ui_min = 0.0; ui_max = 64.0; ui_step = 0.1; \
 		> = 1.0; \
 \
+		uniform bool alphaBlendVar < \
+			ui_category = label; \
+			ui_label = "Alpha Blend Layer Edges"; \
+			ui_tooltip = "Should the edges of the layer be alpha-blended rather than a sharp falloff?"; \
+		> = true; \
+\
+		uniform float2 alphaBlendDepthVar < \
+			ui_type = "slider"; \
+			ui_category = label; \
+			ui_label = "Alpha Blend Depth Range"; \
+			ui_tooltip = "Mark the start and end point of of the alpha blending within the depth range of the mask. Note that this is RELATIVE depth; 1.0 means 'the farthest point of the layer', not of the overall screenshot."; \
+		> = float2(0.05, 0.95); \
+\
 		texture textureName { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; }; \
 		sampler sampleName { Texture = textureName; };	 
 
-#define LAYERCAKE_LAYER_SHADER(copyShader, pasteShader, depthVar, blendVar, opacityVar, maskVar, maskColorVar, maskBlendVar, sampleLayer) \
+#define LAYERCAKE_LAYER_SHADER(copyShader, pasteShader, depthVar, blendVar, opacityVar, maskVar, maskColorVar, maskBlendVar, alphaBlendVar, alphaBlendDepthVar, sampleLayer) \
 		void copyShader(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float4 layerColor : SV_Target) \
         { \
-        	layerColor = CopyLayer(texcoord, ReShade::BackBuffer, depthVar, maskVar, maskColorVar, maskBlendVar); \
+        	layerColor = CopyLayer(texcoord, ReShade::BackBuffer, depthVar, maskVar, maskColorVar, maskBlendVar, alphaBlendVar, alphaBlendDepthVar); \
         } \
 \
 		void pasteShader(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float4 screenColor : SV_Target) \
@@ -111,27 +133,46 @@ namespace pkd
 		#define LAYERCAKE_BLEND_LUMINOSITY 28
 
 		// Layer1
-		LAYERCAKE_LAYER_CONFIG("Layer 1", Tex_Layer1, Samp_Layer1, CFG_LAYERCAKE_DEPTH_Layer1, CFG_LAYERCAKE_BLEND_Layer1, CFG_LAYERCAKE_OPACITY_Layer1, CFG_LAYERCAKE_MASKENABLE_Layer1, CFG_LAYERCAKE_MASKCOLOR_Layer1, CFG_LAYERCAKE_MASKBLEND_Layer1)
+		LAYERCAKE_LAYER_CONFIG("Layer 1", Tex_Layer1, Samp_Layer1, CFG_LAYERCAKE_DEPTH_Layer1, CFG_LAYERCAKE_BLEND_Layer1, CFG_LAYERCAKE_OPACITY_Layer1, CFG_LAYERCAKE_MASKENABLE_Layer1, CFG_LAYERCAKE_MASKCOLOR_Layer1, CFG_LAYERCAKE_MASKBLEND_Layer1, CFG_LAYERCAKE_ALPHABLEND_Layer1, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer1)
 
 		// Layer2
-		LAYERCAKE_LAYER_CONFIG("Layer 2", Tex_Layer2, Samp_Layer2, CFG_LAYERCAKE_DEPTH_Layer2, CFG_LAYERCAKE_BLEND_Layer2, CFG_LAYERCAKE_OPACITY_Layer2, CFG_LAYERCAKE_MASKENABLE_Layer2, CFG_LAYERCAKE_MASKCOLOR_Layer2, CFG_LAYERCAKE_MASKBLEND_Layer2)
+		LAYERCAKE_LAYER_CONFIG("Layer 2", Tex_Layer2, Samp_Layer2, CFG_LAYERCAKE_DEPTH_Layer2, CFG_LAYERCAKE_BLEND_Layer2, CFG_LAYERCAKE_OPACITY_Layer2, CFG_LAYERCAKE_MASKENABLE_Layer2, CFG_LAYERCAKE_MASKCOLOR_Layer2, CFG_LAYERCAKE_MASKBLEND_Layer2, CFG_LAYERCAKE_ALPHABLEND_Layer2, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer2)
 
 		// Layer3
-		LAYERCAKE_LAYER_CONFIG("Layer 3", Tex_Layer3, Samp_Layer3, CFG_LAYERCAKE_DEPTH_Layer3, CFG_LAYERCAKE_BLEND_Layer3, CFG_LAYERCAKE_OPACITY_Layer3, CFG_LAYERCAKE_MASKENABLE_Layer3, CFG_LAYERCAKE_MASKCOLOR_Layer3, CFG_LAYERCAKE_MASKBLEND_Layer3)
+		LAYERCAKE_LAYER_CONFIG("Layer 3", Tex_Layer3, Samp_Layer3, CFG_LAYERCAKE_DEPTH_Layer3, CFG_LAYERCAKE_BLEND_Layer3, CFG_LAYERCAKE_OPACITY_Layer3, CFG_LAYERCAKE_MASKENABLE_Layer3, CFG_LAYERCAKE_MASKCOLOR_Layer3, CFG_LAYERCAKE_MASKBLEND_Layer3, CFG_LAYERCAKE_ALPHABLEND_Layer3, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer3)
 
-		float4 CopyLayer(float2 texcoord, sampler sourceSamp, float2 depthRange, bool maskEnable, float3 maskColor, float maskTolerance) {
+		// Layer4
+		LAYERCAKE_LAYER_CONFIG("Layer 4", Tex_Layer4, Samp_Layer4, CFG_LAYERCAKE_DEPTH_Layer4, CFG_LAYERCAKE_BLEND_Layer4, CFG_LAYERCAKE_OPACITY_Layer4, CFG_LAYERCAKE_MASKENABLE_Layer4, CFG_LAYERCAKE_MASKCOLOR_Layer4, CFG_LAYERCAKE_MASKBLEND_Layer4, CFG_LAYERCAKE_ALPHABLEND_Layer4, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer4)
+
+		float4 CopyLayer(float2 texcoord, sampler sourceSamp, float2 depthRange, bool maskEnable, float3 maskColor, float maskTolerance, bool alphaBlend, float2 alphaBlendDepth) 
+		{
+			// Get our base data
 			const float depth = ReShade::GetLinearizedDepth(texcoord);
+			float4 color = float4(tex2D(ReShade::BackBuffer, texcoord).rgb, 1.0);
 
-			if ((depth < depthRange.x) || (depth > depthRange.y)) {
-				return float4(0.0, 0.0, 0.0, 0.0);
+			// Handle the color masking logic.
+			const float smoothDelta = maskEnable ? smoothstep(0.0, maskTolerance, pkd::Color::DeltaRGB(color.rgb, maskColor)) : 1.0;
+			if (alphaBlend) {
+				color.a = smoothDelta;
+			}
+			else {
+				if (smoothDelta >= 1.0) {
+					color.a = 1.0;
+				}
+				else {
+					color.a = 0.0;
+				}
 			}
 
-			const float4 color = float4(tex2D(ReShade::BackBuffer, texcoord).rgb, 1.0);
+			// Handle the depth blending logic
+			const float relativeDepth = smoothstep(depthRange.x, depthRange.y, depth);
+			if (alphaBlend) {
+				color.a *= smoothstep(0.0, alphaBlendDepth.x, relativeDepth) * (1.0 - smoothstep(alphaBlendDepth.y, 1.0, relativeDepth));
+			}
 
-			if (maskEnable) {
-				if (pkd::Color::DeltaRGB(color.rgb, maskColor) <= maskTolerance) {
-					return float4(0.0, 0.0, 0.0, 0.0);
-				}
+			// Handle removing anything outside of our depth range
+			if (depth < depthRange.x || depth > depthRange.y) {
+				color.a *= 0.0;
 			}
 
 			return color;			
@@ -242,15 +283,19 @@ namespace pkd
 		}
 
 		// Layer 1
-		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer1, PS_Paste_Layer1, CFG_LAYERCAKE_DEPTH_Layer1, CFG_LAYERCAKE_BLEND_Layer1, CFG_LAYERCAKE_OPACITY_Layer1, CFG_LAYERCAKE_MASKENABLE_Layer1, CFG_LAYERCAKE_MASKCOLOR_Layer1, CFG_LAYERCAKE_MASKBLEND_Layer1, Samp_Layer1)
+		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer1, PS_Paste_Layer1, CFG_LAYERCAKE_DEPTH_Layer1, CFG_LAYERCAKE_BLEND_Layer1, CFG_LAYERCAKE_OPACITY_Layer1, CFG_LAYERCAKE_MASKENABLE_Layer1, CFG_LAYERCAKE_MASKCOLOR_Layer1, CFG_LAYERCAKE_MASKBLEND_Layer1, CFG_LAYERCAKE_ALPHABLEND_Layer1, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer1, Samp_Layer1)
 		LAYERCAKE_LAYER_TECHNIQUES(LayerCake_Layer1_Copy, PS_Copy_Layer1, LayerCake_Layer1_Paste, PS_Paste_Layer1, Tex_Layer1)
 
 		// Layer 2
-		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer2, PS_Paste_Layer2, CFG_LAYERCAKE_DEPTH_Layer2, CFG_LAYERCAKE_BLEND_Layer2, CFG_LAYERCAKE_OPACITY_Layer2, CFG_LAYERCAKE_MASKENABLE_Layer2, CFG_LAYERCAKE_MASKCOLOR_Layer2, CFG_LAYERCAKE_MASKBLEND_Layer2, Samp_Layer2)
+		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer2, PS_Paste_Layer2, CFG_LAYERCAKE_DEPTH_Layer2, CFG_LAYERCAKE_BLEND_Layer2, CFG_LAYERCAKE_OPACITY_Layer2, CFG_LAYERCAKE_MASKENABLE_Layer2, CFG_LAYERCAKE_MASKCOLOR_Layer2, CFG_LAYERCAKE_MASKBLEND_Layer2, CFG_LAYERCAKE_ALPHABLEND_Layer2, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer2, Samp_Layer2)
 		LAYERCAKE_LAYER_TECHNIQUES(LayerCake_Layer2_Copy, PS_Copy_Layer2, LayerCake_Layer2_Paste, PS_Paste_Layer2, Tex_Layer2)
 
 		// Layer 3
-		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer3, PS_Paste_Layer3, CFG_LAYERCAKE_DEPTH_Layer3, CFG_LAYERCAKE_BLEND_Layer3, CFG_LAYERCAKE_OPACITY_Layer3, CFG_LAYERCAKE_MASKENABLE_Layer3, CFG_LAYERCAKE_MASKCOLOR_Layer3, CFG_LAYERCAKE_MASKBLEND_Layer3, Samp_Layer3)
+		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer3, PS_Paste_Layer3, CFG_LAYERCAKE_DEPTH_Layer3, CFG_LAYERCAKE_BLEND_Layer3, CFG_LAYERCAKE_OPACITY_Layer3, CFG_LAYERCAKE_MASKENABLE_Layer3, CFG_LAYERCAKE_MASKCOLOR_Layer3, CFG_LAYERCAKE_MASKBLEND_Layer3, CFG_LAYERCAKE_ALPHABLEND_Layer3, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer3, Samp_Layer3)
 		LAYERCAKE_LAYER_TECHNIQUES(LayerCake_Layer3_Copy, PS_Copy_Layer3, LayerCake_Layer3_Paste, PS_Paste_Layer3, Tex_Layer3)
+
+		// Layer 4
+		LAYERCAKE_LAYER_SHADER(PS_Copy_Layer4, PS_Paste_Layer4, CFG_LAYERCAKE_DEPTH_Layer4, CFG_LAYERCAKE_BLEND_Layer4, CFG_LAYERCAKE_OPACITY_Layer4, CFG_LAYERCAKE_MASKENABLE_Layer4, CFG_LAYERCAKE_MASKCOLOR_Layer4, CFG_LAYERCAKE_MASKBLEND_Layer4, CFG_LAYERCAKE_ALPHABLEND_Layer4, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer4, Samp_Layer4)
+		LAYERCAKE_LAYER_TECHNIQUES(LayerCake_Layer4_Copy, PS_Copy_Layer4, LayerCake_Layer4_Paste, PS_Paste_Layer4, Tex_Layer4)
 	}
 }

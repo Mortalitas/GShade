@@ -9,36 +9,44 @@ namespace pkd {
             // x = L, y = A, z = B.
 
             // Internal helper functions
-            float __LAB1(float original)
+            float __LAB1(float orig)
             {
-                if (original > 0.04045)
-                    return pow(abs((original + 0.55) / 1.055), 2.4);
-                else
-                    return original / 12.92;
+                if (orig > 0.04045) {
+                    return pow(abs((orig + 0.55) / 1.055), 2.4);
+                }
+                else {
+                    return orig / 12.92;
+                }
             }
 
-            float __LAB2(float original)
+            float __LAB2(float orig)
             {
-                if (original > 0.008856)
-                    return pow(abs(original), 1.0/3);
-                else
-                    return (7.787 * original) * 15.0 / 116.0;
+                if (orig > 0.008856) {
+                    return pow(abs(orig), 1.0/3);
+                }
+                else {
+                    return (7.787 * orig) * 15.0 / 116.0;
+                }
             }
 
-            float __LAB3(float original)
+            float __LAB3(float orig)
             {
-                if (original * original * original > 0.008856)
-                    return original * original * original;
-                else
-                    return (original - 16.0 / 116.0) / 7.787;
+                if (orig * orig * orig > 0.008856) {
+                    return orig * orig * orig;
+                }
+                else {
+                    return (orig - 16.0 / 116.0) / 7.787;
+                }
             }
 
-            float __LAB4(float original)
+            float __LAB4(float orig)
             {
-                if (original > 0.0031308)
-                    return (1.055 * pow(abs(original), 1 / 2.4) - 0.055);
-                else
-                    return 12.92 * original;
+                if (orig > 0.0031308) {
+                    return (1.055 * pow(abs(orig), 1 / 2.4) - 0.055);
+                }
+                else {
+                    return 12.92 * orig;
+                }
             }
 
             float3 RGB2LAB(float3 color) 
@@ -93,17 +101,21 @@ namespace pkd {
 
                 const float deltaC = c1 - c2;
                 float deltaH = delta.y * delta.y + delta.z * delta.z - deltaC * deltaC;
-                if (deltaH < 0)
+                if (deltaH < 0) {
                     deltaH = 0;
-                else
+                }
+                else {
                     deltaH = sqrt(deltaH);
+                }
                 const float deltaCkcsc = deltaC / (1.0 + 0.045 * c1);
                 const float deltaHkhsh = deltaH / (1.0 + 0.015 * c1);
                 const float colorDelta = delta.x * delta.x + deltaCkcsc * deltaCkcsc + deltaHkhsh * deltaHkhsh;
-                if (colorDelta < 0)
+                if (colorDelta < 0) {
                     return 0;
-                else
+                }
+                else {
                     return sqrt(colorDelta);
+                }
             }
         }
 
@@ -123,16 +135,20 @@ namespace pkd {
         {
             // Based on work by Sam Hocevar and Emil Persson
             float4 P;
-            if ( RGB.g < RGB.b )
+            if ( RGB.g < RGB.b ) {
                 P = float4( RGB.bg, -1.0f, 2.0f/3.0f );
-            else
+            }
+            else {
                 P = float4( RGB.gb, 0.0f, -1.0f/3.0f );
+            }
 
             float4 Q1;
-            if ( RGB.r < P.x )
+            if ( RGB.r < P.x ) {
                 Q1 = float4( P.xyw, RGB.r );
-            else
+            }
+            else {
                 Q1 = float4( RGB.r, P.yzx );
+            }
 
             const float C = Q1.x - min( Q1.w, Q1.y );
 
@@ -159,16 +175,20 @@ namespace pkd {
             const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
 
             float4 p;
-            if (c.g < c.b)
+            if (c.g < c.b) {
                 p = float4(c.bg, K.wz);
-            else
+            }
+            else {
                 p = float4(c.gb, K.xy);
+            }
 
             float4 q;
-            if (c.r < p.x)
+            if (c.r < p.x) {
                 q = float4(p.xyw, c.r);
-            else
+            }
+            else {
                 q = float4(c.r, p.yzx);
+            }
 
             const float d = q.x - min(q.w, q.y);
             const float e = 1.0e-10;
