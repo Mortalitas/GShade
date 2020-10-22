@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.1
+Perfect Perspective PS, version 3.7.2
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -34,6 +34,8 @@ and
 ////////////
 
 
+// FIELD OF VIEW
+
 uniform int FOV <
 	ui_type = "slider";
 	ui_category = "Field of View";
@@ -51,11 +53,11 @@ uniform int Type <
 		"change it to 'Diagonal'.\n"
 		"When proportions are distorted at the periphery\n"
 		"(too low FOV), choose 'Vertical' or '4:3'.\n"
-		"For ultra-wide display you may want '16:9' instead.\n"
-		"\nAdjust so that round objects are still round in\n"
-		"the corners, and not oblong.\n"
-		"\n*This method works only in 'navigation' preset,\n"
-		"or k=0.5 on manual.";
+		"For ultra-wide display you may want '16:9' instead.\n\n"
+		"Adjust so that round objects are still round in\n"
+		"the corners, and not oblong.\n\n"
+		"*This method works only in 'navigation' preset,\n"
+		"or k=0.5 in manual.";
 	ui_items =
 		"Horizontal FOV\0"
 		"Diagonal FOV\0"
@@ -63,6 +65,8 @@ uniform int Type <
 		"4:3 FOV\0"
 		"16:9 FOV\0";
 > = 0;
+
+// PERSPECTIVE
 
 uniform int Projection <
 	ui_type = "radio";
@@ -91,13 +95,13 @@ uniform float K <
 	ui_tooltip =
 		"K  1.0 ...Rectilinear projection (standard), preserves straight lines,"
 		" but doesn't preserve proportions, angles or scale.\n"
-		"K  0.5 ...Stereographic projection (navigation, shape) preserves angles and proportions,"
+		"K  0.5 ...Stereographic projection (navigation, shapes) preserves angles and proportions,"
 		" best for navigation through tight spaces.\n"
 		"K  0 .....Equidistant (aiming) maintains angular speed of motion,"
 		" best for aiming at fast targets.\n"
-		"K -0.5 ...Equisolid projection (distance) preserves area relation,"
-		" best for navigation in open space.\n"
-		"K -1.0 ...Orthographic projection preserves planar luminance,"
+		"K -0.5 ...Equisolid projection (distances) preserves area relation,"
+		" best for navigation in open spaces.\n"
+		"K -1.0 ...Orthographic projection preserves planar luminance as cosine-law,"
 		" has extreme radial compression. Found in peephole viewer.";
 	ui_min = -1.0; ui_max = 1.0;
 > = 1.0;
@@ -122,6 +126,8 @@ uniform float VerticalScale <
 	ui_min = 0.8; ui_max = 1.0; ui_step = 0.01;
 > = 0.98;
 
+// BORDER
+
 uniform bool Vignette <
 	ui_type = "input";
 	ui_category = "Border";
@@ -132,9 +138,10 @@ uniform bool Vignette <
 
 uniform float Zooming <
 	ui_type = "slider";
+	ui_spacing = 2;
 	ui_category = "Border";
 	ui_label = "Border scale";
-	ui_tooltip = "Adjust image scale and cropped area";
+	ui_tooltip = "Adjust image scale and cropped area size";
 	ui_min = 0.5; ui_max = 2.0; ui_step = 0.001;
 > = 1.0;
 
@@ -148,6 +155,7 @@ uniform float2 Offset <
 
 uniform float4 BorderColor <
 	ui_type = "color";
+	ui_spacing = 2;
 	ui_category = "Border";
 	ui_label = "Border color";
 	ui_tooltip = "Use Alpha to change transparency";
@@ -175,6 +183,8 @@ uniform bool MirrorBorder <
 	ui_tooltip = "Choose original or mirrored image at the border";
 > = true;
 
+// DEBUG OPTIONS
+
 uniform bool DebugPreview <
 	ui_type = "input";
 	ui_spacing = 2;
@@ -190,7 +200,7 @@ uniform bool DebugPreview <
 uniform int2 ResScale <
 	ui_type = "input";
 	ui_category = "Tools for debugging";
-	ui_text = "screen resolution  |  virtual, super resolution";
+	ui_text = "screen resolution  |  virtual, super-resolution";
 	ui_label = "Difference";
 	ui_tooltip = "Simulates application running beyond\n"
 		"native screen resolution (using VSR or DSR)";
@@ -240,30 +250,30 @@ This algorithm is a part of scientific paper:
 	arXiv: 2010.04077 [cs.GR] (2020)
 Input data:
 	FOV -> Camera Field of View in degrees.
-	scrCoord -> screen coordinates (from -1, to 1),
+	viewCoord -> screen coordinates (from -1, to 1),
 		where p(0,0) is at the center of the screen.
 	k -> distortion parameter (from -1, to 1).
 	l -> vertical distortion parameter (from 0, to 1).
 	s -> anamorphic correction parameter (from 0.8, to 1)
 Output data:
 	vignette -> vignetting mask in linear space
-	scrCoord -> texture lookup perspective coordinates
+	viewCoord -> texture lookup perspective coordinates
 */
-float univPerspVignette(float k, float l, float s, in out float2 scrCoord)
+float univPerspVignette(in out float2 viewCoord, float k, float l, float s)
 {
 	// Bypass
-	if (FOV==0 || k==1.0 && !Vignette && (l==1.0 || s==1.0))
-		return 1.0;
+	if (FOV==0 || k==1.0 && !Vignette && (l==1.0 || s==1.0)) return 1.0;
 
 	// Get radius
-	float R = (l==1.0)?
-		length(scrCoord) : // Spherical
-		length( float2(scrCoord.x, sqrt(l)*scrCoord.y) ); // Cylindrical
+	float R = l==1.0?
+		dot(viewCoord, viewCoord) : // Spherical
+		(viewCoord.x*viewCoord.x)+l*(viewCoord.y*viewCoord.y); // Cylindrical
+	float rcpR = rsqrt(R); R = sqrt(R);
 
 	// Get half field of view
 	const float halfOmega = radians(FOV*0.5);
 	// Radius for gnomonic projection wrapping
-	const float tanHalfOmega = tan(halfOmega);
+	const float rTanHalfOmega = rcp(tan(halfOmega));
 
 	// Get incident angle
 	float theta;
@@ -280,28 +290,25 @@ float univPerspVignette(float k, float l, float s, in out float2 scrCoord)
 		// Create spherical vignette
 		vignetteMask = lerp(
 			cos(thetaLimit), // Cosine law of illumination
-			rcp(pow(tan(thetaLimit), 2)+1.0), // Inverse square law
-			clamp(k+0.5, 0.0, 1.0) // k in [-0.5, 0.5] range
+			rcp(tan(thetaLimit)*tan(thetaLimit)+1.0), // Inverse square law
+			clamp(k+0.5, 0.0, 1.0) // For k in [-0.5, 0.5] range
 		);
 		// Cylinder vignette
 		if (l!=1.0)
 		{
-			// Get cylinder 3D vector
-			float3 perspVec;
-			perspVec.xy = (sin(theta)/R)*scrCoord;
-			perspVec.z  = cos(theta);
-			// Inverse square law
-			vignetteMask /= dot(perspVec, perspVec);
+			// Get cylinder-incident 3D vector
+			float3 perspVec = float3( (sin(theta)/R)*viewCoord, cos(theta));
+			vignetteMask /= dot(perspVec, perspVec); // Inverse square law
 		}
 	}
 	else // Bypass
-		vignetteMask = 1.0;
+	vignetteMask = 1.0;
 
 	// Anamorphic correction for non-spherical perspective
-	if (s!=1.0 && l!=1.0) scrCoord.y /= lerp(s, 1.0, l);
+	if (s!=1.0 && l!=1.0) viewCoord.y /= (s+l)-s*l; // lerp(s, 1, l)
 
 	// Transform screen coordinates and normalize to FOV
-	scrCoord *= tan(theta)/R/tanHalfOmega;
+	viewCoord *= tan(theta)*rcpR*rTanHalfOmega;
 
 	// Return vignette
 	return vignetteMask;
@@ -322,18 +329,18 @@ float BorderMaskPS(float2 sphCoord)
 	float borderMask;
 
 	if (BorderCorner == 0.0) // If sharp corners
-		borderMask = max(abs(sphCoord.x), abs(sphCoord.y));
+		borderMask = max( abs(sphCoord.x), abs(sphCoord.y));
 	else // If round corners
 	{
 		// Get coordinates for each corner
 		float2 borderCoord = abs(sphCoord);
 		// Correct corner aspect ratio
 		if (BUFFER_ASPECT_RATIO > 1.0) // If in landscape mode
-			borderCoord.x = borderCoord.x*BUFFER_ASPECT_RATIO +(1.0-BUFFER_ASPECT_RATIO);
+			borderCoord.x = borderCoord.x*BUFFER_ASPECT_RATIO+(1.0-BUFFER_ASPECT_RATIO);
 		else if (BUFFER_ASPECT_RATIO < 1.0) // If in portrait mode
-			borderCoord.y = borderCoord.y*RCP_ASPECT +(1.0-RCP_ASPECT);
+			borderCoord.y = borderCoord.y*RCP_ASPECT+(1.0-RCP_ASPECT);
 		// Generate mask
-		borderMask = length( max(borderCoord +BorderCorner-1.0, 0.0) ) /BorderCorner;
+		borderMask = length( max(borderCoord+BorderCorner-1.0, 0.0))/BorderCorner;
 	}
 
 	return pixStep(borderMask-1.0);
@@ -344,7 +351,7 @@ float BorderMaskPS(float2 sphCoord)
 float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 {
 	// Calculate radial screen coordinates before and after perspective transformation
-	float4 radialCoord = float4(texCoord, sphCoord)*2.0 -1.0;
+	float4 radialCoord = float4(texCoord, sphCoord)*2.0-1.0;
 	// Correct vertical aspect ratio
 	radialCoord.yw *= RCP_ASPECT;
 
@@ -356,8 +363,7 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 	// Calculate Pixel Size difference...
 	float pixelScaleMap = fwidth( length(radialCoord.xy) );
 	// ...and simulate Dynamic Super Resolution (DSR) scalar
-	pixelScaleMap *= ResScale.x / (fwidth( length(radialCoord.zw) )*ResScale.y);
-	pixelScaleMap -= 1.0;
+	pixelScaleMap = pixelScaleMap*ResScale.x/ResScale.y/fwidth(length(radialCoord.zw))-1.0;
 
 	// Generate super-sampled/under-sampled color map
 	float3 resMap = lerp(
@@ -367,14 +373,13 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 	);
 
 	// Create black-white gradient mask of scale-neutral pixels
-	pixelScaleMap = 1.0-abs(pixelScaleMap);
-	pixelScaleMap = saturate(pixelScaleMap*4.0 -3.0); // Clamp to more representative values
+	pixelScaleMap = saturate(1.0-4.0*abs(pixelScaleMap)); // Clamp to more representative values
 
 	// Color neutral scale pixels
 	resMap = lerp(resMap, neutralSmpl, pixelScaleMap);
 
 	// Blend color map with display image
-	return normalize(resMap) * (0.8*grayscale(display) +0.2);
+	return (0.8*grayscale(display)+0.2)*normalize(resMap);
 }
 
 
@@ -387,7 +392,7 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 		// Horizontal
 		default: FovType = 1.0; break;
 		// Diagonal
-		case 1: FovType = sqrt(RCP_ASPECT*RCP_ASPECT +1.0); break;
+		case 1: FovType = sqrt(RCP_ASPECT*RCP_ASPECT+1.0); break;
 		// Vertical
 		case 2: FovType = RCP_ASPECT; break;
 		// Horizontal 4:3
@@ -400,9 +405,9 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	float2 sphCoord = texCoord*2.0 -1.0;
 	// View center offset
 	sphCoord.x -= Offset.y; // Aspect Ratio correction
-	sphCoord.y  = Offset.x+ sphCoord.y*RCP_ASPECT;
+	sphCoord.y  = Offset.x+sphCoord.y*RCP_ASPECT;
 	// Zoom in image and adjust FOV type (pass 1 of 2)
-	sphCoord *= clamp(Zooming, 0.5, 2.0) / FovType; // Anti-cheat clamp
+	sphCoord *= clamp(Zooming, 0.5, 2.0)/FovType; // Anti-cheat clamp
 
 	// Choose projection type
 	float k; switch (Projection)
@@ -414,7 +419,7 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 		default: k = clamp(K, -1.0, 1.0); break;
 	}
 	// Perspective transform and create vignette
-	float vignetteMask = univPerspVignette(k, Vertical, VerticalScale, sphCoord);
+	float vignetteMask = univPerspVignette(sphCoord, k, Vertical, VerticalScale);
 
 	// FOV type (pass 2 of 2)
 	sphCoord *= FovType;
@@ -426,7 +431,7 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	float borderMask = BorderMaskPS(sphCoord);
 
 	// Back to UV Coordinates
-	sphCoord = sphCoord*0.5 +0.5;
+	sphCoord = sphCoord*0.5+0.5;
 
 	// Sample display image
 	float3 display = tex2D(BackBuffer, sphCoord).rgb;
@@ -466,19 +471,19 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 technique PerfectPerspective <
 	ui_label = "Perfect Perspective";
 	ui_tooltip =
-	"Adjust perspective for distortion-free picture"
-	"\n(fish-eye, panini shader and vignetting)"
-	"\n\nManual:"
-	"\nFist select proper FOV angle and type."
-	"\nIf FOV type is unknown, find a round object within the game and look at it upfront,\n"
-	"then rotate the camera so that the object is in the corner."
-	"\nChange FOV type such that the object does not have an egg shape, but a perfect round shape."
-	"\n\nSecondly adjust perspective type according to game-play style."
-	"\nIf you look mostly at the horizon, 'Vertical distortion' value can be lowered."
-	"\nFor curved-display correction, set it above one."
-	"\n\nThirdly, adjust visible borders. You can zoom in the image and offset to hide borders and reveal UI."
-	"\n\nAdditionally for sharp picture, use FilmicSharpen.fx or run the game at Super-Resolution."
-	"\nDebug options can help you with finding the proper value."
+	"Adjust perspective for distortion-free picture\n"
+	"(fish-eye, panini shader and vignetting)\n\n"
+	"Manual:\n"
+	"Fist select proper FOV angle and type.\n"
+	"If FOV type is unknown, find a round object within the game and look at it upfront,\n"
+	"then rotate the camera so that the object is in the corner.\n"
+	"Change FOV type such that the object does not have an egg shape, but a perfect round shape.\n\n"
+	"Secondly adjust perspective type according to game-play style.\n"
+	"If you look mostly at the horizon, 'Vertical distortion' value can be lowered.\n"
+	"For curved-display correction, set it above one.\n\n"
+	"Thirdly, adjust visible borders. You can zoom in the picture and offset to hide borders and reveal UI.\n\n"
+	"Additionally for sharp image, use FilmicSharpen.fx or run the game at Super-Resolution.\n"
+	"Debug options can help you find the proper value."
 ; >
 {
 	pass
