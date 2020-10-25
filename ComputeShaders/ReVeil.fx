@@ -63,24 +63,20 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 
 #define MAX_MIP (FOGREMOVAL_GET_MAX_MIP(BUFFER_WIDTH * 2 - 1, BUFFER_HEIGHT * 2 - 1))
 
-
-
 texture BackBuffer : COLOR;
-texture DepthBuffer : DEPTH;
-texture DarkChannel {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture MeanAndVariance {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG32f;};
-texture Mean {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
-texture Variance {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
+
+texture DarkChannel <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+texture MeanAndVariance <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG32f;};
+texture Mean <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
+texture Variance <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
 texture Airlight {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
 texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
 texture FogRemoved {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
 texture TruncatedPrecision {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
-texture Maximum0 {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture Maximum1 {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
-
+texture Maximum0 <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+texture Maximum1 <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
 
 sampler sBackBuffer {Texture = BackBuffer;};
-sampler sDepthBuffer {Texture = DepthBuffer;};
 sampler sDarkChannel {Texture = DarkChannel;};
 sampler sMeanAndVariance {Texture = MeanAndVariance;};
 sampler sMean {Texture = Mean;};
@@ -98,19 +94,24 @@ uniform float TransmissionMultiplier<
 	ui_tooltip = "The overall strength of the removal, negative values correspond to more removal,\n"
 				"and positive values correspond to less.";
 	ui_min = -1; ui_max = 1;
+	ui_step = 0.001;
 > = -0.125;
 
 uniform float DepthMultiplier<
 	ui_type = "slider";
-	ui_label = "Depth Strength";
+	ui_label = "Depth Sensitivity";
 	ui_tooltip = "This setting is for adjusting how much of the removal is depth based, or if\n"
 				"positive values are set, it will actually add fog to the scene. 0 means it is\n"
 				"unaffected by depth.";
 	ui_min = -1; ui_max = 1;
+	ui_step = 0.001;
 > = -0.075;
 
-uniform bool IgnoreSky<
-	ui_label = "Ignore Sky";
+uniform float SkyAlpha<
+	ui_type = "slider";
+	ui_label = "Sky Alpha";
+	ui_min = 0; ui_max = 1;
+	ui_step = 0.001;
 > = 1;
 
 
@@ -247,18 +248,29 @@ void FogRemovalPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out flo
 {
 	float airlight = tex2D(sAirlight, texcoord).r;
 	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
-	float3 color = (tex2D(sBackBuffer, texcoord).rgb);
-	fogRemoved = float4(((color - airlight) / transmission) + airlight, 1);
+	float3 RVBB = tex2D(sBackBuffer, texcoord).rgb; //extracting the BackBuffer Here.
+	float y = dot(RVBB, float3(0.299, 0.587, 0.114));
+	y = ((y - airlight) / transmission) + airlight;
+	float cb = -0.168736 * RVBB.r - 0.331264 * RVBB.g + 0.500000 * RVBB.b;
+	float cr = +0.500000 * RVBB.r - 0.418688 * RVBB.g - 0.081312 * RVBB.b;
+    float3 color = float3(
+        y + 1.402 * cr,
+        y - 0.344136 * cb - 0.714136 * cr,
+        y + 1.772 * cb);
+        
+	fogRemoved = float4(color, 1);
+
 }
 
 void OutputToBackbufferPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 fogRemoved : SV_TARGET0)
 {
-	if(IgnoreSky && ReShade::GetLinearizedDepth(texcoord) >= 1)
+	fogRemoved = float4(tex2D(sFogRemoved, texcoord).rgb, 1);
+	if(ReShade::GetLinearizedDepth(texcoord) >= 1)
 	{
-		fogRemoved = float4(tex2D(sBackBuffer, texcoord).rgb, 0);
-	}	
-	else fogRemoved = float4(tex2D(sFogRemoved, texcoord).rgb, 1);
-	//fogRemoved =  (1 - log( 2.78 * (tex2D(sTransmission, texcoord).rrrr)));
+		fogRemoved = lerp(float4(tex2D(sBackBuffer, texcoord).rgb, 0), fogRemoved, SkyAlpha);
+	}
+	
+	//fogRemoved =  (1 - log( 3 * (tex2D(sTransmission, texcoord).rrrr)));
 }
 
 void TruncatedPrecisionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 truncatedPrecision : SV_TARGET0)
@@ -273,23 +285,36 @@ void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, 
 {
 	float airlight = tex2D(sAirlight, texcoord).r;
 	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
-	float3 color = (tex2D(sBackBuffer, texcoord).rgb);
+	float3 i = (tex2D(sBackBuffer, texcoord).rgb);
+	float3 fogRemoved = tex2D(sFogRemoved, texcoord).rgb;
 	
 	
 	
-	if(tex2D(sBackBuffer, texcoord).a == 0)
+
+	i += tex2D(sTruncatedPrecision, texcoord).rgb;
+	
+	float y = dot(i, float3(0.299, 0.587, 0.114));
+	float3 color;
+	if(tex2D(sBackBuffer, texcoord).a == 1)
 	{
-		fogReintroduced = float4(color, 1);
-		return;
-	}
-	color += tex2D(sTruncatedPrecision, texcoord).rgb;
+		//i = fogRemoved;
+		y = ((y - airlight) * transmission) + airlight;
+
 	
-	fogReintroduced = float4(((color - airlight) * transmission) + airlight, 1);
-	//fogReintroduced = lerp(color, tex2D(sAirlight, texcoord).rgb, tex2D(sTransmission, texcoord).r);
-}
-
+	float cb = -0.168736 * i.r - 0.331264 * i.g + 0.500000 * i.b;
+	float cr = +0.500000 * i.r - 0.418688 * i.g - 0.081312 * i.b;
+    color = float3(
+        y + 1.402 * cr,
+        y - 0.344136 * cb - 0.714136 * cr,
+        y + 1.772 * cb);
+	}
+	else color = i;
 		
-
+		
+	float alpha = 1;
+	fogReintroduced = float4(color, 1);
+	
+}
 
 technique Veil_B_Gone<ui_tooltip = "Place this shader technique before any effects you wish to be placed behind the image veil.\n\n"
 									"Veil_B_Back needs to be ran after this technique to reintroduce the image veil. The default\n"
@@ -339,7 +364,7 @@ technique Veil_B_Gone<ui_tooltip = "Place this shader technique before any effec
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FogRemovalPS;
-		RenderTarget = FogRemoved;
+		RenderTarget0 = FogRemoved;
 	}
 	
 #if SECOND_PASS != 0
@@ -379,7 +404,7 @@ technique Veil_B_Gone<ui_tooltip = "Place this shader technique before any effec
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FogRemovalPS;
-		RenderTarget = FogRemoved;
+		RenderTarget0 = FogRemoved;
 	}
 #endif
 	
