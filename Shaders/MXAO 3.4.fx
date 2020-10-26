@@ -395,7 +395,6 @@ void PS_AO_Gen(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	float3 ScreenSpaceNormals = normalSample.xyz * 2.0 - 1.0;
 	float3 ScreenSpacePosition = GetPositionLOD(texcoord.xy, 0);
 
-	[branch]
 	if(bMXAOSmoothNormalsEnable)
 	{
 		ScreenSpaceNormals = GetSmoothedNormals(texcoord, ScreenSpaceNormals, ScreenSpacePosition);

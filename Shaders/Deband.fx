@@ -240,6 +240,7 @@ float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
     const float dir  = rand(permute(h)) * 6.2831853;
     const float2 o = float2(cos(dir), sin(dir));
 
+    [loop]
     for (int i = 1; i <= Iterations; ++i) {
         // Compute a random distance
         float dist = rand(h) * Range * i;
