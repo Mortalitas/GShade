@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.2
+Perfect Perspective PS, version 3.7.3
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -197,16 +197,22 @@ uniform bool DebugPreview <
 		" Blue  - neutral sampling";
 > = false;
 
-uniform int2 ResScale <
+uniform int ResScaleVirtual <
 	ui_type = "input";
 	ui_category = "Tools for debugging";
-	ui_text = "screen resolution  |  virtual, super-resolution";
-	ui_label = "Difference";
+	ui_label = "Virtual resolution";
 	ui_tooltip = "Simulates application running beyond\n"
 		"native screen resolution (using VSR or DSR)";
 	ui_min = 16; ui_max = 16384; ui_step = 0.2;
-> = int2(1920, 1920);
+> = 1920;
 
+uniform int ResScaleScreen <
+	ui_type = "input";
+	ui_category = "Tools for debugging";
+	ui_label = "Native screen resolution";
+	ui_tooltip = "Simulates application running beyond\n"
+		"native screen resolution (using VSR or DSR)";
+> = 1920;
 
   ////////////////
  /// TEXTURES ///
@@ -363,7 +369,7 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 	// Calculate Pixel Size difference...
 	float pixelScaleMap = fwidth( length(radialCoord.xy) );
 	// ...and simulate Dynamic Super Resolution (DSR) scalar
-	pixelScaleMap = pixelScaleMap*ResScale.x/ResScale.y/fwidth(length(radialCoord.zw))-1.0;
+	pixelScaleMap = pixelScaleMap*ResScaleScreen/ResScaleVirtual/fwidth(length(radialCoord.zw))-1.0;
 
 	// Generate super-sampled/under-sampled color map
 	float3 resMap = lerp(
