@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.7
+Perfect Perspective PS, version 3.7.8
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -228,7 +228,7 @@ sampler BackBuffer
 	Texture = BackBufferTex;
 	AddressU = MIRROR;
 	AddressV = MIRROR;
-	#if BUFFER_COLOR_BIT_DEPTH == 8
+	#if BUFFER_COLOR_BIT_DEPTH != 10
 		SRGBTexture = true;
 	#endif
 };
