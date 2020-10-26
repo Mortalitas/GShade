@@ -1,5 +1,5 @@
 /*
-Filmic Anamorph Sharpen PS v1.4.4 (c) 2018 Jakub Maximilian Fober
+Filmic Anamorph Sharpen PS v1.4.5 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons 
 Attribution-ShareAlike 4.0 International License. 
@@ -9,9 +9,9 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 // Lightly optimized by Marot Satil for the GShade project.
 
 
-	  ////////////
-	 /// MENU ///
-	////////////
+  ////////////
+ /// MENU ///
+////////////
 
 uniform float Strength <
 	ui_label = "Strength";
@@ -76,11 +76,24 @@ uniform bool Preview <
 > = false;
 
 
-	  //////////////
-	 /// SHADER ///
-	//////////////
+  //////////////
+ /// SHADER ///
+//////////////
 
 #include "ReShade.fxh"
+
+// Define screen texture with mirror tiles
+sampler BackBuffer
+{
+	Texture = ReShade::BackBufferTex;
+	AddressU = MIRROR;
+	AddressV = MIRROR;
+	SRGBTexture = true;
+};
+
+  /////////////////
+ /// FUNCTIONS ///
+/////////////////
 
 // RGB to YUV709 Luma
 static const float3 Luma709 = float3(0.2126, 0.7152, 0.0722);
@@ -97,6 +110,14 @@ float Overlay(float LayerA, float LayerB)
 	return 2.0 * (MinA * MinB + MaxA + MaxB - MaxA * MaxB) - 1.5;
 }
 
+// Convert to linear gamma
+float gamma(float grad) { return pow(abs(grad), 2.2); }
+float3 gamma(float3 grad) { return pow(abs(grad), 2.2); }
+
+  //////////////
+ /// SHADER ///
+//////////////
+
 // Overlay blending mode for one input
 float Overlay(float LayerAB)
 {
@@ -109,7 +130,7 @@ float Overlay(float LayerAB)
 float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV_Target
 {
 	// Sample display image
-	float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+	float3 Source = tex2D(BackBuffer, UvCoord).rgb;
 
 	// Generate radial mask
 	float Mask;
@@ -195,11 +216,11 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		if(Preview) // Preview mode ON
 		{
 			const float PreviewChannel = lerp(HighPassColor, HighPassColor * DepthMask, 0.5);
-			return float3(
+			return gamma(float3(
 				1.0 - DepthMask * (1.0 - HighPassColor), 
 				PreviewChannel, 
 				PreviewChannel
-			);
+			));
 		}
 
 		return Sharpen;
@@ -219,7 +240,7 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		float HighPassColor = 0.0;
 		[unroll]
 		for(int s = 0; s < 4; s++)
-			HighPassColor += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
+			HighPassColor += dot(tex2D(BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
 			
 		// !!! added space above to make it more obvious
 		// !!! that loop is now a one-liner in this else branch
@@ -246,7 +267,7 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 
 		// Preview mode ON
 		if (Preview)
-			return HighPassColor;
+			return gamma(HighPassColor);
 		else
 			return float3(Overlay(Source.r, HighPassColor), Overlay(Source.g, HighPassColor), Overlay(Source.b, HighPassColor));
 	}
@@ -263,5 +284,6 @@ technique FilmicAnamorphSharpen < ui_label = "Filmic Anamorphic Sharpen"; >
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FilmicAnamorphSharpenPS;
+		SRGBWriteEnable = true;
 	}
 }

@@ -1,5 +1,5 @@
 /**
-Filmic Sharpen PS v1.2.4 (c) 2018 Jakub Maximilian Fober
+Filmic Sharpen PS v1.2.6 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons
 Attribution-ShareAlike 4.0 International License.
@@ -9,9 +9,9 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 
 // Lightly optimized by Marot Satil for the GShade project.
 
-	  ////////////
-	 /// MENU ///
-	////////////
+  ////////////
+ /// MENU ///
+////////////
 
 uniform float Strength <
 	ui_label = "Strength";
@@ -56,11 +56,24 @@ uniform bool Preview <
 > = false;
 
 
-	  //////////////
-	 /// SHADER ///
-	//////////////
+  //////////////
+ /// SHADER ///
+//////////////
 
 #include "ReShade.fxh"
+
+// Define screen texture with mirror tiles
+sampler BackBuffer
+{
+	Texture = ReShade::BackBufferTex;
+	AddressU = MIRROR;
+	AddressV = MIRROR;
+	SRGBTexture = true;
+};
+
+  /////////////////
+ /// FUNCTIONS ///
+/////////////////
 
 // RGB to YUV709 luma
 static const float3 Luma709 = float3(0.2126, 0.7152, 0.0722);
@@ -74,7 +87,7 @@ float Overlay(float LayerA, float LayerB)
 	const float MinB = min(LayerB, 0.5);
 	const float MaxA = max(LayerA, 0.5);
 	const float MaxB = max(LayerB, 0.5);
-	return 2.0 * (MinA * MinB + MaxA + MaxB - MaxA * MaxB) - 1.5;
+	return 2.0 * ((MinA * MinB + MaxA) + (MaxB - MaxA * MaxB)) - 1.5;
 }
 
 // Overlay blending mode for one input
@@ -82,14 +95,21 @@ float Overlay(float LayerAB)
 {
 	const float MinAB = min(LayerAB, 0.5);
 	const float MaxAB = max(LayerAB, 0.5);
-	return 2.0 * (MinAB * MinAB + MaxAB + MaxAB - MaxAB * MaxAB) - 1.5;
+	return 2.0 * ((MinAB * MinAB + MaxAB) + (MaxAB - MaxAB * MaxAB)) - 1.5;
 }
+
+// Convert to linear gamma
+float gamma(float grad) { return pow(abs(grad), 2.2); }
+
+  //////////////
+ /// SHADER ///
+//////////////
 
 // Sharpen pass
 float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV_Target
 {
 	// Sample display image
-	const float3 Source = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+	const float3 Source = tex2D(BackBuffer, UvCoord).rgb;
 
 	// Generate and apply radial mask
 	float Mask; if (UseMask)
@@ -124,7 +144,7 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	float HighPass = 0.0;
 	[unroll]
 	for(int i=0; i<4; i++)
-		HighPass += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[i]).rgb, LumaCoefficient);
+		HighPass += dot(tex2D(BackBuffer, NorSouWesEst[i]).rgb, LumaCoefficient);
 
 	HighPass = 0.5 - 0.5 * (HighPass * 0.25 - dot(Source, LumaCoefficient));
 
@@ -135,16 +155,14 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	if (Clamp != 1.0)
 		HighPass = clamp(HighPass, 1.0 - Clamp, Clamp);
 
-	const float3 Sharpen = float3(
+	if (Preview)
+		return gamma(HighPass);
+	else
+		return float3(
 		Overlay(Source.r, HighPass),
 		Overlay(Source.g, HighPass),
 		Overlay(Source.b, HighPass)
-	);
-
-	if (Preview)
-		return HighPass;
-	else
-		return Sharpen;
+		);
 }
 
 
