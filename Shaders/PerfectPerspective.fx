@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.6
+Perfect Perspective PS, version 3.7.7
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -220,13 +220,17 @@ uniform int ResScaleScreen <
 
 #include "ReShade.fxh"
 
+texture BackBufferTex : COLOR;
+
 // Define screen texture with mirror tiles
 sampler BackBuffer
 {
-	Texture = ReShade::BackBufferTex;
+	Texture = BackBufferTex;
 	AddressU = MIRROR;
 	AddressV = MIRROR;
-	SRGBTexture = true;
+	#if __RENDERER__ < 0xb000 || __RENDERER__ >= 0x10000
+		SRGBTexture = true;
+	#endif
 };
 
 
