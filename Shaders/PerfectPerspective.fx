@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.4
+Perfect Perspective PS, version 3.7.5
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -226,6 +226,7 @@ sampler BackBuffer
 	Texture = ReShade::BackBufferTex;
 	AddressU = MIRROR;
 	AddressV = MIRROR;
+	SRGBTexture = true;
 };
 
 
@@ -237,7 +238,8 @@ sampler BackBuffer
 float grayscale(float3 Color)
 { return max(max(Color.r, Color.g), Color.b); }
 // Convert to sRGB gamma
-float gamma(float grad) { return pow(abs(grad), rcp(2.2)); }
+float3 gamma(float3 grad) { return pow(abs(grad), rcp(2.2)); }
+float4 gammaLinear(float4 grad) { return pow(abs(grad), 2.2); }
 /**
 Linear pixel step function for anti-aliasing by Jakub Max Fober.
 This algorithm is a part of scientific paper:
@@ -246,7 +248,7 @@ This algorithm is a part of scientific paper:
 float pixStep(float grad)
 {
 	float2 Del = float2(ddx(grad), ddy(grad));
-	return gamma(saturate(rsqrt(dot(Del, Del))*grad));
+	return saturate(rsqrt(dot(Del, Del))*grad);
 }
 
 /**
@@ -290,7 +292,7 @@ float univPerspVignette(in out float2 viewCoord, float k, float l, float s)
 
 	// Generate vignette
 	float vignetteMask;
-	if (Vignette)
+	if (Vignette && !DebugPreview)
 	{
 		// Limit FOV span, k+- in [0.5, 1] range
 		float thetaLimit = max(abs(k), 0.5)*theta;
@@ -443,27 +445,28 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	// Sample display image
 	float3 display = tex2D(BackBuffer, sphCoord).rgb;
 
-	// Apply sRGB gamma
-	vignetteMask = Vignette && !DebugPreview? gamma(vignetteMask) : 1.0;
-
+	// Apply linear gamma to border color
+	float4 BorderColorLinear = gammaLinear(BorderColor);
 	// Mask outside-border pixels or mirror
 	if (BorderVignette)
 		display = vignetteMask*lerp(
 			display,
 			lerp(
 				MirrorBorder? display : tex2D(BackBuffer, texCoord).rgb,
-				BorderColor.rgb,
-				BorderColor.a
+				BorderColorLinear.rgb,
+				BorderColorLinear.a
 			), borderMask
 		);
 	else display = lerp(
 			vignetteMask*display,
 			lerp(
 				MirrorBorder? display : tex2D(BackBuffer, texCoord).rgb,
-				BorderColor.rgb,
-				BorderColor.a
+				BorderColorLinear.rgb,
+				BorderColorLinear.a
 			), borderMask
 		);
+	// Gamma-correct final image
+	display = gamma(display);
 
 	// Output type choice
 	if (DebugPreview) return DebugViewModePS(display, texCoord, sphCoord);
