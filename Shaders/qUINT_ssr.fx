@@ -375,7 +375,7 @@ float4 blur_filter(in SSR_VSOUT i, in sampler inputsampler, in float radius, in 
 	float blursum_weight 			= 1e-3;
 	float blursum_noweight_weight 	= 1e-3; //lel
 
-	[unroll] 1;
+	[loop]
 	for(float j = -floor(kernel_size); j <= floor(kernel_size); j++)
 	{
 		spatial_blur_data(tap, inputsampler,  float4(i.uv + axis * (2.0 * j - 0.5), 0, 0));

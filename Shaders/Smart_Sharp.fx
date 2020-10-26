@@ -282,7 +282,7 @@ float4 CAS(float2 texcoord)
 #if Quality == 3
 	const float weight[MSIZE] = {0.031225216, 0.035206333, 0.039104044, 0.039894000, 0.039104044, 0.035206333, 0.031225216};   // by 7
 #endif
-#if Quality == 4	
+#if Quality == 4
 	const float weight[MSIZE] = {0.031225216, 0.035206333, 0.038138565, 0.039695028, 0.039894000, 0.039695028, 0.038138565, 0.035206333, 0.031225216};  // by 9
 #endif*/
 	
@@ -293,7 +293,7 @@ float4 CAS(float2 texcoord)
 	[loop]
 	for (int i=-kSize; i <= kSize; ++i)
 	{	
-	[branch]if(Slow_Mode)
+	if(Slow_Mode)
 		{
 			for (int j=-kSize; j <= kSize; ++j)
 			{
