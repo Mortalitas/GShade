@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.3
+Perfect Perspective PS, version 3.7.4
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -236,7 +236,8 @@ sampler BackBuffer
 // Convert RGB to gray-scale
 float grayscale(float3 Color)
 { return max(max(Color.r, Color.g), Color.b); }
-
+// Convert to sRGB gamma
+float gamma(float grad) { return pow(abs(grad), rcp(2.2)); }
 /**
 Linear pixel step function for anti-aliasing by Jakub Max Fober.
 This algorithm is a part of scientific paper:
@@ -245,7 +246,7 @@ This algorithm is a part of scientific paper:
 float pixStep(float grad)
 {
 	float2 Del = float2(ddx(grad), ddy(grad));
-	return saturate(rsqrt(dot(Del, Del))*grad);
+	return gamma(saturate(rsqrt(dot(Del, Del))*grad));
 }
 
 /**
@@ -443,7 +444,7 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	float3 display = tex2D(BackBuffer, sphCoord).rgb;
 
 	// Apply sRGB gamma
-	vignetteMask = Vignette && !DebugPreview? pow(abs(vignetteMask), rcp(2.2)) : 1.0;
+	vignetteMask = Vignette && !DebugPreview? gamma(vignetteMask) : 1.0;
 
 	// Mask outside-border pixels or mirror
 	if (BorderVignette)
