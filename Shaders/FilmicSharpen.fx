@@ -68,7 +68,7 @@ sampler BackBuffer
 	Texture = ReShade::BackBufferTex;
 	AddressU = MIRROR;
 	AddressV = MIRROR;
-	#if __RENDERER__ < 0xb000 || __RENDERER__ >= 0x10000
+	#if BUFFER_COLOR_BIT_DEPTH == 8
 		SRGBTexture = true;
 	#endif
 };
