@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.5
+Perfect Perspective PS, version 3.7.6
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -237,9 +237,9 @@ sampler BackBuffer
 // Convert RGB to gray-scale
 float grayscale(float3 Color)
 { return max(max(Color.r, Color.g), Color.b); }
-// Convert to sRGB gamma
-float3 gamma(float3 grad) { return pow(abs(grad), rcp(2.2)); }
-float4 gammaLinear(float4 grad) { return pow(abs(grad), 2.2); }
+// Convert to linear gamma
+float3 gamma(float3 grad) { return pow(abs(grad), 2.2); }
+float4 gamma(float4 grad) { return pow(abs(grad), 2.2); }
 /**
 Linear pixel step function for anti-aliasing by Jakub Max Fober.
 This algorithm is a part of scientific paper:
@@ -365,9 +365,9 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 	radialCoord.yw *= RCP_ASPECT;
 
 	// Define Mapping color
-	const float3   underSmpl = float3(1.0, 0.0, 0.2); // Red
-	const float3   superSmpl = float3(0.0, 1.0, 0.5); // Green
-	const float3 neutralSmpl = float3(0.0, 0.5, 1.0); // Blue
+	const float3   underSmpl = gamma(float3(1.0, 0.0, 0.2)); // Red
+	const float3   superSmpl = gamma(float3(0.0, 1.0, 0.5)); // Green
+	const float3 neutralSmpl = gamma(float3(0.0, 0.5, 1.0)); // Blue
 
 	// Calculate Pixel Size difference...
 	float pixelScaleMap = fwidth( length(radialCoord.xy) );
@@ -446,7 +446,7 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	float3 display = tex2D(BackBuffer, sphCoord).rgb;
 
 	// Apply linear gamma to border color
-	float4 BorderColorLinear = gammaLinear(BorderColor);
+	float4 BorderColorLinear = gamma(BorderColor);
 	// Mask outside-border pixels or mirror
 	if (BorderVignette)
 		display = vignetteMask*lerp(
@@ -465,8 +465,6 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 				BorderColorLinear.a
 			), borderMask
 		);
-	// Gamma-correct final image
-	display = gamma(display);
 
 	// Output type choice
 	if (DebugPreview) return DebugViewModePS(display, texCoord, sphCoord);
@@ -493,12 +491,13 @@ technique PerfectPerspective <
 	"For curved-display correction, set it above one.\n\n"
 	"Thirdly, adjust visible borders. You can zoom in the picture and offset to hide borders and reveal UI.\n\n"
 	"Additionally for sharp image, use FilmicSharpen.fx or run the game at Super-Resolution.\n"
-	"Debug options can help you find the proper value."
-; >
+	"Debug options can help you find the proper value.";
+>
 {
 	pass
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = PerfectPerspectivePS;
+		SRGBWriteEnable = true;
 	}
 }
