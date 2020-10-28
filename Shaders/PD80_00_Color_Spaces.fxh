@@ -91,8 +91,8 @@ float3 KelvinToRGB( in float k )
     else
     {
         float t      = kelvin - 60.0f;
-        ret.r        = saturate( 1.29293618606274509804f * pow( t, -0.1332047592f ));
-        ret.g        = saturate( 1.12989086089529411765f * pow( t, -0.0755148492f ));
+        ret.r        = saturate( 1.29293618606274509804f * pow( abs( t ), -0.1332047592f ));
+        ret.g        = saturate( 1.12989086089529411765f * pow( abs( t ), -0.0755148492f ));
     }
     if( kelvin >= 66.0f )
         ret.b        = 1.0f;
