@@ -55,10 +55,9 @@ uniform bool Preview <
 	ui_category_closed = true;
 > = false;
 
-
-  //////////////
- /// SHADER ///
-//////////////
+  ////////////////
+ /// TEXTURES ///
+////////////////
 
 #include "ReShade.fxh"
 
@@ -89,7 +88,7 @@ float Overlay(float LayerA, float LayerB)
 	const float MinB = min(LayerB, 0.5);
 	const float MaxA = max(LayerA, 0.5);
 	const float MaxB = max(LayerB, 0.5);
-	return 2.0 * ((MinA * MinB + MaxA) + (MaxB - MaxA * MaxB)) - 1.5;
+	return 2.0*((MinA*MinB+MaxA)+(MaxB-MaxA*MaxB))-1.5;
 }
 
 // Overlay blending mode for one input
@@ -97,7 +96,7 @@ float Overlay(float LayerAB)
 {
 	const float MinAB = min(LayerAB, 0.5);
 	const float MaxAB = max(LayerAB, 0.5);
-	return 2.0 * ((MinAB * MinAB + MaxAB) + (MaxAB - MaxAB * MaxAB)) - 1.5;
+	return 2.0*((MinAB*MinAB+MaxAB)+(MaxAB-MaxAB*MaxAB))-1.5;
 }
 
 // Convert to linear gamma
@@ -114,25 +113,26 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	const float3 Source = tex2D(BackBuffer, UvCoord).rgb;
 
 	// Generate and apply radial mask
-	float Mask; if (UseMask)
+	float Mask;
+	if (UseMask)
 	{
 		// Generate radial mask
 		Mask = 1.0-length(UvCoord*2.0-1.0);
-		Mask = Overlay(Mask) * Strength;
+		Mask = Overlay(Mask)*Strength;
 		// Bypass
 		if (Mask <= 0) return Source;
 	}
 	else Mask = Strength;
 
 	// Get pixel size
-	const float2 Pixel = BUFFER_PIXEL_SIZE * Offset;
+	const float2 Pixel = BUFFER_PIXEL_SIZE*Offset;
 
 	// Sampling coordinates
 	const float2 NorSouWesEst[4] = {
-		float2(UvCoord.x, UvCoord.y + Pixel.y),
-		float2(UvCoord.x, UvCoord.y - Pixel.y),
-		float2(UvCoord.x + Pixel.x, UvCoord.y),
-		float2(UvCoord.x - Pixel.x, UvCoord.y)
+		float2(UvCoord.x, UvCoord.y+Pixel.y),
+		float2(UvCoord.x, UvCoord.y-Pixel.y),
+		float2(UvCoord.x+Pixel.x, UvCoord.y),
+		float2(UvCoord.x-Pixel.x, UvCoord.y)
 	};
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
@@ -148,14 +148,14 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	for(int i=0; i<4; i++)
 		HighPass += dot(tex2D(BackBuffer, NorSouWesEst[i]).rgb, LumaCoefficient);
 
-	HighPass = 0.5 - 0.5 * (HighPass * 0.25 - dot(Source, LumaCoefficient));
+	HighPass = 0.5-0.5*(HighPass*0.25-dot(Source, LumaCoefficient));
 
 	// Sharpen strength
 	HighPass = lerp(0.5, HighPass, Mask);
 
 	// Clamping sharpen
 	if (Clamp != 1.0)
-		HighPass = clamp(HighPass, 1.0 - Clamp, Clamp);
+		HighPass = clamp(HighPass, 1.0-Clamp, Clamp);
 
 	if (Preview)
 		return gamma(HighPass);
@@ -168,9 +168,9 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 }
 
 
-	  //////////////
-	 /// OUTPUT ///
-	//////////////
+  //////////////
+ /// OUTPUT ///
+//////////////
 
 technique FilmicSharpen < ui_label = "Filmic Sharpen"; >
 {
@@ -178,5 +178,6 @@ technique FilmicSharpen < ui_label = "Filmic Sharpen"; >
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FilmicSharpenPS;
+		SRGBWriteEnable = true;
 	}
 }
