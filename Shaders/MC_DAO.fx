@@ -43,16 +43,23 @@ uniform int NumSamples <
 	ui_label = "Number of samples";
 > = 8;
 
+uniform float ReduceRadiusJitter <
+	ui_type = "slider";
+	ui_min = 0; ui_max = 1; ui_step = 0.1;
+	ui_tooltip = "Less accurate AO, but also less noisy.\nrecommended: 0.2";
+	ui_label = "Limit radius jitter";
+> = 0.2;
+
 uniform float StartFade <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 3.0; ui_step = 0.1;
-	ui_tooltip = "AO starts fading when Z difference is greater than this\nmust be bigger than \"Z difference end fade\"\nrecommended: 0.5";
+	ui_min = 0.0; ui_max = 300.0; ui_step = 0.1;
+	ui_tooltip = "AO starts fading when Z difference is greater than this\nmust be bigger than \"Z difference end fade\"\nrecommended: 0.4";
 	ui_label = "Z difference start fade";
-> = 0.5;
+> = 0.4;
 
 uniform float EndFade <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 3.0; ui_step = 0.1;
+	ui_min = 0.0; ui_max = 300.0; ui_step = 0.1;
 	ui_tooltip = "AO completely fades when Z difference is greater than this\nmust be bigger than \"Z difference start fade\"\nrecommended: 0.6";
 	ui_label = "Z difference end fade";
 > = 0.6;
@@ -111,6 +118,26 @@ uniform float DepthShrink <
 		ui_label = "Depth shrink";
         ui_tooltip = "Higher values cause AO to become finer on distant objects\nrecommended: 0.65";
 > = 0.65;
+
+
+// DepthStartFade does not change much visually
+
+/*
+uniform float DepthStartFade <
+		ui_type = "slider";
+		ui_min = 0.0; ui_max = 4000.0; ui_step = 1.0;
+		ui_label = "Depth start fade";
+        ui_tooltip = "Start fading AO at this Z value";
+> = 0.0;
+*/
+
+uniform int DepthEndFade <
+		ui_type = "slider";
+		ui_min = 0; ui_max = 4000;
+		ui_label = "Depth end fade";
+        ui_tooltip = "AO completely fades at this Z value\nrecommended: 1000";
+> = 1000;
+
 
 #include "ReShade.fxh"
 
@@ -231,37 +258,35 @@ float2 ensure_1px_offset(float2 ray)
 }
 
 float3 MadCakeDiskAOPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
-{
+{	
 	const float3 position = GetPosition(texcoord);
 	const float3 normal = GetNormalFromDepth(texcoord);
-
+	
 	const int num_samples = clamp(NumSamples, 1, 64);
 	const int sample_dist = clamp(SampleDistance, 1, 128);
-	const float start_fade = clamp(StartFade, 0.0, 3.0);
 	const float normal_bias = clamp(NormalBias, 0.0, 1.0);
-
-	float occlusion = 0;
-	const float fade_range = clamp(EndFade, 0.0, 3.0) - start_fade;
-
+	
+	float occlusion = 0.0;
+	const float fade_range = EndFade - StartFade;
+	
 	const float angle_jitter_minor = rand2D(texcoord);
-	const float angle_jitter_major = rand2D(texcoord + float2(-1, 0)) * 3.1415 * 2.0 * 0;
+	const float angle_jitter_major = rand2D(texcoord + float2(-1, 0)) * 3.1415 * 2.0;
 
 	[loop]
 	for (int i = 0; i < num_samples; i++)
 	{
 		float angle = 3.1415 * 2.0 / num_samples * (i + angle_jitter_minor) + angle_jitter_major;
-		float radius_jitter = rand2D(texcoord + float2(i, 1));
-		float radius_coef = max((i + radius_jitter) / num_samples, 0.001);
-		float3 v = GetPosition(texcoord + ensure_1px_offset((((float2(sin(angle), cos(angle)) * BUFFER_PIXEL_SIZE * sample_dist) / (1.0 + position.z * lerp(0, 0.05, pow(DepthShrink,4)))) * radius_coef))) - position;
-		float ray_occlusion = saturate((pow(abs(dot(normal, normalize(v))), NormalPower) - normal_bias) / (1.0 - normal_bias));
+		float2 ray = ensure_1px_offset(((float2(sin(angle), cos(angle)) * (BUFFER_PIXEL_SIZE * sample_dist)) / (1.0 + position.z * lerp(0, 0.05, pow(DepthShrink,4)))) * lerp(max(0.001, ReduceRadiusJitter), 1.0, rand2D(texcoord + float2(i, 1))));
+		float3 v = GetPosition(texcoord + ray) - position;
+		float ray_occlusion = (pow(max(dot(normal, normalize(v)), 0.0), NormalPower) - normal_bias) / (1.0 - normal_bias);
 		float zdiff = abs(v.z);
-		if (zdiff >= start_fade)
+		if (zdiff >= StartFade)
 		{
-			ray_occlusion *= saturate(1.0 - (zdiff - start_fade) / fade_range);
+			ray_occlusion *= saturate(1.0 - (zdiff - StartFade) / fade_range);
 		}
 		occlusion += ray_occlusion / num_samples;
 	}
-	return saturate(1.0 - occlusion * Strength);
+	return saturate(1.0 - (occlusion * saturate(1.0 - (position.z / DepthEndFade))) * Strength);
 }
 
 technique MC_DAO

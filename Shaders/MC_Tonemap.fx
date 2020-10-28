@@ -80,12 +80,13 @@ float3 MadCakeToneMapPass(float4 vpos : SV_Position, float2 texcoord : TexCoord)
 	color.g = color.g * (r_fix + 1.0) / (color.g + r_fix);
 	color.b = color.b * (r_fix + 1.0) / (color.b + r_fix);
 
+	color.rgb = color.rgb - BlackLevel;
 	if (DeGamma)
 	{
 		color.rgb = pow(abs(color.rgb), 2.2);
 	}
 
-	return color.rgb - BlackLevel;
+	return color;
 }
 
 technique MC_ToneMap
