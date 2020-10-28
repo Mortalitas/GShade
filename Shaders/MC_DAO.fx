@@ -141,8 +141,8 @@ uniform int DepthEndFade <
 
 #include "ReShade.fxh"
 
-texture2D AOTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R16F; MipLevels = 1;};
-texture2D AOTex2	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R16F; MipLevels = 1;};
+texture2D AOTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R8; MipLevels = 1;};
+texture2D AOTex2	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R8; MipLevels = 1;};
 
 sampler2D sAOTex { Texture = AOTex; };
 sampler2D sAOTex2 { Texture = AOTex2; };
@@ -243,7 +243,7 @@ float3 BlurAOVerticalPass(float4 vpos : SV_Position, float2 texcoord : TexCoord)
 		return sum;
 	}
 
-	return pow(abs(pow(abs(tex2D(ReShade::BackBuffer, texcoord).rgb), 1.0 / Gamma) * sum), Gamma);
+	return tex2D(ReShade::BackBuffer, texcoord).rgb * sum;
 }
 
 float2 ensure_1px_offset(float2 ray)
@@ -270,7 +270,7 @@ float3 MadCakeDiskAOPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
 	const float fade_range = EndFade - StartFade;
 	
 	const float angle_jitter_minor = rand2D(texcoord);
-	const float angle_jitter_major = rand2D(texcoord + float2(-1, 0)) * 3.1415 * 2.0;
+	const float angle_jitter_major = rand2D(texcoord + float2(-1, 0)) * 3.1415 * 2.0 * 0.0;
 
 	[loop]
 	for (int i = 0; i < num_samples; i++)
@@ -286,7 +286,7 @@ float3 MadCakeDiskAOPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
 		}
 		occlusion += ray_occlusion / num_samples;
 	}
-	return saturate(1.0 - (occlusion * saturate(1.0 - (position.z / DepthEndFade))) * Strength);
+	return pow(saturate(1.0 - (occlusion * saturate(1.0 - (position.z / DepthEndFade))) * Strength), Gamma);
 }
 
 technique MC_DAO
