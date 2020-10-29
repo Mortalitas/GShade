@@ -1,9 +1,10 @@
 /*
 Filmic Anamorph Sharpen PS v1.4.7 (c) 2018 Jakub Maximilian Fober
+Some changes by ccritchfield https://github.com/ccritchfield
 
-This work is licensed under the Creative Commons 
-Attribution-ShareAlike 4.0 International License. 
-To view a copy of this license, visit 
+This work is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License.
+To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
 // Lightly optimized by Marot Satil for the GShade project.
@@ -75,10 +76,9 @@ uniform bool Preview <
 	ui_category_closed = true;
 > = false;
 
-
-  //////////////
- /// SHADER ///
-//////////////
+  ////////////////
+ /// TEXTURES ///
+////////////////
 
 #include "ReShade.fxh"
 
@@ -112,14 +112,6 @@ float Overlay(float LayerA, float LayerB)
 	return 2.0 * (MinA * MinB + MaxA + MaxB - MaxA * MaxB) - 1.5;
 }
 
-// Convert to linear gamma
-float gamma(float grad) { return pow(abs(grad), 2.2); }
-float3 gamma(float3 grad) { return pow(abs(grad), 2.2); }
-
-  //////////////
- /// SHADER ///
-//////////////
-
 // Overlay blending mode for one input
 float Overlay(float LayerAB)
 {
@@ -127,6 +119,14 @@ float Overlay(float LayerAB)
 	const float MaxAB = max(LayerAB, 0.5);
 	return 2.0 * (MinAB * MinAB + MaxAB + MaxAB - MaxAB * MaxAB) - 1.5;
 }
+
+// Convert to linear gamma
+float gamma(float grad) { return pow(abs(grad), 2.2); }
+float3 gamma(float3 grad) { return pow(abs(grad), 2.2); }
+
+  //////////////
+ /// SHADER ///
+//////////////
 
 // Sharpen pass
 float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV_Target
@@ -148,16 +148,21 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 
 	// Get pixel size
 	float2 Pixel = BUFFER_PIXEL_SIZE;
-
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
 	float3 LumaCoefficient;
 	if (bool(Coefficient))
 		LumaCoefficient = Luma601;
 	else
 		LumaCoefficient = Luma709;
-	
+
 	if (DepthMask)
 	{
+		/*
+		// original
+		float2 DepthPixel = Pixel*Offset + Pixel;
+		Pixel *= Offset;
+		*/
+
 		// !!! calc pixel*offset once, use twice
 		const float2 PixelOffset = Pixel * Offset;
 		const float2 DepthPixel = PixelOffset + Pixel;
@@ -183,10 +188,10 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		// Luma high-pass color
 		// Luma high-pass depth
 		float HighPassColor = 0.0, DepthMask = 0.0;
-	
+
 		[unroll]for(int s = 0; s < 4; s++)
 		{
-			HighPassColor += dot(tex2D(ReShade::BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
+			HighPassColor += dot(tex2D(BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
 			DepthMask += ReShade::GetLinearizedDepth(NorSouWesEst[s])
 			+ ReShade::GetLinearizedDepth(DepthNorSouWesEst[s]);
 		}
@@ -199,6 +204,12 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 
 		// Sharpen strength
 		HighPassColor = lerp(0.5, HighPassColor, Mask * DepthMask);
+
+		// Clamping sharpen
+		/*
+		// original
+		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
+		*/
 
 		// !!! Clamp in settings above is restricted to 0.5 to 1.0
 		// !!! 1.0 - Clamp is the low value, while Clamp is the high value
@@ -219,8 +230,8 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		{
 			const float PreviewChannel = lerp(HighPassColor, HighPassColor * DepthMask, 0.5);
 			return gamma(float3(
-				1.0 - DepthMask * (1.0 - HighPassColor), 
-				PreviewChannel, 
+				1.0 - DepthMask * (1.0 - HighPassColor),
+				PreviewChannel,
 				PreviewChannel
 			));
 		}
@@ -243,7 +254,7 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		[unroll]
 		for(int s = 0; s < 4; s++)
 			HighPassColor += dot(tex2D(BackBuffer, NorSouWesEst[s]).rgb, LumaCoefficient);
-			
+
 		// !!! added space above to make it more obvious
 		// !!! that loop is now a one-liner in this else branch
 		// !!! where-as loop in branch above was multi-part
@@ -252,6 +263,12 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		// Sharpen strength
 		HighPassColor = lerp(0.5, HighPassColor, Mask);
 
+		// Clamping sharpen
+		/*
+		// original
+		HighPassColor = (Clamp != 1.0) ? max(min(HighPassColor, Clamp), 1.0 - Clamp) : HighPassColor;
+		*/
+
 		// !!! Clamp in settings above is restricted to 0.5 to 1.0
 		// !!! 1.0 - Clamp is the low value, while Clamp is the high value
 		// !!! so we can literally just use the clamp() func instead of min/max.
@@ -259,19 +276,17 @@ float3 FilmicAnamorphSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOO
 		// !!! compiler "cheat" using min/max instead of clamp to improve
 		// !!! performance. doesn't make sense to min/max otherwise.
 		if (Clamp != 1.0)
-			HighPassColor = clamp(HighPassColor, 1.0 - Clamp, Clamp);
-
-		const float3 Sharpen = float3(
-			Overlay(Source.r, HighPassColor),
-			Overlay(Source.g, HighPassColor),
-			Overlay(Source.b, HighPassColor)
-		);
+			HighPassColor = clamp( HighPassColor, 1.0 - Clamp, Clamp );
 
 		// Preview mode ON
 		if (Preview)
 			return gamma(HighPassColor);
 		else
-			return float3(Overlay(Source.r, HighPassColor), Overlay(Source.g, HighPassColor), Overlay(Source.b, HighPassColor));
+			return float3(
+			Overlay(Source.r, HighPassColor),
+			Overlay(Source.g, HighPassColor),
+			Overlay(Source.b, HighPassColor)
+			);
 	}
 }
 
