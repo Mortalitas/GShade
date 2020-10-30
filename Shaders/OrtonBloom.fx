@@ -37,11 +37,11 @@ uniform float BlendStrength <
 
 #include "ReShade.fxh"
 
-texture GaussianBlurTex { Width = BUFFER_WIDTH / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Height = BUFFER_HEIGHT / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Format = RGBA8; };
-sampler GaussianBlurSampler { Texture = GaussianBlurTex; };
+texture OrtonGaussianBlurTex { Width = BUFFER_WIDTH / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Height = BUFFER_HEIGHT / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Format = RGBA8; };
+sampler OrtonGaussianBlurSampler { Texture = OrtonGaussianBlurTex; };
 
-texture GaussianBlurTex2 { Width = BUFFER_WIDTH / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Height = BUFFER_HEIGHT / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Format = RGBA8; };
-sampler GaussianBlurSampler2 { Texture = GaussianBlurTex2; };
+texture OrtonGaussianBlurTex2 { Width = BUFFER_WIDTH / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Height = BUFFER_HEIGHT / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Format = RGBA8; };
+sampler OrtonGaussianBlurSampler2 { Texture = OrtonGaussianBlurTex2; };
 
 float CalcLuma(float3 color)
 {
@@ -73,7 +73,7 @@ float3 GaussianBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 
 float3 GaussianBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : SV_Target
 {
-	float3 color = tex2D(GaussianBlurSampler, texcoord).rgb;
+	float3 color = tex2D(OrtonGaussianBlurSampler, texcoord).rgb;
 	const float blurPower = CalcLuma(color);
 
 	const float offset[18] = { 0.0, 1.4953705027, 3.4891992113, 5.4830312105, 7.4768683759, 9.4707125766, 11.4645656736, 13.4584295168, 15.4523059431, 17.4461967743, 19.4661974725, 21.4627427973, 23.4592916956, 25.455844494, 27.4524015179, 29.4489630909, 31.445529535, 33.4421011704 };
@@ -84,8 +84,8 @@ float3 GaussianBlur2(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 	[loop]
 	for(int i = 1; i < 18; ++i)
 	{
-		color += tex2D(GaussianBlurSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * blurPower * BlurMulti).rgb * weight[i];
-		color += tex2D(GaussianBlurSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * blurPower * BlurMulti).rgb * weight[i];
+		color += tex2D(OrtonGaussianBlurSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * blurPower * BlurMulti).rgb * weight[i];
+		color += tex2D(OrtonGaussianBlurSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * blurPower * BlurMulti).rgb * weight[i];
 	}
 
 	return saturate(color);
@@ -108,7 +108,7 @@ float3 LevelsAndBlend(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : S
 		mid_point_float = black_point_float;
 
 	const float3 original = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	const float3 color = (tex2D(GaussianBlurSampler2, texcoord).rgb * white_point_float - (black_point_float * white_point_float)) * mid_point_float;
+	const float3 color = (tex2D(OrtonGaussianBlurSampler2, texcoord).rgb * white_point_float - (black_point_float * white_point_float)) * mid_point_float;
 
 	return saturate(max(0.0, max(original, lerp(original, (1 - (1 - saturate(color)) * (1 - saturate(color))), BlendStrength))));
 }
@@ -119,13 +119,13 @@ technique OrtonBloom
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = GaussianBlur1;
-		RenderTarget = GaussianBlurTex;
+		RenderTarget = OrtonGaussianBlurTex;
 	}
 	pass GaussianBlur2
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = GaussianBlur2;
-		RenderTarget = GaussianBlurTex2;
+		RenderTarget = OrtonGaussianBlurTex2;
 	}
 	pass LevelsAndBlend
 	{
