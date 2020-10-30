@@ -31,7 +31,7 @@ uniform float Strength <
 	ui_min = 0.0; ui_max = 16.0; ui_step = 0.1;
 	ui_tooltip = "Strength of the effect (recommended 1.0 to 2.0)";
 	ui_label = "Strength";
-> = 2.0;
+> = 1.4;
 
 uniform int SampleDistance <
 	ui_type = "slider";
@@ -83,9 +83,9 @@ uniform int Bilateral <
 uniform int BlurRadius <
 	ui_type = "slider";
 	ui_min = 1.0; ui_max = 32.0;
-	ui_tooltip = "Blur radius (in pixels)\nrecommended: 4";
+	ui_tooltip = "Blur radius (in pixels)\nrecommended: 3 or 4";
 	ui_label = "Blur radius";
-> = 4.0;
+> = 3.0;
 
 uniform float BlurQuality <
 		ui_type = "slider";
@@ -216,6 +216,7 @@ float BlurAOFirstPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
 	}
 
 	const float normal_bias = clamp(NormalBias, 0.0, 1.0);
+	const int bilateral = clamp(Bilateral, 0, 2);
 
 	float range = clamp(BlurRadius, 1, 32);
 	const float fade_range = EndFade - StartFade;
@@ -233,7 +234,7 @@ float BlurAOFirstPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
 	
 	float4 my_normal;
 
-	if (Bilateral)
+	if (bilateral)
 	{
 		my_normal = GetNormalFromTexture(texcoord);
 	}
@@ -259,7 +260,7 @@ float BlurAOFirstPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
 	{
 		float weight = weights[abs(k)];
 		
-		if (Bilateral == 1)
+		if (bilateral)
 		{
 			float4 normal = GetNormalFromTexture(texcoord + off * k);
 			weight *= saturate((dot(my_normal.xyz, normal.xyz) - normal_bias) / (1.0 - normal_bias));
@@ -284,9 +285,10 @@ float BlurAOFirstPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
 	{
 		float weight = weights[abs(k)];
 
-		if (Bilateral)
+		if (bilateral)
 		{
-			float4 normal = GetNormalFromTexture(texcoord - off * k);
+			float4 normal = GetNormalFromTexture(texcoord + off * k);
+			normal *= pow(saturate((dot(my_normal.xyz, normal.xyz) - normal_bias) / (1.0 - normal_bias)), NormalPower);
 			weight *= max(0.0, dot(my_normal.xyz, normal.xyz));
 			float zdiff = abs(my_normal.w - normal.w);
 			if (zdiff >= StartFade)
@@ -316,6 +318,7 @@ float3 BlurAOSecondPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) :
 		return tex2D(sAOTex2, texcoord).r;
 	}
 
+	const int bilateral = clamp(Bilateral, 0, 2);
 	const float normal_bias = clamp(NormalBias, 0.0, 1.0);
 
 	float range = clamp(BlurRadius, 1, 32);
@@ -334,7 +337,7 @@ float3 BlurAOSecondPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) :
 
 	float4 my_normal;
 
-	if (Bilateral)
+	if (bilateral)
 	{
 		my_normal = GetNormalFromTexture(texcoord);
 	}
@@ -360,7 +363,7 @@ float3 BlurAOSecondPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) :
 	{
 		float weight = weights[abs(k)];
 
-		if (Bilateral)
+		if (bilateral)
 		{
 			float4 normal = GetNormalFromTexture(texcoord + off * k);
 			weight *= max(0.0, dot(my_normal.xyz, normal.xyz));
@@ -386,9 +389,10 @@ float3 BlurAOSecondPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) :
 	{
 		float weight = weights[abs(k)];
 
-		if (Bilateral)
+		if (bilateral)
 		{
 			float4 normal = GetNormalFromTexture(texcoord - off * k);
+			normal *= pow(saturate((dot(my_normal.xyz, normal.xyz) - normal_bias) / (1.0 - normal_bias)), NormalPower);
 			weight *= saturate((dot(my_normal.xyz, normal.xyz) - normal_bias) / (1.0 - normal_bias));
 			float zdiff = abs(my_normal.w - normal.w);
 			if (zdiff >= StartFade)
