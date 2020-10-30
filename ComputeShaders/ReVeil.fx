@@ -1,44 +1,4 @@
-#include "Reshade.fxh"
-
-/*
-ReVeil for Reshade
-By: Lord of Lunacy
-
-
-This shader attempts to remove fog using a dark channel prior technique that has been
-refined using 2 passes over an iterative guided Wiener filter ran on the image dark channel.
-
-The purpose of the Wiener filters is to minimize the root mean square error between
-the given dark channel, and the true dark channel, making the removal more accurate.
-
-The airlight of the image is estimated by using the max values that appears in the each
-window of the dark channel. This window is then averaged together with every mip level
-that is larger than the current window size.
-
-Koschmeider's airlight equation is then used to remove the veil from the image, and the inverse
-is applied to reverse this affect, blending any new image components with the fog.
-
-
-This method was adapted from the following paper:
-Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using the adaptive Wiener filter.
-2013 IEEE International Conference on Image Processing, ICIP 2013 - Proceedings. 714-718. 10.1109/ICIP.2013.6738147. 
-*/
-
-#ifndef WINDOW_SIZE
-	#define WINDOW_SIZE 15
-#endif
-
-#if WINDOW_SIZE > 1023
-	#undef WINDOW_SIZE
-	#define WINDOW_SIZE 1023
-#endif
-
-#ifndef SECOND_PASS
-	#define SECOND_PASS 0
-#endif
-
-#define WINDOW_SIZE_SQUARED (WINDOW_SIZE * WINDOW_SIZE)
-
+#include "ReShade.fxh"
 
 #define CONST_LOG2(x) (\
     (uint((x) & 0xAAAAAAAA) != 0) | \
@@ -63,30 +23,17 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 
 #define MAX_MIP (FOGREMOVAL_GET_MAX_MIP(BUFFER_WIDTH * 2 - 1, BUFFER_HEIGHT * 2 - 1))
 
-texture BackBuffer : COLOR;
+#define REVEIL_WINDOW_SIZE 16
+#define REVEIL_WINDOW_SIZE_SQUARED 256
+#define RENDERER __RENDERER__
 
-texture DarkChannel <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture MeanAndVariance <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG32f;};
-texture Mean <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
-texture Variance <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
-texture Airlight {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture FogRemoved {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
-texture TruncatedPrecision {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
-texture Maximum0 <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture Maximum1 <Pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
-
-sampler sBackBuffer {Texture = BackBuffer;};
-sampler sDarkChannel {Texture = DarkChannel;};
-sampler sMeanAndVariance {Texture = MeanAndVariance;};
-sampler sMean {Texture = Mean;};
-sampler sVariance {Texture = Variance;};
-sampler sTransmission {Texture = Transmission;};
-sampler sAirlight {Texture = Airlight;};
-sampler sTruncatedPrecision {Texture = TruncatedPrecision;};
-sampler sFogRemoved {Texture = FogRemoved;};
-sampler sMaximum0 {Texture = Maximum0;};
-sampler sMaximum1 {Texture = Maximum1;};
+#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >40800)
+	#ifndef REVEIL_COMPUTE
+	#define REVEIL_COMPUTE 1
+	#endif
+#else
+#define REVEIL_COMPUTE 0
+#endif
 
 uniform float TransmissionMultiplier<
 	ui_type = "slider";
@@ -106,28 +53,239 @@ uniform float DepthMultiplier<
 	ui_min = -1; ui_max = 1;
 	ui_step = 0.001;
 > = -0.075;
-
-uniform float SkyAlpha<
-	ui_type = "slider";
-	ui_label = "Sky Alpha";
-	ui_min = 0; ui_max = 1;
-	ui_step = 0.001;
-> = 1;
-
-
-void DarkChannelPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float darkChannel : SV_TARGET0)
+texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+namespace ReVeilCS
 {
-	float3 color = tex2D(sBackBuffer, texcoord).rgb;
-	color = (color);
+texture BackBuffer : COLOR;
+texture Mean <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+texture Variance <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
+texture Airlight {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+texture OriginalImage {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGB10A2;};
+
+#if REVEIL_COMPUTE == 1
+texture Maximum <Pooled = true;> {Width = ((BUFFER_WIDTH - 1) / 16) + 1; Height = ((BUFFER_HEIGHT - 1) / 16) + 1; Format = R8; MipLevels = MAX_MIP - 4;};
+#else
+texture MeanAndVariance <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16f;};
+texture Maximum0 <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+texture Maximum <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+
+sampler sMeanAndVariance {Texture = MeanAndVariance;};
+sampler sMaximum0 {Texture = Maximum0;};
+#endif
+
+sampler sBackBuffer {Texture = BackBuffer;};
+sampler sMean {Texture = Mean;};
+sampler sVariance {Texture = Variance;};
+sampler sMaximum {Texture = Maximum;};
+sampler sTransmission {Texture = Transmission;};
+sampler sAirlight {Texture = Airlight;};
+sampler sOriginalImage {Texture = OriginalImage;};
+
+#if REVEIL_COMPUTE == 1
+storage wMean {Texture = Mean;};
+storage wVariance {Texture = Variance;};
+storage wMaximum {Texture = Maximum;};
+storage wTransmission {Texture = Transmission;};
+storage wAirlight {Texture = Airlight;};
+storage wOriginalImage {Texture = OriginalImage;};
+
+groupshared float2 prefixSums[1024];
+groupshared uint maximum;
+void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
+{
+	uint2 groupCoord = id.xy - tid.xy;
+	if(tid.x == 0)
+	{
+		maximum = 0;
+	}
+	barrier();
+	uint index[5];
+	/*int x[4] = {int(tid.x), int(31 - tid.x), int(tid.x), int(31 - tid.x)};
+	int y[4] = {int(tid.y), int(tid.y), int(31 - tid.y), int(31 - tid.y)};*/
+	int x[4] = {int(tid.x), int(tid.x + 16), int(tid.x), int(tid.x + 16)};
+	int y[4] = {int(tid.y), int(tid.y), int(tid.y + 16), int(tid.y + 16)};
+	index[0] = y[0] * 32 + x[0];
+	index[1] = y[1] * 32 + x[1];
+	index[2] = y[2] * 32 + x[2];
+	index[3] = y[3] * 32 + x[3];
+	index[4] = index[0] + 264;
+	/*int a[4] = {int(int(tid.x) - 8), int(23 - int(tid.x)), int(int(tid.x) - 8), int(23 - int(tid.x))};
+	int b[4] = {int(int(tid.y) - 8), int(int(tid.y) - 8), int(23 - int(tid.y)), int(23 - int(tid.y))};
+
+	/*index[0] = tid.y * 32 + tid.x;
+	index[1] = index[0] + 16;
+	index[2] = index[0] + 512;
+	index[3] = index[0] + 528;
+	index[4] = index[0] + 264;*/
+	int a[4] = {int(int(tid.x) - 8), int(int(tid.x) + 8), int(int(tid.x) - 8), int(int(tid.x) + 8)};
+	int b[4] = {int(int(tid.y) - 8), int(int(tid.y) - 8), int(int(tid.y) + 8), int(int(tid.y) + 8)};
+	/**/
+	float3 originalImage;
+	float2 sum[4];
+	[unroll]
+	for(int i = 0; i < 4; i++)
+	{
+		int2 coord = groupCoord + int2(a[i], b[i]);
+		float3 color = tex2Dfetch(sBackBuffer, coord).rgb;
+		float minimum = min(min(color.r, color.b), color.g);
+		sum[i] = float2(minimum, minimum * minimum);
+		prefixSums[index[i]] = sum[i];
+		if(i == 0)
+		{
+			atomicMax(maximum, uint((prefixSums[index[i]].r) * 255));
+		}
+		//maximum[i] = minimum * 256;
+		//atomicMax(maximum, uint((prefixSums[index[i]].r) * 255));
+	}
+	barrier();
+
+	if(all(tid==0))
+	{
+		uint2 coord = id.xy / 16;
+		tex2Dstore(wMaximum, coord, float4((float(maximum) * 1) / 255, 0, 0, 0));
+	}
 	
-	darkChannel = min(min(color.r, color.g), color.b);
+	[unroll]
+	for(int j = 0; j < 5; j++)
+	{
+		
+		/*[unroll]
+		for(int i = 0; i < 4; i++)
+		{
+			sum[i] = prefixSums[index[i]];
+		}*/
+		[unroll]
+		for(int i = 0; i < 4; i++)
+		{
+			int address = index[i];
+			//sum[i] = prefixSums[address];
+			
+			int access = x[i] - exp2(j);
+			access += y[i] * 32;
+			if(x[i] >= exp2(j))
+			{
+			sum[i] += prefixSums[access];
+			}
+		}
+		groupMemoryBarrier();
+		[unroll]
+		for(int i = 0; i < 4; i++)
+		{
+			int address = index[i];
+			prefixSums[address] = sum[i];
+		}
+		barrier();
+	}
+	
+	[unroll]
+	for(int j = 0; j < 5; j++)
+	{
+		/*[unroll]
+		for(int i = 0; i < 4; i++)
+		{
+			sum[i] = prefixSums[index[i]];
+		}*/
+
+		[unroll]
+		for(int i = 0; i < 4; i++)
+		{
+			int address = index[i];
+			
+			//int access = 32 * (int(y[i]) - (exp2(j))) + x[i];
+			int access = y[i] - exp2(j);
+			access *= 32;
+			access += x[i];
+			if(y[i] >= exp2(j))
+			{
+			sum[i] += prefixSums[access];
+			}
+		}
+		groupMemoryBarrier();
+		[unroll]
+		for(int i = 0; i < 4; i++)
+		{
+			int address = index[i];
+			prefixSums[address] = sum[i];
+		}
+		barrier();
+	}
+	//uint4 corners = uint4(index[4] + 264, index[4] - 248, index[4] + 248, index[4] - 264);
+	//float2 sums = prefixSums[corners.x] - prefixSums[corners.y] - prefixSums[corners.z] + prefixSums[corners.w];
+	float2 sums = sum[3] - sum[2] - sum[1] + sum[0];
+	float mean = sums.x / 256;
+	float variance = ((sums.y) - ((sums.x * sums.x) / 256));
+	variance /= 256;
+	
+
+	
+		tex2Dstore(wMean, id.xy, float4(mean, 0, 0, 0));
+		tex2Dstore(wVariance, id.xy, float4(variance, 0, 0, 0));
 }
 
-void DarkChannelPS1(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float darkChannel : SV_TARGET0)
+void WienerFilterCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 {
-	float3 color = tex2D(sFogRemoved, texcoord).rgb;
-	darkChannel = min(min(color.r, color.g), color.b);
+	float2 texcoord = id.xy / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+	float mean = tex2Dfetch(sMean, id.xy).r;
+	float variance = tex2Dfetch(sVariance, id.xy).r;
+	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
+	float3 color = tex2Dfetch(sBackBuffer, id.xy).rgb;
+	float darkChannel = min(min(color.r, color.g), color.b);
+	float maximum = 0;
+	
+	tex2Dstore(wOriginalImage, id.xy, float4(color, 1));
+	
+	[unroll]
+	for(int i = 0; i < MAX_MIP - 4; i++)
+	{
+		maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
+	}
+	maximum /= MAX_MIP - 5;	
+	
+	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
+	float veil = saturate(mean + filter);
+	//filter = ((variance - noise) / variance) * (darkChannel - mean);
+	//mean += filter;
+	float usedVariance = variance;
+	
+	float airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
+	tex2Dstore(wAirlight, id.xy, float4(airlight, 0, 0, 0));
+	float transmission = (1 - ((veil * darkChannel) / airlight));
+	transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
+	transmission *= exp(TransmissionMultiplier);
+	tex2Dstore(wTransmission, id.xy, float4(transmission, 0, 0, 0));
 }
+
+void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1, out float4 originalImage : SV_TARGET2)
+{
+	float mean = tex2D(sMean, texcoord).r;
+	float variance = tex2D(sVariance, texcoord).r;
+	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
+	float3 color = tex2D(sBackBuffer, texcoord).rgb;
+	float darkChannel = min(min(color.r, color.g), color.b);
+	float maximum = 0;
+	
+	[unroll]
+	for(int i = 1; i < MAX_MIP - 4; i++)
+	{
+		maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
+	}
+	maximum /= MAX_MIP - 5;	
+	
+	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
+	float veil = saturate(mean + filter);
+	//filter = ((variance - noise) / variance) * (darkChannel - mean);
+	//mean += filter;
+	float usedVariance = variance;
+	
+	airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
+	transmission = (1 - ((veil * darkChannel) / airlight));
+	transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
+	transmission *= exp(TransmissionMultiplier);
+
+     originalImage = float4(color, 1);   
+
+}
+#else
 
 void MeanAndVariancePS0(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float2 meanAndVariance : SV_TARGET0, out float maximum : SV_TARGET1)
 {
@@ -135,10 +293,11 @@ void MeanAndVariancePS0(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, o
 	float sum = 0;
 	float squaredSum = 0;
 	maximum = 0;
-	for(int i = -(WINDOW_SIZE / 2); i < ((WINDOW_SIZE + 1) / 2); i++)
+	for(int i = -(REVEIL_WINDOW_SIZE / 2); i < ((REVEIL_WINDOW_SIZE + 1) / 2); i++)
 	{
 			float2 offset = float2(i * BUFFER_RCP_WIDTH, 0);
-			darkChannel = tex2D(sDarkChannel, texcoord + offset).r;
+			float3 color = tex2D(sBackBuffer, texcoord + offset).rgb;
+			darkChannel = min(min(color.r, color.g), color.b);
 			float darkChannelSquared = darkChannel * darkChannel;
 			float darkChannelCubed = darkChannelSquared * darkChannel;
 			sum += darkChannel;
@@ -155,10 +314,8 @@ void MeanAndVariancePS1(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, o
 	float2 meanAndVariance;
 	float sum = 0;
 	float squaredSum = 0;
-	float cubedSum = 0;
-	float quadSum = 0;
 	maximum = 0;
-	for(int i = -(WINDOW_SIZE / 2); i < ((WINDOW_SIZE + 1) / 2); i++)
+	for(int i = -(REVEIL_WINDOW_SIZE / 2); i < ((REVEIL_WINDOW_SIZE + 1) / 2); i++)
 	{
 			float2 offset = float2(0, i * BUFFER_RCP_HEIGHT);
 			meanAndVariance = tex2D(sMeanAndVariance, texcoord + offset).rg;
@@ -168,45 +325,26 @@ void MeanAndVariancePS1(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, o
 	}
 	float sumSquared = sum * sum;
 	
-	mean = sum / WINDOW_SIZE_SQUARED;
-	variance = (squaredSum - ((sumSquared) / WINDOW_SIZE_SQUARED));
-	variance /= WINDOW_SIZE_SQUARED;
+	mean = sum / REVEIL_WINDOW_SIZE_SQUARED;
+	variance = (squaredSum - ((sumSquared) / REVEIL_WINDOW_SIZE_SQUARED));
+	variance /= REVEIL_WINDOW_SIZE_SQUARED;
 }
 
-void MeanAndVariancePS2(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float variance : SV_TARGET0, out float maximum : SV_TARGET1)
-{
-	float2 meanAndVariance;
-	float sum = 0;
-	float squaredSum = 0;
-	maximum = 0;
-	
-	for(int i = -(WINDOW_SIZE / 2); i < ((WINDOW_SIZE + 1) / 2); i++)
-	{
-			float2 offset = float2(0, i * BUFFER_RCP_HEIGHT);
-			meanAndVariance = tex2D(sMeanAndVariance, texcoord + offset).rg;
-			sum += meanAndVariance.r;
-			squaredSum += meanAndVariance.g;
-			maximum = max(maximum, tex2D(sMaximum0, texcoord + offset).r);
-	}
-	float sumSquared = sum * sum;
-	
-	float mean = sum / WINDOW_SIZE_SQUARED;
-	variance = (squaredSum - ((sumSquared) / WINDOW_SIZE_SQUARED));
-	variance /= WINDOW_SIZE_SQUARED;
-}
-
-void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1)
+void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1, out float4 originalImage : SV_TARGET2)
 {
 	float mean = tex2D(sMean, texcoord).r;
 	float variance = tex2D(sVariance, texcoord).r;
 	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
-	float darkChannel = tex2D(sDarkChannel, texcoord).r;
+	float3 color = tex2D(sBackBuffer, texcoord).rgb;
+	float darkChannel = min(min(color.r, color.g), color.b);
 	float maximum = 0;
-	for(int i = log2(WINDOW_SIZE); i < MAX_MIP; i++)
+	
+	[unroll]
+	for(int i = 4; i < MAX_MIP; i++)
 	{
-		maximum += tex2Dlod(sMaximum1, float4(texcoord, 0, i)).r;
+		maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
 	}
-	maximum /= MAX_MIP - log2(WINDOW_SIZE);
+	maximum /= MAX_MIP - 4;	
 	
 	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
 	float veil = saturate(mean + filter);
@@ -219,79 +357,44 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 	transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
 	transmission *= exp(TransmissionMultiplier);
 
-}
-
-void WienerFilterPS1(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1)
-{
-	float mean = tex2D(sMean, texcoord).r;
-	float variance = tex2D(sVariance, texcoord).r;
-	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
-	float darkChannel = tex2D(sDarkChannel, texcoord).r;
-	float maximum = 0;
-	for(int i = log2(WINDOW_SIZE); i < MAX_MIP; i++)
-	{
-		maximum += tex2Dlod(sMaximum1, float4(texcoord, 0, i)).r;
-	}
-	maximum /= MAX_MIP - log2(WINDOW_SIZE);	
-	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
-	float veil = saturate(mean + filter);
-	//filter = ((variance - noise) / variance) * (darkChannel - mean);
-	//mean += filter;
-	float usedVariance = variance;
-	
-	airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
-	transmission = (1 - ((veil * veil) / airlight));
+     originalImage = float4(color, 1);   
 
 }
+#endif
 
-void FogRemovalPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 fogRemoved : SV_TARGET0)
-{
-	float airlight = tex2D(sAirlight, texcoord).r;
-	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
-	float3 RVBB = tex2D(sBackBuffer, texcoord).rgb; //extracting the BackBuffer Here.
-	float y = dot(RVBB, float3(0.299, 0.587, 0.114));
-	y = ((y - airlight) / transmission) + airlight;
-	float cb = -0.168736 * RVBB.r - 0.331264 * RVBB.g + 0.500000 * RVBB.b;
-	float cr = +0.500000 * RVBB.r - 0.418688 * RVBB.g - 0.081312 * RVBB.b;
-    float3 color = float3(
-        y + 1.402 * cr,
-        y - 0.344136 * cb - 0.714136 * cr,
-        y + 1.772 * cb);
-        
-	fogRemoved = float4(color, 1);
-
-}
-
-void OutputToBackbufferPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 fogRemoved : SV_TARGET0)
-{
-	fogRemoved = float4(tex2D(sFogRemoved, texcoord).rgb, 1);
-	if(ReShade::GetLinearizedDepth(texcoord) >= 1)
-	{
-		fogRemoved = lerp(float4(tex2D(sBackBuffer, texcoord).rgb, 0), fogRemoved, SkyAlpha);
-	}
-	
-	//fogRemoved =  (1 - log( 3 * (tex2D(sTransmission, texcoord).rrrr)));
-}
-
-void TruncatedPrecisionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 truncatedPrecision : SV_TARGET0)
-{
-	float3 color = tex2D(sBackBuffer, texcoord).rgb;
-	float3 fogRemoved = tex2D(sFogRemoved, texcoord).rgb;
-	truncatedPrecision = float4(fogRemoved - color, 1);
-}
-	
 
 void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 fogReintroduced : SV_TARGET0)
 {
 	float airlight = tex2D(sAirlight, texcoord).r;
 	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
-	float3 i = (tex2D(sBackBuffer, texcoord).rgb);
-	float3 fogRemoved = tex2D(sFogRemoved, texcoord).rgb;
+	float3 newImage = (tex2D(sBackBuffer, texcoord).rgb);
+	float3 originalImage = tex2D(sOriginalImage, texcoord).rgb;
+	
+	float y = dot(originalImage, float3(0.299, 0.587, 0.114));
+	float originalLuma = ((y - airlight) / transmission) + airlight;
+	
+	y = dot(newImage, float3(0.299, 0.587, 0.114));
+	float newLuma = ((y - airlight) / max(transmission, 0.05)) + airlight;
+	
+	float blended = (originalLuma - newLuma) * (1 - transmission);
+	blended += newLuma;
+	blended = lerp(originalLuma, newLuma, max(transmission, 0.05));
+	
+	blended = ((blended - airlight) * max(transmission, 0.05)) + airlight;
+	
+	float cb = -0.168736 * newImage.r - 0.331264 * newImage.g + 0.500000 * newImage.b;
+	float cr = +0.500000 * newImage.r - 0.418688 * newImage.g - 0.081312 * newImage.b;
+    newImage = float3(
+        blended + 1.402 * cr,
+        blended - 0.344136 * cb - 0.714136 * cr,
+        blended + 1.772 * cb);
+		
+	fogReintroduced = float4(newImage, 1);
 	
 	
 	
 
-	i += tex2D(sTruncatedPrecision, texcoord).rgb;
+	/*i += tex2D(sTruncatedPrecision, texcoord).rgb;
 	
 	float y = dot(i, float3(0.299, 0.587, 0.114));
 	float3 color;
@@ -312,25 +415,23 @@ void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, 
 		
 		
 	float alpha = 1;
-	fogReintroduced = float4(color, 1);
+	fogReintroduced = float4(color, 1);*/
 	
 }
 
-technique Veil_B_Gone<ui_tooltip = "Place this shader technique before any effects you wish to be placed behind the image veil.\n\n"
-									"Veil_B_Back needs to be ran after this technique to reintroduce the image veil. The default\n"
-									"WINDOW_SIZE is 15, a smaller size means more performance, but also lower quality. Another \n"
-									"important thing to note when changing window sizes is that due to the way mipmaps are used in\n"
-									"this shader, whenever the WINDOW_SIZE surpasses a power of 2 (2, 4, 8, 16, 32, etc.), it \n"
-									"results in the shader having a massive shift in color and brightness. For this reason its \n"
-									"recommended these values be avoided.";>
+
+
+technique ReVeil_Top <ui_tooltip = "This goes above any shaders you want to apply ReVeil to. \n\n"
+								  "(Don't worry if it looks like its doing nothing, what its doing here won't take effect until ReVeil_Bottom is applied)";>
 {
-	pass DarkChannel
+#if REVEIL_COMPUTE == 1
+	pass MeanAndVariance
 	{
-		VertexShader = PostProcessVS;
-		PixelShader = DarkChannelPS;
-		RenderTarget0 = DarkChannel;
+		ComputeShader = MeanAndVarianceCS<16, 16>;
+		DispatchSizeX = ((BUFFER_WIDTH - 1) / 16) + 1;
+		DispatchSizeY = ((BUFFER_HEIGHT - 1) / 16) + 1;
 	}
-	
+#else
 	pass MeanAndVariance
 	{
 		VertexShader = PostProcessVS;
@@ -345,52 +446,10 @@ technique Veil_B_Gone<ui_tooltip = "Place this shader technique before any effec
 		PixelShader = MeanAndVariancePS1;
 		RenderTarget0 = Mean;
 		RenderTarget1 = Variance;
-		RenderTarget2 = Maximum1;
+		RenderTarget2 = Maximum;
 	}
-	
-	pass WienerFilter
-	{
-		VertexShader = PostProcessVS;
-#if SECOND_PASS == 0
-		PixelShader = WienerFilterPS;
-#else
-		PixelShader = WienerFilterPS1;
 #endif
-		RenderTarget0 = Transmission;
-		RenderTarget1 = Airlight;
-	}
-	
-	pass FogRemoval
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = FogRemovalPS;
-		RenderTarget0 = FogRemoved;
-	}
-	
-#if SECOND_PASS != 0
-	
-	pass DarkChannel
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = DarkChannelPS;
-		RenderTarget0 = DarkChannel;
-	}
-	
-	pass MeanAndVariance
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = MeanAndVariancePS0;
-		RenderTarget0 = MeanAndVariance;
-		RenderTarget1 = Maximum0;
-	}
-	
-	pass MeanAndVariance
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = MeanAndVariancePS2;
-		RenderTarget0 = Variance;
-		RenderTarget1 = Maximum1;
-	}
+
 	
 	pass WienerFilter
 	{
@@ -398,35 +457,16 @@ technique Veil_B_Gone<ui_tooltip = "Place this shader technique before any effec
 		PixelShader = WienerFilterPS;
 		RenderTarget0 = Transmission;
 		RenderTarget1 = Airlight;
-	}
-	
-	pass FogRemoval
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = FogRemovalPS;
-		RenderTarget0 = FogRemoved;
-	}
-#endif
-	
-	pass BackBuffer
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = OutputToBackbufferPS;
-	}
-	
-	pass TruncatedPrecision
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = TruncatedPrecisionPS;
-		RenderTarget = TruncatedPrecision;
+		RenderTarget2 = OriginalImage;
 	}
 }
 
-technique Veil_B_Back<ui_tooltip = "Place this shader technique after Veil_B_Gone and any shaders you want to be veiled.";>
+technique ReVeil_Bottom <ui_tooptip = "This goes beneath the shaders you want to apply ReVeil to.";>
 {
 	pass FogReintroduction
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = FogReintroductionPS;
 	}
+}
 }
