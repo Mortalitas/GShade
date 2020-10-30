@@ -1,4 +1,27 @@
 #include "ReShade.fxh"
+/*
+ReVeil for Reshade
+By: Lord of Lunacy
+
+
+This shader attempts to remove fog using a dark channel prior technique that has been
+refined using 2 passes over an iterative guided Wiener filter ran on the image dark channel.
+
+The purpose of the Wiener filters is to minimize the root mean square error between
+the given dark channel, and the true dark channel, making the removal more accurate.
+
+The airlight of the image is estimated by using the max values that appears in the each
+window of the dark channel. This window is then averaged together with every mip level
+that is larger than the current window size.
+
+Koschmeider's airlight equation is then used to remove the veil from the image, and the inverse
+is applied to reverse this affect, blending any new image components with the fog.
+
+
+This method was adapted from the following paper:
+Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using the adaptive Wiener filter.
+2013 IEEE International Conference on Image Processing, ICIP 2013 - Proceedings. 714-718. 10.1109/ICIP.2013.6738147. 
+*/
 
 #define CONST_LOG2(x) (\
     (uint((x) & 0xAAAAAAAA) != 0) | \
@@ -27,7 +50,7 @@
 #define REVEIL_WINDOW_SIZE_SQUARED 256
 #define RENDERER __RENDERER__
 
-#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >= 40800)
+#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >40800)
 	#ifndef REVEIL_COMPUTE
 	#define REVEIL_COMPUTE 1
 	#endif
@@ -99,9 +122,9 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 		maximum = 0;
 	}
 	barrier();
+	
+	//Indexing locations for the shader
 	uint index[5];
-	/*int x[4] = {int(tid.x), int(31 - tid.x), int(tid.x), int(31 - tid.x)};
-	int y[4] = {int(tid.y), int(tid.y), int(31 - tid.y), int(31 - tid.y)};*/
 	int x[4] = {int(tid.x), int(tid.x + 16), int(tid.x), int(tid.x + 16)};
 	int y[4] = {int(tid.y), int(tid.y), int(tid.y + 16), int(tid.y + 16)};
 	index[0] = y[0] * 32 + x[0];
@@ -109,14 +132,6 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 	index[2] = y[2] * 32 + x[2];
 	index[3] = y[3] * 32 + x[3];
 	index[4] = index[0] + 264;
-	/*int a[4] = {int(int(tid.x) - 8), int(23 - int(tid.x)), int(int(tid.x) - 8), int(23 - int(tid.x))};
-	int b[4] = {int(int(tid.y) - 8), int(int(tid.y) - 8), int(23 - int(tid.y)), int(23 - int(tid.y))};
-
-	/*index[0] = tid.y * 32 + tid.x;
-	index[1] = index[0] + 16;
-	index[2] = index[0] + 512;
-	index[3] = index[0] + 528;
-	index[4] = index[0] + 264;*/
 	int a[4] = {int(int(tid.x) - 8), int(int(tid.x) + 8), int(int(tid.x) - 8), int(int(tid.x) + 8)};
 	int b[4] = {int(int(tid.y) - 8), int(int(tid.y) - 8), int(int(tid.y) + 8), int(int(tid.y) + 8)};
 	/**/
@@ -134,8 +149,6 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 		{
 			atomicMax(maximum, uint((prefixSums[index[i]].r) * 255));
 		}
-		//maximum[i] = minimum * 256;
-		//atomicMax(maximum, uint((prefixSums[index[i]].r) * 255));
 	}
 	barrier();
 
@@ -145,20 +158,15 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 		tex2Dstore(wMaximum, coord, float4((float(maximum) * 1) / 255, 0, 0, 0));
 	}
 	
+	//Generating rows of summed area table
 	[unroll]
 	for(int j = 0; j < 5; j++)
 	{
 		
-		/*[unroll]
-		for(int i = 0; i < 4; i++)
-		{
-			sum[i] = prefixSums[index[i]];
-		}*/
 		[unroll]
 		for(int i = 0; i < 4; i++)
 		{
 			int address = index[i];
-			//sum[i] = prefixSums[address];
 			
 			int access = x[i] - exp2(j);
 			access += y[i] * 32;
@@ -177,21 +185,16 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 		barrier();
 	}
 	
+	//Generating columns of summed area table
 	[unroll]
 	for(int j = 0; j < 5; j++)
 	{
-		/*[unroll]
-		for(int i = 0; i < 4; i++)
-		{
-			sum[i] = prefixSums[index[i]];
-		}*/
 
 		[unroll]
 		for(int i = 0; i < 4; i++)
 		{
 			int address = index[i];
 			
-			//int access = 32 * (int(y[i]) - (exp2(j))) + x[i];
 			int access = y[i] - exp2(j);
 			access *= 32;
 			access += x[i];
@@ -209,8 +212,8 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 		}
 		barrier();
 	}
-	//uint4 corners = uint4(index[4] + 264, index[4] - 248, index[4] + 248, index[4] - 264);
-	//float2 sums = prefixSums[corners.x] - prefixSums[corners.y] - prefixSums[corners.z] + prefixSums[corners.w];
+
+	//sampling from summed area table, and extractions the desired values
 	float2 sums = sum[3] - sum[2] - sum[1] + sum[0];
 	float mean = sums.x / 256;
 	float variance = ((sums.y) - ((sums.x * sums.x) / 256));
@@ -218,8 +221,8 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 	
 
 	
-		tex2Dstore(wMean, id.xy, float4(mean, 0, 0, 0));
-		tex2Dstore(wVariance, id.xy, float4(variance, 0, 0, 0));
+	tex2Dstore(wMean, id.xy, float4(mean, 0, 0, 0));
+	tex2Dstore(wVariance, id.xy, float4(variance, 0, 0, 0));
 }
 
 void WienerFilterCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
