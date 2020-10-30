@@ -50,7 +50,7 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 #define REVEIL_WINDOW_SIZE_SQUARED 256
 #define RENDERER __RENDERER__
 
-#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >40800)
+#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >= 40800)
 	#ifndef REVEIL_COMPUTE
 	#define REVEIL_COMPUTE 1
 	#endif
