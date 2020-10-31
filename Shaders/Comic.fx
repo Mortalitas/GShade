@@ -536,7 +536,7 @@ namespace Comic {
     }
 
     float StrengthCurve(float3 fade, float depth) {
-        return smoothstep(0.0, 1.0 - fade.z, depth + (0.2 - 1.2 * fade.x)) * smoothstep(0.0, 1.0 - fade.z, 1.0 - depth + (1.2 * fade.y - 1.0));
+        return smoothstep(0.0001, max(1.0 - fade.z, 0.0001), max(depth + (0.2 - 1.2 * fade.x), 0.0001)) * smoothstep(0.0001, max(1.0 - fade.z, 0.0001), max(1.0 - depth + (1.2 * fade.y - 1.0), 0.0001));
     }
 
     /******************************************************************************
