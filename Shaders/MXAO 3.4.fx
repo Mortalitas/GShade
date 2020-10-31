@@ -466,8 +466,8 @@ void PS_AO_Blur2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	if (!bMXAODebugViewEnable)
 		MXAOFFXIV = lerp(MXAOFFXIV, 0.0, pow(colorgray,2.0));
 
-	MXAOFFXIV.w    = lerp(MXAOFFXIV.w, 0.0,smoothstep(fMXAOFadeoutStart, fMXAOFadeoutEnd, scenedepth));
-	MXAOFFXIV.xyz  = lerp(MXAOFFXIV.xyz,0.0,smoothstep(fMXAOFadeoutStart*0.5, fMXAOFadeoutEnd*0.5, scenedepth));
+	MXAOFFXIV.w    = lerp(MXAOFFXIV.w, 0.0,smoothstep(max(fMXAOFadeoutStart, 0.0001), max(fMXAOFadeoutEnd, 0.0001), max(scenedepth, 0.0001)));
+	MXAOFFXIV.xyz  = lerp(MXAOFFXIV.xyz,0.0,smoothstep(max(fMXAOFadeoutStart, 0.0001)*0.5, max(fMXAOFadeoutEnd, 0.0001)*0.5, max(scenedepth, 0.0001)));
 
 	float3 GI = MXAOFFXIV.w - MXAOFFXIV.xyz;
 	GI = saturate(1-GI);
