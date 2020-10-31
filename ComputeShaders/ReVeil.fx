@@ -50,7 +50,7 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 #define REVEIL_WINDOW_SIZE_SQUARED 256
 #define RENDERER __RENDERER__
 
-#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >= 40800)
+#if (((RENDERER >= 0xb000 && RENDERER < 0x10000) || (RENDERER >= 0x14300)) && __RESHADE__ >=40800)
 	#ifndef REVEIL_COMPUTE
 	#define REVEIL_COMPUTE 1
 	#endif
@@ -175,14 +175,13 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 			sum[i] += prefixSums[access];
 			}
 		}
-		groupMemoryBarrier();
+		barrier();
 		[unroll]
 		for(int i = 0; i < 4; i++)
 		{
 			int address = index[i];
 			prefixSums[address] = sum[i];
 		}
-		barrier();
 	}
 	
 	//Generating columns of summed area table
@@ -203,14 +202,13 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 			sum[i] += prefixSums[access];
 			}
 		}
-		groupMemoryBarrier();
+		barrier();
 		[unroll]
 		for(int i = 0; i < 4; i++)
 		{
 			int address = index[i];
 			prefixSums[address] = sum[i];
 		}
-		barrier();
 	}
 
 	//sampling from summed area table, and extractions the desired values
@@ -223,39 +221,6 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 	
 	tex2Dstore(wMean, id.xy, float4(mean, 0, 0, 0));
 	tex2Dstore(wVariance, id.xy, float4(variance, 0, 0, 0));
-}
-
-void WienerFilterCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
-{
-	float2 texcoord = id.xy / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-	float mean = tex2Dfetch(sMean, id.xy).r;
-	float variance = tex2Dfetch(sVariance, id.xy).r;
-	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
-	float3 color = tex2Dfetch(sBackBuffer, id.xy).rgb;
-	float darkChannel = min(min(color.r, color.g), color.b);
-	float maximum = 0;
-	
-	tex2Dstore(wOriginalImage, id.xy, float4(color, 1));
-	
-	[unroll]
-	for(int i = 0; i < MAX_MIP - 4; i++)
-	{
-		maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
-	}
-	maximum /= MAX_MIP - 5;	
-	
-	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
-	float veil = saturate(mean + filter);
-	//filter = ((variance - noise) / variance) * (darkChannel - mean);
-	//mean += filter;
-	float usedVariance = variance;
-	
-	float airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
-	tex2Dstore(wAirlight, id.xy, float4(airlight, 0, 0, 0));
-	float transmission = (1 - ((veil * darkChannel) / airlight));
-	transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
-	transmission *= exp(TransmissionMultiplier);
-	tex2Dstore(wTransmission, id.xy, float4(transmission, 0, 0, 0));
 }
 
 void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1, out float4 originalImage : SV_TARGET2)
@@ -393,32 +358,6 @@ void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, 
         blended + 1.772 * cb);
 		
 	fogReintroduced = float4(newImage, 1);
-	
-	
-	
-
-	/*i += tex2D(sTruncatedPrecision, texcoord).rgb;
-	
-	float y = dot(i, float3(0.299, 0.587, 0.114));
-	float3 color;
-	if(tex2D(sBackBuffer, texcoord).a == 1)
-	{
-		//i = fogRemoved;
-		y = ((y - airlight) * transmission) + airlight;
-
-	
-	float cb = -0.168736 * i.r - 0.331264 * i.g + 0.500000 * i.b;
-	float cr = +0.500000 * i.r - 0.418688 * i.g - 0.081312 * i.b;
-    color = float3(
-        y + 1.402 * cr,
-        y - 0.344136 * cb - 0.714136 * cr,
-        y + 1.772 * cb);
-	}
-	else color = i;
-		
-		
-	float alpha = 1;
-	fogReintroduced = float4(color, 1);*/
 	
 }
 
