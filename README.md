@@ -7,15 +7,22 @@ Note that all shaders in this repository are strictly intended for use with the 
 
 To learn more about how GShade compares to ReShade itself and other forks, [click here](https://gposers.com/gshade/gshade-faq/#comparison).
 
-**GShade is only network-unlocked in the following online games, but will work with any game that ReShade itself can:**
+**GShade is network-unlocked in the following online software and games, but will work with any game that ReShade itself can:**
+* **Baldur’s Gate 3**
 * **Black Desert Online**
+* **Cemu**
 * DiRT Rally 2.0
 * **Elder Scrolls Online**
 * Fallout 76
 * **Final Fantasy XIV**
 * Guild Wars 2
+* **Marvel’s Avengers**
+* Neverwinter (MMORPG)
+* **No Man’s Sky**
 * OpenJK
 * **Phantasy Star Online 2 (Japan/North America)**
+* Remnant: From the Ashes
+* **Ryujinx**
 * Second Life (Official, Firestorm, Black Dragon)
 * Shroud of the Avatar
 * Star Wars: The Old Republic
@@ -23,6 +30,12 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Warframe
 * **World of Warcraft**
 * World of Warcraft Classic
+
+**Additional whitelisted software and games with no official support:**
+* DARK SOULS II: Scholar of the First Sin
+* Genshin Impact
+* Grand Theft Auto V
+* RemotePlay
 
 **The installer version also includes:**
 * Multi-language Support:
@@ -32,6 +45,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
   * Deutsch
   * Français
   * Italiano
+  * 中文
 * [Presets created by our community!](https://github.com/Mortalitas/GShade-Presets)
 * Control Panel which includes:
   * One-click Updates
