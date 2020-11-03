@@ -6,7 +6,7 @@
 //
 // This shader has been released under the following license:
 //
-// Copyright (c) 2018-2019 Frans Bouma
+// Copyright (c) 2018-2020 Frans Bouma
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 23-oct-2020:    v1.1.18: Near-plane bleed blurred the unblurred far plane which leads to artifacts around edges in some cases. This has been rolled back to the earlier versions of
+//                          using the blurred far plane (if any). Also added mirroring to the samplers so edges of the screen aren't blurring darker into the result but should be much smoother.
+// 26-mar-2020:    v1.1.17: FreeStyle support added (not yet ansel superres compatible). Fixed issue with far plane highlight causing near plane edge pixels getting highlighted.
+// 15-mar-2020:    v1.1.16: Dithering added for low-luma areas to avoid banding. (Contributed by Prod80)
 // 03-feb-2020:    v1.1.15: Experimental near plane edge blur improvements.
 // 04-oct-2019:    v1.1.14: Fine-tuning of near plane blur using smaller tiles. 
 // 23-jun-2019:    v1.1.13: Cleanup of highlight code, reimplementing of luma boost / highlightblending. Removal of unnecessary controls.
@@ -71,6 +75,7 @@
 // Thanks to Daodan for the crosshair code in the focus helper.
 // 9 tap tent filter is from KinoBokeh Copyright (C) 2015 Keijiro Takahashi. MIT licensed. See file below for details.
 //       Ref:  https://github.com/keijiro/KinoBokeh/blob/master/Assets/Kino/Bokeh/Shader/Composition.cginc
+// Thanks to Prod80 for contributing dithering in combiner to avoid banding in low-luma blurred areas. 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // References:
 //
@@ -89,7 +94,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.1.15"
+	#define CINEMATIC_DOF_VERSION "v1.1.18"
 
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
@@ -253,7 +258,7 @@ namespace CinematicDOF
 		ui_category = "Highlight tweaking, far plane";
 		ui_label="Highlight gain";
 		ui_type = "slider";
-		ui_min = 0.00; ui_max = 20.00;
+		ui_min = 0.00; ui_max = 5.00;
 		ui_tooltip = "The gain for highlights in the far plane. The higher the more a highlight gets\nbrighter. Tweak this in tandem with the Highlight threshold. Best results are\nachieved with bright spots in dark(er) backgrounds.";
 		ui_step = 0.01;
 	> = 0.500;
@@ -269,10 +274,10 @@ namespace CinematicDOF
 		ui_category = "Highlight tweaking, near plane";
 		ui_label="Highlight gain";
 		ui_type = "slider";
-		ui_min = 0.00; ui_max = 20.00;
+		ui_min = 0.00; ui_max = 5.00;
 		ui_tooltip = "The gain for highlights in the near plane. The higher the more a highlight gets\nbrighter. Tweak this in tandem with the Highlight threshold. Best results are\nachieved with bright spots in dark(er) foregrounds.";
-		ui_step = 0.001;
-	> = 0.200;
+		ui_step = 0.01;
+	> = 0.000;
 	uniform float HighlightThresholdNearPlane <
 		ui_category = "Highlight tweaking, near plane";
 		ui_label="Highlight threshold";
@@ -327,6 +332,9 @@ namespace CinematicDOF
 	uniform bool ShowNearPlaneBlurred <
 		ui_category = "Debugging";
 	> = false;
+	uniform bool ShowOnlyFarPlaneBlurred <
+		ui_category = "Debugging";
+	> = false;
 #endif
 	//////////////////////////////////////////////////
 	//
@@ -356,26 +364,28 @@ namespace CinematicDOF
 	texture texCDCoCTileNeighbor	{ Width = BUFFER_WIDTH/(TILE_SIZE*TILE_MULTIPLY); Height = BUFFER_HEIGHT/(TILE_SIZE*TILE_MULTIPLY); Format = R16F; };	// R is MinCoC
 	texture texCDCoCTmp1			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = R16F; };	// half res, single value
 	texture texCDCoCBlurred			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RG16F; };	// half res, blurred CoC (r) and real CoC (g)
-	texture texCDBuffer1 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8; };
-	texture texCDBuffer2 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8; }; 
-	texture texCDBuffer3 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8; }; // needed for tentfilter as far/near have to be preserved in buffer 1 and 2
-	texture texCDBuffer4 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; }; 	// Full res upscale buffer
-	texture texCDBuffer5 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; }; 	// Full res upscale buffer. We need 2 as post smooth needs 2
+	texture texCDBuffer1 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
+	texture texCDBuffer2 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; }; 
+	texture texCDBuffer3 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };// needed for tentfilter as far/near have to be preserved in buffer 1 and 2
+	texture texCDBuffer4 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; }; 	// Full res upscale buffer
+	texture texCDBuffer5 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; }; 	// Full res upscale buffer. We need 2 as post smooth needs 2
+	texture texCDNoise				< source = "pd80_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
 	sampler	SamplerCDCurrentFocus		{ Texture = texCDCurrentFocus; };
 	sampler SamplerCDPreviousFocus		{ Texture = texCDPreviousFocus; };
-	sampler SamplerCDBuffer1 			{ Texture = texCDBuffer1; };
-	sampler SamplerCDBuffer2 			{ Texture = texCDBuffer2; };
-	sampler SamplerCDBuffer3 			{ Texture = texCDBuffer3; };
-	sampler SamplerCDBuffer4 			{ Texture = texCDBuffer4; };
-	sampler SamplerCDBuffer5 			{ Texture = texCDBuffer5; };
-	sampler SamplerCDCoC				{ Texture = texCDCoC; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;};
-	sampler SamplerCDCoCTmp1			{ Texture = texCDCoCTmp1; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;};
-	sampler SamplerCDCoCBlurred			{ Texture = texCDCoCBlurred; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;};
-	sampler SamplerCDCoCTileTmp			{ Texture = texCDCoCTileTmp; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;};
-	sampler SamplerCDCoCTile			{ Texture = texCDCoCTile; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;};
-	sampler SamplerCDCoCTileNeighbor	{ Texture = texCDCoCTileNeighbor; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;};
-	
+	sampler SamplerCDBuffer1 			{ Texture = texCDBuffer1; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDBuffer2 			{ Texture = texCDBuffer2; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDBuffer3 			{ Texture = texCDBuffer3; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDBuffer4 			{ Texture = texCDBuffer4; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDBuffer5 			{ Texture = texCDBuffer5; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDCoC				{ Texture = texCDCoC; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDCoCTmp1			{ Texture = texCDCoCTmp1; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDCoCBlurred			{ Texture = texCDCoCBlurred; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDCoCTileTmp			{ Texture = texCDCoCTileTmp; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDCoCTile			{ Texture = texCDCoCTile; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDCoCTileNeighbor	{ Texture = texCDCoCTileNeighbor; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
+	sampler SamplerCDNoise				{ Texture = texCDNoise; MipFilter = POINT; MinFilter = POINT; MagFilter = POINT; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
+
 	uniform float2 MouseCoords < source = "mousepoint"; >;
 	uniform bool LeftMouseDown < source = "mousebutton"; keycode = 0; toggle = false; >;
 
@@ -452,7 +462,7 @@ namespace CinematicDOF
 	// returns minCoC
 	float PerformTileGatherHorizontal(sampler source, float2 texcoord)
 	{
-		const float tileSize = TILE_SIZE * (float(BUFFER_WIDTH) / float(GROUND_TRUTH_SCREEN_WIDTH));
+		const float tileSize = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.x) / GROUND_TRUTH_SCREEN_WIDTH);
 		float minCoC = 10;
 		float coc;
 		float2 coordOffset = float2(BUFFER_PIXEL_SIZE.x, 0);
@@ -471,7 +481,7 @@ namespace CinematicDOF
 	// returns min CoC
 	float PerformTileGatherVertical(sampler source, float2 texcoord)
 	{
-		float tileSize = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.y) / float(GROUND_TRUTH_SCREEN_HEIGHT));
+		const float tileSize = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.y) / GROUND_TRUTH_SCREEN_HEIGHT);
 		float minCoC = 10;
 		float coc;
 		float2 coordOffset = float2(0, BUFFER_PIXEL_SIZE.y);
@@ -491,8 +501,8 @@ namespace CinematicDOF
 	float PerformNeighborTileGather(sampler source, float2 texcoord)
 	{
 		float minCoC = 10;
-		const float tileSizeX = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.x) / float(GROUND_TRUTH_SCREEN_WIDTH));
-		const float tileSizeY = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.y) / float(GROUND_TRUTH_SCREEN_HEIGHT));
+		const float tileSizeX = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.x) / GROUND_TRUTH_SCREEN_WIDTH);
+		const float tileSizeY = TILE_SIZE * (float(BUFFER_SCREEN_SIZE.y) / GROUND_TRUTH_SCREEN_HEIGHT);
 		// tile is TILE_SIZE*2+1 wide. So add that and substract that to get to neighbor tile right/left.
 		// 3x3 around center.
 		const float2 baseCoordOffset = float2(BUFFER_PIXEL_SIZE.x * (tileSizeX*2+1), BUFFER_PIXEL_SIZE.x * (tileSizeY*2+1));
@@ -500,8 +510,8 @@ namespace CinematicDOF
 		{
 			for(float j=-1;j<2;j++)
 			{
-				const float2 coordOffset = float2(baseCoordOffset.x * i, baseCoordOffset.y * j);
-				const float coc = tex2Dlod(source, float4(texcoord + coordOffset, 0, 0)).r;
+				float2 coordOffset = float2(baseCoordOffset.x * i, baseCoordOffset.y * j);
+				float coc = tex2Dlod(source, float4(texcoord + coordOffset, 0, 0)).r;
 				minCoC = min(minCoC, coc);
 			}
 		}
@@ -556,7 +566,7 @@ namespace CinematicDOF
 	{
 		const float3 lumaDotWeight = float3(0.3, 0.59, 0.11);
 
-		float newFragmentLuma = dot(fragment, lumaDotWeight);
+		const float newFragmentLuma = dot(fragment, lumaDotWeight);
 		averageGained.rgb = CorrectForWhiteAccentuation(averageGained.rgb);
 		// increase luma to the max luma found on the gained taps. This over-boosts the luma on the averageGained, which we'll use to blend
 		// together with the non-boosted fragment using the normalization factor to smoothly merge the highlights.
@@ -601,30 +611,31 @@ namespace CinematicDOF
 		const float2 ringRadiusDeltaCoords = BUFFER_PIXEL_SIZE * (nearPlaneBlurInPixels / (numberOfRings-1));
 		float pointsOnRing = pointsFirstRing;
 		float2 currentRingRadiusCoords = ringRadiusDeltaCoords;
-		float maxLuma = dot(averageGained, lumaDotWeight) * fragmentRadii.g * (1-HighlightThresholdNearPlane);
+		float maxLuma = dot(averageGained, lumaDotWeight) * -fragmentRadii.g * (1-HighlightThresholdNearPlane);
 		const float4 anamorphicFactors = CalculateAnamorphicFactor(blurInfo.texcoord - 0.5); // xy are up vector, zw are right vector
 		const float2x2 anamorphicRotationMatrix = CalculateAnamorphicRotationMatrix(blurInfo.texcoord);
 		for(float ringIndex = 0; ringIndex < numberOfRings; ringIndex++)
 		{
-			const float anglePerPoint = 6.28318530717958 / pointsOnRing;
+			float anglePerPoint = 6.28318530717958 / pointsOnRing;
 			float angle = anglePerPoint;
 			// no further weight needed, bleed all you want. 
-			const float weight = lerp(ringIndex/numberOfRings, 1, smoothstep(0, 1, bokehBusyFactorToUse));
+			float weight = lerp(ringIndex/numberOfRings, 1, smoothstep(0, 1, bokehBusyFactorToUse));
 			for(float pointNumber = 0; pointNumber < pointsOnRing; pointNumber++)
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
 				// now transform the offset vector with the anamorphic factors and rotate it accordingly to the rotation matrix, so we get a nice
 				// bending around the center of the screen.
 				pointOffset = MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
-				const float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
-				const float4 tap = tex2Dlod(source, tapCoords);
+				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
+				float4 tap = tex2Dlod(source, tapCoords);
 				// r contains blurred CoC, g contains original CoC. Original can be negative
-				const float blurredSampleRadius = tex2Dlod(SamplerCDCoCBlurred, tapCoords).r;
+				float2 sampleRadii = tex2Dlod(SamplerCDCoCBlurred, tapCoords).rg;
+				float blurredSampleRadius = sampleRadii.r;
 				average.rgb += tap.rgb * weight;
 				average.w += weight;
-				const float3 gainedTap = AccentuateWhites(tap.rgb);
+				float3 gainedTap = AccentuateWhites(tap.rgb);
 				averageGained += gainedTap * weight;
-				const float lumaSample = dot(gainedTap, lumaDotWeight) * saturate(blurredSampleRadius) * (1-HighlightThresholdNearPlane);
+				float lumaSample = dot(gainedTap, lumaDotWeight) * saturate(blurredSampleRadius) * (1-HighlightThresholdNearPlane);
 				maxLuma = max(maxLuma, lumaSample);
 				angle+=anglePerPoint;
 			}
@@ -665,7 +676,7 @@ namespace CinematicDOF
 		float4 fragment = tex2Dlod(source, float4(blurInfo.texcoord, 0, 0));
 		const float fragmentRadius = tex2Dlod(SamplerCDCoC, float4(blurInfo.texcoord, 0, 0)).r;
 		// we'll not process near plane fragments as they're processed in a separate pass. 
-		if(fragmentRadius < 0)
+		if(fragmentRadius < 0 || blurInfo.farPlaneMaxBlurInPixels <=0)
 		{
 			// near plane fragment, will be done in near plane pass 
 			return fragment;
@@ -684,26 +695,26 @@ namespace CinematicDOF
 		const float2x2 anamorphicRotationMatrix = CalculateAnamorphicRotationMatrix(blurInfo.texcoord);
 		for(float ringIndex = 0; ringIndex < blurInfo.numberOfRings; ringIndex++)
 		{
-			const float anglePerPoint = 6.28318530717958 / pointsOnRing;
+			float anglePerPoint = 6.28318530717958 / pointsOnRing;
 			float angle = anglePerPoint;
-			const float ringWeight = lerp(ringIndex/blurInfo.numberOfRings, 1, bokehBusyFactorToUse);
-			const float ringDistance = cocPerRing * ringIndex;
+			float ringWeight = lerp(ringIndex/blurInfo.numberOfRings, 1, bokehBusyFactorToUse);
+			float ringDistance = cocPerRing * ringIndex;
 			for(float pointNumber = 0; pointNumber < pointsOnRing; pointNumber++)
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
 				// now transform the offset vector with the anamorphic factors and rotate it accordingly to the rotation matrix, so we get a nice
 				// bending around the center of the screen.
 				pointOffset = MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
-				const float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
-				const float sampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).r;
-				const float4 tap = tex2Dlod(source, tapCoords);
-				const float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance);
+				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
+				float sampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).r;
+				float4 tap = tex2Dlod(source, tapCoords);
+				float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance);
 				average.rgb += tap.rgb * weight;
 				average.w += weight;
-				const float3 gainedTap = AccentuateWhites(tap.rgb);
+				float3 gainedTap = sampleRadius >= 0 ? AccentuateWhites(tap.rgb) : tap.rgb;
 				averageGained += gainedTap * weight;
-				const float lumaSample = dot(gainedTap, lumaDotWeight) * sampleRadius * (1-HighlightThresholdFarPlane);
-				maxLuma = max(maxLuma, lumaSample);
+				float lumaSample = saturate(dot(gainedTap, lumaDotWeight) * sampleRadius * (1-HighlightThresholdFarPlane));
+				maxLuma = sampleRadius > 0 ? max(maxLuma, lumaSample) : maxLuma;
 				angle+=anglePerPoint;
 			}
 			pointsOnRing+=pointsFirstRing;
@@ -742,17 +753,17 @@ namespace CinematicDOF
 		const float cocPerRing = (signedFragmentRadius * blurFactorToUse) / numberOfRings;
 		for(float ringIndex = 0; ringIndex < numberOfRings; ringIndex++)
 		{
-			const float anglePerPoint = 6.28318530717958 / pointsOnRing;
+			float anglePerPoint = 6.28318530717958 / pointsOnRing;
 			float angle = anglePerPoint;
-			const float ringDistance = cocPerRing * ringIndex;
+			float ringDistance = cocPerRing * ringIndex;
 			for(float pointNumber = 0; pointNumber < pointsOnRing; pointNumber++)
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
-				const float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
-				const float signedSampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).x * radiusFactor;
-				const float absoluteSampleRadius = abs(signedSampleRadius);
-				const float isSamePlaneAsFragment = ((signedSampleRadius > 0 && !isNearPlaneFragment) || (signedSampleRadius <= 0 && isNearPlaneFragment));
-				const float weight = CalculateSampleWeight(absoluteSampleRadius * blurFactorToUse, ringDistance) * isSamePlaneAsFragment * 
+				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
+				float signedSampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).x * radiusFactor;
+				float absoluteSampleRadius = abs(signedSampleRadius);
+				float isSamePlaneAsFragment = ((signedSampleRadius > 0 && !isNearPlaneFragment) || (signedSampleRadius <= 0 && isNearPlaneFragment));
+				float weight = CalculateSampleWeight(absoluteSampleRadius * blurFactorToUse, ringDistance) * isSamePlaneAsFragment * 
 								(absoluteFragmentRadius - absoluteSampleRadius < 0.001);
 				average.rgb += (tex2Dlod(source, tapCoords).rgb) * weight;
 				average.w += weight;
@@ -803,8 +814,8 @@ namespace CinematicDOF
 		const float2 factorToUse = offsetWeight * NearPlaneMaxBlur * 0.8;
 		for(int i = 1; i < 18; ++i)
 		{
-			const float2 coordOffset = factorToUse * offset[i];
-			const float weightSample = weight[i];
+			float2 coordOffset = factorToUse * offset[i];
+			float weightSample = weight[i];
 			coc += GetBlurDiscRadiusFromSource(source, texcoord + coordOffset, flattenToZero) * weightSample;
 			coc += GetBlurDiscRadiusFromSource(source, texcoord - coordOffset, flattenToZero) * weightSample;
 		}
@@ -839,8 +850,8 @@ namespace CinematicDOF
 		const float2 factorToUse = offsetWeight * PostBlurSmoothing;
 		for(int i = 1; i < 6; ++i)
 		{
-			const float2 coordOffset = factorToUse * offset[i];
-			const float weightSample = weight[i];
+			float2 coordOffset = factorToUse * offset[i];
+			float weightSample = weight[i];
 			float sampleCoC = tex2Dlod(SamplerCDCoC, float4(texcoord + coordOffset, 0, 0)).r;
 			float maskFactor = abs(sampleCoC) < 0.2;		// mask factor to avoid near/in focus bleed.
 			fragment.rgb += (originalFragment.rgb * maskFactor * weightSample) + 
@@ -1019,6 +1030,12 @@ namespace CinematicDOF
 		const float blendFactor = (realCoC > 0.1) ? 1 : smoothstep(0, 1, (realCoC / 0.1));
 		fragment = lerp(originalFragment, farFragment, blendFactor);
 		fragment.rgb = lerp(fragment.rgb, nearFragment.rgb, nearFragment.a * (NearPlaneMaxBlur != 0));
+#if CD_DEBUG
+		if(ShowOnlyFarPlaneBlurred)
+		{
+			fragment = farFragment;
+		}
+#endif
 		fragment.a = 1.0;
 	}
 
@@ -1081,8 +1098,14 @@ namespace CinematicDOF
 		}
 #endif
 		fragment = PerformFullFragmentGaussianBlur(SamplerCDBuffer5, focusInfo.texcoord, float2(0.0, BUFFER_PIXEL_SIZE.y));
-		const float4 originalFragment = tex2D(SamplerCDBuffer4, focusInfo.texcoord);
-		const float coc = abs(tex2Dlod(SamplerCDCoC, float4(focusInfo.texcoord, 0, 0)).r);
+		float4 originalFragment = tex2D(SamplerCDBuffer4, focusInfo.texcoord);
+		// Dither
+		float2 uv = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / float2( 512.0f, 512.0f ); // create multiplier on texcoord so that we can use 1px size reads on gaussian noise texture (since much smaller than screen)
+		uv.xy = uv.xy * focusInfo.texcoord.xy;
+		float noise = tex2D(SamplerCDNoise, uv).x; // read, uv is scaled, sampler is set to tile noise texture (WRAP)
+		fragment.xyz = saturate(fragment.xyz + lerp( -0.5/255.0, 0.5/255.0, noise)); // apply dither
+		// End Dither
+		float coc = abs(tex2Dlod(SamplerCDCoC, float4(focusInfo.texcoord, 0, 0)).r);
 		fragment.rgb = lerp(originalFragment.rgb, fragment.rgb, saturate(coc < length(BUFFER_PIXEL_SIZE) ? 0 : 4 * coc));
 		fragment.w = 1.0;
 		
