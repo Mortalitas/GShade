@@ -445,7 +445,7 @@ float3 ApplyInverseTonemap(float3 color, float2 uv)
 {
 	switch (InvTonemap)
 	{
-		case InvTonemap_Reinhard:
+		default:
 			color = Tonemap::Reinhard::Inverse(color);
 			break;
 		case InvTonemap_Lottes:
@@ -490,11 +490,9 @@ float3 ApplyTonemap(float3 color, float2 uv)
 			return Tonemap::NarkowiczACES::Apply(color * exposure);
 		case Tonemap_Uncharted2Filmic:
 			return Tonemap::Uncharted2Filmic::Apply(color * exposure);
-		case Tonemap_BakingLabACES:
+		default:
 			return Tonemap::BakingLabACES::Apply(color * exposure);
 	}
-
-	return color;
 }
 
 float4 Blur(sampler sp, float2 uv, float2 dir)
