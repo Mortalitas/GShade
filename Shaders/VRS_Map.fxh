@@ -88,7 +88,14 @@ namespace VRS_Map
 	{
 		return 0;
 	}
-
+	uint ShadingRate(float2 texcoord, bool UseVRS, uint offRate)
+	{
+		return offRate;
+	}
+	uint ShadingRate(float2 texcoord, float VarianceCutoff, bool UseVRS, uint offRate)
+	{
+		return offRate;
+	}
 	float3 DebugImage(float3 originalImage, float2 texcoord, float VarianceCutoff, bool DebugView)
 	{
 		return originalImage;
@@ -206,6 +213,56 @@ namespace VRS_Map
 			return shadingRate;
 		}
 	}
+	
+	//uses the uniform set by VariableRateShading for the VarianceCutoff, also, it defines a custom shading rate that
+	//will be used when it is disabled rather than the default 0.
+	uint ShadingRate(float2 texcoord, bool UseVRS, uint offRate)
+	{
+		if(!VRS_IS_UPDATED || !UseVRS)
+		{
+			return offRate;
+		}
+		else
+		{
+			return uint(tex2Dfetch(sVRS, int2(texcoord * VRS_IMAGE_SIZE)).w * 255);
+		}
+	}
+	
+	//uses a custom input for the variance cutoff, the custom cutoff must be less than 0.25
+	//otherwise the shading rate will be reduced everywhere, also, it defines a custom shading rate that
+	//will be used when it is disabled rather than the default 0.
+	uint ShadingRate(float2 texcoord, float VarianceCutoff, bool UseVRS, uint offRate)
+	{
+		if(!VRS_IS_UPDATED || !UseVRS)
+		{
+			return offRate;
+		}
+		else
+		{
+			float3 variances = (tex2Dfetch(sVRS, int2(texcoord * VRS_IMAGE_SIZE)).xyz / 4);
+			float varH = variances.x;
+			float varV = variances.y;
+			float var = variances.z;
+			uint shadingRate = VRS_MAKE_SHADING_RATE(VRS_RATE1D_1X, VRS_RATE1D_1X);
+
+			if (var < VarianceCutoff)
+			{
+				shadingRate = VRS_MAKE_SHADING_RATE(VRS_RATE1D_2X, VRS_RATE1D_2X);
+			}
+			else
+			{
+				if (varH > varV)
+				{
+					shadingRate = VRS_MAKE_SHADING_RATE(VRS_RATE1D_1X, (varV > VarianceCutoff) ? VRS_RATE1D_1X : VRS_RATE1D_2X);
+				}
+				else
+				{
+					shadingRate = VRS_MAKE_SHADING_RATE((varH > VarianceCutoff) ? VRS_RATE1D_1X : VRS_RATE1D_2X, VRS_RATE1D_1X);
+				}
+			}
+			return shadingRate;
+		}
+	}
 	float3 DebugImage(float3 originalImage, float2 texcoord, float VarianceCutoff, bool DebugView)
 	{
 		if(DebugView)
@@ -276,7 +333,14 @@ namespace VRS_Map
 	{
 		return 0;
 	}
-
+	uint ShadingRate(float2 texcoord, bool UseVRS, uint offRate)
+	{
+		return offRate;
+	}
+	uint ShadingRate(float2 texcoord, float VarianceCutoff, bool UseVRS, uint offRate)
+	{
+		return offRate;
+	}
 	float3 DebugImage(float3 originalImage, float2 texcoord, float VarianceCutoff, bool DebugView)
 	{
 		return originalImage;
