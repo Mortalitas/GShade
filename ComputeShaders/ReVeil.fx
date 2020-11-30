@@ -58,9 +58,63 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 #define REVEIL_COMPUTE 0
 #endif
 
+//VRS_Map support
+#define __SUPPORTED_VRS_MAP_COMPATIBILITY__ 10
+#undef RENDERER
+#if exists "VRS_Map.fxh"                                          
+    #include "VRS_Map.fxh"
+	#ifndef VRS_MAP
+		#define VRS_MAP 1
+	#endif
+#else
+    #define VRS_MAP 0
+#endif
+
+//Define the necessary functions and constants so the code can't break when the .fxh isn't present
+#if VRS_MAP == 0
+static const uint VRS_RATE1D_1X = 0x0;
+static const uint VRS_RATE1D_2X = 0x1;
+static const uint VRS_RATE1D_4X = 0x2;
+#define VRS_MAKE_SHADING_RATE(x,y) ((x << 2) | (y))
+
+static const uint VRS_RATE_1X1 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_1X, VRS_RATE1D_1X); // 0;
+static const uint VRS_RATE_1X2 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_1X, VRS_RATE1D_2X); // 0x1;
+static const uint VRS_RATE_2X1 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_2X, VRS_RATE1D_1X); // 0x4;
+static const uint VRS_RATE_2X2 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_2X, VRS_RATE1D_2X); // 0x5;
+//Only up to 2X2 is implemented currently
+static const uint VRS_RATE_2X4 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_2X, VRS_RATE1D_4X); // 0x6;
+static const uint VRS_RATE_4X2 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_4X, VRS_RATE1D_2X); // 0x9;
+static const uint VRS_RATE_4X4 = VRS_MAKE_SHADING_RATE(VRS_RATE1D_4X, VRS_RATE1D_4X); // 0xa;
+
+namespace VRS_Map
+{
+	uint ShadingRate(float2 texcoord, bool UseVRS)
+	{
+		return VRS_RATE2X2;
+	}
+	uint ShadingRate(float2 texcoord, float VarianceCutoff, bool UseVRS)
+	{
+		return VRS_RATE2X2;
+	}
+	uint ShadingRate(float2 texcoord, bool UseVRS, uint offRate)
+	{
+		return offRate;
+	}
+	uint ShadingRate(float2 texcoord, float VarianceCutoff, bool UseVRS, uint offRate)
+	{
+		return offRate;
+	}
+	float3 DebugImage(float3 originalImage, float2 texcoord, float VarianceCutoff, bool DebugView)
+	{
+		return originalImage;
+	}
+}
+#endif //VRS_MAP
+
 uniform float TransmissionMultiplier<
 	ui_type = "slider";
 	ui_label = "Strength";
+	ui_category = "General";
 	ui_tooltip = "The overall strength of the removal, negative values correspond to more removal,\n"
 				"and positive values correspond to less.";
 	ui_min = -1; ui_max = 1;
@@ -70,12 +124,46 @@ uniform float TransmissionMultiplier<
 uniform float DepthMultiplier<
 	ui_type = "slider";
 	ui_label = "Depth Sensitivity";
+	ui_category = "General";
 	ui_tooltip = "This setting is for adjusting how much of the removal is depth based, or if\n"
 				"positive values are set, it will actually add fog to the scene. 0 means it is\n"
 				"unaffected by depth.";
 	ui_min = -1; ui_max = 1;
 	ui_step = 0.001;
 > = -0.075;
+
+#if VRS_MAP != 0
+	uniform float VarianceCutoff<
+		ui_type = "slider";
+		ui_label = "Variance Cutoff";
+		ui_category = "Variable Rate Map";
+		ui_tooltip = "Use this to adjust the level of variance at which ReVeil stops looking for fog (fog should be green in the debug view)";
+		ui_min = 0.1; ui_max = 0.249;
+		ui_step = 0.001;
+	> = 0.15;
+	
+	uniform bool UseVRS<
+		ui_label = "Experimental Variable Rate Map Support";
+		ui_category = "Variable Rate Map";
+		ui_tooltip = "Use this to allow ReVeil to use a variable rate map (VariableRateShading must be enabled for it to make a change)";
+	> = true;
+	
+	uniform int Debug <
+		ui_type = "combo";
+		ui_items = "None\0Transmission Map\0Variable Rate Map\0";
+		ui_label = "Debug View";
+		ui_category = "Debug";
+	> = 0;
+#else
+	static const VarianceCutoff = 0;
+	static const UseVRS = false;
+	uniform int Debug <
+	ui_type = "combo";
+	ui_items = "None\0Transmission Map\0";
+	ui_label = "Debug View";
+	ui_category = "Debug";
+	> = 0;
+#endif
 texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
 namespace ReVeilCS
 {
@@ -225,32 +313,39 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 
 void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1, out float4 originalImage : SV_TARGET2)
 {
-	float mean = tex2D(sMean, texcoord).r;
-	float variance = tex2D(sVariance, texcoord).r;
-	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
-	float3 color = tex2D(sBackBuffer, texcoord).rgb;
-	float darkChannel = min(min(color.r, color.g), color.b);
-	float maximum = 0;
-	
-	[unroll]
-	for(int i = 1; i < MAX_MIP - 4; i++)
+	if(VRS_Map::ShadingRate(texcoord, VarianceCutoff, UseVRS, VRS_RATE_2X2) == VRS_RATE_1X1 && Debug == 0)
 	{
-		maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
+		transmission = 1;
 	}
-	maximum /= MAX_MIP - 5;	
-	
-	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
-	float veil = saturate(mean + filter);
-	//filter = ((variance - noise) / variance) * (darkChannel - mean);
-	//mean += filter;
-	float usedVariance = variance;
-	
-	airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
-	transmission = (1 - ((veil * darkChannel) / airlight));
-	transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
-	transmission *= exp(TransmissionMultiplier);
+	else
+	{
+		float mean = tex2D(sMean, texcoord).r;
+		float variance = tex2D(sVariance, texcoord).r;
+		float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
+		float3 color = tex2D(sBackBuffer, texcoord).rgb;
+		float darkChannel = min(min(color.r, color.g), color.b);
+		float maximum = 0;
+		
+		[unroll]
+		for(int i = 1; i < MAX_MIP - 4; i++)
+		{
+			maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
+		}
+		maximum /= MAX_MIP - 5;	
+		
+		float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
+		float veil = saturate(mean + filter);
+		//filter = ((variance - noise) / variance) * (darkChannel - mean);
+		//mean += filter;
+		float usedVariance = variance;
+		
+		airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
+		transmission = (1 - ((veil * darkChannel) / airlight));
+		transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
+		transmission *= exp(TransmissionMultiplier);
 
-     originalImage = float4(color, 1);   
+		 originalImage = float4(color, 1);   
+	 }
 
 }
 #else
@@ -300,32 +395,39 @@ void MeanAndVariancePS1(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, o
 
 void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1, out float4 originalImage : SV_TARGET2)
 {
-	float mean = tex2D(sMean, texcoord).r;
-	float variance = tex2D(sVariance, texcoord).r;
-	float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
-	float3 color = tex2D(sBackBuffer, texcoord).rgb;
-	float darkChannel = min(min(color.r, color.g), color.b);
-	float maximum = 0;
-	
-	[unroll]
-	for(int i = 4; i < MAX_MIP; i++)
+	if(VRS_Map::ShadingRate(texcoord, VarianceCutoff, UseVRS, VRS_RATE_2X2) == VRS_RATE_1X1 && Debug == 0)
 	{
-		maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
+		transmission = 1;
 	}
-	maximum /= MAX_MIP - 4;	
-	
-	float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
-	float veil = saturate(mean + filter);
-	//filter = ((variance - noise) / variance) * (darkChannel - mean);
-	//mean += filter;
-	float usedVariance = variance;
-	
-	airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
-	transmission = (1 - ((veil * darkChannel) / airlight));
-	transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
-	transmission *= exp(TransmissionMultiplier);
+	else
+	{
+		float mean = tex2D(sMean, texcoord).r;
+		float variance = tex2D(sVariance, texcoord).r;
+		float noise = tex2Dlod(sVariance, float4(texcoord, 0, MAX_MIP - 1)).r;
+		float3 color = tex2D(sBackBuffer, texcoord).rgb;
+		float darkChannel = min(min(color.r, color.g), color.b);
+		float maximum = 0;
+		
+		[unroll]
+		for(int i = 4; i < MAX_MIP; i++)
+		{
+			maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
+		}
+		maximum /= MAX_MIP - 4;	
+		
+		float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
+		float veil = saturate(mean + filter);
+		//filter = ((variance - noise) / variance) * (darkChannel - mean);
+		//mean += filter;
+		float usedVariance = variance;
+		
+		airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
+		transmission = (1 - ((veil * darkChannel) / airlight));
+		transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
+		transmission *= exp(TransmissionMultiplier);
 
-     originalImage = float4(color, 1);   
+		 originalImage = float4(color, 1);   
+	 }
 
 }
 #endif
@@ -333,31 +435,45 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 
 void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 fogReintroduced : SV_TARGET0)
 {
-	float airlight = tex2D(sAirlight, texcoord).r;
 	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
-	float3 newImage = (tex2D(sBackBuffer, texcoord).rgb);
-	float3 originalImage = tex2D(sOriginalImage, texcoord).rgb;
-	
-	float y = dot(originalImage, float3(0.299, 0.587, 0.114));
-	float originalLuma = ((y - airlight) / transmission) + airlight;
-	
-	y = dot(newImage, float3(0.299, 0.587, 0.114));
-	float newLuma = ((y - airlight) / max(transmission, 0.05)) + airlight;
-	
-	float blended = (originalLuma - newLuma) * (1 - transmission);
-	blended += newLuma;
-	blended = lerp(originalLuma, newLuma, max(transmission, 0.05));
-	
-	blended = ((blended - airlight) * max(transmission, 0.05)) + airlight;
-	
-	float cb = -0.168736 * newImage.r - 0.331264 * newImage.g + 0.500000 * newImage.b;
-	float cr = +0.500000 * newImage.r - 0.418688 * newImage.g - 0.081312 * newImage.b;
-    newImage = float3(
-        blended + 1.402 * cr,
-        blended - 0.344136 * cb - 0.714136 * cr,
-        blended + 1.772 * cb);
+
+	if(transmission == 1) discard;
+	else if(Debug == 1)
+	{
+		fogReintroduced = transmission.rrrr;
+	}
+	else if(Debug == 2)
+	{
+		float3 originalImage = tex2D(sOriginalImage, texcoord).rgb;
+		fogReintroduced = float4(VRS_Map::DebugImage(originalImage, texcoord, VarianceCutoff, true), 1);
+	}
+	else
+	{
+		float airlight = tex2D(sAirlight, texcoord).r;
+		float3 newImage = (tex2D(sBackBuffer, texcoord).rgb);
+		float3 originalImage = tex2D(sOriginalImage, texcoord).rgb;
 		
-	fogReintroduced = float4(newImage, 1);
+		float y = dot(originalImage, float3(0.299, 0.587, 0.114));
+		float originalLuma = ((y - airlight) / transmission) + airlight;
+		
+		y = dot(newImage, float3(0.299, 0.587, 0.114));
+		float newLuma = ((y - airlight) / max(transmission, 0.05)) + airlight;
+		
+		float blended = (originalLuma - newLuma) * (1 - transmission);
+		blended += newLuma;
+		blended = lerp(originalLuma, newLuma, max(transmission, 0.05));
+		
+		blended = ((blended - airlight) * max(transmission, 0.05)) + airlight;
+		
+		float cb = -0.168736 * newImage.r - 0.331264 * newImage.g + 0.500000 * newImage.b;
+		float cr = +0.500000 * newImage.r - 0.418688 * newImage.g - 0.081312 * newImage.b;
+		newImage = float3(
+			blended + 1.402 * cr,
+			blended - 0.344136 * cb - 0.714136 * cr,
+			blended + 1.772 * cb);
+			
+		fogReintroduced = float4(newImage, 1);
+	}
 	
 }
 
