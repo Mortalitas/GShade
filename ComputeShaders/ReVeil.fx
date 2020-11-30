@@ -22,6 +22,11 @@ This method was adapted from the following paper:
 Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using the adaptive Wiener filter.
 2013 IEEE International Conference on Image Processing, ICIP 2013 - Proceedings. 714-718. 10.1109/ICIP.2013.6738147. 
 */
+#undef REVEIL_RES_DENOMINATOR
+#define REVEIL_RES_DENOMINATOR 4
+
+#define RENDER_WIDTH uint((BUFFER_WIDTH + REVEIL_RES_DENOMINATOR - 1) / (REVEIL_RES_DENOMINATOR))
+#define RENDER_HEIGHT uint((BUFFER_HEIGHT + REVEIL_RES_DENOMINATOR - 1) / (REVEIL_RES_DENOMINATOR))
 
 #define CONST_LOG2(x) (\
     (uint((x) & 0xAAAAAAAA) != 0) | \
@@ -44,7 +49,7 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 #define FOGREMOVAL_GET_MAX_MIP(w, h) \
 (FOGREMOVAL_LOG2((FOGREMOVAL_MAX((w), (h))) + 1))
 
-#define MAX_MIP (FOGREMOVAL_GET_MAX_MIP(BUFFER_WIDTH * 2 - 1, BUFFER_HEIGHT * 2 - 1))
+#define MAX_MIP (FOGREMOVAL_GET_MAX_MIP(RENDER_WIDTH * 2 - 1, RENDER_HEIGHT * 2 - 1))
 
 #define REVEIL_WINDOW_SIZE 16
 #define REVEIL_WINDOW_SIZE_SQUARED 256
@@ -164,21 +169,27 @@ uniform float DepthMultiplier<
 	ui_category = "Debug";
 	> = 0;
 #endif
-texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+#if exists"RadiantGI.fx"
+	texture Transmission {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+	sampler sGITransmission {Texture = Transmission;};
+#endif
+
 namespace ReVeilCS
 {
 texture BackBuffer : COLOR;
-texture Mean <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture Variance <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
-texture Airlight {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+texture Mean <Pooled = true;> {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = R16f;};
+texture Variance <Pooled = true;> {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = R16f; MipLevels = MAX_MIP;};
+texture Airlight {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = R16f;};
 texture OriginalImage {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGB10A2;};
+texture Transmission {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = R16f;};
 
 #if REVEIL_COMPUTE == 1
-texture Maximum <Pooled = true;> {Width = ((BUFFER_WIDTH - 1) / 16) + 1; Height = ((BUFFER_HEIGHT - 1) / 16) + 1; Format = R8; MipLevels = MAX_MIP - 4;};
+texture Maximum <Pooled = true;> {Width = ((RENDER_WIDTH - 1) / 16) + 1; Height = ((RENDER_HEIGHT - 1) / 16) + 1; Format = R8; MipLevels = MAX_MIP - 4;};
 #else
-texture MeanAndVariance <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16f;};
-texture Maximum0 <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-texture Maximum <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+texture MeanAndVariance <Pooled = true;> {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = RG16f;};
+texture Maximum0 <Pooled = true;> {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = R8;};
+texture Maximum <Pooled = true;> {Width = RENDER_WIDTH; Height = RENDER_HEIGHT; Format = R8;};
+
 
 sampler sMeanAndVariance {Texture = MeanAndVariance;};
 sampler sMaximum0 {Texture = Maximum0;};
@@ -188,7 +199,7 @@ sampler sBackBuffer {Texture = BackBuffer;};
 sampler sMean {Texture = Mean;};
 sampler sVariance {Texture = Variance;};
 sampler sMaximum {Texture = Maximum;};
-sampler sTransmission {Texture = Transmission;};
+sampler sTransmission {Texture = ReVeilCS::Transmission;};
 sampler sAirlight {Texture = Airlight;};
 sampler sOriginalImage {Texture = OriginalImage;};
 
@@ -196,7 +207,7 @@ sampler sOriginalImage {Texture = OriginalImage;};
 storage wMean {Texture = Mean;};
 storage wVariance {Texture = Variance;};
 storage wMaximum {Texture = Maximum;};
-storage wTransmission {Texture = Transmission;};
+storage wTransmission {Texture = ReVeilCS::Transmission;};
 storage wAirlight {Texture = Airlight;};
 storage wOriginalImage {Texture = OriginalImage;};
 
@@ -229,7 +240,8 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 	for(int i = 0; i < 4; i++)
 	{
 		int2 coord = groupCoord + int2(a[i], b[i]);
-		float3 color = tex2Dfetch(sBackBuffer, coord).rgb;
+		//float3 color = tex2Dlod(sBackBuffer, float4(float2(coord) / float2(RENDER_WIDTH, RENDER_HEIGHT), 0, 3)).rgb;
+		float3 color = tex2Dfetch(sBackBuffer, coord * REVEIL_RES_DENOMINATOR).rgb;
 		float minimum = min(min(color.r, color.b), color.g);
 		sum[i] = float2(minimum, minimum * minimum);
 		prefixSums[index[i]] = sum[i];
@@ -311,7 +323,7 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 	tex2Dstore(wVariance, id.xy, float4(variance, 0, 0, 0));
 }
 
-void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1, out float4 originalImage : SV_TARGET2)
+void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float transmission : SV_TARGET0, out float airlight : SV_TARGET1)
 {
 	if(VRS_Map::ShadingRate(texcoord, VarianceCutoff, UseVRS, VRS_RATE_2X2) == VRS_RATE_1X1 && Debug == 0)
 	{
@@ -342,9 +354,7 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 		airlight = clamp(maximum, 0.05, 1);//max(saturate(mean + sqrt(usedVariance) * StandardDeviations), 0.05);
 		transmission = (1 - ((veil * darkChannel) / airlight));
 		transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
-		transmission *= exp(TransmissionMultiplier);
-
-		 originalImage = float4(color, 1);   
+		transmission *= exp(TransmissionMultiplier);  
 	 }
 
 }
@@ -431,7 +441,17 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 
 }
 #endif
-
+void OriginalImagePS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 originalImage : SV_Target0
+#if exists("RadiantGI.fx")
+	, out float4 transmission : SV_Target1
+#endif
+)
+{
+	originalImage = float4(tex2Dfetch(sBackBuffer, texcoord * float2(BUFFER_WIDTH, BUFFER_HEIGHT)).rgb, 1);
+#if exists("RadiantGI.fx")
+	transmission = tex2D(sTransmission, texcoord);
+#endif
+}
 
 void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 fogReintroduced : SV_TARGET0)
 {
@@ -477,7 +497,7 @@ void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, 
 	
 }
 
-
+}
 
 technique ReVeil_Top <ui_tooltip = "This goes above any shaders you want to apply ReVeil to. \n\n"
 								  "(Don't worry if it looks like its doing nothing, what its doing here won't take effect until ReVeil_Bottom is applied)";>
@@ -485,26 +505,26 @@ technique ReVeil_Top <ui_tooltip = "This goes above any shaders you want to appl
 #if REVEIL_COMPUTE == 1
 	pass MeanAndVariance
 	{
-		ComputeShader = MeanAndVarianceCS<16, 16>;
-		DispatchSizeX = ((BUFFER_WIDTH - 1) / 16) + 1;
-		DispatchSizeY = ((BUFFER_HEIGHT - 1) / 16) + 1;
+		ComputeShader = ReVeilCS::MeanAndVarianceCS<16, 16>;
+		DispatchSizeX = ((RENDER_WIDTH - 1) / 16) + 1;
+		DispatchSizeY = ((RENDER_HEIGHT - 1) / 16) + 1;
 	}
 #else
 	pass MeanAndVariance
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = MeanAndVariancePS0;
-		RenderTarget0 = MeanAndVariance;
-		RenderTarget1 = Maximum0;
+		PixelShader = ReVeilCS::MeanAndVariancePS0;
+		RenderTarget0 = ReVeilCS::MeanAndVariance;
+		RenderTarget1 = ReVeilCS::Maximum0;
 	}
 	
 	pass MeanAndVariance
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = MeanAndVariancePS1;
-		RenderTarget0 = Mean;
-		RenderTarget1 = Variance;
-		RenderTarget2 = Maximum;
+		PixelShader = ReVeilCS::MeanAndVariancePS1;
+		RenderTarget0 = ReVeilCS::Mean;
+		RenderTarget1 = ReVeilCS::Variance;
+		RenderTarget2 = ReVeilCS::Maximum;
 	}
 #endif
 
@@ -512,10 +532,19 @@ technique ReVeil_Top <ui_tooltip = "This goes above any shaders you want to appl
 	pass WienerFilter
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = WienerFilterPS;
-		RenderTarget0 = Transmission;
-		RenderTarget1 = Airlight;
-		RenderTarget2 = OriginalImage;
+		PixelShader = ReVeilCS::WienerFilterPS;
+		RenderTarget0 = ReVeilCS::Transmission;
+		RenderTarget1 = ReVeilCS::Airlight;
+	}
+	
+	pass OriginalImage
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = ReVeilCS::OriginalImagePS;
+		RenderTarget0 = ReVeilCS::OriginalImage;
+#if exists("RadiantGI.fx")
+		RenderTarget1 = Transmission;
+#endif
 	}
 }
 
@@ -524,7 +553,6 @@ technique ReVeil_Bottom <ui_tooptip = "This goes beneath the shaders you want to
 	pass FogReintroduction
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = FogReintroductionPS;
+		PixelShader = ReVeilCS::FogReintroductionPS;
 	}
-}
 }
