@@ -54,6 +54,12 @@ uniform bool bKeepUIOcclude <
 	#define KeepUIOccludeAssist 0
 #endif
 
+// Disable occlusion assistance in unsupported games.
+#if KeepUIType == 0
+	#undef KeepUIOccludeAssist
+	#define KeepUIOccludeAssist 0
+#endif
+
 #if KeepUIDebug
 uniform bool bTroubleshootOpacityIssue <
     ui_category = "Troubleshooting (Do not use)";
