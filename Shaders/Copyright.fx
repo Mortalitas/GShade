@@ -102,7 +102,9 @@ uniform int cLayer_Select <
               "PSO2 Poppins\0"
               "PSO2 Flat Logo\0"
               "PSO2 Yanone Kaffeesatz A\0"
-              "PSO2 Yanone Kaffeesatz B\0";
+              "PSO2 Yanone Kaffeesatz B\0"
+              "PSO2 Yanone Kaffeesatz C\0"
+              "Custom\0";
     ui_bind = "CopyrightTexture_Source";
 > = 0;
 
@@ -345,6 +347,9 @@ uniform float cLayer_Rotate <
 #elif CopyrightTexture_Source == 44 // PSO2 Yanone Kaffeesatz B
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_yanone_kaffeesatz_b.png"
 #define _SOURCE_COPYRIGHT_SIZE 300.0, 300.0
+#elif CopyrightTexture_Source == 45 // Custom
+#define _SOURCE_COPYRIGHT_FILE cLayerTex
+#define _SOURCE_COPYRIGHT_SIZE cLayer_SIZE_X, cLayer_SIZE_Y
 #endif
 
 
