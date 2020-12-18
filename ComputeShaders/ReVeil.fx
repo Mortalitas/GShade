@@ -137,7 +137,7 @@ uniform float DepthMultiplier<
 	ui_step = 0.001;
 > = -0.075;
 
-#if VRS_MAP != 0
+#if (VRS_MAP != 0 && REVEIL_COMPUTE != 0)
 	uniform float VarianceCutoff<
 		ui_type = "slider";
 		ui_label = "Variance Cutoff";
@@ -160,8 +160,8 @@ uniform float DepthMultiplier<
 		ui_category = "Debug";
 	> = 0;
 #else
-	static const VarianceCutoff = 0;
-	static const UseVRS = false;
+	static const float VarianceCutoff = 0;
+	static const bool UseVRS = false;
 	uniform int Debug <
 	ui_type = "combo";
 	ui_items = "None\0Transmission Map\0";
@@ -282,6 +282,7 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 			int address = index[i];
 			prefixSums[address] = sum[i];
 		}
+		barrier();
 	}
 	
 	//Generating columns of summed area table
@@ -309,6 +310,7 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 			int address = index[i];
 			prefixSums[address] = sum[i];
 		}
+		barrier();
 	}
 
 	//sampling from summed area table, and extractions the desired values
@@ -556,3 +558,4 @@ technique ReVeil_Bottom <ui_tooptip = "This goes beneath the shaders you want to
 		PixelShader = ReVeilCS::FogReintroductionPS;
 	}
 }
+
