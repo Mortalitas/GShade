@@ -229,7 +229,13 @@ uniform float2 fUIMeshEdgesStrength <
     ui_step = 0.01;
 > = float2(3.0, 3.0);
 
-#define COMIC_MESHEDGES_ITERATIONS_MAX 3
+#ifndef COMIC_MESHEDGES_ITERATIONS_MAX
+    #if __RENDERER__ <= 0x9300
+        #define COMIC_MESHEDGES_ITERATIONS_MAX 2
+    #else 
+        #define COMIC_MESHEDGES_ITERATIONS_MAX 3
+    #endif
+#endif
 
 uniform float iUIMeshEdgesIterations <
     ui_type = "slider";
