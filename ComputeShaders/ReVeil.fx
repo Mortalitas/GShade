@@ -42,7 +42,9 @@ Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using 
 
 #define FOGREMOVAL_LOG2(x) (CONST_LOG2( (BIT16_LOG2(x) >> 1) + 1))
 	    
-	
+#if __RESHADE__ < 40800	
+	#error "ReVeil requires ReShade 4.8 or higher to run"
+#endif
 
 #define FOGREMOVAL_MAX(a, b) (int((a) > (b)) * (a) + int((b) > (a)) * (b))
 
@@ -95,11 +97,11 @@ namespace VRS_Map
 {
 	uint ShadingRate(float2 texcoord, bool UseVRS)
 	{
-		return VRS_RATE2X2;
+		return VRS_RATE_2X2;
 	}
 	uint ShadingRate(float2 texcoord, float VarianceCutoff, bool UseVRS)
 	{
-		return VRS_RATE2X2;
+		return VRS_RATE_2X2;
 	}
 	uint ShadingRate(float2 texcoord, bool UseVRS, uint offRate)
 	{
@@ -211,10 +213,36 @@ storage wTransmission {Texture = ReVeilCS::Transmission;};
 storage wAirlight {Texture = Airlight;};
 storage wOriginalImage {Texture = OriginalImage;};
 
-groupshared float2 prefixSums[1024];
+groupshared float4 prefixSums[1024];
+void StorePrefixSums(uint index, float2 value, uint iteration)
+{
+	if(iteration % 2 == 0)
+	{
+		prefixSums[index].xy = value;
+	}
+	else
+	{
+		prefixSums[index].zw = value;
+	}
+}
+
+float2 AccessPrefixSums(uint index, uint iteration)
+{
+	if(iteration % 2 == 1)
+	{
+		return prefixSums[index].xy;
+	}
+	else
+	{
+		return prefixSums[index].zw;
+	}
+}
+
 groupshared uint maximum;
+
 void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 {
+	uint iteration = 0;
 	uint2 groupCoord = id.xy - tid.xy;
 	if(tid.x == 0)
 	{
@@ -244,13 +272,15 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 		float3 color = tex2Dfetch(sBackBuffer, coord * REVEIL_RES_DENOMINATOR).rgb;
 		float minimum = min(min(color.r, color.b), color.g);
 		sum[i] = float2(minimum, minimum * minimum);
+		StorePrefixSums(index[i], sum[i], iteration);
 		prefixSums[index[i]] = sum[i];
 		if(i == 0)
 		{
-			atomicMax(maximum, uint((prefixSums[index[i]].r) * 255));
+			atomicMax(maximum, uint((prefixSums[index[i]].x) * 255));
 		}
 	}
 	barrier();
+	iteration++;
 
 	if(all(tid==0))
 	{
@@ -272,17 +302,21 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 			access += y[i] * 32;
 			if(x[i] >= exp2(j))
 			{
-			sum[i] += prefixSums[access];
+			sum[i] += AccessPrefixSums(access, iteration);
 			}
+			StorePrefixSums(address, sum[i], iteration);
 		}
 		barrier();
+		iteration++;
+		
+		/*barrier();
 		[unroll]
 		for(int i = 0; i < 4; i++)
 		{
 			int address = index[i];
 			prefixSums[address] = sum[i];
 		}
-		barrier();
+		barrier();*/
 	}
 	
 	//Generating columns of summed area table
@@ -300,17 +334,22 @@ void MeanAndVarianceCS(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThrea
 			access += x[i];
 			if(y[i] >= exp2(j))
 			{
-			sum[i] += prefixSums[access];
+			sum[i] += AccessPrefixSums(access, iteration);
 			}
+			if(j != 4)
+				StorePrefixSums(address, sum[i], iteration);
 		}
-		barrier();
+		if(j != 4)
+			barrier();
+		iteration++;
+		/*barrier();
 		[unroll]
 		for(int i = 0; i < 4; i++)
 		{
 			int address = index[i];
 			prefixSums[address] = sum[i];
 		}
-		barrier();
+		barrier();*/
 	}
 
 	//sampling from summed area table, and extractions the desired values
@@ -437,6 +476,7 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 		transmission = (1 - ((veil * darkChannel) / airlight));
 		transmission *= (exp(DepthMultiplier * ReShade::GetLinearizedDepth(texcoord)));
 		transmission *= exp(TransmissionMultiplier);
+		transmission = saturate(transmission);
 
 		 originalImage = float4(color, 1);   
 	 }
@@ -459,7 +499,7 @@ void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, 
 {
 	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
 
-	if(transmission == 1) discard;
+	if(transmission == 1 && Debug == 0) discard;
 	else if(Debug == 1)
 	{
 		fogReintroduced = transmission.rrrr;
@@ -558,4 +598,3 @@ technique ReVeil_Bottom <ui_tooptip = "This goes beneath the shaders you want to
 		PixelShader = ReVeilCS::FogReintroductionPS;
 	}
 }
-
