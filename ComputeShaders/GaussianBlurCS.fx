@@ -51,8 +51,8 @@
 
 #if GAUSSIAN_COMPUTE != 0
 texture BackBuffer : COLOR;
-texture PlaceHolder {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
-texture Convolution {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
+texture PlaceHolder {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGB10A2;};
+texture Convolution {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGB10A2;};
 
 sampler sBackBuffer {Texture = BackBuffer;};
 sampler sPlaceHolder {Texture = PlaceHolder;};
