@@ -147,7 +147,7 @@ void HorizontalPassCS(uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
 	indexCoords.x = (gtid.x * SAMPLES_PER_THREAD);
 	indexCoords.y = gtid.y;
 	int2 sampleOffset = indexCoords;
-	sampleOffset.x -= KERNEL_RADIUS;
+	sampleOffset.x -= KERNEL_RADIUS - SAMPLES_PER_THREAD;
 	int2 groupCoord = int2(gid.x * SAMPLES_PER_THREAD * GROUP_WIDTH, gid.y * GROUP_HEIGHT);
 	
 	[unroll]
@@ -168,7 +168,7 @@ void HorizontalPassCS(uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
 	[unroll]
 	while(indexCoords.x < ARRAY_DIMENSIONS.x)
 	{
-		sampleOffset.x = indexCoords.x - KERNEL_RADIUS;
+		sampleOffset.x = indexCoords.x - KERNEL_RADIUS + SAMPLES_PER_THREAD;
 		int2 sampleCoord = sampleOffset + groupCoord;
 		sampleCoord = clamp(sampleCoord, 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT));
 		uint arrayIndex = ArrayIndex(indexCoords, ARRAY_DIMENSIONS);
@@ -200,7 +200,7 @@ void HorizontalPassCS(uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
 	}
 	indexCoords.x = (gtid.x * SAMPLES_PER_THREAD);
 	int2 coord = indexCoords + groupCoord;
-	
+	//coord.x -= SAMPLES_PER_THREAD;
 	//store the horizontal to a placeholder texture
 	[unroll]
 	for(int i = 0; i < SAMPLES_PER_THREAD; i++)
@@ -218,7 +218,7 @@ void VerticalPassCS(uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
 	indexCoords.x = (gtid.x * SAMPLES_PER_THREAD);
 	indexCoords.y = gtid.y;
 	int2 sampleOffset = indexCoords;
-	sampleOffset.x -= KERNEL_RADIUS;
+	sampleOffset.x -= KERNEL_RADIUS - SAMPLES_PER_THREAD;
 	int2 groupCoord = int2(gid.x * SAMPLES_PER_THREAD * GROUP_WIDTH, gid.y * GROUP_HEIGHT);
 	
 	//load the samples into shared memory
@@ -240,7 +240,7 @@ void VerticalPassCS(uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
 	[unroll]
 	while(indexCoords.x < ARRAY_DIMENSIONS.x)
 	{
-		sampleOffset.x = indexCoords.x - KERNEL_RADIUS;
+		sampleOffset.x = indexCoords.x - KERNEL_RADIUS + SAMPLES_PER_THREAD;
 		int2 sampleCoord = sampleOffset + groupCoord;
 		sampleCoord = clamp(sampleCoord, 0, float2(BUFFER_HEIGHT, BUFFER_WIDTH));
 		uint arrayIndex = ArrayIndex(indexCoords, ARRAY_DIMENSIONS);
@@ -273,6 +273,7 @@ void VerticalPassCS(uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
 	
 	indexCoords.x = (gtid.x * SAMPLES_PER_THREAD);
 	int2 coord = indexCoords + groupCoord;
+	//coord.x -= SAMPLES_PER_THREAD;
 	[unroll]
 	for(int i = 0; i < SAMPLES_PER_THREAD; i++)
 	{
@@ -295,6 +296,7 @@ void OutputPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 c
 	if(Strength < 1)
 	{
 		color = lerp(tex2D(sBackBuffer, texcoord), color, Strength);
+		//color = (color - tex2D(sBackBuffer, texcoord)) + 0.5;
 	}
 }
 
