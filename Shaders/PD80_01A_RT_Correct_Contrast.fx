@@ -174,7 +174,7 @@ namespace pd80_correctcontrast
             for( int x = 0; x < SampleRes; ++x )
             {   
                 // Dark color detection methods
-                minColor     = tex2Dfetch( samplerDS_1_Min, int2( x, y ), 0 ).xyz;
+                minColor     = tex2Dfetch( samplerDS_1_Min, int2( x, y), 0 ).xyz;
                 minValue.xyz = min( minValue.xyz, minColor.xyz );
                 // Light color detection methods
                 maxColor     = tex2Dfetch( samplerDS_1_Max, int2( x, y ), 0 ).xyz;

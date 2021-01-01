@@ -61,7 +61,6 @@ namespace pd80_correctcolor
     #define RT_RES      16
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
-    /*
     uniform int debug_mode <
         ui_label = "Debug Mode";
         ui_tooltip = "Debug Mode";
@@ -69,7 +68,6 @@ namespace pd80_correctcolor
         ui_type = "combo";
         ui_items = "Default\0Min Color Texture\0Max Color Texture\0Mid Color Texture\0";
         > = 0;
-    */
     uniform bool enable_fade <
         ui_text = "----------------------------------------------";
         ui_label = "Enable Time Based Fade";
@@ -286,7 +284,7 @@ namespace pd80_correctcolor
         {
             for( int x = start.x; x < stop.x && x < stexSize.x; x += OFFSET )
             {
-                currColor      = tex2Dfetch( samplerColor, int2( x, y ), 0 ).xyz;
+                currColor      = tex2Dfetch( samplerColor, int2( x, y ), RT_MIPLVL ).xyz;
                 // Dark color detection methods
                 // Per channel
                 minMethod0.xyz = min( minMethod0.xyz, currColor.xyz );
@@ -427,7 +425,6 @@ namespace pd80_correctcolor
         avgCol             = 1.0f - abs( avgCol * 2.0f - 1.0f );
         color.xyz          = saturate( color.xyz - midValue.xyz * avgCol + avgMid * avgCol * rt_midpoint_respect_luma );
         // Debug
-        /*
         switch( debug_mode )
         {
             case 0: { color.xyz = color.xyz; } break;
@@ -435,7 +432,6 @@ namespace pd80_correctcolor
             case 2: { color.xyz = tex2D( samplerDS_1_Max, texcoord ).xyz; } break;
             case 3: { color.xyz = tex2D( samplerDS_1_Mid, texcoord ).xyz; } break;
         }
-        */
         return float4( color.xyz, 1.0f );
     }
 
