@@ -152,7 +152,7 @@ namespace pd80_blackandwhite
     {
         float s = sign( x - 0.5f );
         float o = ( 1.0f + s ) / 2.0f;
-        return o - 0.5f * s * pow( abs( 2.0f * ( o - s * x ) ), k );
+        return o - 0.5f * s * pow( max( 2.0f * ( o - s * x ), 0.0f ), k );
     }
 
     float3 ProcessBW( float3 col, float r, float y, float g, float c, float b, float m )

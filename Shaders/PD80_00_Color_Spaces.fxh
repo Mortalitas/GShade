@@ -90,9 +90,9 @@ float3 KelvinToRGB( in float k )
     }
     else
     {
-        float t      = kelvin - 60.0f;
-        ret.r        = saturate( 1.29293618606274509804f * pow( abs( t ), -0.1332047592f ));
-        ret.g        = saturate( 1.12989086089529411765f * pow( abs( t ), -0.0755148492f ));
+        float t      = max( kelvin - 60.0f, 0.0f );
+        ret.r        = saturate( 1.29293618606274509804f * pow( max( t, 0.0f ), -0.1332047592f ));
+        ret.g        = saturate( 1.12989086089529411765f * pow( max( t, 0.0f ), -0.0755148492f ));
     }
     if( kelvin >= 66.0f )
         ret.b        = 1.0f;
@@ -145,7 +145,7 @@ float3 SRGBToLinear( float3 color )
 float3 pd80_xyz_to_lab( float3 c )
 {
     // .xyz output contains .lab
-    float3 w       = c / reference_white;
+    float3 w       = max( c / reference_white, 0.0f );
     float3 v;
     v.x            = ( w.x >  E_val ) ? pow( abs( w.x ), 1.0 / 3.0 ) : ( K_val * w.x + 16.0 ) / 116.0;
     v.y            = ( w.y >  E_val ) ? pow( abs( w.y ), 1.0 / 3.0 ) : ( K_val * w.y + 16.0 ) / 116.0;
