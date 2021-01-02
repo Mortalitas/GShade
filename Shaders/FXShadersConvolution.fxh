@@ -162,4 +162,21 @@ float4 GaussianBlur2D(
 	return color / accum;
 }
 
+float4 LinearBlur1D(sampler sp, float2 uv, float2 dir, int samples)
+{
+	static const float half_samples = (samples - 1) * 0.5;
+	uv -= half_samples * dir;
+
+	float4 color = 0.0;
+
+	[unroll]
+	for (int i = 0; i < samples; ++i)
+	{
+		color += tex2D(sp, uv);
+		uv += dir;
+	}
+
+	return color / samples;
 }
+
+} // Namespace.
