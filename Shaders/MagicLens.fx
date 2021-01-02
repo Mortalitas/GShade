@@ -1,24 +1,22 @@
-#include "FXShaders/Common.fxh"
-#include "FXShaders/Convolution.fxh"
-#include "FXShaders/Math.fxh"
-#include "FXShaders/Tonemap.fxh"
+#include "FXShadersAspectRatio.fxh"
+#include "FXShadersCommon.fxh"
+#include "FXShadersConvolution.fxh"
+#include "FXShadersMath.fxh"
+#include "FXShadersTonemap.fxh"
+
+#ifndef MAGIC_LENS_BLUR_SAMPLES
+#define MAGIC_LENS_BLUR_SAMPLES 9
+#endif
+
+#ifndef MAGIC_LENS_DOWNSCALE
+#define MAGIC_LENS_DOWNSCALE 4
+#endif
 
 namespace FXShaders
 {
 
-static const int BlurSamples = 9;
-static const int Downsample = 2;
-
-static const int ScaleType_VertMinus = 0;
-static const int ScaleType_HorPlus = 1;
-static const int ScaleType_Stretch = 2;
-
-static const int Tonemapper_Reinhard = 0;
-static const int Tonemapper_Uncharted2Filmic = 1;
-static const int Tonemapper_BakingLabACES = 2;
-static const int Tonemapper_NarkowiczACES = 3;
-static const int Tonemapper_Unreal3 = 4;
-static const int Tonemapper_Lottes = 5;
+static const int BlurSamples = MAGIC_LENS_BLUR_SAMPLES;
+static const int Downscale = MAGIC_LENS_DOWNSCALE;
 
 FXSHADERS_WIP_WARNING();
 
@@ -34,13 +32,7 @@ uniform int Tonemapper
 <
 	ui_category = "Appearance";
 	ui_type = "combo";
-	ui_items =
-		"Reinhard\0"
-		"Uncharted 2 Filmic\0"
-		"BakingLab ACES\0"
-		"Narkowicz ACES\0"
-		"Unreal3\0"
-		"Lottes\0";	
+	ui_items = FXSHADERS_TONEMAPPER_LIST;
 > = 0;
 
 uniform float FisheyeAmount
@@ -58,8 +50,8 @@ uniform int FisheyeScaleType
 	ui_label = " ";
 	ui_text = "Scale Type";
 	ui_type = "radio";
-	ui_items = "Vert-\0Hor+\0Stretch\0";
-> = ScaleType_VertMinus;
+	ui_items = FXSHADERS_ASPECT_RATIO_SCALE_TYPE_LIST;
+> = AspectRatio::ScaleType::Cover;
 
 uniform float BokehAngle
 <
@@ -164,8 +156,8 @@ sampler BackBuffer
 
 texture LensATex// <pooled = true;>
 {
-	Width = BUFFER_WIDTH / Downsample;
-	Height = BUFFER_HEIGHT / Downsample;
+	Width = BUFFER_WIDTH / Downscale;
+	Height = BUFFER_HEIGHT / Downscale;
 	Format = RGBA16F;
 };
 
@@ -176,8 +168,8 @@ sampler LensA
 
 texture LensBTex// <pooled = true;>
 {
-	Width = BUFFER_WIDTH / Downsample;
-	Height = BUFFER_HEIGHT / Downsample;
+	Width = BUFFER_WIDTH / Downscale;
+	Height = BUFFER_HEIGHT / Downscale;
 	Format = RGBA16F;
 };
 
@@ -186,40 +178,11 @@ sampler LensB
 	Texture = LensBTex;
 };
 
-float2 AspectRatioScaleByLesserAxis()
-{
-	return BUFFER_WIDTH > BUFFER_HEIGHT
-		? float2(1.0, BUFFER_HEIGHT * BUFFER_RCP_WIDTH)
-		: float2(BUFFER_WIDTH * BUFFER_RCP_HEIGHT, 1.0);
-}
-
-float2 AspectRatioScaleByGreaterAxis()
-{
-	return BUFFER_WIDTH > BUFFER_HEIGHT
-		? float2(BUFFER_WIDTH * BUFFER_RCP_HEIGHT, 1.0)
-		: float2(1.0, BUFFER_HEIGHT * BUFFER_RCP_WIDTH);
-}
-
-float2 GetAspectRatioScale()
-{
-	switch (FisheyeScaleType)
-	{
-		case ScaleType_VertMinus:
-			return AspectRatioScaleByLesserAxis();
-		case ScaleType_HorPlus:
-			return AspectRatioScaleByGreaterAxis();
-		case ScaleType_Stretch:
-		default:
-			return 1.0;
-	}
-}
-
 float2 ApplyFisheye(float2 uv, float amount, float zoom)
 {
 	uv = uv * 2.0 - 1.0;
-	//uv /= zoom;
 
-	float2 fishUv = uv * GetAspectRatioScale();
+	float2 fishUv = uv * AspectRatio::ApplyScale(FisheyeScaleType, uv);
 	float distort = sqrt(1.0 - fishUv.x * fishUv.x - fishUv.y * fishUv.y);
 
 	uv *= lerp(1.0, distort * zoom, amount);
@@ -229,52 +192,10 @@ float2 ApplyFisheye(float2 uv, float amount, float zoom)
 	return uv;
 }
 
-float3 InverseTonemap(float3 color)
-{
-	switch (Tonemapper)
-	{
-		case Tonemapper_Reinhard:
-			return Tonemap::Reinhard::Inverse(color);
-		case Tonemapper_Uncharted2Filmic:
-			return Tonemap::Uncharted2Filmic::Inverse(color);
-		case Tonemapper_BakingLabACES:
-			return Tonemap::BakingLabACES::Inverse(color);
-		case Tonemapper_NarkowiczACES:
-			return Tonemap::NarkowiczACES::Inverse(color);
-		case Tonemapper_Unreal3:
-			return Tonemap::Unreal3::Inverse(color);
-		case Tonemapper_Lottes:
-			return Tonemap::Lottes::Inverse(color);
-	}
-
-	return color;
-}
-
-float3 Tonemap(float3 color)
-{
-	switch (Tonemapper)
-	{
-		case Tonemapper_Reinhard:
-			return Tonemap::Reinhard::Apply(color);
-		case Tonemapper_Uncharted2Filmic:
-			return Tonemap::Uncharted2Filmic::Apply(color);
-		case Tonemapper_BakingLabACES:
-			return Tonemap::BakingLabACES::Apply(color);
-		case Tonemapper_NarkowiczACES:
-			return Tonemap::NarkowiczACES::Apply(color);
-		case Tonemapper_Unreal3:
-			return Tonemap::Unreal3::Apply(color);
-		case Tonemapper_Lottes:
-			return Tonemap::Lottes::Apply(color);
-	}
-
-	return color;
-}
-
 float4 PreparePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
 	float4 color = tex2D(BackBuffer, uv);
-	color.rgb = InverseTonemap(color.rgb);
+	color.rgb = Tonemap::Inverse(Tonemapper, color.rgb);
 
 	return color;
 }
@@ -302,7 +223,7 @@ float4 HexBlur##id##PS( \
 	float4 p : SV_POSITION, \
 	float2 uv : TEXCOORD) : SV_TARGET \
 { \
-	float2 dir = float2(BokehSize * Downsample, 0); \
+	float2 dir = float2(BokehSize * Downscale, 0); \
 	dir = RotatePoint(dir, angle + 30, 0); \
 	dir *= GetPixelSize(); \
 	\
@@ -318,7 +239,7 @@ _HEX_BLUR_SHADER(3, LensB, BokehAngle - 90)
 float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
 	float4 color = tex2D(BackBuffer, uv);
-	color.rgb = InverseTonemap(color.rgb);
+	color.rgb = Tonemap::Inverse(Tonemapper, color.rgb);
 
 	float4 lens = tex2D(LensA, uv);
 
@@ -326,7 +247,7 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 		? lens.rgb
 		: color.rgb + lens.rgb * log(1.0 + Intensity) / log(10); 
 
-	color.rgb = Tonemap(color.rgb);
+	color.rgb = Tonemap::Apply(Tonemapper, color.rgb);
 
 	return color;
 }

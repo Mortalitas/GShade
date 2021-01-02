@@ -1,7 +1,25 @@
 #pragma once
 
+#define FXSHADERS_TONEMAPPER_LIST \
+"Reinhard\0" \
+"Uncharted 2 Filmic\0" \
+"BakingLab ACES\0"  \
+"Narkowicz ACES\0" \
+"Unreal3\0" \
+"Lottes\0"
+
 namespace FXShaders { namespace Tonemap
 {
+
+namespace Type
+{
+	static const int Reinhard = 0;
+	static const int Uncharted2Filmic = 1;
+	static const int BakingLabACES = 2;
+	static const int NarkowiczACES = 3;
+	static const int Unreal3 = 4;
+	static const int Lottes = 5;
+}
 
 namespace Reinhard
 {
@@ -206,6 +224,46 @@ namespace Unreal3
 	float3 Inverse(float3 color)
 	{
 		return (color * -0.155) / (max(color, 0.01) - 1.019);
+	}
+}
+
+float3 Apply(int type, float3 color)
+{
+	switch (type)
+	{
+		default:
+		case Type::Reinhard:
+			return Reinhard::Apply(color);
+		case Type::Uncharted2Filmic:
+			return Uncharted2Filmic::Apply(color);
+		case Type::BakingLabACES:
+			return BakingLabACES::Apply(color);
+		case Type::NarkowiczACES:
+			return NarkowiczACES::Apply(color);
+		case Type::Unreal3:
+			return Unreal3::Apply(color);
+		case Type::Lottes:
+			return Lottes::Apply(color);
+	}
+}
+
+float3 Inverse(int type, float3 color)
+{
+	switch (type)
+	{
+		default:
+		case Type::Reinhard:
+			return Reinhard::Inverse(color);
+		case Type::Uncharted2Filmic:
+			return Uncharted2Filmic::Inverse(color);
+		case Type::BakingLabACES:
+			return BakingLabACES::Inverse(color);
+		case Type::NarkowiczACES:
+			return NarkowiczACES::Inverse(color);
+		case Type::Unreal3:
+			return Unreal3::Inverse(color);
+		case Type::Lottes:
+			return Lottes::Inverse(color);
 	}
 }
 
