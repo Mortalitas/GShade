@@ -196,4 +196,24 @@ float4 MaxBlur1D(sampler sp, float2 uv, float2 dir, int samples)
 	return color;
 }
 
+float4 SharpBlur1D(sampler sp, float2 uv, float2 dir, int samples, float sharpness)
+{
+	static const float halfSamples = (samples - 1) * 0.5;
+	static const float weight = 1.0 / samples;
+
+	uv -= halfSamples * dir;
+
+	float4 color = 0.0;
+
+	[unroll]
+	for (int i = 0; i < samples; ++i)
+	{
+		float4 pixel = tex2D(sp, uv);
+		color = lerp(color + pixel * weight, max(color, pixel), sharpness);
+		uv += dir;
+	}
+
+	return color;
+}
+
 } // Namespace.

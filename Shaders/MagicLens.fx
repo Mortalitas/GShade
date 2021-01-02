@@ -17,10 +17,11 @@ namespace FXShaders
 
 static const int BlurSamples = MAGIC_LENS_BLUR_SAMPLES;
 static const int Downscale = MAGIC_LENS_DOWNSCALE;
+static const float BaseFlareDownscale = 4.0;
 
 FXSHADERS_WIP_WARNING();
 
-uniform float Intensity
+uniform float Brightness
 <
 	ui_category = "Appearance";
 	ui_type = "slider";
@@ -28,114 +29,89 @@ uniform float Intensity
 	ui_max = 3.0;
 > = 0.1;
 
+uniform float Saturation
+<
+	ui_category = "Appearance";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 2.0;
+> = 0.7;
+
+uniform float Threshold
+<
+	ui_category = "Appearance";
+	ui_type = "slider";
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 0.7;
+
 uniform int Tonemapper
 <
 	ui_category = "Appearance";
 	ui_type = "combo";
 	ui_items = FXSHADERS_TONEMAPPER_LIST;
-> = 0;
-
-uniform float FisheyeAmount
-<
-	ui_category = "Fisheye Lens";
-	ui_label = "Amount";
-	ui_type = "slider";
-	ui_min = -1.0;
-	ui_max = 1.0;
-> = 1.0;
-
-uniform int FisheyeScaleType
-<
-	ui_category = "Fisheye Lens";
-	ui_label = " ";
-	ui_text = "Scale Type";
-	ui_type = "radio";
-	ui_items = FXSHADERS_ASPECT_RATIO_SCALE_TYPE_LIST;
-> = AspectRatio::ScaleType::Cover;
+> = Tonemap::Type::BakingLabACES;
 
 uniform float BokehAngle
 <
 	ui_category = "Bokeh Blur";
 	ui_label = "Angle";
 	ui_type = "slider";
-	ui_min = 0;
-	ui_max = 359;
-	ui_step = 1;
-> = 15;
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 15.0 / 60.0;
 
 uniform float BokehSize
 <
 	ui_category = "Bokeh Blur";
 	ui_label = "Size";
 	ui_type = "slider";
-	ui_min = 1.0;
-	ui_max = 10.0;
-> = 3.0;
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 1.0;
 
-uniform float4 Tint1
+uniform float BokehDefinition
 <
-	ui_category = "Flares";
-	ui_category_closed = true;
-	ui_label = "Flare 1 Tint";
-	ui_type = "color";
-> = float4(1.0, 0.0, 0.0, 1.0);
-
-uniform float4 Tint2
-<
-	ui_category = "Flares";
-	ui_label = "Flare 2 Tint";
-	ui_type = "color";
-> = float4(1.0, 0.0, 1.0, 1.0);
-
-uniform float4 Tint3
-<
-	ui_category = "Flares";
-	ui_label = "Flare 3 Tint";
-	ui_type = "color";
-> = float4(1.0, 1.0, 0.0, 1.0);
-
-uniform float4 Tint4
-<
-	ui_category = "Flares";
-	ui_label = "Flare 4 Tint";
-	ui_type = "color";
-> = float4(0.0, 1.0, 1.0, 1.0);
-
-uniform float Scale1
-<
-	ui_category = "Flares";
-	ui_label = "Flare 1 Scale";
+	ui_category = "Bokeh Blur";
+	ui_label = "Definition";
 	ui_type = "slider";
-	ui_min = -3.0;
-	ui_max = 3.0;
-> = -3.0;
+	ui_min = 0.0;
+	ui_max = 1.0;
+> = 0.2;
 
-uniform float Scale2
-<
-	ui_category = "Flares";
-	ui_label = "Flare 2 Scale";
-	ui_type = "slider";
-	ui_min = -3.0;
-	ui_max = 3.0;
-> = -1.5;
+#define _FLARE_TINT(id, defaultValue) \
+uniform float4 Tint##id \
+< \
+	ui_category = "Flares"; \
+	ui_label = "Tint " #id; \
+	ui_type = "color"; \
+> = defaultValue
 
-uniform float Scale3
-<
-	ui_category = "Flares";
-	ui_label = "Flare 3 Scale";
-	ui_type = "slider";
-	ui_min = -3.0;
-	ui_max = 3.0;
-> = -1.0;
+_FLARE_TINT(1, float4(1.0, 1.0, 1.0, 1.0));
+_FLARE_TINT(2, float4(1.0, 1.0, 1.0, 1.0));
+_FLARE_TINT(3, float4(1.0, 1.0, 1.0, 1.0));
+_FLARE_TINT(4, float4(1.0, 1.0, 1.0, 1.0));
+_FLARE_TINT(5, float4(1.0, 1.0, 1.0, 1.0));
 
-uniform float Scale4
-<
-	ui_category = "Flares";
-	ui_label = "Flare 4 Scale";
-	ui_type = "slider";
-	ui_min = -3.0;
-	ui_max = 3.0;
-> = 2.0;
+#undef _FLARE_TINT
+
+#define _FLARE_SCALE(id, defaultValue) \
+uniform float Scale##id \
+< \
+	ui_category = "Flares"; \
+	ui_label = "Scale " #id; \
+	ui_type = "slider"; \
+	ui_min = -1.0; \
+	ui_max = 1.0; \
+> = defaultValue
+
+_FLARE_SCALE(1, 0.6);
+_FLARE_SCALE(2, 0.2);
+_FLARE_SCALE(3, 0.1);
+_FLARE_SCALE(4, 0.05);
+_FLARE_SCALE(5, -1.0);
+
+#undef _FLARE_SCALE
 
 uniform bool ShowLens
 <
@@ -164,6 +140,8 @@ texture LensATex// <pooled = true;>
 sampler LensA
 {
 	Texture = LensATex;
+	AddressU = BORDER;
+	AddressV = BORDER;
 };
 
 texture LensBTex// <pooled = true;>
@@ -176,44 +154,19 @@ texture LensBTex// <pooled = true;>
 sampler LensB
 {
 	Texture = LensBTex;
+	AddressU = BORDER;
+	AddressV = BORDER;
 };
-
-float2 ApplyFisheye(float2 uv, float amount, float zoom)
-{
-	uv = uv * 2.0 - 1.0;
-
-	float2 fishUv = uv * AspectRatio::ApplyScale(FisheyeScaleType, uv);
-	float distort = sqrt(1.0 - fishUv.x * fishUv.x - fishUv.y * fishUv.y);
-
-	uv *= lerp(1.0, distort * zoom, amount);
-
-	uv = (uv + 1.0) * 0.5;
-
-	return uv;
-}
 
 float4 PreparePS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
+	uv = ScaleCoord(1.0 - uv, BaseFlareDownscale);
 	float4 color = tex2D(BackBuffer, uv);
 	color.rgb = Tonemap::Inverse(Tonemapper, color.rgb);
 
-	return color;
-}
-
-float4 FishLensPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-{
-	#define _GET_FLARE(id) \
-	(tex2D(LensA, ApplyFisheye(uv, FisheyeAmount, Scale##id)) * \
-	float4(Tint##id##.rgb * Tint##id##.a, 1.0))
-
-	float4 color = _GET_FLARE(1);
-	color += _GET_FLARE(2);
-	color += _GET_FLARE(3);
-	color += _GET_FLARE(4);
-
-	#undef _GET_FLARE
-
-	color /= 4;
+	color.rgb = ApplySaturation(color.rgb, Saturation);
+	color.rgb *= color.rgb >= Tonemap::Inverse(Tonemapper, Threshold).x;
+	color.rgb *= Brightness;
 
 	return color;
 }
@@ -227,12 +180,12 @@ float4 HexBlur##id##PS( \
 	dir = RotatePoint(dir, angle + 30, 0); \
 	dir *= GetPixelSize(); \
 	\
-	return LinearBlur1D(tex, uv, dir, BlurSamples); \
+	return SharpBlur1D(tex, uv, dir, BlurSamples, BokehDefinition); \
 }
 
-_HEX_BLUR_SHADER(1, LensB, BokehAngle + 30)
-_HEX_BLUR_SHADER(2, LensA, BokehAngle - 30)
-_HEX_BLUR_SHADER(3, LensB, BokehAngle - 90)
+_HEX_BLUR_SHADER(1, LensB, BokehAngle * 60 + 30)
+_HEX_BLUR_SHADER(2, LensA, BokehAngle * 60 - 30)
+_HEX_BLUR_SHADER(3, LensB, BokehAngle * 60 - 90)
 
 #undef _HEX_BLUR_SHADER
 
@@ -241,11 +194,23 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 	float4 color = tex2D(BackBuffer, uv);
 	color.rgb = Tonemap::Inverse(Tonemapper, color.rgb);
 
-	float4 lens = tex2D(LensA, uv);
+	#define _GET_FLARE(id) \
+	(tex2D(LensA, ScaleCoord(uv, Scale##id * BaseFlareDownscale)) * \
+	float4(Tint##id##.rgb * Tint##id##.a, 1.0))
+
+	float4 lens =
+		_GET_FLARE(1) +
+		_GET_FLARE(2) +
+		_GET_FLARE(3) +
+		_GET_FLARE(4) +
+		_GET_FLARE(5);
+	lens /= 5;
+
+	#undef _GET_FLARE
 
 	color.rgb = ShowLens
 		? lens.rgb
-		: color.rgb + lens.rgb * log(1.0 + Intensity) / log(10); 
+		: color.rgb + lens.rgb; 
 
 	color.rgb = Tonemap::Apply(Tonemapper, color.rgb);
 
@@ -258,12 +223,6 @@ technique MagicLens
 	{
 		VertexShader = ScreenVS;
 		PixelShader = PreparePS;
-		RenderTarget = LensATex;
-	}
-	pass FishLens
-	{
-		VertexShader = ScreenVS;
-		PixelShader = FishLensPS;
 		RenderTarget = LensBTex;
 	}
 	pass HexBlur1
