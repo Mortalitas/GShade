@@ -147,9 +147,9 @@ float3 pd80_xyz_to_lab( float3 c )
     // .xyz output contains .lab
     float3 w       = max( c / reference_white, 0.0f );
     float3 v;
-    v.x            = ( w.x >  E_val ) ? pow( abs( w.x ), 1.0 / 3.0 ) : ( K_val * w.x + 16.0 ) / 116.0;
-    v.y            = ( w.y >  E_val ) ? pow( abs( w.y ), 1.0 / 3.0 ) : ( K_val * w.y + 16.0 ) / 116.0;
-    v.z            = ( w.z >  E_val ) ? pow( abs( w.z ), 1.0 / 3.0 ) : ( K_val * w.z + 16.0 ) / 116.0;
+    v.x            = ( w.x >  E_val ) ? pow( max( w.x, 0.0f ), 1.0 / 3.0 ) : ( K_val * w.x + 16.0 ) / 116.0;
+    v.y            = ( w.y >  E_val ) ? pow( max( w.y, 0.0f ), 1.0 / 3.0 ) : ( K_val * w.y + 16.0 ) / 116.0;
+    v.z            = ( w.z >  E_val ) ? pow( max( w.z, 0.0f ), 1.0 / 3.0 ) : ( K_val * w.z + 16.0 ) / 116.0;
     return float3( 116.0 * v.y - 16.0,
                    500.0 * ( v.x - v.y ),
                    200.0 * ( v.y - v.z ));

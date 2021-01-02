@@ -51,14 +51,19 @@ namespace pd80_correctcolor
     //// DEFINES ////////////////////////////////////////////////////////////////////
 #if( RT_PRECISION_LEVEL_0_TO_4 == 0 )
     #define RT_RES      1
+    #define RT_MIPLVL   0
 #elif( RT_PRECISION_LEVEL_0_TO_4 == 1 )
     #define RT_RES      2
+    #define RT_MIPLVL   1
 #elif( RT_PRECISION_LEVEL_0_TO_4 == 2 )
     #define RT_RES      4
+    #define RT_MIPLVL   2
 #elif( RT_PRECISION_LEVEL_0_TO_4 == 3 )
     #define RT_RES      8
+    #define RT_MIPLVL   3
 #else
     #define RT_RES      16
+    #define RT_MIPLVL   4
 #endif
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
     uniform int debug_mode <
