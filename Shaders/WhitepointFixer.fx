@@ -84,7 +84,7 @@ uniform float Whitepoint
 		"\nDefault: 1.0";
 	ui_min = 0.0;
 	ui_max = 1.0;
-	ui_step = 1.0 / 255.0;
+	ui_step = 0.00392156; //1.0 / 255.0;
 > = 1.0;
 
 #elif WHITEPOINT_FIXER_MODE == 1

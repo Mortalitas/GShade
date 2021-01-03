@@ -39,7 +39,7 @@ float2 ApplyScale(int type, float2 uv)
 			return CoverScale(uv);
 		case ScaleType::Fit:
 			return FitScale(uv);
-		case ScaleType::Stretch:
+		// case ScaleType::Stretch:
 		default:
 			return uv;
 	}
