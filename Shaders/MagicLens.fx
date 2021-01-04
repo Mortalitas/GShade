@@ -1,4 +1,3 @@
-#include "FXShadersAspectRatio.fxh"
 #include "FXShadersCommon.fxh"
 #include "FXShadersConvolution.fxh"
 #include "FXShadersMath.fxh"
