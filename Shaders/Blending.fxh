@@ -253,7 +253,7 @@ float3 Glow(float3 a, float3 b)
 // Overlay Blending Mode
 float3 Overlay(float3 a, float3 b)
 {
-    return lerp(2 * a * b, 1.0 - 2 * (1.0 - a) * (1.0 - b), step(0.5, b));
+    return lerp(2 * a * b, 1.0 - 2 * (1.0 - a) * (1.0 - b), step(0.5, a));
 }
 
 // Soft Light Blending Mode
@@ -268,7 +268,7 @@ float3 SoftLight(float3 a, float3 b)
 // Hard Light Blending Mode
 float3 HardLight(float3 a, float3 b)
 {
-    return lerp(2 * a * b, 1.0 - 2 * (1.0 - b) * (1.0 - a), step(0.5, a));
+    return lerp(2 * a * b, 1.0 - 2 * (1.0 - b) * (1.0 - a), step(0.5, b));
 }
 
 // Vivid Light Blending Mode
