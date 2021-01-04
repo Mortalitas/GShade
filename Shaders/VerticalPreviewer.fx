@@ -2,20 +2,22 @@
 | :: Description :: |
 '-------------------/
 
-    Vertical Previewer and Composition (based on Layer.fx version 0.7)
+    Vertical Previewer and Composition (version 0.1)
 
     Authors: CeeJay.dk, seri14, Marot Satil, prod80, Uchu Suzume, originalnicodr
                     Composition https://github.com/Daodan317081/reshade-shaders
     License: MIT
 
     About:
-    Show the screen rotated to the 90 degree angle to assist you in taking a vertical screenshot.
+    Show the preview rotated to the 90 degree angle on your screen to help you take vertical screenshot.
+    Composition guides created by Daodan31708 are integrated and added new variations are built in.
+    Can be used simply as a composition guide by turning off the preview.
 
     History:
     (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
     
-    Prototype by Uchu Suzume
-    
+    Veresion 0.1 Uchu Suzume & Marot Satil
+    *Created by Uchu Suzume, with code optimization by Marot Satil.
 */
 
 #include "ReShade.fxh"
@@ -574,7 +576,7 @@ ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
                      "      Can be use as composition guide\n"
                      "   or a small preview window overlooking\n"
                      "     whole screen with your preference.\n\n"
-                     "     Recommend adding your hotkeys for\n"
+                     "     Recommend adding to your hotkeys\n"
                      " by right click from here for easy access."; >
 {
     pass pass0

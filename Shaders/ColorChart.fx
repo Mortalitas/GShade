@@ -2,16 +2,18 @@
 | :: Description :: |
 '-------------------/
 
-    Color Chart (based on Layer.fx version 0.7)
+    Color Chart (version 0.1)
 
     Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume, prod80, originalnicodr
     License: MIT
 
     About:
-    Displays a color chart used color grading within video/cinema production.
+    Display a color chart like used for color grading work in video/cinema production.
+    Can be useful to see how presets and shaders affect to colors.
     Placing it at the top of the preset will show you the color changes of entire preset,
     placing it in the middle will show you what each shader does to the color,
     placing it at the bottom will show your screen's color property by simply.
+    
     Color values refer to the following link to X-Rite L*a*b* D50 (formulations AFTER Nov. 2014).
     https://www.babelcolor.com/colorchecker-2.htm
 
@@ -19,8 +21,8 @@
     History:
     (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
     
-    Prototype by Uchu Suzume
-    
+    Veresion 0.1 Uchu Suzume & Marot Satil
+    *Created by Uchu Suzume, with code optimization by Marot Satil.
 */
 
 #include "ReShade.fxh"
