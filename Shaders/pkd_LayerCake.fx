@@ -1,5 +1,5 @@
 /*
-    LayerCake - v1.4
+    LayerCake - v1.5
     by Packetdancer
 
     This shader allows you to slice apart an image and save it into separate texture buffers
@@ -68,13 +68,13 @@
 			ui_category = label; \
 			ui_label = "Alpha Blend Layer Edges"; \
 			ui_tooltip = "Should the edges of the layer be alpha-blended rather than a sharp falloff?"; \
-		> = true; \
+		> = false; \
 \
 		uniform float2 alphaBlendDepthVar < \
 			ui_type = "slider"; \
 			ui_category = label; \
 			ui_label = "Alpha Blend Depth Range"; \
-			ui_tooltip = "Mark the start and end point of of the alpha blending within the depth range of the mask. Note that this is RELATIVE depth; 1.0 means 'the farthest point of the layer', not of the overall screenshot."; \
+			ui_tooltip = "Mark the relative start and end point for full opacity within the depth range of the mask; anything outside of this range will be faded smoothly to full transparency. Note that this is RELATIVE depth; 1.0 means 'the farthest point of the layer', not of the overall screenshot."; \
 			ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; \
 		> = float2(0.05, 0.95); \
 \
@@ -176,36 +176,20 @@ namespace pkd
 				maskAlpha = smoothDelta;
 			}
 			else {
-				if (smoothDelta >= 1.0) {
-					maskAlpha = 1.0;
-				}
-				else {
-					maskAlpha = 0.0;
-				}
+				maskAlpha = (smoothDelta >= 1.0) ? 1.0 : 0.0;
 			}
 
-			if (maskInvert) {
-				maskAlpha *= -1.0;
-			}
-			else {
-				maskAlpha *= 1.0;
-			}
+			maskAlpha *= maskInvert ? -1.0 : 1.0;
 
-			if (maskEnable) {
-				color.a *= maskAlpha;
-			}
-			else {
-				color.a *= 1.0;
-			}
+			color.a *= maskEnable ? maskAlpha : 1.0;
 
 			// Handle the depth blending logic
 			const float relativeDepth = smoothstep(depthRange.x, depthRange.y, depth);
-			if (alphaBlend) {
-				color.a *= smoothstep(0.0, alphaBlendDepth.x, relativeDepth) * (1.0 - smoothstep(alphaBlendDepth.y, 1.0, relativeDepth));
-			}
+			const float relativeAlpha = (relativeDepth > alphaBlendDepth.y) ? (1.0 - smoothstep(alphaBlendDepth.y, 1.0, relativeDepth)) : smoothstep(0.0, alphaBlendDepth.x, relativeDepth);
+			color.a *= alphaBlend ? relativeAlpha : 1.0;
 
 			// Handle removing anything outside of our depth range
-			if (depth < depthRange.x || depth > depthRange.y) {
+			if (enableDepth && (depth < depthRange.x || depth > depthRange.y)) {
 				color.a *= 0.0;
 			}
 
