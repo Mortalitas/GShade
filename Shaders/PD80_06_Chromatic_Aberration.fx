@@ -267,7 +267,7 @@ namespace pd80_ca
         {
             huecolor.xyz  = HUEToRGB( i / sampleSTEPS );
             o2            = lerp( -caWidth, caWidth, i / o1 );
-            temp.xyz      = tex2D( ReShade::BackBuffer, texcoord.xy + float2( o2 * offsetX, o2 * offsetY )).xyz;
+            temp.xyz      = tex2Dlod( ReShade::BackBuffer, float4(texcoord.xy + float2( o2 * offsetX, o2 * offsetY ), 0.0, 0.0)).xyz;
             color.xyz     += temp.xyz * huecolor.xyz;
             d.xyz         += huecolor.xyz;
         }
