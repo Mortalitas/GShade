@@ -63,8 +63,8 @@ namespace LocalContrast
 	storage wRegionVariancesH {Texture = RegionVariancesH;};
 	storage wRegionVariances {Texture = RegionVariances;};
 	
-	//static const float GAUSSIAN[9] = {0.063327,	0.093095,	0.122589,	0.144599,	0.152781,	0.144599,	0.122589,	0.093095,	0.063327};
-	static const float GAUSSIAN[9] = {0.048297,	0.08393,	0.124548,	0.157829,	0.170793,	0.157829,	0.124548,	0.08393,	0.048297};
+	static const float GAUSSIAN[9] = {0.063327,	0.093095,	0.122589,	0.144599,	0.152781,	0.144599,	0.122589,	0.093095,	0.063327};
+	//static const float GAUSSIAN[9] = {0.048297,	0.08393,	0.124548,	0.157829,	0.170793,	0.157829,	0.124548,	0.08393,	0.048297};
 	//static const float GAUSSIAN[9] = {0.028532,	0.067234,	0.124009,	0.179044,	0.20236,	0.179044,	0.124009,	0.067234,	0.028532};
 	//static const float GAUSSIAN[9] = {0.000229,	0.005977,	0.060598,	0.241732,	0.382928,	0.241732,	0.060598,	0.005977,	0.000229};
 
@@ -160,8 +160,8 @@ namespace LocalContrast
 			[unroll]
 			for(int j = 0; j < TILES_SAMPLES_PER_THREAD.y; j++)
 			{
-				float2 coord = (gid.xy * TILES_SAMPLES_PER_THREAD * GROUP_SIZE + (gtid.xy * TILES_SAMPLES_PER_THREAD + float2(i, j)) * 1) * RESOLUTION_MULTIPLIER;
-				coord -= float2(GROUP_SIZE * TILES_SAMPLES_PER_THREAD) * 0;
+				float2 coord = (gid.xy * TILES_SAMPLES_PER_THREAD * GROUP_SIZE + (gtid.xy * TILES_SAMPLES_PER_THREAD + float2(i, j)) * 2) * RESOLUTION_MULTIPLIER;
+				coord -= float2(GROUP_SIZE * TILES_SAMPLES_PER_THREAD) * 1 - 0.5;
 				uint arrayIndex = i + TILES_SAMPLES_PER_THREAD.x * j;
 				if(any(coord >= uint2(BUFFER_WIDTH, BUFFER_HEIGHT)) || any(coord < 0))
 				{
@@ -491,6 +491,34 @@ namespace LocalContrast
 			ComputeShader = ContrastLUTCS<(BIN_COUNT), 1>;
 			DispatchSizeX = 1;
 			DispatchSizeY = DISPATCH_SIZE.x * DISPATCH_SIZE.y;
+		}
+		
+		pass
+		{
+			VertexShader = PostProcessVS;
+			PixelShader = GaussianLUTHPS;
+			RenderTarget = HistogramLUTH;
+		}
+		
+		pass
+		{
+			VertexShader = PostProcessVS;
+			PixelShader = GaussianLUTVPS;
+			RenderTarget = HistogramLUT;
+		}
+		
+		pass
+		{
+			VertexShader = PostProcessVS;
+			PixelShader = GaussianVarianceHPS;
+			RenderTarget = RegionVariancesH;
+		}
+		
+		pass
+		{
+			VertexShader = PostProcessVS;
+			PixelShader = GaussianVarianceVPS;
+			RenderTarget = RegionVariances;
 		}
 		
 		pass
