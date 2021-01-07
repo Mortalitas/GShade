@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.8
+Perfect Perspective PS, version 3.7.9
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -33,7 +33,6 @@ and
  /// MENU ///
 ////////////
 
-
 // FIELD OF VIEW
 
 uniform int FOV <
@@ -41,6 +40,9 @@ uniform int FOV <
 	ui_category = "Field of View";
 	ui_label = "Game field of view";
 	ui_tooltip = "This setting should match your in-game FOV (in degrees)";
+	#if __RESHADE__ < 40000
+		ui_step = 0.2;
+	#endif
 	ui_min = 0; ui_max = 170;
 > = 90;
 
@@ -146,7 +148,7 @@ uniform float Zooming <
 > = 1.0;
 
 uniform float2 Offset <
-	ui_type = "sldier";
+	ui_type = "slider";
 	ui_category = "Border";
 	ui_label = "Border offset";
 	ui_tooltip = "Offset the picture in XY to adjust UI visibility";
@@ -198,7 +200,7 @@ uniform bool DebugPreview <
 > = false;
 
 uniform int ResScaleVirtual <
-	ui_type = "input";
+	ui_type = "slider";
 	ui_category = "Tools for debugging";
 	ui_label = "Virtual resolution";
 	ui_tooltip = "Simulates application running beyond\n"
@@ -214,18 +216,17 @@ uniform int ResScaleScreen <
 		"native screen resolution (using VSR or DSR)";
 > = 1920;
 
+
   ////////////////
  /// TEXTURES ///
 ////////////////
 
 #include "ReShade.fxh"
 
-texture BackBufferTex : COLOR;
-
 // Define screen texture with mirror tiles
 sampler BackBuffer
 {
-	Texture = BackBufferTex;
+	Texture = ReShade::BackBufferTex;
 	AddressU = MIRROR;
 	AddressV = MIRROR;
 	#if BUFFER_COLOR_BIT_DEPTH != 10
@@ -301,9 +302,10 @@ float univPerspVignette(in out float2 viewCoord, float k, float l, float s)
 		// Limit FOV span, k+- in [0.5, 1] range
 		float thetaLimit = max(abs(k), 0.5)*theta;
 		// Create spherical vignette
+		vignetteMask = cos(thetaLimit);
 		vignetteMask = lerp(
-			cos(thetaLimit), // Cosine law of illumination
-			rcp(tan(thetaLimit)*tan(thetaLimit)+1.0), // Inverse square law
+			vignetteMask, // Cosine law of illumination
+			vignetteMask*vignetteMask, // Inverse square law
 			clamp(k+0.5, 0.0, 1.0) // For k in [-0.5, 0.5] range
 		);
 		// Cylinder vignette
