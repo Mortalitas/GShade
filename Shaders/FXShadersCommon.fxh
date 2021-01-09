@@ -11,48 +11,6 @@
 namespace FXShaders
 {
 
-#define FXSHADERS_ASPECT_RATIO_SCALE_TYPE_LIST \
-"Cover\0" \
-"Fit\0" \
-"Stretch\0"
-
-namespace ScaleType
-{
-	static const int Cover = 0;
-	static const int Fit = 1;
-	static const int Stretch = 2;
-}
-
-float2 CoverScale(float2 uv)
-{
-	if (BUFFER_WIDTH > BUFFER_HEIGHT)
-		return float2(1.0, BUFFER_HEIGHT * BUFFER_RCP_WIDTH);
-	else
-		return float2(BUFFER_WIDTH * BUFFER_RCP_HEIGHT, 1.0);
-}
-
-float2 FitScale(float2 uv)
-{
-	if (BUFFER_WIDTH > BUFFER_HEIGHT)
-		return float2(BUFFER_WIDTH * BUFFER_RCP_HEIGHT, 1.0);
-	else
-		return float2(1.0, BUFFER_HEIGHT * BUFFER_RCP_WIDTH);
-}
-
-float2 ApplyScale(int type, float2 uv)
-{
-	switch (type)
-	{
-		case ScaleType::Cover:
-			return CoverScale(uv);
-		case ScaleType::Fit:
-			return FitScale(uv);
-		// case ScaleType::Stretch:
-		default:
-			return uv;
-	}
-}
-
 /**
  * Arbitrary margin of error/minimal value for various calculations involving
  * floating point numbers.
@@ -360,24 +318,6 @@ float2 CorrectAspectRatio(float2 uv, float a, float b)
 
 		return ScaleCoord(uv, float2(1.0, 1.0 / b));
 	}
-}
-
-float2 ApplyFisheyeDistortion(
-	int aspectRatioScaleType,
-	float2 uv,
-	float amount,
-	float zoom)
-{
-	uv = uv * 2.0 - 1.0;
-
-	float2 fishUv = uv * ApplyScale(aspectRatioScaleType, uv);
-	float distort = sqrt(1.0 - fishUv.x * fishUv.x - fishUv.y * fishUv.y);
-
-	uv *= lerp(1.0, distort * zoom, amount);
-
-	uv = (uv + 1.0) * 0.5;
-
-	return uv;
 }
 
 } // Namespace.
