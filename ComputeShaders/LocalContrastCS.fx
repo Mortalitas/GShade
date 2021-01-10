@@ -11,13 +11,23 @@ Srinivasan, S & Balram, Nikhil. (2006). Adaptive contrast enhancement using loca
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.526.5037&rep=rep1&type=pdf
 */
 
+
 #ifndef LARGE_CONTRAST_LUT
 	#define LARGE_CONTRAST_LUT 1
 #endif
 
+#ifndef MORE_LOCALITY
+	#define MORE_LOCALITY 0
+#endif
+
 #define DIVIDE_ROUNDING_UP(numerator, denominator) (int(numerator + denominator - 1) / int(denominator))
 
-#define TILES_SAMPLES_PER_THREAD uint2(3, 3)
+#if MORE_LOCALITY != 0
+	#define TILES_SAMPLES_PER_THREAD uint2(2, 2)
+#else
+	#define TILES_SAMPLES_PER_THREAD uint2(3, 3)
+#endif
+
 #define COLUMN_SAMPLES_PER_THREAD 4
 #define LOCAL_ARRAY_SIZE (TILES_SAMPLES_PER_THREAD.x * TILES_SAMPLES_PER_THREAD.y)
 #if LARGE_CONTRAST_LUT != 0
@@ -43,7 +53,6 @@ namespace LocalContrast
 	texture BackBuffer : COLOR;
 	texture LocalTiles {Width = BIN_COUNT; Height = DISPATCH_SIZE.x * DISPATCH_SIZE.y; Format = R32f;};
 	texture Histogram {Width = BIN_COUNT; Height = 1; Format = R32f;};
-	texture HistogramLUTH {Width = BIN_COUNT; Height = DISPATCH_SIZE.x * DISPATCH_SIZE.y; Format = R32f;};
 	texture HistogramLUT {Width = BIN_COUNT; Height = DISPATCH_SIZE.x * DISPATCH_SIZE.y; Format = R32f;};
 	texture RegionVariancesH {Width = DISPATCH_SIZE.x * DISPATCH_SIZE.y; Height = 1; Format = RGBA32f;};
 	texture RegionVariances {Width = DISPATCH_SIZE.x * DISPATCH_SIZE.y; Height = 1; Format = RGBA32f;};
@@ -51,14 +60,12 @@ namespace LocalContrast
 	sampler sBackBuffer {Texture = BackBuffer;};
 	sampler sLocalTiles {Texture = LocalTiles;};
 	sampler sHistogram {Texture = Histogram;};
-	sampler sHistogramLUTH {Texture = HistogramLUTH;};
 	sampler sHistogramLUT {Texture = HistogramLUT;};
 	sampler sRegionVariancesH {Texture = RegionVariancesH;};
 	sampler sRegionVariances {Texture = RegionVariances;};
 
 	storage wLocalTiles {Texture = LocalTiles;};
 	storage wHistogram {Texture = Histogram;};
-	storage wHistogramLUTH {Texture = HistogramLUTH;};
 	storage wHistogramLUT {Texture = HistogramLUT;};
 	storage wRegionVariancesH {Texture = RegionVariancesH;};
 	storage wRegionVariances {Texture = RegionVariances;};
@@ -67,7 +74,14 @@ namespace LocalContrast
 	//static const float GAUSSIAN[9] = {0.048297,	0.08393,	0.124548,	0.157829,	0.170793,	0.157829,	0.124548,	0.08393,	0.048297};
 	//static const float GAUSSIAN[9] = {0.028532,	0.067234,	0.124009,	0.179044,	0.20236,	0.179044,	0.124009,	0.067234,	0.028532};
 	//static const float GAUSSIAN[9] = {0.000229,	0.005977,	0.060598,	0.241732,	0.382928,	0.241732,	0.060598,	0.005977,	0.000229};
+	//static const float GAUSSIAN[5] = {0.153388,	0.221461,	0.250301,	0.221461,	0.153388};
 
+
+	uniform float GlobalStrength<
+		ui_type = "slider";
+		ui_label = "Strength";
+		ui_min = 0; ui_max = 1;
+	> = 0.75;
 
 	uniform float Minimum<
 		ui_type = "slider";
@@ -102,42 +116,43 @@ namespace LocalContrast
 		ui_label = "Dark Blending Curve";
 		ui_category = "Dark Settings";
 		ui_min = 0; ui_max = 1;
-	> = 0.035;
+	> = 0.075;
 	
 	uniform float DarkMax<
 		ui_type = "slider";
 		ui_label = "Dark Maximum Blending";
 		ui_category = "Dark Settings";
 		ui_min = 0; ui_max = 1;
-	> = 0.25;
+	> = 0.15;
 
 	uniform float MidPeak<
 		ui_type = "slider";
 		ui_label = "Mid Blending Curve";
 		ui_category = "Mid Settings";
 		ui_min = 0; ui_max = 1;
-	> = 0.2;
+	> = 0.5;
 	
 	uniform float MidMax<
 		ui_type = "slider";
 		ui_label = "Mid Maximum Blending";
 		ui_category = "Mid Settings";
 		ui_min = 0; ui_max = 1;
-	> = 0.3;
+	> = 0.4;
 
 	uniform float LightPeak<
 		ui_type = "slider";
 		ui_label = "Light Blending Curve";
 		ui_category = "Light Settings";
 		ui_min = 0; ui_max = 1;
-	> = 0.3;
+	> = 0.7;
 	
 	uniform float LightMax<
 		ui_type = "slider";
 		ui_label = "Light Maximum Blending";
 		ui_category = "Light Settings";
 		ui_min = 0; ui_max = 1;
-	> = 0.275;
+	> = 0.3;
+	
 
 	groupshared uint HistogramBins[BIN_COUNT];
 	void HistogramTilesCS(uint3 id : SV_DispatchThreadID, uint3 gid : SV_GroupID, uint3 gtid : SV_GroupThreadID)
@@ -160,8 +175,8 @@ namespace LocalContrast
 			[unroll]
 			for(int j = 0; j < TILES_SAMPLES_PER_THREAD.y; j++)
 			{
-				float2 coord = (gid.xy * TILES_SAMPLES_PER_THREAD * GROUP_SIZE + (gtid.xy * TILES_SAMPLES_PER_THREAD + float2(i, j)) * 2) * RESOLUTION_MULTIPLIER;
-				coord -= float2(GROUP_SIZE * TILES_SAMPLES_PER_THREAD) * 1 - 0.5;
+				float2 coord = (gid.xy * TILES_SAMPLES_PER_THREAD * GROUP_SIZE + (gtid.xy * TILES_SAMPLES_PER_THREAD + float2(i, j)) * 3) * RESOLUTION_MULTIPLIER;
+				coord -= float2(GROUP_SIZE * TILES_SAMPLES_PER_THREAD) * 1.5;
 				uint arrayIndex = i + TILES_SAMPLES_PER_THREAD.x * j;
 				if(any(coord >= uint2(BUFFER_WIDTH, BUFFER_HEIGHT)) || any(coord < 0))
 				{
@@ -190,30 +205,6 @@ namespace LocalContrast
 		{
 			tex2Dstore(wLocalTiles, int2(threadIndex, groupIndex), float4(HistogramBins[threadIndex], 1, 1, 1));
 			threadIndex += GROUP_SIZE.x * GROUP_SIZE.y;
-		}
-	}
-
-	groupshared uint columnSum;
-	void ColumnSumCS(uint3 id : SV_DispatchThreadID)
-	{
-		if(id.y == 0)
-		{
-			columnSum = 0;
-		}
-		barrier();
-		uint localSum = 0;
-		[unroll]
-		for(int i = 0; i < COLUMN_SAMPLES_PER_THREAD; i++)
-		{
-			localSum += tex2Dfetch(sLocalTiles, int2(id.x, id.y * COLUMN_SAMPLES_PER_THREAD + i)).x;
-		}
-		
-		atomicAdd(columnSum, localSum);
-		barrier();
-		
-		if(id.y == 0)
-		{
-			tex2Dstore(wHistogram, id.xy, columnSum);
 		}
 	}
 
@@ -367,37 +358,64 @@ namespace LocalContrast
 		}
 	}
 	
-	void GaussianLUTHPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float GaussianLUT : SV_Target0)
+	void LUTInterpolation(uint2 coord, float yOld, out float yNew, out float3 variances)
 	{
-		GaussianLUT = 0;
-		uint textureHeight = DISPATCH_SIZE.x * DISPATCH_SIZE.y;
-		uint2 coord = texcoord * float2(BIN_COUNT, textureHeight);
-		uint2 group = uint2(coord.x / (GROUP_SIZE.x * TILES_SAMPLES_PER_THREAD.x), (coord.y / (GROUP_SIZE.y * TILES_SAMPLES_PER_THREAD.y)));
-		[unroll]
-		for(int i = -4; i <= 4; i++)
+		uint2 blockSize = uint2((GROUP_SIZE.x * TILES_SAMPLES_PER_THREAD.x), (GROUP_SIZE.y * TILES_SAMPLES_PER_THREAD.y));
+		uint2 groupCoord = coord / blockSize;
+		int2 position = (coord % blockSize) - float2(blockSize / 2);
+		float2 positionCoord = float2(abs(position)) / float2(blockSize);
+		float2 weights = smoothstep(0, 1, positionCoord);
+		uint group = groupCoord.x + groupCoord.y * DISPATCH_SIZE.x;
+		int2 groupCoordW;
+		float samples[4];
+		float3 varianceSamples[4];
+		samples[0] = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+		varianceSamples[0] = tex2Dfetch(sRegionVariances, float2(group, 0)).xyz;
+		int2 groupCoordTemp = groupCoord;
+		if(position.x < 0)
 		{
-			int2 sampleCoord = uint2(coord.x, coord.y + i);
-			sampleCoord.y = clamp(sampleCoord.y, 0, textureHeight);
-			GaussianLUT += GAUSSIAN[i + 4] * tex2Dfetch(sHistogramLUT, sampleCoord).x;
+			groupCoordTemp.x -= 1;
+			groupCoordTemp = clamp(groupCoordTemp, 0, DISPATCH_SIZE);
+			groupCoordW = groupCoordTemp;
+			group = groupCoord.x + groupCoord.y * DISPATCH_SIZE.x;
+			samples[1] = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+			varianceSamples[1] = tex2Dfetch(sRegionVariances, float2(group, 0)).xyz;
 		}
-	}
-	
-	void GaussianLUTVPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float GaussianLUT : SV_Target0)
-	{
-		GaussianLUT = 0;
-		uint textureHeight = DISPATCH_SIZE.x * DISPATCH_SIZE.y;
-		uint2 coord = texcoord * float2(BIN_COUNT, textureHeight);
-		uint2 group = uint2(coord.x / (GROUP_SIZE.x * TILES_SAMPLES_PER_THREAD.x), (coord.y / (GROUP_SIZE.y * TILES_SAMPLES_PER_THREAD.y)));
-		int2 clampingValues;
-		clampingValues.x = coord.y % DISPATCH_SIZE.x;
-		clampingValues.y = textureHeight - (DISPATCH_SIZE.x - clampingValues.x);
-		[unroll]
-		for(int i = -4; i <= 4; i++)
+		else
 		{
-			int2 sampleCoord = uint2(coord.x, coord.y + i * DISPATCH_SIZE.x);
-			sampleCoord.y = clamp(sampleCoord.y, clampingValues.x, clampingValues.y);
-			GaussianLUT += GAUSSIAN[i + 4] * tex2Dfetch(sHistogramLUTH, sampleCoord).x;
+			groupCoordTemp.x += 1;
+			groupCoordTemp = clamp(groupCoordTemp, 0, DISPATCH_SIZE);
+			groupCoordW = groupCoordTemp;
+			group = groupCoordTemp.x + groupCoordTemp.y * DISPATCH_SIZE.x;
+			samples[1] = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+			varianceSamples[1] = tex2Dfetch(sRegionVariances, float2(group, 0)).xyz;
 		}
+		
+		if(position.y < 0)
+		{
+			groupCoordTemp.y -= 1;
+			groupCoordTemp = clamp(groupCoordTemp, 0, DISPATCH_SIZE);
+			groupCoordW.y = groupCoordTemp.y;
+			group = groupCoordTemp.x + groupCoordTemp.y * DISPATCH_SIZE.x;
+			samples[2] = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+			varianceSamples[2] = tex2Dfetch(sRegionVariances, float2(group, 0)).xyz ;
+		}
+		else
+		{
+			groupCoordTemp.y += 1;
+			groupCoordTemp = clamp(groupCoordTemp, 0, DISPATCH_SIZE);
+			groupCoordW.y = groupCoordTemp.y;
+			group = groupCoordTemp.x + groupCoordTemp.y * DISPATCH_SIZE.x;
+			samples[2] = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+			varianceSamples[2] = tex2Dfetch(sRegionVariances, float2(group, 0)).xyz;
+		}
+		
+		group = groupCoordW.x + groupCoordW.y * DISPATCH_SIZE.x;
+		samples[3] = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+		varianceSamples[3] = tex2Dfetch(sRegionVariances, float2(group, 0)).xyz;
+		
+		yNew = lerp(lerp(samples[0], samples[1], weights.x), lerp(samples[2], samples[3], weights.x), weights.y);
+		variances = lerp(lerp(varianceSamples[0], varianceSamples[1], weights.x), lerp(varianceSamples[2], varianceSamples[3], weights.x), weights.y);
 	}
 	
 	void GaussianVarianceHPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 GaussianVariance : SV_Target0)
@@ -410,7 +428,7 @@ namespace LocalContrast
 		for(int i = -4; i <= 4; i++)
 		{
 			int2 sampleCoord = uint2(coord.x, coord.y + i);
-			sampleCoord.y = clamp(sampleCoord.y, 0, textureHeight);
+			sampleCoord.y = clamp(sampleCoord.y, 0, textureHeight - 1);
 			sampleCoord.xy = sampleCoord.yx;
 			GaussianVariance.xyz += GAUSSIAN[i + 4] * tex2Dfetch(sRegionVariances, sampleCoord).xyz;
 		}
@@ -425,7 +443,7 @@ namespace LocalContrast
 		uint2 group = uint2(coord.x / (GROUP_SIZE.x * TILES_SAMPLES_PER_THREAD.x), (coord.y / (GROUP_SIZE.y * TILES_SAMPLES_PER_THREAD.y)));
 		int2 clampingValues;
 		clampingValues.x = coord.y % DISPATCH_SIZE.x;
-		clampingValues.y = textureHeight - (DISPATCH_SIZE.x - clampingValues.x);
+		clampingValues.y = textureHeight - (DISPATCH_SIZE.x - clampingValues.x) - 1;
 		[unroll]
 		for(int i = -4; i <= 4; i++)
 		{
@@ -436,6 +454,7 @@ namespace LocalContrast
 		}
 		GaussianVariance.w = 1;
 	}
+	
 
 	void OutputPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float3 color : SV_Target0)
 	{
@@ -443,8 +462,9 @@ namespace LocalContrast
 		uint2 coord = texcoord * float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 		float yOld = dot(color, float3(0.299, 0.587, 0.114));
 		uint group = coord.x / (GROUP_SIZE.x * TILES_SAMPLES_PER_THREAD.x) + (coord.y / (GROUP_SIZE.y * TILES_SAMPLES_PER_THREAD.y)) * DISPATCH_SIZE.x;
-		float3 variances = tex2Dfetch(sRegionVariances, float2(group, 0)).rgb;
-		float yNew = tex2Dfetch(sHistogramLUT, float2(yOld * BIN_COUNT, group)).x;
+		float3 variances;
+		float yNew;
+		LUTInterpolation(coord, /*texcoord,*/ yOld, yNew, variances);
 		float alpha;
 		
 		
@@ -463,7 +483,7 @@ namespace LocalContrast
 			alpha = WeightingCurve(LightPeak, variances.z, LightMax);
 			//alpha = variances.z;
 		}
-		float y = lerp(yOld, yNew, (alpha));
+		float y = lerp(yOld, yNew, (alpha * GlobalStrength));
 		
 		float cb = -0.168736 * color.r - 0.331264 * color.g + 0.500000 * color.b;
 		float cr = +0.500000 * color.r - 0.418688 * color.g - 0.081312 * color.b;
@@ -477,6 +497,7 @@ namespace LocalContrast
 
 	technique LocalContrastCS<ui_tooltip = "A histogram based contrast stretching shader that locally adjusts the contrast of the image\n"
 										   "based on the contents of small regions of the image.\n\n"
+										   "May cause square shaped artifacting \n\n"
 										   "Part of the Insane Shaders repository";>
 	{
 		pass
@@ -491,48 +512,6 @@ namespace LocalContrast
 			ComputeShader = ContrastLUTCS<(BIN_COUNT), 1>;
 			DispatchSizeX = 1;
 			DispatchSizeY = DISPATCH_SIZE.x * DISPATCH_SIZE.y;
-		}
-		
-		pass
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = GaussianLUTHPS;
-			RenderTarget = HistogramLUTH;
-		}
-		
-		pass
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = GaussianLUTVPS;
-			RenderTarget = HistogramLUT;
-		}
-		
-		pass
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = GaussianVarianceHPS;
-			RenderTarget = RegionVariancesH;
-		}
-		
-		pass
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = GaussianVarianceVPS;
-			RenderTarget = RegionVariances;
-		}
-		
-		pass
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = GaussianLUTHPS;
-			RenderTarget = HistogramLUTH;
-		}
-		
-		pass
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = GaussianLUTVPS;
-			RenderTarget = HistogramLUT;
 		}
 		
 		pass
