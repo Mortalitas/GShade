@@ -214,22 +214,22 @@ uniform float cLayer_Rotate <
 
 #if   CopyrightTexture_Source == 0 // FFXIV Vanilla
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1363.0, 68.0
+#define _SOURCE_COPYRIGHT_SIZE 1400.0, 80.0
 #elif CopyrightTexture_Source == 1 // FFXIV Nalukai
 #define _SOURCE_COPYRIGHT_FILE "CopyrightF4kH.png"
 #define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
 #elif CopyrightTexture_Source == 2 // FFXIV Yomi Black
 #define _SOURCE_COPYRIGHT_FILE "CopyrightYBlH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
+#define _SOURCE_COPYRIGHT_SIZE 843.0, 103.0
 #elif CopyrightTexture_Source == 3 // FFXIV Yomi White
 #define _SOURCE_COPYRIGHT_FILE "CopyrightYWhH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1162.0, 135.0
+#define _SOURCE_COPYRIGHT_SIZE 843.0, 103.0
 #elif CopyrightTexture_Source == 4 // FFXIV With GShade Dark
-#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_w_gshade_dark.png"
-#define _SOURCE_COPYRIGHT_SIZE 1300.0, 70.0
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_by_gshade_dark.png"
+#define _SOURCE_COPYRIGHT_SIZE 1200.0, 70.0
 #elif CopyrightTexture_Source == 5 // FFXIV With GShade White
-#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_w_gshade_white.png"
-#define _SOURCE_COPYRIGHT_SIZE 1300.0, 70.0
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_by_gshade_light.png"
+#define _SOURCE_COPYRIGHT_SIZE 1200.0, 70.0
 #elif CopyrightTexture_Source == 6 // PSO2
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
 #define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
