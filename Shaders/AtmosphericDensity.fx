@@ -37,13 +37,13 @@
 
 // Configure MShadersMacros.fxh
 #define  CATEGORIZE  // Enable UI category macros
-#include "Include/MShadersMacros.fxh"
+#include "MShadersMacros.fxh"
 
 // Configure MShadersCommon.fxh
 #define _TIMER       // Enable ReShade timer
 #define _DITHER      // Enable Dither function
 #define _DEPTH_CHECK // Enable checking for depth buffer
-#include "Include/MShadersCommon.fxh"
+#include "MShadersCommon.fxh"
 
 // UI VARIABLES ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ UI_INT_S (BLEND, "Overall Blend", "(Unrealistic) Simply mixes fog with the origi
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#include "Include/Functions/AVGen.fxh"
+#include "MShadersAVGen.fxh"
 
 // Only run blur calc within downscaled image bounds (thanks for the help, kingeric1992)
 #define LOWER_BOUND 0.675
