@@ -35,7 +35,7 @@
 
 // Configure MShadersMacros.fxh
 #define  CATEGORIZE  // Enable UI category macros
-#include "Include/MShadersMacros.fxh"
+#include "MShadersMacros.fxh"
 
 #ifndef ENABLE_HIGH_RES
     // Disables a downscale step for higher res luma
@@ -51,7 +51,7 @@
     #define _TIMER
     #define _DITHER
 #endif
-#include "Include/MShadersCommon.fxh"
+#include "MShadersCommon.fxh"
 
 // UI VARIABLES ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -74,11 +74,11 @@ UI_COMBO (SHIFT_MODE, "Misalignment Mode", "", 0, 1,
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#include "Include/Functions/BlendingModes.fxh"
+#include "MShadersBlendingModes.fxh"
 
 #define LUT_COUNT 5
 #define LUT_SIZE  32
-#include "Include/Functions/LUTAtlas.fxh"
+#include "MShadersLUTAtlas.fxh"
 
 
 // TEXTURES & SAMPLERS /////////////////////////////////////////////////////////
