@@ -43,7 +43,7 @@
 #endif
 
 #ifndef ENABLE_DITHER
-    #define ENABLE_DITHER 0
+    #define ENABLE_DITHER 1
 #endif
 
 // Configure MShadersCommon.fxh
@@ -81,6 +81,12 @@ UI_COMBO (SHIFT_MODE, "Misalignment Mode", "Determines the color combination for
 #include "MShadersLUTAtlas.fxh"
 
 
+// DEFINITIONS /////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+#define VHS_LUMA   float2(0.5, 0.75)
+#define VHS_CHROMA float2(0.5, 1.0)
+
+
 // TEXTURES & SAMPLERS /////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 TEXTURE_FULL_SRC (TexVHSLUTs,    "VideoCassette.png", 1024, 160, RGBA8)
@@ -98,14 +104,14 @@ void PS_Copy(PS_IN(vpos, coord), out float3 color : SV_Target)
 
 void PS_Downscale1(PS_IN(vpos, coord), out float3 color : SV_Target)
 {
-    // Downscale to 50%
-    color  = tex2Dbicub(TextureBlur2, SCALE(coord, 0.5)).rgb;
+    // Downscale to VHS luma resolution
+    color  = tex2D(TextureBlur2, SCALE(coord, VHS_LUMA)).rgb;
 }
 
 void PS_Upscale1(PS_IN(vpos, coord), out float3 color : SV_Target)
 {
     // Upscale back to 100%
-    color  = tex2Dbicub(TextureBlur1, SCALE(coord, 2.0)).rgb;
+    color  = tex2Dbicub(TextureBlur1, SCALE(coord, (1.0 / VHS_LUMA))).rgb;
 }
 
 void PS_SDLuma(PS_IN(vpos, coord), out float4 color : SV_Target)
@@ -118,28 +124,42 @@ void PS_SDLuma(PS_IN(vpos, coord), out float4 color : SV_Target)
 void PS_Downscale2(PS_IN(vpos, coord), out float4 color : SV_Target)
 {
     // Downscale RGB channels, leaving luma alone on the alpha channel
-    color.rgb = tex2Dbicub(TextureBlur1, SCALE(coord, 0.5)).rgb;
+    color.rgb = tex2D(TextureBlur1, SCALE(coord, VHS_LUMA)).rgb;
     color.a   = tex2D(TextureBlur1, coord).a;
 }
 
 void PS_Downscale3(PS_IN(vpos, coord), out float4 color : SV_Target)
 {
     // Downscale RGB channels, leaving luma alone on the alpha channel
-    color.rgb = tex2Dbicub(TextureBlur2, SCALE(coord, 0.5)).rgb;
+    color.rgb = tex2D(TextureBlur2, SCALE(coord, VHS_CHROMA)).rgb;
+    color.a   = tex2D(TextureBlur2, coord).a;
+}
+
+void PS_Downscale4(PS_IN(vpos, coord), out float4 color : SV_Target)
+{
+    // Downscale RGB channels, leaving luma alone on the alpha channel
+    color.rgb = tex2D(TextureBlur1, SCALE(coord, VHS_CHROMA)).rgb;
     color.a   = tex2D(TextureBlur2, coord).a;
 }
 
 void PS_Upscale2(PS_IN(vpos, coord), out float4 color : SV_Target)
 {
     // Upscale the RGB channels, leaving luma alone on the alpha channel
-    color.rgb = tex2Dbicub(TextureBlur2, SCALE(coord, 2.0)).rgb;
+    color.rgb = tex2Dbicub(TextureBlur2, SCALE(coord, (1.0 / VHS_LUMA))).rgb;
     color.a   = tex2D(TextureBlur2, coord).a;
 }
 
 void PS_Upscale3(PS_IN(vpos, coord), out float4 color : SV_Target)
 {
     // Upscale the RGB channels, leaving luma alone on the alpha channel
-    color.rgb = tex2Dbicub(TextureBlur1, SCALE(coord, 2.0)).rgb;
+    color.rgb = tex2Dbicub(TextureBlur1, SCALE(coord, (1.0 / VHS_CHROMA))).rgb;
+    color.a   = tex2D(TextureBlur1, coord).a;
+}
+
+void PS_Upscale4(PS_IN(vpos, coord), out float4 color : SV_Target)
+{
+    // Upscale the RGB channels, leaving luma alone on the alpha channel
+    color.rgb = tex2Dbicub(TextureBlur2, SCALE(coord, (1.0 / VHS_CHROMA))).rgb;
     color.a   = tex2D(TextureBlur1, coord).a;
 }
 
@@ -212,10 +232,10 @@ TECHNIQUE    (VHSM, "VHS-M",
     // Downscale again for even lower res chroma, preserving previous luma res
     PASS_RT  (VS_Tri, PS_Downscale2, TexBlur2)
     PASS_RT  (VS_Tri, PS_Downscale3, TexBlur1)
-    PASS_RT  (VS_Tri, PS_Downscale2, TexBlur2)
+    PASS_RT  (VS_Tri, PS_Downscale4, TexBlur2)
     PASS_RT  (VS_Tri, PS_Upscale2,   TexBlur1)
     PASS_RT  (VS_Tri, PS_Upscale3,   TexBlur2)
-    PASS_RT  (VS_Tri, PS_Upscale2,   TexBlur1)
+    PASS_RT  (VS_Tri, PS_Upscale4,   TexBlur1)
 
     // Combine the VHS effect
     PASS     (VS_Tri, PS_Combine))
@@ -235,10 +255,10 @@ TECHNIQUE    (VHSM, "VHS-M",
     // Downscale again for even lower res chroma, preserving previous luma res
     PASS_RT  (VS_Tri, PS_Downscale2, TexBlur2)
     PASS_RT  (VS_Tri, PS_Downscale3, TexBlur1)
-    PASS_RT  (VS_Tri, PS_Downscale2, TexBlur2)
+    PASS_RT  (VS_Tri, PS_Downscale4, TexBlur2)
     PASS_RT  (VS_Tri, PS_Upscale2,   TexBlur1)
     PASS_RT  (VS_Tri, PS_Upscale3,   TexBlur2)
-    PASS_RT  (VS_Tri, PS_Upscale2,   TexBlur1)
+    PASS_RT  (VS_Tri, PS_Upscale4,   TexBlur1)
 
     // Combine the VHS effect
     PASS     (VS_Tri, PS_Combine))
