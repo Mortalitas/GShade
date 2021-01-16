@@ -132,10 +132,10 @@ float3 LinToSRGB(float3 LinearColor)
     ////////////////////////////////////////////////////
     float3 Dither(float3 color, float2 uv, int bits)
     {
-        static const float bitstep = exp2(bits) - 1.0;
-        static const float lsb = 1.0 / bitstep;
-        static const float lobit = 0.5 / bitstep;
-        static const float hibit = (bitstep - 0.5) / bitstep;
+        float bitstep = exp2(bits) - 1.0;
+        float lsb = 1.0 / bitstep;
+        float lobit = 0.5 / bitstep;
+        float hibit = (bitstep - 0.5) / bitstep;
 
         float3 m = float3(uv, rand21(uv + Timer)) + 1.0;
         float h = permute(permute(permute(m.x) + m.y) + m.z);
