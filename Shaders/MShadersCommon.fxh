@@ -66,6 +66,7 @@ texture TexDepth : DEPTH;
     TEXTURE_FULL (TexCopy, BUFFER_WIDTH, BUFFER_HEIGHT, RGB10A2)
 #endif
 
+TEXTURE_FULL (Tex16,       BUFFER_WIDTH, BUFFER_HEIGHT, RGBA16)
 TEXTURE_FULL (TexBlur1,    BUFFER_WIDTH, BUFFER_HEIGHT, RGBA16)
 TEXTURE_FULL (TexBlur2,    BUFFER_WIDTH, BUFFER_HEIGHT, RGBA16)
 
@@ -73,6 +74,7 @@ TEXTURE_FULL (TexBlur2,    BUFFER_WIDTH, BUFFER_HEIGHT, RGBA16)
 // SAMPLERS //////////////////////////////////////
 //////////////////////////////////////////////////
 SAMPLER_UV  (TextureColor, TexColor, MIRROR)
+SAMPLER_UV  (Texture16,    Tex16,    MIRROR)
 SAMPLER_UV  (TextureLuma,  TexCopy,  MIRROR)
 SAMPLER_LIN (TextureLin,   TexColor, MIRROR)
 SAMPLER_UV  (TextureDepth, TexDepth, BORDER)

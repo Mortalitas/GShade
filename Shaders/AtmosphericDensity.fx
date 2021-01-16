@@ -85,6 +85,7 @@ UI_INT_S (BLEND, "Overall Blend", "(Unrealistic) Simply mixes fog with the origi
 // FUNCTIONS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 #include "MShadersAVGen.fxh"
+#include "MShadersBlendingModes.fxh"
 
 // Only run blur calc within downscaled image bounds (thanks for the help, kingeric1992)
 #define LOWER_BOUND 0.675
@@ -92,7 +93,7 @@ UI_INT_S (BLEND, "Overall Blend", "(Unrealistic) Simply mixes fog with the origi
 #define LEFT_BOUND  0.325
 #define RIGHT_BOUND 0.675
 
-float3 BlurH (float luma, sampler Samplerluma, float2 coord)
+float BlurH (float luma, sampler Samplerluma, float2 coord)
 {
     float offset[18] =
     {
@@ -133,10 +134,10 @@ float3 BlurH (float luma, sampler Samplerluma, float2 coord)
         luma += tex2Dlod(Samplerluma, float4(coord - float2(offset[i] * BUFFER_PIXEL_SIZE.x, 0.0), 0.0, 0.0)).x * kernel[i];
     }
 
-    return float3(luma.xxx);
+    return luma;
 }
 
-float3 BlurV (float luma, sampler Samplerluma, float2 coord)
+float BlurV (float luma, sampler Samplerluma, float2 coord)
 {
     float offset[18] =
     {
@@ -177,7 +178,7 @@ float3 BlurV (float luma, sampler Samplerluma, float2 coord)
         luma += tex2Dlod(Samplerluma, float4(coord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y), 0.0, 0.0)).x * kernel[i];
     }
 
-    return float3(luma.xxx);
+    return luma;
 }
 
 float3 BlurH (float3 color, sampler SamplerColor, float2 coord)
@@ -322,7 +323,7 @@ void PS_Prep(PS_IN(vpos, coord), out float3 color : SV_Target)
     sky    = all(1-depth);
 
     // Fog density setting (gamma controls how thick the fog is)
-    depth  = pow(abs(depth), lerp(10.0, 0.75, DISTANCE * 0.01));
+    depth  = pow(abs(depth), lerp(10.0, 0.25, DISTANCE * 0.01));
 
     // Darken the background with distance
     color  = lerp(color, pow(abs(color), lerp(2.0, 4.0, DISTANCE * 0.01)), depth * sky);
