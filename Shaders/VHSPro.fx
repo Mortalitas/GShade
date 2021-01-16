@@ -807,7 +807,7 @@ float vignette(float2 uv, float t)
 
 float3 t2d(float2 p)
 {
-	return rgb2yiq( tex2D (SamplerColorVHS, p ).rgb );
+	return rgb2yiq( tex2Dlod (SamplerColorVHS, float4( p, 0.0, 0.0 ) ).rgb );
 }
 
 float3 yiqDist(float2 uv, float m, float t)
