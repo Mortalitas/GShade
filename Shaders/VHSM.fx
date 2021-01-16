@@ -83,7 +83,7 @@ UI_COMBO (SHIFT_MODE, "Misalignment Mode", "Determines the color combination for
 
 // TEXTURES & SAMPLERS /////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-TEXTURE_FULL_SRC (TexVHSLUTs,    "MShaders/LUTs/VideoCassette.png", 1024, 160, RGBA8)
+TEXTURE_FULL_SRC (TexVHSLUTs,    "VideoCassette.png", 1024, 160, RGBA8)
 SAMPLER_UV       (TextureVHSLUTs, TexVHSLUTs,                       BORDER)
 
 
