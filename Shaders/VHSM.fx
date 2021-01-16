@@ -56,14 +56,14 @@
 // UI VARIABLES ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 #define CATEGORY "VCR Settings" ////////////////////////////////////////////////
-UI_COMBO (TAPE_SELECT, "Tape Selection", "", 2, 0,
+UI_COMBO (TAPE_SELECT, "Tape Selection", "Choose your video cassette type.", 2, 0,
     "Betamax\0"
     "S-VHS\0"
     "VHS\0"
     "Bad VHS\0"
     "U-Matic\0")
-UI_INT_S (CHROMA_SHIFT, "Misalign Chroma", "", -100, 100, 50, 5)
-UI_COMBO (SHIFT_MODE, "Misalignment Mode", "", 0, 1,
+UI_INT_S (CHROMA_SHIFT, "Misalign Chroma", "Splits the color channels.", -100, 100, 50, 5)
+UI_COMBO (SHIFT_MODE, "Misalignment Mode", "Determines the color combination for the split channels", 0, 1,
     "Red / Blue\0"
     "Green / Magenta\0"
     "Yellow / Violet\0")
@@ -196,7 +196,7 @@ void PS_Combine(PS_IN(vpos, coord), out float3 color : SV_Target)
 ////////////////////////////////////////////////////////////////////////////////
 #if (ENABLE_HIGH_RES < 1) // ENABLE_HIGH_RES = 1 disables a blur step on the luma channel for more sharpness
 TECHNIQUE    (VHSM, "VHS-M",
-             "Tooltip",
+             "Emulates clean, artifact-free, output of a VHS tape",
 
     PASS_RT  (VS_Tri, PS_Copy,       TexBlur2)
 
@@ -221,7 +221,7 @@ TECHNIQUE    (VHSM, "VHS-M",
     PASS     (VS_Tri, PS_Combine))
 #else
 TECHNIQUE    (VHSM, "VHS-M",
-             "Tooltip",
+             "Emulates clean, artifact-free, output of a VHS tape",
 
     PASS_RT  (VS_Tri, PS_Copy,       TexBlur2)
 
