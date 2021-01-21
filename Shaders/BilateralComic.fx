@@ -16,14 +16,14 @@ uniform float Sigma0 <
 	ui_category = "Bilateral";
 	ui_label = "Spatial Blur Strength";
 	ui_min = 0; ui_max = 2;
-> = 0.5;
+> = 0.8;
 
 uniform float Sigma1 <
 	ui_type = "slider";
 	ui_category = "Bilateral";
 	ui_label = "Gradient Blur Strength";
 	ui_min = 0.001; ui_max = 10;
-> = 10;
+> = 4;
 
 uniform bool UseAnisotropy <
 	ui_category = "Bilateral";
