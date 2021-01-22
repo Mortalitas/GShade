@@ -16,14 +16,14 @@ uniform float Sigma0 <
 	ui_category = "Bilateral";
 	ui_label = "Spatial Blur Strength";
 	ui_min = 0; ui_max = 2;
-> = 0.8;
+> = 2;
 
 uniform float Sigma1 <
 	ui_type = "slider";
 	ui_category = "Bilateral";
 	ui_label = "Gradient Blur Strength";
 	ui_min = 0.001; ui_max = 10;
-> = 4;
+> = 10;
 
 uniform bool UseAnisotropy <
 	ui_category = "Bilateral";
@@ -35,7 +35,7 @@ uniform float EdgeThreshold <
 	ui_category = "Edges";
 	ui_label = "Edge Threshold";
 	ui_min = 0; ui_max = 1.001;
-> = 0.2;
+> = 0.3;
 
 uniform float EdgeStrength <
 	ui_type = "slider";
@@ -115,14 +115,14 @@ void BilateralFilterPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out
 		normals = 1;
 	}
 	[unroll]
-	for(int i = -1; i <= 1; i ++)
+	for(int i = -2; i <= 2; i ++)
 	{
 		[unroll]
-		for(int j = -1; j <= 1; j ++)
+		for(int j = -2; j <= 2; j ++)
 		{
 			if(all(abs(float2(i, j)) != 0))
 			{
-				float2 offset = (float2(i, j) * normals.xy) * 3 / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+				float2 offset = (float2(i, j) * normals.xy) * 1 / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 				float3 s = tex2D(sBackbuffer, texcoord + offset).rgb;
 				float luma = dot(s, float3(0.299, 0.587, 0.114));
 				float3 w = exp(((-(i * i + j * j) / (sigma0 * sigma0)) - ((center - luma) * (center - luma) / (sigma1 * sigma1))) * 0.5);
@@ -171,19 +171,6 @@ technique BilateralComic<ui_tooltip = "Cel-shading shader that uses a combinatio
 		VertexShader = PostProcessVS;
 		PixelShader = SobelFilterPS;
 		RenderTarget0 = Sobel;
-	}
-	
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = BilateralFilterPS;
-	}
-	
-	
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = BilateralFilterPS;
 	}
 	
 	pass
