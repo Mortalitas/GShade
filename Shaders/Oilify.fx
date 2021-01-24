@@ -68,11 +68,11 @@
 namespace KuwaharaFilter
 {
 texture BackBuffer : COLOR;
-texture Value {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32f; MipLevels = 3;};
+texture Value {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32f;};
 texture MeanAndVariance {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16f;};
 texture CoordNormals {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16f;};
 texture Mean {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-texture Variance {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; MipLevels = 10;};
+texture Variance {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
 
 sampler sBackBuffer {Texture = BackBuffer;};
 sampler sValue {Texture = Value;};
