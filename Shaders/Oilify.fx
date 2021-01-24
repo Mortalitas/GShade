@@ -338,6 +338,8 @@ void KuwaharaFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out
 
 technique Oilify<ui_tooltip = "This shader applies a variation on the anisotropic Kuwahara filter to give an effect\n"
 							  "similar to an oil painting.\n\n"
+							  "Part of Insane Shaders\n"
+							  "By: Lord of Lunacy\n\n"
 							  "OILIFY_RADIUS: Changes the size of the filter used.\n"
 							  "OILIFY_ITERATIONS: Ranges from 1 to 4.";>
 {
