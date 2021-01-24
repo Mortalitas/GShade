@@ -71,8 +71,15 @@ float3 NormalVector(float2 texcoord)
 	float3 vertCenter = float3(posCenter - 0.5, 1) * ReShade::GetLinearizedDepth(posCenter);
 	float3 vertNorth  = float3(posNorth - 0.5,  1) * ReShade::GetLinearizedDepth(posNorth);
 	float3 vertEast   = float3(posEast - 0.5,   1) * ReShade::GetLinearizedDepth(posEast);
-
+	
+	if(vertCenter.z <= 0)
+	{
+		return 1;
+	}
+	else
+	{
 	return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast)) * 0.5 + 0.5;
+	}
 }
 
 void SobelFilterPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float edges : SV_Target0)
@@ -140,6 +147,10 @@ void OutputPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 c
 	float sobel = tex2D(sSobel, texcoord).x;
 	if(1 - sobel > (1 - EdgeThreshold)) sobel = 0;
 	sobel *= exp(-(2 - EdgeStrength));
+	if (QuantizeLuma == true)
+	{
+		sobel = round(sobel * LevelCount) / LevelCount;
+	}
 	sobel = 1 - sobel;
 	color = tex2D(sBackbuffer, texcoord).rgba * sobel;
 	if (QuantizeLuma == true)
