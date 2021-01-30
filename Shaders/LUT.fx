@@ -59,6 +59,9 @@
 #ifndef fLUT_IP_TextureName
     #define fLUT_IP_TextureName "lut_IpsusuGameplay.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 32 tiles at 32px.
 #endif
+#ifndef fLUT_PS_TextureName
+    #define fLUT_PS_TextureName "seilut.png" // Add your own LUT file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the LUT used! This one uses 64 tiles at 64px.
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -66,9 +69,9 @@
 
 uniform int fLUT_Selector <
   ui_type = "combo";
-  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0Sleeps_Hungry\0Feli\0Lufreine Legacy\0Ipsusu Gameplay\0";
+  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade 3/4\0Sleeps_Hungry\0Feli\0Lufreine Legacy\0Ipsusu Gameplay\0Potatoshade\0";
   ui_label = "The LUT file to use.";
-  ui_tooltip = "Set this to whichever your preset requires!";
+  ui_tooltip = "Set this to whichever your preset requires!\nPlease note that the Potatoshade option will require you to obtain a copy of \"seilut.png\" from the Potoshade zip and place it in the \"?:\\Program Files\\GShade\\gshade-shaders\\Textures\" folder before it becomes usable.";
   ui_bind = "LUTTexture_Source";
 > = 0;
 
@@ -133,6 +136,10 @@ uniform float fLUT_AmountLuma <
 #define _SOURCE_LUT_FILE fLUT_IP_TextureName
 #define _SOURCE_LUT_SIZE fLUT_TileSizeXY
 #define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#elif LUTTexture_Source == 9 // Potatoshade LUT
+#define _SOURCE_LUT_FILE fLUT_PS_TextureName
+#define _SOURCE_LUT_SIZE fLUT_W_TileSizeXY
+#define _SOURCE_LUT_AMOUNT fLUT_W_TileAmount
 #endif
 
 
