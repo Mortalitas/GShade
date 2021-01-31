@@ -68,7 +68,7 @@
 namespace KuwaharaFilter
 {
 texture BackBuffer : COLOR;
-texture Value {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32f;};
+texture Value {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
 texture MeanAndVariance {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16f;};
 texture CoordNormals {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16f;};
 texture Mean {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
@@ -226,7 +226,7 @@ float3 NormalVector(float2 texcoord)
 		vDeriv = pos1 * v.x - pos2 * v.z;
 	}
 	
-	return (normalize(cross(-vDeriv, hDeriv)) * 0.5 + 0.5);
+	return (normalize(min(cross(-vDeriv, hDeriv), 0.00001)) * 0.5 + 0.5);
 }
 
 void ValueBicubicPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float value : SV_TARGET0)
@@ -368,5 +368,3 @@ technique Oilify<ui_tooltip = "This shader applies a variation on the anisotropi
 #endif
 }
 }
-	
-	
