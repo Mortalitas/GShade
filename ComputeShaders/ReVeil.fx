@@ -440,7 +440,7 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 		{
 			maximum += tex2Dlod(sMaximum, float4(texcoord, 0, i)).r;
 		}
-		maximum /= MAX_MIP - 4;	
+		maximum /= MAX_MIP - 5;	
 		
 		float filter = saturate((max((variance - noise), 0) / variance) * (darkChannel - mean));
 		float veil = saturate(mean + filter);
