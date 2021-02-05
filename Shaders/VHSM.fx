@@ -139,7 +139,7 @@ void PS_Downscale4(PS_IN(vpos, coord), out float4 color : SV_Target)
 {
     // Downscale RGB channels, leaving luma alone on the alpha channel
     color.rgb = tex2D(TextureBlur1, SCALE(coord, VHS_CHROMA)).rgb;
-    color.a   = tex2D(TextureBlur2, coord).a;
+    color.a   = tex2D(TextureBlur1, coord).a;
 }
 
 void PS_Upscale2(PS_IN(vpos, coord), out float4 color : SV_Target)
@@ -160,7 +160,7 @@ void PS_Upscale4(PS_IN(vpos, coord), out float4 color : SV_Target)
 {
     // Upscale the RGB channels, leaving luma alone on the alpha channel
     color.rgb = tex2Dbicub(TextureBlur2, SCALE(coord, (1.0 / VHS_CHROMA))).rgb;
-    color.a   = tex2D(TextureBlur1, coord).a;
+    color.a   = tex2D(TextureBlur2, coord).a;
 }
 
 void PS_Combine(PS_IN(vpos, coord), out float3 color : SV_Target)
