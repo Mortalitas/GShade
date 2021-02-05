@@ -95,8 +95,6 @@ SAMPLER_UV       (TextureVHSLUTs, TexVHSLUTs,                       BORDER)
 
 // SHADERS /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#define PS_IN(v, c) float4 v : SV_Position, float2 c : TEXCOORD // Laziness macros FTW
-
 void PS_Copy(PS_IN(vpos, coord), out float3 color : SV_Target)
 {
     color  = tex2D(TextureColor, coord).rgb;
@@ -218,6 +216,7 @@ void PS_Combine(PS_IN(vpos, coord), out float3 color : SV_Target)
 TECHNIQUE    (VHSM, "VHS-M",
              "Emulates clean, artifact-free, output of a VHS tape",
 
+    // Store the backbuffer in TexBlur2
     PASS_RT  (VS_Tri, PS_Copy,       TexBlur2)
 
     // Downscale for lower res luma
@@ -243,6 +242,7 @@ TECHNIQUE    (VHSM, "VHS-M",
 TECHNIQUE    (VHSM, "VHS-M",
              "Emulates clean, artifact-free, output of a VHS tape",
 
+    // Store the backbuffer in TexBlur2
     PASS_RT  (VS_Tri, PS_Copy,       TexBlur2)
 
     // Downscale for lower res luma

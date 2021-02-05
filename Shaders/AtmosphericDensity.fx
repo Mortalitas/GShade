@@ -87,192 +87,15 @@ UI_INT_S (BLEND, "Overall Blend", "(Unrealistic) Simply mixes fog with the origi
 #include "MShadersAVGen.fxh"
 #include "MShadersBlendingModes.fxh"
 
-// Only run blur calc within downscaled image bounds (thanks for the help, kingeric1992)
-#define LOWER_BOUND 0.675
-#define UPPER_BOUND 0.325
-#define LEFT_BOUND  0.325
-#define RIGHT_BOUND 0.675
-
-float BlurH (float luma, sampler Samplerluma, float2 coord)
-{
-    float offset[18] =
-    {
-        0.0,            1.4953705027, 3.4891992113,
-        5.4830312105,   7.4768683759, 9.4707125766,
-        11.4645656736, 13.4584295168, 15.4523059431,
-        17.4461967743, 19.4661974725, 21.4627427973,
-        23.4592916956, 25.455844494,  27.4524015179,
-        29.4489630909, 31.445529535,  33.4421011704
-    };
-
-    float kernel[18] =
-    {
-        0.033245,     0.0659162217, 0.0636705814,
-        0.0598194658, 0.0546642566, 0.0485871646,
-        0.0420045997, 0.0353207015, 0.0288880982,
-        0.0229808311, 0.0177815511, 0.013382297,
-        0.0097960001, 0.0069746748, 0.0048301008,
-        0.0032534598, 0.0021315311, 0.0013582974
-    };
-
-    luma *= kernel[0];
-
-    [branch]
-    // Only run blur calc within downscaled image bounds
-    if ((coord.x > RIGHT_BOUND || coord.x < LEFT_BOUND   ||
-         coord.y > LOWER_BOUND || coord.y < UPPER_BOUND))
-         return luma;
-
-    [loop]
-    for(int i = 1; i < 18; ++i)
-    {
-        // Only run blur calc within downscaled image bounds
-        if (((coord.x + i * BUFFER_PIXEL_SIZE.x) > RIGHT_BOUND  ||
-             (coord.x - i * BUFFER_PIXEL_SIZE.x) < LEFT_BOUND)) continue;
-
-        luma += tex2Dlod(Samplerluma, float4(coord + float2(offset[i] * BUFFER_PIXEL_SIZE.x, 0.0), 0.0, 0.0)).x * kernel[i];
-        luma += tex2Dlod(Samplerluma, float4(coord - float2(offset[i] * BUFFER_PIXEL_SIZE.x, 0.0), 0.0, 0.0)).x * kernel[i];
-    }
-
-    return luma;
-}
-
-float BlurV (float luma, sampler Samplerluma, float2 coord)
-{
-    float offset[18] =
-    {
-        0.0,            1.4953705027, 3.4891992113,
-        5.4830312105,   7.4768683759, 9.4707125766,
-        11.4645656736, 13.4584295168, 15.4523059431,
-        17.4461967743, 19.4661974725, 21.4627427973,
-        23.4592916956, 25.455844494,  27.4524015179,
-        29.4489630909, 31.445529535,  33.4421011704
-    };
-
-    float kernel[18] =
-    {
-        0.033245,     0.0659162217, 0.0636705814,
-        0.0598194658, 0.0546642566, 0.0485871646,
-        0.0420045997, 0.0353207015, 0.0288880982,
-        0.0229808311, 0.0177815511, 0.013382297,
-        0.0097960001, 0.0069746748, 0.0048301008,
-        0.0032534598, 0.0021315311, 0.0013582974
-    };
-
-    luma *= kernel[0];
-
-    [branch]
-    // Only run blur calc within downscaled image bounds
-    if ((coord.x > RIGHT_BOUND || coord.x < LEFT_BOUND   ||
-         coord.y > LOWER_BOUND || coord.y < UPPER_BOUND))
-         return luma;
-
-    [loop]
-    for(int i = 1; i < 18; ++i)
-    {
-        // Only run blur calc within downscaled image bounds
-        if (((coord.y + i * BUFFER_PIXEL_SIZE.y) > LOWER_BOUND   ||
-             (coord.y - i * BUFFER_PIXEL_SIZE.y) < UPPER_BOUND)) continue;
-
-        luma += tex2Dlod(Samplerluma, float4(coord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y), 0.0, 0.0)).x * kernel[i];
-        luma += tex2Dlod(Samplerluma, float4(coord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y), 0.0, 0.0)).x * kernel[i];
-    }
-
-    return luma;
-}
-
-float3 BlurH (float3 color, sampler SamplerColor, float2 coord)
-{
-    float offset[18] =
-    {
-        0.0,            1.4953705027, 3.4891992113,
-        5.4830312105,   7.4768683759, 9.4707125766,
-        11.4645656736, 13.4584295168, 15.4523059431,
-        17.4461967743, 19.4661974725, 21.4627427973,
-        23.4592916956, 25.455844494,  27.4524015179,
-        29.4489630909, 31.445529535,  33.4421011704
-    };
-
-    float kernel[18] =
-    {
-        0.033245,     0.0659162217, 0.0636705814,
-        0.0598194658, 0.0546642566, 0.0485871646,
-        0.0420045997, 0.0353207015, 0.0288880982,
-        0.0229808311, 0.0177815511, 0.013382297,
-        0.0097960001, 0.0069746748, 0.0048301008,
-        0.0032534598, 0.0021315311, 0.0013582974
-    };
-
-    color *= kernel[0];
-
-    [branch]
-    // Only run blur calc within downscaled image bounds
-    if ((coord.x > RIGHT_BOUND || coord.x < LEFT_BOUND   ||
-         coord.y > LOWER_BOUND || coord.y < UPPER_BOUND))
-         return color;
-
-    [loop]
-    for(int i = 1; i < 18; ++i)
-    {
-        // Only run blur calc within downscaled image bounds
-        if (((coord.x + i * BUFFER_PIXEL_SIZE.x) > RIGHT_BOUND  ||
-             (coord.x - i * BUFFER_PIXEL_SIZE.x) < LEFT_BOUND)) continue;
-
-        color += tex2Dlod(SamplerColor, float4(coord + float2(offset[i] * BUFFER_PIXEL_SIZE.x, 0.0), 0.0, 0.0)).rgb * kernel[i];
-        color += tex2Dlod(SamplerColor, float4(coord - float2(offset[i] * BUFFER_PIXEL_SIZE.x, 0.0), 0.0, 0.0)).rgb * kernel[i];
-    }
-
-    return color;
-}
-
-float3 BlurV (float3 color, sampler SamplerColor, float2 coord)
-{
-    float offset[18] =
-    {
-        0.0,            1.4953705027, 3.4891992113,
-        5.4830312105,   7.4768683759, 9.4707125766,
-        11.4645656736, 13.4584295168, 15.4523059431,
-        17.4461967743, 19.4661974725, 21.4627427973,
-        23.4592916956, 25.455844494,  27.4524015179,
-        29.4489630909, 31.445529535,  33.4421011704
-    };
-
-    float kernel[18] =
-    {
-        0.033245,     0.0659162217, 0.0636705814,
-        0.0598194658, 0.0546642566, 0.0485871646,
-        0.0420045997, 0.0353207015, 0.0288880982,
-        0.0229808311, 0.0177815511, 0.013382297,
-        0.0097960001, 0.0069746748, 0.0048301008,
-        0.0032534598, 0.0021315311, 0.0013582974
-    };
-
-    color *= kernel[0];
-
-    [branch]
-    // Only run blur calc within downscaled image bounds
-    if ((coord.x > RIGHT_BOUND || coord.x < LEFT_BOUND   ||
-         coord.y > LOWER_BOUND || coord.y < UPPER_BOUND))
-         return color;
-
-    [loop]
-    for(int i = 1; i < 18; ++i)
-    {
-        // Only run blur calc within downscaled image bounds
-        if (((coord.y + i * BUFFER_PIXEL_SIZE.y) > LOWER_BOUND  ||
-             (coord.y - i * BUFFER_PIXEL_SIZE.y) < UPPER_BOUND)) continue;
-
-        color += tex2Dlod(SamplerColor, float4(coord + float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y), 0.0, 0.0)).rgb * kernel[i];
-        color += tex2Dlod(SamplerColor, float4(coord - float2(0.0, offset[i] * BUFFER_PIXEL_SIZE.y), 0.0, 0.0)).rgb * kernel[i];
-    }
-
-    return color;
-}
-
+#define _BLUR_BOUNDS
+#define _LOWER_BOUND 0.575
+#define _UPPER_BOUND 0.425
+#define _LEFT_BOUND  0.425
+#define _RIGHT_BOUND 0.575
+#include "MShadersGaussianBlurBounds.fxh"
 
 // SHADERS /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#define PS_IN(v, c) float4 v : SV_Position, float2 c : TEXCOORD // Laziness macros FTW
 
 // COPY BACKBUFFER ///////////////////////////////
 void PS_Copy(PS_IN(vpos, coord), out float3 color : SV_Target)
@@ -412,7 +235,7 @@ void PS_LumaBlurH(PS_IN(vpos, coord), out float3 luma : SV_Target)
 
     if (AUTO_COLOR > 1)
     {
-        luma  = BlurH(luma, TextureBlur1, coord).xxx;
+        luma  = Blur18H(luma, TextureBlur1, coord).xxx;
     }
 }
 // Luma blur vertical pass
@@ -422,7 +245,7 @@ void PS_LumaBlurV(PS_IN(vpos, coord), out float3 luma : SV_Target)
 
     if (AUTO_COLOR > 1)
     {
-        luma = BlurV(luma, TextureBlur2, coord).xxx;
+        luma = Blur18V(luma, TextureBlur2, coord).xxx;
     }
 }
 
@@ -430,13 +253,13 @@ void PS_LumaBlurV(PS_IN(vpos, coord), out float3 luma : SV_Target)
 void PS_BlurH(PS_IN(vpos, coord), out float3 color : SV_Target)
 {
     color  = tex2D(TextureBlur1, coord).rgb;
-    color  = BlurH(color, TextureBlur1, coord);
+    color  = Blur18H(color, TextureBlur1, coord);
 }
 // Large color blur vertical pass
 void PS_BlurV(PS_IN(vpos, coord), out float3 color : SV_Target)
 {
     color  = tex2D(TextureBlur2, coord).rgb;
-    color  = BlurV(color, TextureBlur2, coord);
+    color  = Blur18V(color, TextureBlur2, coord);
 }
 
 // SCALE UP //////////////////////////////////////
