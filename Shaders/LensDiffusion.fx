@@ -107,7 +107,7 @@ void PS_Combine(PS_IN(vpos, coord), out float3 color : SV_Target)
     float  luma, avg;
 
     // Grab the scene average luminance
-    avg    = GetLuma(pow(avGen::get(), 0.75));
+    avg    = GetLuma(pow(max(avGen::get(), 0.0), 0.75));
 
     // Grab the original scene color
     orig   = tex2D(TextureColor, coord).rgb;
@@ -121,10 +121,10 @@ void PS_Combine(PS_IN(vpos, coord), out float3 color : SV_Target)
     // Prepare the luma mask
     #if (ENABLE_DYNAMIC_DIFFUSION !=0)
         // Dynamic mask based on average scene luminance
-        luma   = 1-pow(luma, lerp(0.01, 1.15, avg));
+        luma   = 1-pow(max(luma, 0.0), lerp(0.01, 1.15, avg));
     #else
         // static luma mask
-        luma   = 1-pow(luma, 0.425);
+        luma   = 1-pow(max(luma, 0.0), 0.425);
     #endif
 
     // Prepare the diffusion tint
