@@ -76,10 +76,10 @@ namespace Contrast
 #endif
 
 	texture Variances {Width = 3; Height = 1; Format = R32f;};
-	texture HistogramLUT {Width = BIN_COUNT; Height = 1; Format = R32f;};
+	texture CSHistogramLUT {Width = BIN_COUNT; Height = 1; Format = R32f;};
 	
 	sampler sVariances {Texture = Variances;};
-	sampler sHistogramLUT {Texture = HistogramLUT;};
+	sampler sHistogramLUT {Texture = CSHistogramLUT;};
 	
 #if CONTRAST_COMPUTE != 0
 	texture LocalTiles {Width = BIN_COUNT; Height = DISPATCH_SIZE.x * DISPATCH_SIZE.y; Format = R32f;};
@@ -88,7 +88,7 @@ namespace Contrast
 	
 	storage wLocalTiles {Texture = LocalTiles;};
 	storage wHistogram {Texture = Histogram;};
-	storage wHistogramLUT {Texture = HistogramLUT;};
+	storage wHistogramLUT {Texture = CSHistogramLUT;};
 #endif
 
 	uniform float Minimum<
@@ -570,7 +570,7 @@ namespace Contrast
 		{
 			VertexShader = PostProcessVS;
 			PixelShader = LUTGenerationPS;
-			RenderTarget0 = HistogramLUT;
+			RenderTarget0 = CSHistogramLUT;
 		}
 		
 		pass Output

@@ -232,17 +232,21 @@ sampler LastPickedColor
 
 float GetGrayscale(float3 color)
 {
+    float cout = 0.0;
 	switch (GrayscaleFormula)
 	{
 		case GrayscaleFormula_Average:
-			return dot(color, 0.333);
+			cout = dot(color, 0.333);
+			break;
 		case GrayscaleFormula_Max:
-			return max(color.r, max(color.g, color.b));
+			cout = max(color.r, max(color.g, color.b));
+			break;
 		case GrayscaleFormula_Luma:
-			return GetLumaGamma(color);
+			cout = GetLumaGamma(color);
+			break;
 	}
 
-	return 0.0;
+	return cout;
 }
 
 #endif
@@ -304,7 +308,7 @@ float PickColorPS(
 		{
 			for (int y = 0; y < DownsampleSize; ++y)
 			{
-				value = max(value, tex2Dfetch(Downsample, int4(x, y, 0, 0)).x);
+				value = max(value, tex2Dfetch(Downsample, int2(x, y)).x);
 			}
 		}
 	}
