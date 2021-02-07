@@ -23,8 +23,8 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Neverwinter (MMORPG)
 * **No Man’s Sky**
 * OpenJK
-* Phasmaphobia
 * **Phantasy Star Online 2 (Japan/North America)**
+* Phasmaphobia
 * Remnant: From the Ashes
 * **Ryujinx**
 * **Second Life** (Official, Alchemy, Black Dragon, Firestorm, Singularity Viewer)
