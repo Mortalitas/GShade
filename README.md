@@ -14,19 +14,24 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * DiRT Rally 2.0
 * **Elder Scrolls Online**
 * Fallout 76
+* Farming Simulator 2019
 * **Final Fantasy XIV**
 * Guild Wars 2
+* Initial Drift Online
 * **Marvel’s Avengers**
+* NeosVR
 * Neverwinter (MMORPG)
 * **No Man’s Sky**
 * OpenJK
+* Phasmaphobia
 * **Phantasy Star Online 2 (Japan/North America)**
 * Remnant: From the Ashes
 * **Ryujinx**
-* Second Life (Official, Firestorm, Black Dragon)
+* **Second Life** (Official, Alchemy, Black Dragon, Firestorm, Singularity Viewer)
 * Shroud of the Avatar
 * Star Wars: The Old Republic
 * TERA Online
+* **VRChat**
 * Warframe
 * **World of Warcraft**
 * World of Warcraft Classic
@@ -35,7 +40,10 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * DARK SOULS II: Scholar of the First Sin
 * Genshin Impact
 * Grand Theft Auto V
+* Lord of the Rings Online
+* Microsoft Flight Simulator
 * RemotePlay
+* Star Wars Galaxies
 
 **The installer version also includes:**
 * Multi-language Support:
@@ -58,7 +66,8 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
     * HQ Shade
     * Dark Veil
     * Faeshade
-  * Vulkan Toggles
+    * Potoatoshade
+* Vulkan Toggles
 * Optional Desktop Update Reminder
 * Uninstaller
 
