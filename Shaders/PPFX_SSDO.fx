@@ -293,7 +293,7 @@ float4 viewSpace(float2 txCoords)
 		const float4	vsOrig = tex2D(SamplerViewSpace,txCoords);
 		float3	ssdo = 0.0;
 		
-		const float	randomDir = tex2D(SamplerSSDONoise,frac(txCoords*NOISE_SCREENSCALE)).x;
+		const float	randomDir = tex2Dlod(SamplerSSDONoise,float4(frac(txCoords*NOISE_SCREENSCALE), 0.0, 0.0)).x;
 		const float2	stepSize = (pSSDOSampleRange/(pSSDOSampleAmount*sourceAxisDiv))*texelSize;
 
 		for (float offs=1.0;offs<=pSSDOSampleAmount;offs++)
