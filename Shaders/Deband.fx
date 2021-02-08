@@ -170,6 +170,7 @@ float3 PS_Deband(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
     float2 pt;
     float dist;
 
+    [loop]
     for (int i = 1; i <= iterations; ++i) {
         dist = rand(h) * range * i;
         pt = dist * BUFFER_PIXEL_SIZE;

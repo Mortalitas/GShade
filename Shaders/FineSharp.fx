@@ -152,7 +152,7 @@ void sort9_partial2(inout float a1, inout float a2, inout float a3, inout float 
 
 float SharpDiff(float4 c) {
 	const float t = c.a - c.x;
-	return sign(t) * (sstr / 255.0) * pow(abs(t) / (abs(lstr / 255.0)), 1.0 / pstr) * ((t * t) / mad(t, t, ldmp / 65025.0));
+	return sign(t) * (sstr / 255.0) * pow(abs(abs(t) / (abs(lstr / 255.0))), 1.0 / pstr) * ((t * t) / mad(t, t, ldmp / 65025.0));
 }
 
 // Main
