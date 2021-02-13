@@ -280,7 +280,7 @@ namespace alt {
 #define ENABLE_BLUE (1 << 2)
 #define ENABLE_ALPHA (1 << 3)
 
-	technique PreGravity < hidden = true; enabled = true; timeout = 2000; >
+	technique PreGravity < timeout = 2000; >
 	{
 		pass GenerateRNG { VertexShader = vs_rng_generate2; PixelShader = rng_generate; RenderTarget = texGravityBuf; RenderTargetWriteMask = ENABLE_BLUE; }
 		pass GenerateDistance { VertexShader = vs_dist_generate2; PixelShader = dist_generate; RenderTarget = texGravityDistanceMap; }

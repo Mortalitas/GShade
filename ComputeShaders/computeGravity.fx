@@ -411,7 +411,7 @@ void downsample_gravity(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, o
 // PIPELINE
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-technique PreGravity < hidden = true; enabled = true; timeout = 1000; >
+technique PreGravity < timeout = 1000; >
 {
 	pass GenerateRNG { VertexShader = PostProcessVS; PixelShader = rng_generateSetup; RenderTarget = texGravitySeedMap; }
 	pass UpdateRNGMap { VertexShader = PostProcessVS; PixelShader = rng_update_mapSetup; RenderTarget = texGravitySeedMapCopy; }
