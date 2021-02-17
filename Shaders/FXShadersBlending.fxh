@@ -1,4 +1,4 @@
-#pragma oncehttps://github.com/Mortalitas/GShade/blob/master/Shaders/FxShadersBlending.fxh
+#pragma once
 
 namespace FXShaders
 {
