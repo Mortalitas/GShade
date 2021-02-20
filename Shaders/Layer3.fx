@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Layer (version 0.7)
+    Layer (version 0.8)
 
     Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume, prod80, originalnicodr
     License: MIT
