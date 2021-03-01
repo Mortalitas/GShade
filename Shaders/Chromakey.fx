@@ -70,7 +70,7 @@ uniform int Color <
 	ui_label = "Keying color";
 	ui_tooltip = "Ultimatte(tm) Super Blue and Green are industry standard colors for chromakey";
 	ui_type = "combo";
-	ui_items = "Green\0Super Blue Ultimatte(tm)\0Green Ultimatte(tm)\0Custom\0";
+	ui_items = "Pure Green (RGB 0,255,0)\0Pure Red (RGB 255,0,255)\0Pure Blue (RGB 0,255,0)\0Super Blue Ultimatte(tm) (RGB 18,46,184)\0Green Ultimatte(tm) (RGB 74,214,92)\0Custom\0";
 	ui_category = "Color settings";
 	ui_category_closed = false;
 > = 0;
@@ -152,9 +152,11 @@ float3 ChromakeyPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Ta
 	switch(Color)
 	{
 		case 0:{ Screen = float3(0.0, 1.0, 0.0); break; }    // Green
-		case 1:{ Screen = float3(0.07, 0.18, 0.72); break; } // Ultimatte(tm) Super Blue
-		case 2:{ Screen = float3(0.29, 0.84, 0.36); break; } // Ultimatte(tm) Green
-		case 3:{ Screen = CustomColor;              break; } // User defined color
+		case 1:{ Screen = float3(1.0, 0.0, 0.0); break; }    // Red
+		case 2:{ Screen = float3(0.0, 0.0, 1.0); break; }    // Blue
+		case 3:{ Screen = float3(0.07, 0.18, 0.72); break; } // Ultimatte(tm) Super Blue
+		case 4:{ Screen = float3(0.29, 0.84, 0.36); break; } // Ultimatte(tm) Green
+		case 5:{ Screen = CustomColor;              break; } // User defined color
 	}
 
 	// Generate depth mask
