@@ -156,7 +156,7 @@ float3 Chromakey2PS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 		case 2:{ Screen = float3(0.0, 0.0, 1.0); break; }    // Blue
 		case 3:{ Screen = float3(0.07, 0.18, 0.72); break; } // Ultimatte(tm) Super Blue
 		case 4:{ Screen = float3(0.29, 0.84, 0.36); break; } // Ultimatte(tm) Green
-		case 5:{ Screen = CustomColor;              break; } // User defined color
+		case 5:{ Screen = CustomColor2;              break; } // User defined color
 	}
 
 	// Generate depth mask
