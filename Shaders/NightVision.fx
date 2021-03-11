@@ -1,3 +1,6 @@
+// by Nikos Papadopoulos, 4rknova / 2013
+// WTFPL
+
 #include "ReShade.fxh"
 
 uniform float iGlobalTime < source = "timer"; >;
