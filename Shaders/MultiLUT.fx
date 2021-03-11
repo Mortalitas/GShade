@@ -97,7 +97,8 @@ uniform int fLUT_MultiLUTSelector <
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
 #ifndef MultiLUTTexture_Source
-#define MultiLUTTexture_Source 0
+    #undef MultiLutTexture_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
+    #define MultiLUTTexture_Source 0
 #endif
 
 uniform int fLUT_LutSelector < 
@@ -163,7 +164,7 @@ uniform bool fLUT_MultiLUTPass2 <
 > = 0;
 
 #ifndef MultiLUTTexture2
-#define MultiLUTTexture2 0
+    #define MultiLUTTexture2 0
 #endif
 
 #if MultiLUTTexture2
@@ -178,7 +179,8 @@ uniform int fLUT_MultiLUTSelector2 <
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
 #ifndef MultiLUTTexture2_Source
-#define MultiLUTTexture2_Source 1
+    #undef MultiLutTexture2_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
+    #define MultiLUTTexture2_Source 1
 #endif
 
 uniform int fLUT_LutSelector2 < 
@@ -245,7 +247,7 @@ uniform bool fLUT_MultiLUTPass3 <
 > = 0;
 
 #ifndef MultiLUTTexture3
-#define MultiLUTTexture3 0
+    #define MultiLUTTexture3 0
 #endif
 
 #if MultiLUTTexture3
@@ -260,7 +262,8 @@ uniform int fLUT_MultiLUTSelector3 <
 
 // Set default value(see above) by source code if the preset has not modified yet this variable/definition
 #ifndef MultiLUTTexture3_Source
-#define MultiLUTTexture3_Source 1
+    #undef MultiLutTexture3_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
+    #define MultiLUTTexture3_Source 1
 #endif
 
 uniform int fLUT_LutSelector3 < 
@@ -326,122 +329,122 @@ uniform float fLUT_AmountLuma3 <
 
 #include "ReShade.fxh"
 
-#if   MultiLUTTexture_Source == 0 // GShade/Angelite MultiLut_GShade.png
-#define _SOURCE_MULTILUT_FILE fLUT_GSTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
+#if MultiLUTTexture_Source == 0 // GShade/Angelite MultiLut_GShade.png
+    #define _SOURCE_MULTILUT_FILE fLUT_GSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
 #elif MultiLUTTexture_Source == 1 || MultiLUTTexture_Source == 2 // ReShade 3 & 4 MultiLut_atlas4.png
-#define _SOURCE_MULTILUT_FILE fLUT_RESTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE fLUT_RESTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
 #elif MultiLUTTexture_Source == 3 // Johto MultiLut_Johto.png
-#define _SOURCE_MULTILUT_FILE fLUT_JOHTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountEx
+    #define _SOURCE_MULTILUT_FILE fLUT_JOHTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountEx
 #elif MultiLUTTexture_Source == 4 // Espresso Glow FFXIVLUTAtlas.png
-#define _SOURCE_MULTILUT_FILE fLUT_EGTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE fLUT_EGTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
 #elif MultiLUTTexture_Source == 5 // MS TMP_MultiLUT.png
-#define _SOURCE_MULTILUT_FILE fLUT_MSTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE fLUT_MSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #elif MultiLUTTexture_Source == 6 // ninjafada Gameplay MultiLut_ninjafadaGameplay.png
-#define _SOURCE_MULTILUT_FILE fLUT_NFGTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE fLUT_NFGTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #elif MultiLUTTexture_Source == 7 // seri14 MultiLut_seri14.png
-#define _SOURCE_MULTILUT_FILE fLUT_S14TextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLower
+    #define _SOURCE_MULTILUT_FILE fLUT_S14TextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLower
 #elif MultiLUTTexture_Source == 8 // Yomi MultiLut_Yomi.png
-#define _SOURCE_MULTILUT_FILE fLUT_YOMTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountEx
+    #define _SOURCE_MULTILUT_FILE fLUT_YOMTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountEx
 #elif MultiLUTTexture_Source == 9 // Neneko MultiLut_Neneko.png
-#define _SOURCE_MULTILUT_FILE fLUT_NENTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE fLUT_NENTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #elif MultiLUTTexture_Source == 10 // Yaes MultiLut_yaes.png
-#define _SOURCE_MULTILUT_FILE fLUT_YAETextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE fLUT_YAETextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #elif MultiLUTTexture_Source == 11 // Ipsusu MultiLut_Ipsusu.png
-#define _SOURCE_MULTILUT_FILE fLUT_IPSTextureName
-#define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE fLUT_IPSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
 #endif
 
-#if   MultiLUTTexture2_Source == 0 // GShade/Angelite MultiLut_GShade.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_GSTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
+#if MultiLUTTexture2_Source == 0 // GShade/Angelite MultiLut_GShade.png
+    #define _SOURCE_MULTILUT_FILE2 fLUT_GSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
 #elif MultiLUTTexture2_Source == 1 || MultiLUTTexture2_Source == 2 // ReShade 3 & 4 MultiLut_atlas4.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_RESTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE2 fLUT_RESTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
 #elif MultiLUTTexture2_Source == 3 // Johto MultiLut_Johto.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_JOHTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountEx
+    #define _SOURCE_MULTILUT_FILE2 fLUT_JOHTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountEx
 #elif MultiLUTTexture2_Source == 4 // Espresso Glow FFXIVLUTAtlas.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_EGTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE2 fLUT_EGTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
 #elif MultiLUTTexture2_Source == 5 // MS TMP_MultiLUT.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_MSTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE2 fLUT_MSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #elif MultiLUTTexture2_Source == 6 // ninjafada Gameplay MultiLut_ninjafadaGameplay.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_NFGTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE2 fLUT_NFGTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #elif MultiLUTTexture2_Source == 7 // seri14 MultiLut_seri14.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_S14TextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLower
+    #define _SOURCE_MULTILUT_FILE2 fLUT_S14TextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLower
 #elif MultiLUTTexture2_Source == 8 // Yomi MultiLut_Yomi.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_YOMTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountEx
+    #define _SOURCE_MULTILUT_FILE2 fLUT_YOMTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountEx
 #elif MultiLUTTexture2_Source == 9 // Neneko MultiLut_Neneko.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_NENTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE2 fLUT_NENTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #elif MultiLUTTexture2_Source == 10 // Yaes MultiLut_yaes.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_YAETextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE2 fLUT_YAETextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #elif MultiLUTTexture2_Source == 11 // Ipsusu MultiLut_Ipsusu.png
-#define _SOURCE_MULTILUT_FILE2 fLUT_IPSTextureName
-#define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE2 fLUT_IPSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
 #endif
 
-#if   MultiLUTTexture3_Source == 0 // GShade/Angelite MultiLut_GShade.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_GSTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
+#if MultiLUTTexture3_Source == 0 // GShade/Angelite MultiLut_GShade.png
+    #define _SOURCE_MULTILUT_FILE3 fLUT_GSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
 #elif MultiLUTTexture3_Source == 1 || MultiLUTTexture3_Source == 2 // ReShade 3 & 4 MultiLut_atlas4.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_RESTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE3 fLUT_RESTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
 #elif MultiLUTTexture3_Source == 3 // Johto MultiLut_Johto.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_JOHTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountEx
+    #define _SOURCE_MULTILUT_FILE3 fLUT_JOHTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountEx
 #elif MultiLUTTexture3_Source == 4 // Espresso Glow FFXIVLUTAtlas.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_EGTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE3 fLUT_EGTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
 #elif MultiLUTTexture3_Source == 5 // MS TMP_MultiLUT.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_MSTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE3 fLUT_MSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #elif MultiLUTTexture3_Source == 6 // ninjafada Gameplay MultiLut_ninjafadaGameplay.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_NFGTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE3 fLUT_NFGTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #elif MultiLUTTexture3_Source == 7 // seri14 MultiLut_seri14.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_S14TextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLower
+    #define _SOURCE_MULTILUT_FILE3 fLUT_S14TextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLower
 #elif MultiLUTTexture3_Source == 8 // Yomi MultiLut_Yomi.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_YOMTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountEx
+    #define _SOURCE_MULTILUT_FILE3 fLUT_YOMTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountEx
 #elif MultiLUTTexture3_Source == 9 // Neneko MultiLut_Neneko.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_NENTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE3 fLUT_NENTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #elif MultiLUTTexture3_Source == 10 // Yaes MultiLut_yaes.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_YAETextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
+    #define _SOURCE_MULTILUT_FILE3 fLUT_YAETextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #elif MultiLUTTexture3_Source == 11 // Ipsusu MultiLut_Ipsusu.png
-#define _SOURCE_MULTILUT_FILE3 fLUT_IPSTextureName
-#define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE3 fLUT_IPSTextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
 #endif
 
 texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT; Format = RGBA8; };
 sampler SamplerMultiLUT { Texture = texMultiLUT; };
 
 #if MultiLUTTexture2
-texture texMultiLUT2 < source = _SOURCE_MULTILUT_FILE2; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT2; Format = RGBA8; };
-sampler SamplerMultiLUT2{ Texture = texMultiLUT2; };
+    texture texMultiLUT2 < source = _SOURCE_MULTILUT_FILE2; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT2; Format = RGBA8; };
+    sampler SamplerMultiLUT2{ Texture = texMultiLUT2; };
 #endif
 
 #if MultiLUTTexture3
-texture texMultiLUT3 < source = _SOURCE_MULTILUT_FILE3; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT3; Format = RGBA8; };
-sampler SamplerMultiLUT3{ Texture = texMultiLUT3; };
+    texture texMultiLUT3 < source = _SOURCE_MULTILUT_FILE3; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT3; Format = RGBA8; };
+    sampler SamplerMultiLUT3{ Texture = texMultiLUT3; };
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
