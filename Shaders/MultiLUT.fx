@@ -63,6 +63,9 @@
 #ifndef fLUT_IPSTextureName
     #define fLUT_IPSTextureName "MultiLut_Ipsusu.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
 #endif
+#ifndef fLUT_NGETextureName
+    #define fLUT_NGETextureName "MultiLut_Nightingale.png" // Add your own MultiLUT atlas to \reshade-shaders\Textures\ and provide the new file name in quotes to change the MultiLUT used! This one uses 12 rows at 32px.
+#endif
 #ifndef fLUT_TileSizeXY
     #define fLUT_TileSizeXY 32
 #endif
@@ -89,7 +92,7 @@
 uniform int fLUT_MultiLUTSelector <
     ui_category = "Pass 1";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "Set this to whatever build your preset was made with!";
     ui_bind = "MultiLUTTexture_Source";
@@ -126,6 +129,8 @@ uniform int fLUT_LutSelector <
     ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
 #elif MultiLUTTexture_Source == 11 // Ipsusu
     ui_items = "Neutral\0Ipsusu\0IpsusuWarm\0IpsusuPastel\0";
+#elif MultiLUTTexture_Source == 12 // Nightingale
+    ui_items = "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0";
 #else
     ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
 #endif
@@ -171,7 +176,7 @@ uniform bool fLUT_MultiLUTPass2 <
 uniform int fLUT_MultiLUTSelector2 <
     ui_category = "Pass 2";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "The MultiLUT table to use on Pass 2.";
     ui_bind = "MultiLUTTexture2_Source";
@@ -208,6 +213,8 @@ uniform int fLUT_LutSelector2 <
     ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
 #elif MultiLUTTexture2_Source == 11 // Ipsusu
     ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+#elif MultiLUTTexture_Source == 12 // Nightingale
+    ui_items = "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0";
 #else
     ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
 #endif
@@ -254,7 +261,7 @@ uniform bool fLUT_MultiLUTPass3 <
 uniform int fLUT_MultiLUTSelector3 <
     ui_category = "Pass 3";
     ui_type = "combo";
-    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0";
+    ui_items = "GShade [Angelite-Compatible]\0ReShade 4\0ReShade 3\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0";
     ui_label = "The MultiLUT file to use.";
     ui_tooltip = "The MultiLUT table to use on Pass 3.";
     ui_bind = "MultiLUTTexture3_Source";
@@ -291,6 +298,8 @@ uniform int fLUT_LutSelector3 <
     ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
 #elif MultiLUTTexture3_Source == 11 // Ipsusu
     ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+#elif MultiLUTTexture_Source == 12 // Nightingale
+    ui_items = "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0";
 #else
     ui_items = "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0";
 #endif
@@ -362,6 +371,9 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture_Source == 11 // Ipsusu MultiLut_Ipsusu.png
     #define _SOURCE_MULTILUT_FILE fLUT_IPSTextureName
     #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
+#elif MultiLUTTexture_Source == 12 // Nightingale MultiLut_Nightingale.png
+    #define _SOURCE_MULTILUT_FILE fLUT_NGETextureName
+    #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmountLow
 #endif
 
 #if MultiLUTTexture2_Source == 0 // GShade/Angelite MultiLut_GShade.png
@@ -397,6 +409,9 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture2_Source == 11 // Ipsusu MultiLut_Ipsusu.png
     #define _SOURCE_MULTILUT_FILE2 fLUT_IPSTextureName
     #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
+#elif MultiLUTTexture2_Source == 12 // Nightingale MultiLut_Nightingale.png
+    #define _SOURCE_MULTILUT_FILE2 fLUT_NGETextureName
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmountLow
 #endif
 
 #if MultiLUTTexture3_Source == 0 // GShade/Angelite MultiLut_GShade.png
@@ -432,6 +447,9 @@ uniform float fLUT_AmountLuma3 <
 #elif MultiLUTTexture3_Source == 11 // Ipsusu MultiLut_Ipsusu.png
     #define _SOURCE_MULTILUT_FILE3 fLUT_IPSTextureName
     #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
+#elif MultiLUTTexture3_Source == 12 // Nightingale MultiLut_Nightingale.png
+    #define _SOURCE_MULTILUT_FILE3 fLUT_NGETextureName
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmountLow
 #endif
 
 texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = fLUT_TileSizeXY * fLUT_TileAmount; Height = fLUT_TileSizeXY * _SOURCE_MULTILUT_AMOUNT; Format = RGBA8; };
