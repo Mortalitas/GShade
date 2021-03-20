@@ -12,6 +12,7 @@ uniform float screenLinesNum <
 	ui_type = "slider";
 	ui_min = 1.0;
 	ui_max = (float)BUFFER_HEIGHT;
+	ui_step = 1.0;
 	ui_label = "Screen Resolution [VHSPro]";
 	ui_tooltip = "Screen Resolution (in lines).\nChange screenLinesRes in Preprocessor Definitions to have the same value as this.";
 > = (float)BUFFER_HEIGHT;
@@ -113,7 +114,7 @@ uniform float noiseLinesNum <
 	ui_min = 1.0;
 	ui_max = (float)BUFFER_HEIGHT;
 	ui_label = "Vertical Resolution [VHSPro]";
-	ui_tooltip = "Noise Resolution (in lines).\nChange noiseLinesRes in Preprocessor Definitions to have the same value as this.";
+	ui_tooltip = "Noise Resolution (in lines).";
 > = 240.0;
 
 uniform float noiseQuantizeX <
@@ -417,11 +418,7 @@ uniform int VHS_Filter <
 
 //textures and samplers
 #ifndef screenLinesRes
-	#define screenLinesRes BUFFER_HEIGHT	//Screen Resolution (to use in _TapeTex, has to be the same as screenLinesNum)
-#endif
-
-#ifndef noiseLinesRes
-	#define noiseLinesRes 240.0	//Vertical Resolution (to use in _TapeTex, has to be the same as noiseLinesNum)
+	#define screenLinesRes (float)BUFFER_HEIGHT	//Screen Resolution (to use in _TapeTex, has to be the same as screenLinesNum)
 #endif
 
 #ifdef VHSLINEARFILTER
@@ -435,13 +432,12 @@ static const float filmGrainPower = 1.0;				//Film Grain Power (DO NOT CHANGE)
 static const float feedbackAmp = 1.0; 					//Feedback Amp (DO NOT CHANGE)
 
 #define _ScreenParams float2(BUFFER_WIDTH, BUFFER_HEIGHT)
-#undef PixelSize
-#define PixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
+#define vhsPixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 uniform float  Timer < source = "timer"; >;
 
 static const float Pi2 = 6.283185307;
 
-#define TEXHEIGHT   int(noiseLinesRes)
+#define TEXHEIGHT   screenLinesRes
 #define TEXWIDTH 	int(((float)TEXHEIGHT*(float)BUFFER_WIDTH/(float)BUFFER_HEIGHT))
 
 texture2D VHS_InputTexA    { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
@@ -558,7 +554,7 @@ float scanLines(float2 p, float t)
 		}
 
 		//expensive but better
-		float scans = 0.5*(cos( (p.y*screenLinesNum+t_sl)*2.0*PI) + 1.0);
+		float scans = 0.5*(cos( (p.y*screenLinesNum+0.5+t_sl)*2.0*PI) + 1.0);
 		scans = pow(scans, scanLineWidth); 
 		return 1.0 - scans; 
 }
@@ -574,7 +570,7 @@ float gcos(float2 uv, float s, float p)
 //lf phase = line float phase = .0
 float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
    
-	const float SLN = screenLinesNum; //TODO use only SLN
+	const float SLN = screenLinesNum + 0.5; //TODO use only SLN
 	//width change
 	const float tt = t*wcs; //widthChangeSpeed
 	const float t2 = tt-fmod(tt, 0.5);
@@ -585,7 +581,7 @@ float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
 	w = floor(w*mw)/mw;
 	w *= mw;
 	//get descreete line number
-	float ln = (1.0-frac(t*lfs + lfp)) *screenLinesNum; 
+	float ln = (1.0-frac(t*lfs + lfp)) *(screenLinesNum + 0.5); 
 	ln = ln - frac(ln); 
 	// float ln = (1.-fmod(t*lfs + lfp, 1.))*SLN; 
 	// ln = ln - fmod(ln, 1.); //descreete line number
@@ -663,8 +659,7 @@ float3 rgbDistortion(float2 uv,  float magnitude, float t)
 	col.y = rgb2yiq( tex2D( SamplerColorVHS, float2(offsetX.g, uv.y) ).rgb ).y;
 	col.z = rgb2yiq( tex2D( SamplerColorVHS, float2(offsetX.b, uv.y) ).rgb ).z;
 
-	col = yiq2rgb(col);
-	return col;
+	return yiq2rgb(col);
 }
 
 float rndln(float2 p, float t)
@@ -830,7 +825,7 @@ float3 yiqDist(float2 uv, float m, float t)
 						return signal;    
 }
 
-#define fixCoord (p - float2( 0.5 * PixelSize.x, .0)) 
+#define fixCoord (p - float2( 0.5 * vhsPixelSize.x, .0)) 
 #define fetch_offset(offset, one_x) t2d(fixCoord + float2( (offset) * (ONE_X), 0.0));
 
 /////////////////////////PIXEL SHADERS//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -841,15 +836,15 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	const float t = Timer.x * 0.001;//_Time.y;
 	float2 p = txcoord.xy;
 	
-	float SLN = screenLinesNum; //TODO use only SLN
-	float SLN_Noise = noiseLinesNum; //TODO only SLN_Noise
+	float SLN = screenLinesNum + 0.5; //TODO use only SLN
+	float SLN_Noise = noiseLinesNum + 0.5; //TODO only SLN_Noise
 	float ONE_X = 0.0;
 	float ONE_Y = 0.0;
 
 	//basically if its 0 -> set it to fullscreen
 	//TODO calc it before shader / already float done
-	SLN = screenLinesNum; //TODO use only SLN
-	SLN_Noise = noiseLinesNum; //TODO only SLN_Noise
+	SLN = screenLinesNum + 0.5; //TODO use only SLN
+	SLN_Noise = noiseLinesNum + 0.5; //TODO only SLN_Noise
 	if(SLN==0.0) SLN = _ScreenParams.y;
 
 	if(SLN_Noise==0 || SLN_Noise>SLN) SLN_Noise = SLN;
@@ -1087,14 +1082,14 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
 	const float t = Timer.x * 0.001;//_Time.y;
 	float2 p = txcoord.xy;
-	float SLN = screenLinesNum; //TODO use only SLN
+	float SLN = screenLinesNum + 0.5; //TODO use only SLN
 
 	//basically if its 0 -> set it to fullscreen
 	if(SLN==0.0) SLN = _ScreenParams.y;
 
 	 //TODO maybe make it based on num of lines? and height ? 
 	//TODO make switch between real pixels and pixelated pixels!
-    // ONE_X = 1.0 / screenLinesNum;
+    // ONE_X = 1.0 / screenLinesNum + 0.5;
 
 	float ONE_X = 1.0 / _ScreenParams.x;  // 1px
     ONE_X *= bleedAmount; // longer tails, more bleeding, default 1.
