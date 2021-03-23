@@ -75,12 +75,20 @@
     #define MAGICBLOOM_BLUR_PRECALCULATED 1
 #endif
 
+#ifndef MAGICBLOOM_UIOCCLUSION
+    #define MAGICBLOOM_UIOCCLUSION 0
+#endif
+
 #ifndef MAGICBLOOM_NODIRT
     #define MAGICBLOOM_NODIRT 0
 #endif
 
 #ifndef MAGICBLOOM_NOADAPT
     #define MAGICBLOOM_NOADAPT 0
+#endif
+
+#ifndef MAGICBLOOM_NOSATURATION
+    #define MAGICBLOOM_NOSATURATION 0
 #endif
 
 static const int iBlurSamples = 4;
@@ -126,6 +134,18 @@ uniform float fDirt_Intensity <
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
+    ui_step = 0.001;
+> = 0.0;
+#endif
+
+#if !MAGICBLOOM_NOSATURATION
+uniform float fSaturation <
+    ui_label = "Saturation";
+    ui_tooltip = 
+    "Determines the amount of saturation added or removed from the bloom.";
+    ui_type = "slider";
+    ui_min = -1.0;
+    ui_max = 3.0;
     ui_step = 0.001;
 > = 0.0;
 #endif
@@ -198,8 +218,10 @@ uniform int iAdapt_Precision <
 
 uniform bool bAdapt_IgnoreOccludedByUI <
   ui_label = "Ignore Trigger Area if Occluded by UI (FFXIV)";
+  ui_bind = "MAGICBLOOM_UIOCCLUSION";
 > = 0;
 
+#if MAGICBLOOM_UIOCCLUSION
 uniform float fAdapt_IgnoreTreshold <
     ui_label = "Ignore Alpha Treshold";
     ui_tooltip = "How visible the UI must be to be ignored"
@@ -209,6 +231,7 @@ uniform float fAdapt_IgnoreTreshold <
     ui_min = 0.0;
     ui_max = 1.0;
 > = 0.2;
+#endif
 #endif
 
 uniform uint iDebug <
@@ -260,7 +283,7 @@ sampler sMagicBloom_Dirt { Texture = tMagicBloom_Dirt; };
 
 #if !MAGICBLOOM_BLUR_PRECALCULATED
 float gaussian_function(float2 i) {
-    static const float first_part = 1.0 / (double_pi * (sigma * 2.0);
+    static const float first_part = 1.0 / (double_pi * (sigma * 2.0));
     static const float second_part_a = 1.0 / (2.0 * (sigma * 2.0));
     static const float second_part_b = ((i.x * 2.0) + (i.y * 2.0)) * second_part_a;
     return first_part * exp(-second_part_b);
@@ -352,6 +375,9 @@ float4 PS_Blur1(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
     float3 col = blur(ReShade::BackBuffer, uv, 2.0);
     col = pow(abs(col), fBloom_Threshold);
     col *= fBloom_Intensity;
+#if !MAGICBLOOM_NOSATURATION
+    col = lerp(col, dot(col, luma_value), fSaturation);
+#endif
     return float4(col, 1.0);
 }
 
@@ -439,6 +465,7 @@ float PS_GetAdapt(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
     curr *= fAdapt_Sensitivity;
     curr = clamp(curr, f2Adapt_Clip.x, f2Adapt_Clip.y);
     const float last = tex2D(sMagicBloom_LastAdapt, 0.0).x;
+#if MAGICBLOOM_NOUIOCCLUSION
     const float uiVisibility = tex2D(ReShade::BackBuffer, float2(0.5, 0.5)).a;
     if(bAdapt_IgnoreOccludedByUI && uiVisibility > fAdapt_IgnoreTreshold) {
         if (last == 0)
@@ -446,6 +473,7 @@ float PS_GetAdapt(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
         else
             return last;
     }
+#endif
     //Using the frametime/delta here would actually scale adaptation with the framerate.
     //We don't want that, so we don't even bother with it.
     return lerp(last, curr, fAdapt_Speed);
