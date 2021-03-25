@@ -50,24 +50,27 @@ float permute(float x)
 float3 TriDither(float3 color, float2 uv, int bits)
 {
     const float bitstep = exp2(bits) - 1.0;
-    const float lsb = 1.0 / bitstep;
-    const float lobit = 0.5 / bitstep;
-    const float hibit = (bitstep - 0.5) / bitstep;
 
     const float3 m = float3(uv, rand21(uv + (DitherTimer * 0.001))) + 1.0;
-    const float h = permute(permute(permute(m.x) + m.y) + m.z);
+    float h = permute(permute(permute(m.x) + m.y) + m.z);
 
     float3 noise1, noise2;
-    noise1.x = rand11(h); h = permute(h);
-    noise2.x = rand11(h); h = permute(h);
-    noise1.y = rand11(h); h = permute(h);
-    noise2.y = rand11(h); h = permute(h);
-    noise1.z = rand11(h); h = permute(h);
+    noise1.x = rand11(h);
+    h = permute(h);
+
+    noise2.x = rand11(h);
+    h = permute(h);
+
+    noise1.y = rand11(h);
+    h = permute(h);
+
+    noise2.y = rand11(h);
+    h = permute(h);
+
+    noise1.z = rand11(h);
+    h = permute(h);
+
     noise2.z = rand11(h);
 
-    const float3 lo = saturate(remap(color.xyz, 0.0, lobit));
-    const float3 hi = saturate(remap(color.xyz, 1.0, hibit));
-    const float3 uni = noise1 - 0.5;
-    const float3 tri = noise1 - noise2;
-	return lerp(uni, tri, min(lo, hi)) * lsb;
+	return lerp(noise1 - 0.5, noise1 - noise2, min(saturate(remap(color.xyz, 0.0, 0.5 / bitstep)), saturate(remap(color.xyz, 1.0, (bitstep - 0.5) / bitstep)))) * (1.0 / bitstep);
 }
