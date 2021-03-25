@@ -290,7 +290,7 @@ namespace pd80_hqbloom
     //// DEFINES ////////////////////////////////////////////////////////////////////
     uniform float frametime < source = "frametime"; >;
     #define LumCoeff float3(0.212656, 0.715158, 0.072186)
-    #define PI 3.141592f
+    #define PI 3.1415926535897932
     #define LOOPCOUNT 500.0f
     #define aspect float( BUFFER_WIDTH * BUFFER_RCP_HEIGHT )
     //// FUNCTIONS //////////////////////////////////////////////////////////////////

@@ -473,7 +473,7 @@ sampler2D _FeedbackTex { Texture = VHS_FeedbackTexB; MinFilter = VHSFILTERMODE; 
 
 //functions
 
-#define PI 3.14159265359
+#define PI 3.1415926535897932
 static const float3 MOD3 = float3(443.8975, 397.2973, 491.1871);
 
 float fmod(float a, float b) {

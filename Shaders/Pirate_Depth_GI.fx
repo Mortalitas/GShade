@@ -204,7 +204,7 @@ float4 PS_GIDiffuse(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : COL
 }
 
 #define threepitwo 4.71238898038f
-#define pi 3.14159265359f
+#define pi 3.14159265358
 float4 PS_GICombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : COLOR
 {
 	float4 diffuse = tex2D(SamplerGI, texcoord);

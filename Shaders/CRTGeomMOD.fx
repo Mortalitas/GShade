@@ -457,7 +457,7 @@ sampler BloomBlurSampler2 { Texture = BloomBlurTex2; };
 
 
 #define FIX(c) max(abs(c), 1e-5);
-#define PI 3.141592653589
+#define PI 3.1415926535897932
 
 #define TEX2D(c) pow(abs(tex2D(ReShade::BackBuffer, (c))), float4(CRTgamma, CRTgamma, CRTgamma, CRTgamma))
 

@@ -94,7 +94,7 @@ uniform bool Oversample <
 #define FIX(c) max(abs(c), 1e-5);
 
 #ifndef PI
-  #define PI 3.1415927
+  #define PI 3.1415926535897932
 #endif
 
 // The size of one texel, in texture-coordinates.

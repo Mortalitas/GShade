@@ -1,6 +1,6 @@
 #include "ReShade.fxh"
 
-#define PI 3.14159265
+#define PI 3.1415926535897932
 #define TILE_SIZE 16.0
 
 uniform float  Timer < source = "timer"; >;

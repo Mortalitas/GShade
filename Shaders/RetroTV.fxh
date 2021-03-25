@@ -92,7 +92,7 @@ uniform float framecount < source = "framecount"; >;
 
 // === CONSTS AND UNIFORMS
 
-#define PI 3.14159265
+#define PI 3.1415926535897932
 #define SCANLINE_PHASE_OFFSET (PI * 0.66667)
 #define CHROMA_MOD_FREQ (PI / 3.0)
 #define CHROMA_AMP 1.5
