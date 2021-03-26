@@ -100,9 +100,16 @@ sampler samplerDepth
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
-    texcoord.x = (id == 2) ? 2.0 : 0.0;
-    texcoord.y = (id == 1) ? 2.0 : 0.0;
-    
+    if (id == 2)
+        texcoord.x = 2.0;
+    else
+        texcoord.x = 0.0;
+
+    if (id == 1)
+        texcoord.y  = 2.0;
+    else
+        texcoord.y = 0.0;
+
     position = float4( texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
 }
 
@@ -115,25 +122,27 @@ void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out floa
 void Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
 {
     
-    float ar = 1. * BUFFER_HEIGHT/BUFFER_WIDTH;
+    const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     float2 center = float2(center_x, center_y);
     float2 tc = texcoord - center;
+
     center.x /= ar;
     tc.x /= ar;
 
-    float dist = distance(tc, center);
+    const float dist = distance(tc, center);
     
     if (dist < radius)
     {
-        float tension_radius = lerp(radius-dist, radius, tension);
-        float percent = (radius-dist) /tension_radius;
-        percent = inverse == 0 ? percent : 1 - percent;
-        float theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
-        float s =  sin(theta);
-        float c =  cos(theta);
-        tc = float2(dot(tc-center, float2(c,-s)), dot(tc-center, float2(s,c)));
+        const float tension_radius = lerp(radius-dist, radius, tension);
+        float percent = (radius-dist) / tension_radius;
+        if (inverse != 0)
+            percent = 1 - percent;
+        const float theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
+        const float s =  sin(theta);
+        const float c =  cos(theta);
+        tc = float2(dot(tc - center, float2(c, -s)), dot(tc - center, float2(s,c)));
 
-        tc += (2*center);
+        tc += (2 * center);
         tc.x *= ar;
       
         color = tex2D(samplerColor, tc);
@@ -147,13 +156,17 @@ void Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 col
 
 float4 ResultPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    float4 color = tex2D(result, texcoord);
-    float4 base = tex2D(samplerColor, texcoord);
+    const float4 color = tex2D(result, texcoord);
     
-    if(!additiveRender)
-        return color;
-
-    return additiveRender == 1 ? lerp(base, color, color.a) : lerp(color, base, color.a);
+    switch(additiveRender)
+    {
+        case 0:
+            return color;
+        case 1:
+            return lerp(tex2D(samplerColor, texcoord), color, color.a);
+        default:
+            return lerp(color, tex2D(samplerColor, texcoord), color.a);
+    }
 }
 
 // Technique

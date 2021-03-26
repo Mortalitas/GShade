@@ -28,6 +28,7 @@ uniform float center_y <
     ui_min = 0.0; ui_max = 1.0;
 > = 0.25;
 
+
 uniform int animate <
     ui_type = "combo";
     ui_label = "Animate";
@@ -89,9 +90,16 @@ sampler result
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
-    texcoord.x = (id == 2) ? 2.0 : 0.0;
-    texcoord.y = (id == 1) ? 2.0 : 0.0;
-    
+    if (id == 2)
+        texcoord.x = 2.0;
+    else
+        texcoord.x = 0.0;
+
+    if (id == 1)
+        texcoord.y  = 2.0;
+    else
+        texcoord.y = 0.0;
+
     position = float4( texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
     //position /= BUFFER_HEIGHT/BUFFER_WIDTH;
 
@@ -105,25 +113,25 @@ void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out floa
 
 float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    float ar = 1. * BUFFER_HEIGHT/BUFFER_WIDTH;
+    const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     float2 center = float2(center_x, center_y);
     float2 tc = texcoord - center;
 
     center.x /= ar;
     tc.x /= ar;
 
-    float dist = distance(tc, center);
+    const float dist = distance(tc, center);
     if (dist < radius)
     {
-        float anim_mag = (animate == 1 ? magnitude * sin(radians(anim_rate * 0.05)) : magnitude);
-        float tension_radius = lerp(dist, radius, tension);
-        float percent = (dist)/tension_radius;
+        const float anim_mag = (animate == 1 ? magnitude * sin(radians(anim_rate * 0.05)) : magnitude);
+        const float tension_radius = lerp(dist, radius, tension);
+        const float percent = (dist) / tension_radius;
         if(anim_mag > 0)
-            tc = (tc-center) * lerp(1.0, smoothstep(0.0, radius/dist, percent), anim_mag * 0.75);
+            tc = (tc - center) * lerp(1.0, smoothstep(0.0, radius / dist, percent), anim_mag * 0.75);
         else
-            tc = (tc-center) * lerp(1.0, pow(percent, 1.0 + anim_mag * 0.75) * radius/dist, 1.0 - percent);
+            tc = (tc - center) * lerp(1.0, pow(max(percent, 0.0), 1.0 + anim_mag * 0.75) * radius / dist, 1.0 - percent);
 
-        tc += (2*center);
+        tc += (2 * center);
         tc.x *= ar;
 
         return tex2D(samplerColor, tc);
@@ -136,13 +144,17 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
 
 float4 ResultPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    float4 color = tex2D(result, texcoord);
-    float4 base = tex2D(samplerColor, texcoord);
+    const float4 color = tex2D(result, texcoord);
     
-    if(!additiveRender)
-        return color;
-
-    return additiveRender == 1 ? lerp(base, color, color.a) : lerp(color, base, color.a);
+    switch(additiveRender)
+    {
+        case 0:
+            return color;
+        case 1:
+            return lerp(tex2D(samplerColor, texcoord), color, color.a);
+        default:
+            return lerp(color, tex2D(samplerColor, texcoord), color.a);
+    }
 }
 
 // Technique

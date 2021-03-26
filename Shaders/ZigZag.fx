@@ -95,9 +95,16 @@ sampler result
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
-    texcoord.x = (id == 2) ? 2.0 : 0.0;
-    texcoord.y = (id == 1) ? 2.0 : 0.0;
-    
+    if (id == 2)
+        texcoord.x = 2.0;
+    else
+        texcoord.x = 0.0;
+
+    if (id == 1)
+        texcoord.y  = 2.0;
+    else
+        texcoord.y = 0.0;
+
     position = float4( texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
 }
 
@@ -109,7 +116,7 @@ void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out floa
 
 float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    float ar = 1. * BUFFER_HEIGHT/BUFFER_WIDTH;
+    const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     float2 center = float2(center_x, center_y);
     float2 tc = texcoord - center;
 
@@ -117,19 +124,19 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     tc.x /= ar;
 
 
-    float dist = distance(tc, center);
+    const float dist = distance(tc, center);
     if (dist < radius)
     {
-        float tension_radius = lerp(radius-dist, radius, tension);
-        float percent = (radius-dist)/tension_radius;
+        const float tension_radius = lerp(radius-dist, radius, tension);
+        const float percent = (radius-dist) / tension_radius;
         
-        float theta = percent * percent * (animate == 1 ? amplitude * sin(anim_rate * 0.0005) : amplitude) * sin(percent * percent / period * radians(angle) + (phase + (animate == 2 ? 0.00075 * anim_rate : 0)));
+        const float theta = percent * percent * (animate == 1 ? amplitude * sin(anim_rate * 0.0005) : amplitude) * sin(percent * percent / period * radians(angle) + (phase + (animate == 2 ? 0.00075 * anim_rate : 0)));
 
-        float s =  sin(theta);
-        float c = cos(theta);
-        tc = float2(dot(tc-center, float2(c,-s)), dot(tc-center, float2(s,c)));
+        const float s =  sin(theta);
+        const float c = cos(theta);
+        tc = float2(dot(tc - center, float2(c, -s)), dot(tc - center, float2(s, c)));
 
-        tc += (2.0*center);
+        tc += (2.0 * center);
         tc.x *= ar;
 
         return tex2D(samplerColor, tc);
@@ -141,13 +148,17 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
 float4 ResultPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    float4 color = tex2D(result, texcoord);
-    float4 base = tex2D(samplerColor, texcoord);
+    const float4 color = tex2D(result, texcoord);
     
-    if(!additiveRender)
-        return color;
-
-    return additiveRender == 1 ? lerp(base, color, color.a) : lerp(color, base, color.a);
+    switch(additiveRender)
+    {
+        case 0:
+            return color;
+        case 1:
+            return lerp(tex2D(samplerColor, texcoord), color, color.a);
+        default:
+            return lerp(color, tex2D(samplerColor, texcoord), color.a);
+    }
 }
 
 // Technique

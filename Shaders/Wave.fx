@@ -96,9 +96,16 @@ sampler result
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
-    texcoord.x = (id == 2) ? 2.0 : 0.0;
-    texcoord.y = (id == 1) ? 2.0 : 0.0;
-    
+    if (id == 2)
+        texcoord.x = 2.0;
+    else
+        texcoord.x = 0.0;
+
+    if (id == 1)
+        texcoord.y  = 2.0;
+    else
+        texcoord.y = 0.0;
+
     position = float4( texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
 
 }
@@ -111,26 +118,42 @@ void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out floa
 float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET 
 {
     
-    float ar = 1. * BUFFER_HEIGHT/BUFFER_WIDTH;
-    float2 center = float2(0.5f, 0.5f);
+    const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
+    const float2 center = float2(0.5 / ar, 0.5);
 
-    center.x /= ar;
     texcoord.x /= ar;
 
-    float theta = radians(animate == 3 ? (anim_rate * 0.01 % 360.0) : angle);
-    float s =  sin(theta);
-    float _s = sin(-theta);
-    float c =  cos(theta);
-    float _c = cos(-theta);
+    const float theta = radians(animate == 3 ? (anim_rate * 0.01 % 360.0) : angle);
+    const float s =  sin(theta);
+    const float _s = sin(-theta);
+    const float c =  cos(theta);
+    const float _c = cos(-theta);
 
-    texcoord = float2(dot(texcoord-center, float2(c,-s)), dot(texcoord-center, float2(s,c)));
+    texcoord = float2(dot(texcoord - center, float2(c, -s)), dot(texcoord - center, float2(s, c)));
     if(wave_type == 0)
-        texcoord.x += (animate == 1 ? sin(anim_rate * 0.001) * amplitude : amplitude) * sin(( texcoord.x * period * 10)  + (animate == 2 ?  anim_rate * 0.001 : phase));
+    {
+        if (animate == 1)
+        {
+            texcoord.x += (sin(anim_rate * 0.001) * amplitude)* sin((texcoord.x * period * 10) + phase);
+        }
+        else
+        {
+            texcoord.x += amplitude * sin((texcoord.x * period * 10)  + (anim_rate * 0.001));
+        }
+    }
     else
-        texcoord.x += (animate == 1 ? sin(anim_rate * 0.001) * amplitude : amplitude) * sin(( texcoord.y * period * 10)  + (animate == 2 ?  anim_rate * 0.001 : phase));
-    texcoord = float2(dot(texcoord, float2(_c,-_s)), dot(texcoord, float2(_s,_c)));
-    
-    texcoord += center;
+    {
+        if (animate == 1)
+        {
+            texcoord.x += (sin(anim_rate * 0.001) * amplitude)* sin(( texcoord.y * period * 10) + phase);
+        }
+        else
+        {
+            texcoord.x += amplitude * sin((texcoord.y * period * 10)  + (anim_rate * 0.001));
+        }
+    }
+    texcoord = float2(dot(texcoord, float2(_c, -_s)), dot(texcoord, float2(_s, _c))) + center;
+
     texcoord.x *= ar;
 
     return tex2D(samplerColor, texcoord);
@@ -140,13 +163,17 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
 float4 ResultPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    float4 color = tex2D(result, texcoord);
-    float4 base = tex2D(samplerColor, texcoord);
-    
-    if(!additiveRender)
-        return color;
+    const float4 color = tex2D(result, texcoord);
 
-    return additiveRender == 1 ? lerp(base, color, color.a) : lerp(color, base, color.a);
+    switch(additiveRender)
+    {
+        case 0:
+            return color;
+        case 1:
+            return lerp(tex2D(samplerColor, texcoord), color, color.a);
+        default:
+            return lerp(color, tex2D(samplerColor, texcoord), color.a);
+    }
 }
 
 
