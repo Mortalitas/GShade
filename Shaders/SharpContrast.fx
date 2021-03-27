@@ -342,15 +342,15 @@ namespace SharpContrast
 		
 	}
 
-	technique SharpContrast< ui_tooltip = "SharperContrast is a sharpen that takes into acount a wider screen area,\n"
-							  "than most sharpen shaders, while also attempting to avoid crossing contrast boundries, \n"
-							  "giving it a unique look.\n\n"
-							  "Part of Insane Shaders\n"
-							  "By: Lord of Lunacy\n\n"
-							  "SHARP_CONTRAST_SIZE: Changes the size of the filter being used.\n"
-							  "\t\t Set lower for more performance.\n"
-							  "SHARP_CONTRAST_FASTER_COMPILE: Set to 0 for a slight performance increase,\n"
-							  "\t\t at the expense of a longer compile time.";
+	technique SharpContrast< ui_tooltip =     "SharpContrast is a sharpen that takes into acount a wider screen area,\n"
+						  "than most sharpen shaders, while also attempting to avoid crossing contrast boundries, \n"
+						  "giving it a unique look.\n\n"
+						  "Part of Insane Shaders\n"
+						  "By: Lord of Lunacy\n\n"
+						  "SHARP_CONTRAST_SIZE: Changes the size of the filter being used.\n"
+						  "\t\t Set lower for more performance.\n"
+						  "SHARP_CONTRAST_FASTER_COMPILE: Set to 0 for a slight performance increase,\n"
+						  "\t\t at the expense of a longer compile time.";
 	>
 	{	
 		pass
