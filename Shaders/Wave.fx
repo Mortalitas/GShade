@@ -132,24 +132,32 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     texcoord = float2(dot(texcoord - center, float2(c, -s)), dot(texcoord - center, float2(s, c)));
     if(wave_type == 0)
     {
-        if (animate == 1)
+        switch(animate)
         {
-            texcoord.x += (sin(anim_rate * 0.001) * amplitude)* sin((texcoord.x * period * 10) + phase);
-        }
-        else
-        {
-            texcoord.x += amplitude * sin((texcoord.x * period * 10)  + (anim_rate * 0.001));
+            default:
+                texcoord.x += amplitude * sin((texcoord.x * period * 10) + phase);
+                break;
+            case 1:
+                texcoord.x += (sin(anim_rate * 0.001) * amplitude) * sin((texcoord.x * period * 10) + phase);
+                break;
+            case 2:
+                texcoord.x += amplitude * sin((texcoord.x * period * 10) + (anim_rate * 0.001));
+                break;
         }
     }
     else
     {
-        if (animate == 1)
+        switch(animate)
         {
-            texcoord.x += (sin(anim_rate * 0.001) * amplitude)* sin(( texcoord.y * period * 10) + phase);
-        }
-        else
-        {
-            texcoord.x += amplitude * sin((texcoord.y * period * 10)  + (anim_rate * 0.001));
+            default:
+                texcoord.x +=  amplitude * sin((texcoord.y * period * 10) + phase);
+                break;
+            case 1:
+                texcoord.x += (sin(anim_rate * 0.001) * amplitude) * sin((texcoord.y * period * 10) + phase);
+                break;
+            case 2:
+                texcoord.x += amplitude * sin((texcoord.y * period * 10) + (anim_rate * 0.001));
+                break;
         }
     }
     texcoord = float2(dot(texcoord, float2(_c, -_s)), dot(texcoord, float2(_s, _c))) + center;
