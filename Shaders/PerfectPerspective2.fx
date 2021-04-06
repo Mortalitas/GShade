@@ -1,5 +1,5 @@
 /**
-Panamorphic PS, version 4.3.1
+Pantomorphic PS, version 4.3.2
 (c) 2021 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -218,7 +218,7 @@ float glength(int G, float2 pos)
 }
 
 /**
-Panamorphic perspective model by Jakub Max Fober,
+Pantomorphic perspective model by Jakub Max Fober,
 Gnomonic to anamorphic-fisheye variant.
 This algorithm is a part of scientific paper:
 	arXiv: 2102.12682 [cs.GR] (2021)
@@ -230,7 +230,7 @@ Output data:
 	viewcoord -> rectilinear lookup view coordinates
 	vignette  -> vignetting mask in linear space
 */
-float panamorphic(float halfOmega, float2 k, inout float2 viewcoord)
+float pantomorphic(float halfOmega, float2 k, inout float2 viewcoord)
 {
 	// Bypass
 	if (halfOmega==0.0) return 1.0;
@@ -307,7 +307,7 @@ float BorderMaskPS(float2 borderCoord)
 }
 
 // Main perspective shader pass
-float3 PanamorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_Target
+float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_Target
 {
 	// Convert FOV to horizontal
 	float halfHorizontalFov = tan(radians(FovAngle*0.5));
@@ -368,7 +368,7 @@ float3 PanamorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_
 	}
 
 	// Perspective transform and create vignette
-	float vignetteMask = panamorphic(halfHorizontalFov, k, sphCoord);
+	float vignetteMask = pantomorphic(halfHorizontalFov, k, sphCoord);
 
 	// Aspect Ratio back to square
 	sphCoord.y *= BUFFER_ASPECT_RATIO;
@@ -404,10 +404,10 @@ float3 PanamorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_
  /// OUTPUT ///
 //////////////
 
-technique Panamorphic <
+technique Pantomorphic <
 	ui_tooltip =
 		"Adjust perspective for distortion-free picture\n"
-		"(anamorphic fish-eye and vignetting)\n"
+		"(anamorphic, fish-eye and vignetting)\n"
 		"\nManual:\n"
 		"Fist select proper FOV angle and type.\n"
 		"If FOV type is unknown, set preset to 'skating' and find a round object within the game.\n"
@@ -421,7 +421,7 @@ technique Panamorphic <
 	pass
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = PanamorphicPS;
+		PixelShader = PantomorphicPS;
 		SRGBWriteEnable = true;
 	}
 }
