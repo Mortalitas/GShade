@@ -1,5 +1,5 @@
 /**
-Perfect Perspective 2D PS, version 4.3.0
+Panamorphic PS, version 4.3.0
 (c) 2021 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
