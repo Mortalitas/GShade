@@ -1,5 +1,5 @@
 /**
-Panamorphic PS, version 4.3.0
+Panamorphic PS, version 4.3.1
 (c) 2021 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -219,18 +219,18 @@ float glength(int G, float2 pos)
 
 /**
 Panamorphic perspective model by Jakub Max Fober,
-Gnomonic to anamorphic variant.
+Gnomonic to anamorphic-fisheye variant.
 This algorithm is a part of scientific paper:
 	arXiv: 2102.12682 [cs.GR] (2021)
 Input data:
-	k (x, y)  -> distortion parameter (from -1, to 1).
+	k [x, y]  -> distortion parameter (from -1, to 1).
 	halfOmega -> Camera half Field of View in radians.
 	viewcoord -> view coordinates (centered at 0), with correct aspect ratio.
 Output data:
 	viewcoord -> rectilinear lookup view coordinates
 	vignette  -> vignetting mask in linear space
 */
-float universalPerspective2(float halfOmega, float2 k, inout float2 viewcoord)
+float panamorphic(float halfOmega, float2 k, inout float2 viewcoord)
 {
 	// Bypass
 	if (halfOmega==0.0) return 1.0;
@@ -261,7 +261,7 @@ float universalPerspective2(float halfOmega, float2 k, inout float2 viewcoord)
 	}
 
 	// Get phi interpolation weights
-	float2 philerp = viewcoord*viewcoord; philerp /= philerp.x+philerp.y; // cos^2 sin^2 of phi
+	float2 philerp = viewcoord*viewcoord; philerp /= philerp.x+philerp.y; // cos^2 sin^2 of phi angle
 
 	// Generate vignette
 	float vignetteMask; if (VignettingStyle!=0)
@@ -301,7 +301,7 @@ float BorderMaskPS(float2 borderCoord)
 		// Generate scaled coordinates
 		borderCoord = max(borderCoord+(BorderCorners-1.0), 0.0)/BorderCorners;
 		// Round corner
-		return aastep(glength(G_CONTINUITY_CORNER_ROUNDING, borderCoord)-1.0); // with G2/3 continuity
+		return aastep(glength(G_CONTINUITY_CORNER_ROUNDING, borderCoord)-1.0); // with G1 to 3 continuity
 	} // Just sharp corner, G0
 	else return aastep(glength(0, borderCoord)-1.0);
 }
@@ -368,7 +368,7 @@ float3 PanamorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_
 	}
 
 	// Perspective transform and create vignette
-	float vignetteMask = universalPerspective2(halfHorizontalFov, k, sphCoord);
+	float vignetteMask = panamorphic(halfHorizontalFov, k, sphCoord);
 
 	// Aspect Ratio back to square
 	sphCoord.y *= BUFFER_ASPECT_RATIO;
