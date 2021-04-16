@@ -22,11 +22,10 @@ https://github.com/Fubaxiusz/fubax-shaders
  /// MENU ///
 ////////////
 
-#include "ReShadeUI.fxh"
-
 // FIELD OF VIEW
 
-uniform int FovType < __UNIFORM_COMBO_INT1
+uniform int FovType <
+	ui_type = "combo";
 	ui_category = "Game field-of-view"; ui_category_closed = false;
 	ui_label = "FOV type";
 	ui_tooltip = "...in stereographic mode\n"
@@ -47,7 +46,8 @@ uniform int FovType < __UNIFORM_COMBO_INT1
 		"16:9\0";
 > = 0;
 
-uniform int FovAngle < __UNIFORM_SLIDER_INT1
+uniform int FovAngle <
+	ui_type = "slider";
 	ui_category = "Game field-of-view";
 	ui_label = "FOV angle";
 	ui_tooltip = "This setting should match your in-game FOV (in degrees)";
@@ -59,7 +59,8 @@ uniform int FovAngle < __UNIFORM_SLIDER_INT1
 
 // PERSPECTIVE
 
-uniform int SimplePresets < __UNIFORM_RADIO_INT1
+uniform int SimplePresets <
+	ui_type = "radio";
 	ui_category = "Presets"; ui_category_closed = false;
 	ui_label = "Gaming style";
 	ui_items =
@@ -71,13 +72,15 @@ uniform int SimplePresets < __UNIFORM_RADIO_INT1
 		"cinematic\0";
 > = 0;
 
-uniform bool Manual < __UNIFORM_INPUT_BOOL1
+uniform bool Manual <
+	ui_type = "input";
 	ui_category = "Manual"; ui_category_closed = true;
 	ui_label = "enable Manual";
 	ui_tooltip = "Change horizontal and vertical perspective manually.";
 > = false;
 
-uniform int PresetKx < __UNIFORM_RADIO_INT1
+uniform int PresetKx <
+	ui_type = "radio";
 	ui_category = "Manual";
 	ui_label = "Horizontal perspective";
 	ui_spacing = 1;
@@ -87,7 +90,8 @@ uniform int PresetKx < __UNIFORM_RADIO_INT1
 		"x  distance/size\0";
 > = 0;
 
-uniform int PresetKy < __UNIFORM_RADIO_INT1
+uniform int PresetKy <
+	ui_type = "radio";
 	ui_category = "Manual";
 	ui_label = "Vertical perspective";
 	ui_spacing = 2;
@@ -97,12 +101,14 @@ uniform int PresetKy < __UNIFORM_RADIO_INT1
 		"y  distance/size\0";
 > = 0;
 
-uniform bool Expert < __UNIFORM_INPUT_BOOL1
+uniform bool Expert <
+	ui_type = "input";
 	ui_category = "Expert"; ui_category_closed = true;
 	ui_label = "enable Expert";
 > = false;
 
-uniform float2 K < __UNIFORM_SLIDER_FLOAT2
+uniform float2 K <
+	ui_type = "slider";
 	ui_category = "Expert";
 	ui_label = "k 2D";
 	ui_spacing = 1;
@@ -122,14 +128,16 @@ uniform float2 K < __UNIFORM_SLIDER_FLOAT2
 
 // BORDER
 
-uniform float Zoom < __UNIFORM_DRAG_FLOAT1
+uniform float Zoom <
+	ui_type = "drag";
 	ui_category = "Border settings"; ui_category_closed = true;
 	ui_label = "Scale image";
 	ui_tooltip = "Adjust image scale and cropped area size";
 	ui_min = 0.8; ui_max = 1.5; ui_step = 0.001;
 > = 1;
 
-uniform float4 BorderColor < __UNIFORM_COLOR_FLOAT4
+uniform float4 BorderColor <
+	ui_type = "color";
 	ui_category = "Border settings";
 	ui_label = "Border color";
 	ui_spacing = 2;
@@ -137,20 +145,23 @@ uniform float4 BorderColor < __UNIFORM_COLOR_FLOAT4
 > = float4(0.027, 0.027, 0.027, 0.784);
 
 
-uniform float BorderCorners < __UNIFORM_SLIDER_FLOAT1
+uniform float BorderCorners <
+	ui_type = "slider";
 	ui_category = "Border settings";
 	ui_label = "Corner roundness";
 	ui_tooltip = "Represents corners curvature\n0 gives sharp corners";
 	ui_min = 0; ui_max = 1;
 > = 0.0862;
 
-uniform bool MirrorBorder < __UNIFORM_INPUT_BOOL1
+uniform bool MirrorBorder <
+	ui_type = "input";
 	ui_category = "Border settings";
 	ui_label = "Mirror background";
 	ui_tooltip = "Choose original or mirrored image at the border";
 > = true;
 
-uniform int VignettingStyle < __UNIFORM_RADIO_INT1
+uniform int VignettingStyle <
+	ui_type = "radio";
 	ui_category = "Border settings";
 	ui_label = "Vignetting style";
 	ui_spacing = 2;
