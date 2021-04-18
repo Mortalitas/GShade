@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // Version History
+// 18-apr-2020:		v1.2: Added blend factor for blur
 // 13-apr-2020:		v1.1: Added highlight control (I know it flips the hue in focus point mode, it's a bug that actually looks great), 
 //					      higher precision in buffers, better defaults
 // 10-apr-2020:		v1.0: First release
@@ -46,7 +47,7 @@ namespace DirectionalDepthBlur
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
 	
-	#define DIRECTIONAL_DEPTH_BLUR_VERSION "v1.0"
+	#define DIRECTIONAL_DEPTH_BLUR_VERSION "v1.2"
 
 	//////////////////////////////////////////////////
 	//
@@ -148,6 +149,14 @@ namespace DirectionalDepthBlur
 		ui_tooltip = "The gain for highlights in the strokes plane. The higher the more a highlight gets\nbrighter.";
 		ui_step = 0.01;
 	> = 0.500;	
+	uniform float BlendFactor <
+		ui_category = "Blur tweaking";
+		ui_label="Blend factor";
+		ui_type = "drag";
+		ui_min = 0.00; ui_max = 1.00;
+		ui_tooltip = "How strong the effect is applied to the original image. 1.0 is 100%, 0.0 is 0%.";
+		ui_step = 0.01;
+	> = 1.000;	
 #if CD_DEBUG
 	// ------------- DEBUG
 	uniform bool DBVal1 <
@@ -300,8 +309,8 @@ namespace DirectionalDepthBlur
 		}
 		fragment.rgb = average.rgb / (average.a + (average.a==0));
 		if (BlurType != 0)
-			fragment.rgb = lerp(fragment.rgb, lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distance(pixelInfo.texCoords, FocusPoint))), FocusPointBlendFactor);
-		fragment.rgb = PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), HighlightGain);
+			fragment.rgb = lerp(fragment, lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distanceToFocusPoint)), FocusPointBlendFactor);
+		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), HighlightGain), BlendFactor);
 		fragment.a = 1.0;
 	}
 
