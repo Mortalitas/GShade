@@ -1,46 +1,68 @@
 /*-----------------------------------------------------------------------------------------------------*/
-/* ZigZag Shader v3.0 - by Radegast Stravinsky of Ultros.                                               */
+/* ZigZag Shader v5.0 - by Radegast Stravinsky of Ultros.                                               */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
+#include "ReShade.fxh"
 
 uniform float radius <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 1.0;
+    ui_min = 0.0; 
+    ui_max = 1.0;
 > = 0.0;
 
 uniform float angle <
     ui_type = "slider";
-    ui_min = -999.0; ui_max = 999.0; ui_step = 1.0;
+    ui_min = -999.0; 
+    ui_max = 999.0; 
+    ui_step = 1.0;
 > = 180.0;
 
 uniform float period <
     ui_type = "slider";
-    ui_min = 0.1; ui_max = 10.0;
+    ui_min = 0.1; 
+    ui_max = 10.0;
 > = 0.5;
 
 uniform float amplitude <
     ui_type = "slider";
-    ui_min = -10.0; ui_max = 10.0;
+    ui_min = -10.0; 
+    ui_max = 10.0;
 > = 0.0;
 
-uniform float center_x <
+uniform float2 coordinates <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 1.0;
-> = 0.5;
+    ui_label="Coordinates";
+    ui_tooltip="The X and Y position of the center of the effect.";
+    ui_min = 0.0; 
+    ui_max = 1.0;
+> = float2(0.25, 0.25);
 
-uniform float center_y <
+uniform float aspect_ratio <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 1.0;
-> = 0.5;
+    ui_label="Aspect Ratio"; 
+    ui_min = -100.0; 
+    ui_max = 100.0;
+> = 0;
+
+uniform float min_depth <
+    ui_type = "slider";
+    ui_label="Minimum Depth";
+    ui_min=0.0;
+    ui_max=1.0;
+> = 0;
 
 uniform float tension <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 10.0; ui_step = 0.001;
+    ui_label = "Tension";
+    ui_min = 0; 
+    ui_max = 10;
+    ui_step = 0.001;
 > = 1.0;
 
 uniform float phase <
     ui_type = "slider";
-    ui_min = -5.0; ui_max = 5.0;
+    ui_min = -5.0; 
+    ui_max = 5.0;
 > = 0.0;
 
 uniform int animate <
@@ -54,11 +76,11 @@ uniform float anim_rate <
     source = "timer";
 >;
 
-uniform int additiveRender <
+uniform int render_type <
     ui_type = "combo";
-    ui_label = "Additively Render";
-    ui_items = "No\0Base -> Result\0Result -> Base\0";
-    ui_tooltip = "Additively render the effect.";
+    ui_label = "Render Type";
+    ui_items = "Normal\0Add\0Multiply\0Subtract\0Divide\0";
+    ui_tooltip = "Applies different rendering modes to the output.";
 > = 0;
 
 texture texColorBuffer : COLOR;
@@ -116,8 +138,12 @@ void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out floa
 
 float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
-    const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
-    float2 center = float2(center_x, center_y);
+    const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
+    const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+    float4 color;
+    const float4 base = tex2D(samplerColor, texcoord);
+    float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
+    float2 center = coordinates;
     float2 tc = texcoord - center;
 
     center.x /= ar;
@@ -125,7 +151,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
 
     const float dist = distance(tc, center);
-    if (dist < radius)
+    if (dist < radius && depth >= min_depth)
     {
         const float tension_radius = lerp(radius-dist, radius, tension);
         const float percent = (radius-dist) / tension_radius;
@@ -139,34 +165,38 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         tc += (2.0 * center);
         tc.x *= ar;
 
-        return tex2D(samplerColor, tc);
+        color = tex2D(samplerColor, tc);
     }
-
-    return tex2D(samplerColor, texcoord);
-   
-}
-
-float4 ResultPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
-{
-    const float4 color = tex2D(result, texcoord);
-    
-    switch(additiveRender)
+    else
     {
-        case 0:
-            return color;
-        case 1:
-            return lerp(tex2D(samplerColor, texcoord), color, color.a);
-        default:
-            return lerp(color, tex2D(samplerColor, texcoord), color.a);
+        color = tex2D(samplerColor, texcoord);
     }
+    
+    if(depth >= min_depth)
+        switch(render_type)
+        {
+            case 1:
+                color += base;
+                break;
+            case 2:
+                color *= base;
+                break;
+            case 3:
+                color -= base;
+                break;
+            case 4:
+                color /= base;
+                break;
+        }  
+    
+    return color;
 }
 
 // Technique
 technique ZigZag
 {
     pass p0
-    {
-       
+    { 
         VertexShader = FullScreenVS;
         PixelShader = DoNothingPS;
 
@@ -177,13 +207,5 @@ technique ZigZag
     {
         VertexShader = FullScreenVS;
         PixelShader = ZigZag;
-
-        RenderTarget = zzTarget;
-    }
-
-    pass p2 
-    {
-        VertexShader = FullScreenVS;
-        PixelShader = ResultPS;
     }
 };

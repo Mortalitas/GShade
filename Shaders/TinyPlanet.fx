@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------------------------------*/
-/* Tiny Planet Shader v1.0 - by Radegast Stravinsky of Ultros.                                         */
+/* Tiny Planet Shader v2.0 - by Radegast Stravinsky of Ultros.                                         */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
 
@@ -7,32 +7,38 @@
 
 uniform float center_x <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 360.0;
+    ui_min = 0.0; 
+    ui_max = 360.0;
 > = 0;
 
 uniform float center_y <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 360.0;
+    ui_min = 0.0; 
+    ui_max = 360.0;
 > =0;
 
 uniform float offset_x <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 1.0;
+    ui_min = 0.0; 
+    ui_max = 1.0;
 > = 0;
 
 uniform float offset_y <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 0.5;
+    ui_min = 0.0; 
+    ui_max = .5;
 > = 0;
 
 uniform float scale <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 10.0;
+    ui_min = 0.0; 
+    ui_max = 10.0;
 > = 10.0;
 
 uniform float z_rotation <
     ui_type = "slider";
-    ui_min = 0.0; ui_max = 360.0;
+    ui_min = 0.0; 
+    ui_max = 360.0;
 > = 0.5;
 
 float3x3 getrot(float3 r)
@@ -63,8 +69,6 @@ float3x3 getrot(float3 r)
 };
 
 texture texColorBuffer : COLOR;
-texture texDepthBuffer : DEPTH;
-
 
 texture TinyPlanetTarget
 {
@@ -93,13 +97,6 @@ sampler samplerColor
     MipLODBias = 0.0f;
 
     SRGBTexture = false;
-};
-
-sampler samplerDepth
-{
-    Texture = texDepthBuffer;
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
 };
 
 sampler samplerTarget
@@ -169,7 +166,7 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
 }
 
 // Technique
-technique TinyPlanet
+technique TinyPlanet<ui_label="Tiny Planet";>
 {
     pass p0
     {
