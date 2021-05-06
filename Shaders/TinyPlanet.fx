@@ -70,15 +70,6 @@ float3x3 getrot(float3 r)
 
 texture texColorBuffer : COLOR;
 
-texture TinyPlanetTarget
-{
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    MipLevels = LINEAR;
-    Format = RGBA8;
-};
-
-
 sampler samplerColor
 {
     Texture = texColorBuffer;
@@ -99,26 +90,6 @@ sampler samplerColor
     SRGBTexture = false;
 };
 
-sampler samplerTarget
-{
-    Texture = TinyPlanetTarget;
-    AddressU = WRAP;
-    AddressV = WRAP;
-    AddressW = WRAP;
-
-    MagFilter = LINEAR;
-    MinFilter = LINEAR;
-    MipFilter = LINEAR;
-
-    MinLOD = 0.0f;
-    MaxLOD = 1000.0f;
-
-    MipLODBias = 0.0f;
-
-    SRGBTexture = false;
-};
-
-
 // Vertex Shaders
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
@@ -136,11 +107,6 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 }
 
 // Pixel Shaders (in order of appearance in the technique)
-void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
-{
-    color = tex2D(samplerColor, texcoord);
-}
-
 float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
     const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
@@ -162,22 +128,13 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
     const float lon = atan2(sphere_pnt.y, sphere_pnt.x);
     const float lat = acos(sphere_pnt.z / r);
 
-    return tex2D(samplerTarget, float2(lon, lat) / rads);
+    return tex2D(samplerColor, float2(lon, lat) / rads);
 }
 
 // Technique
 technique TinyPlanet<ui_label="Tiny Planet";>
 {
     pass p0
-    {
-       
-        VertexShader = FullScreenVS;
-        PixelShader = DoNothingPS;
-
-        RenderTarget = TinyPlanetTarget;
-    }
-
-    pass p1
     {
         VertexShader = FullScreenVS;
         PixelShader = TinyPlanet;

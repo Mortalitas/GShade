@@ -65,13 +65,6 @@ uniform int render_type <
 
 texture texColorBuffer : COLOR;
 
-texture pbDistortTarget
-{
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA8;
-};
-
 sampler samplerColor
 {
     Texture = texColorBuffer;
@@ -92,11 +85,6 @@ sampler samplerColor
     SRGBTexture = false;
 };
 
-sampler result 
-{
-    Texture = pbDistortTarget;
-};
-
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
@@ -109,11 +97,6 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 }
 
 // Pixel Shaders (in order of appearance in the technique)
-void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
-{
-    color = tex2D(samplerColor, texcoord);
-}
-
 float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
@@ -138,7 +121,7 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
         if(anim_mag > 0)
             tc = (tc-center) * lerp(1.0, smoothstep(0.0, radius/dist, percent), anim_mag * 0.75);
         else
-            tc = (tc-center) * lerp(1.0, pow(percent, 1.0 + anim_mag * 0.75) * radius/dist, 1.0 - percent);
+            tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * radius/dist, 1.0 - percent);
 
         tc += (2*center);
         tc.x *= ar;
@@ -181,15 +164,6 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
 technique BulgePinch < ui_label="Bulge/Pinch";>
 {
     pass p0
-    {
-       
-        VertexShader = FullScreenVS;
-        PixelShader = DoNothingPS;
-
-        RenderTarget = pbDistortTarget;
-    }
-
-    pass p1
     {
         VertexShader = FullScreenVS;
         PixelShader = PBDistort;

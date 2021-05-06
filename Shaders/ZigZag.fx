@@ -86,14 +86,6 @@ uniform int render_type <
 texture texColorBuffer : COLOR;
 texture texDepthBuffer : DEPTH;
 
-texture zzTarget
-{
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA8;
-};
-
-
 sampler samplerColor
 {
     Texture = texColorBuffer;
@@ -102,16 +94,6 @@ sampler samplerColor
     AddressV = WRAP;
     AddressW = WRAP;
 
-};
-
-sampler samplerDepth
-{
-    Texture = texDepthBuffer;
-};
-
-sampler result
-{
-    Texture = zzTarget;
 };
 
 // Vertex Shader
@@ -131,11 +113,6 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 }
 
 // Pixel Shaders (in order of appearance in the technique)
-void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
-{
-    color = tex2D(samplerColor, texcoord);
-}
-
 float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
@@ -204,14 +181,6 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 technique ZigZag
 {
     pass p0
-    { 
-        VertexShader = FullScreenVS;
-        PixelShader = DoNothingPS;
-
-        RenderTarget = zzTarget;
-    }
-
-    pass p1
     {
         VertexShader = FullScreenVS;
         PixelShader = ZigZag;

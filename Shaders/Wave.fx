@@ -81,14 +81,6 @@ uniform int render_type <
 
 texture texColorBuffer : COLOR;
 
-texture waveTarget
-{
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    MipLevels = LINEAR;
-    Format = RGBA8;
-};
-
 sampler samplerColor
 {
     Texture = texColorBuffer;
@@ -124,11 +116,6 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 
     position = float4( texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
 
-}
-
-void DoNothingPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
-{
-    color = tex2D(samplerColor, texcoord);
 }
 
 float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET 
@@ -223,15 +210,6 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 technique Wave
 {
     pass p0
-    {
-       
-        VertexShader = FullScreenVS;
-        PixelShader = DoNothingPS;
-
-        RenderTarget = waveTarget;
-    }
-
-    pass p1
     {
         VertexShader = FullScreenVS;
         PixelShader = Wave;
