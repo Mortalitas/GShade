@@ -309,8 +309,8 @@ namespace DirectionalDepthBlur
 		}
 		fragment.rgb = average.rgb / (average.a + (average.a==0));
 		if (BlurType != 0)
-			fragment.rgb = lerp(fragment, lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distanceToFocusPoint)), FocusPointBlendFactor);
-		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), HighlightGain), BlendFactor);
+			fragment.rgb = lerp(fragment.rgb, lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distance(pixelInfo.texCoords, FocusPoint))), FocusPointBlendFactor);
+		fragment.rgb = lerp(tex2Dlod(samplerDownsampledBackBuffer, float4(pixelInfo.texCoordsScaled.xy, 0, 0)).rgb, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), HighlightGain), BlendFactor);
 		fragment.a = 1.0;
 	}
 
