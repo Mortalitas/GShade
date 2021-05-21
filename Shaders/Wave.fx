@@ -47,7 +47,7 @@ uniform float phase <
         ui_type = "slider";
     #endif
     ui_min = -5.0; ui_max = 5.0;
-    ui_tooltip = "The offset being applied to the distortion's waves. Smaller is longer.";
+    ui_tooltip = "The offset being applied to the distortion's waves.";
 > = 0.0;
 
 uniform float min_depth <
