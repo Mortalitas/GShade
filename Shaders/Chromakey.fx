@@ -88,6 +88,12 @@ uniform bool AntiAliased <
 	ui_category_closed = true;
 > = false;
 
+uniform bool InvertDepth <
+	ui_label = "Invert Depth";
+	ui_tooltip = "Inverts the depth buffer so that the color is applied to the foreground instead.";
+	ui_category = "Additional settings";
+> = false;
+
 
 	  /////////////////
 	 /// FUNCTIONS ///
@@ -96,7 +102,11 @@ uniform bool AntiAliased <
 float MaskAA(float2 texcoord)
 {
 	// Sample depth image
-	float Depth = ReShade::GetLinearizedDepth(texcoord);
+	float Depth;
+	if (InvertDepth)
+		Depth = 1 - ReShade::GetLinearizedDepth(texcoord);
+	else
+		Depth = ReShade::GetLinearizedDepth(texcoord);
 
 	// Convert to radial depth
 	float2 Size;

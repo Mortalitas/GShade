@@ -154,6 +154,11 @@ uniform float Stage2_Rotate <
     ui_step = 0.01;
 > = 0;
 
+uniform bool Stage2_InvertDepth <
+	ui_label = "Invert Depth";
+	ui_tooltip = "Inverts the depth buffer so that the texture is applied to the foreground instead.";
+> = false;
+
 texture Stage2_texture <source=Stage2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 
 sampler Stage2_sampler { Texture = Stage2_texture; };
@@ -161,7 +166,7 @@ sampler Stage2_sampler { Texture = Stage2_texture; };
 void PS_StageDepth2(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, out float4 passColor : SV_Target)
 {
     passColor = tex2D(ReShade::BackBuffer, texCoord);
-    const float depth = 1 - ReShade::GetLinearizedDepth(texCoord).r;
+    const float depth = Stage2_InvertDepth ? ReShade::GetLinearizedDepth(texCoord).r : 1 - ReShade::GetLinearizedDepth(texCoord).r;
 
     if (depth < Stage2_depth)
     {
