@@ -47,8 +47,8 @@ float3 GaussianBlurH(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 4; ++i)
 			{
-				color += tex2D(HalationSamp, texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
-				color += tex2D(HalationSamp, texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 1:
@@ -58,8 +58,8 @@ float3 GaussianBlurH(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 6; ++i)
 			{
-				color += tex2D(HalationSamp, texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
-				color += tex2D(HalationSamp, texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 2:
@@ -69,8 +69,8 @@ float3 GaussianBlurH(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			color *= weight[0];
 			for(int i = 1; i < 11; ++i)
 			{
-				color += tex2D(HalationSamp, texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
-				color += tex2D(HalationSamp, texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 3:
@@ -81,8 +81,8 @@ float3 GaussianBlurH(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 15; ++i)
 			{
-				color += tex2D(HalationSamp, texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
-				color += tex2D(HalationSamp, texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 4:
@@ -92,8 +92,8 @@ float3 GaussianBlurH(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 18; ++i)
 			{
-				color += tex2D(HalationSamp, texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
-				color += tex2D(HalationSamp, texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord + float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(HalationSamp, float4(texcoord - float2(offset[i] * ReShade::PixelSize.x, 0.0) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 	}
@@ -116,8 +116,8 @@ float3 GaussianBlurV(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 4; ++i)
 			{
-				color += tex2D(GaussianBlurHalSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
-				color += tex2D(GaussianBlurHalSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 1:
@@ -127,8 +127,8 @@ float3 GaussianBlurV(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 6; ++i)
 			{
-				color += tex2D(GaussianBlurHalSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
-				color += tex2D(GaussianBlurHalSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 2:
@@ -138,8 +138,8 @@ float3 GaussianBlurV(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 11; ++i)
 			{
-				color += tex2D(GaussianBlurHalSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
-				color += tex2D(GaussianBlurHalSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 3:
@@ -149,8 +149,8 @@ float3 GaussianBlurV(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 15; ++i)
 			{
-				color += tex2D(GaussianBlurHalSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
-				color += tex2D(GaussianBlurHalSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 		case 4:
@@ -160,8 +160,8 @@ float3 GaussianBlurV(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			[unroll]
 			for(int i = 1; i < 18; ++i)
 			{
-				color += tex2D(GaussianBlurHalSampler, texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
-				color += tex2D(GaussianBlurHalSampler, texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord + float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
+				color += tex2Dlod(GaussianBlurHalSampler, float4(texcoord - float2(0.0, offset[i] * ReShade::PixelSize.y) * halationOffset, 0.0, 0.0)).rgb * weight[i];
 			}
 			break;
 	}
