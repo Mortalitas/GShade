@@ -150,9 +150,9 @@ sampler	SamplerLUT 	{ Texture = texLUT; };
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
+void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float3 res : SV_Target0)
 {
-    res = tex2D(ReShade::BackBuffer, texcoord.xy);
+    res = tex2D(ReShade::BackBuffer, texcoord.xy).xyz;
 
     float2 texelsize = 1.0 / _SOURCE_LUT_SIZE;
     texelsize.x /= _SOURCE_LUT_AMOUNT;
@@ -161,11 +161,10 @@ void PS_LUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
     const float lerpfact = frac(lutcoord.z);
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
 
-    const float3 lutcolor = lerp(tex2D(SamplerLUT, lutcoord.xy).xyz, tex2D(SamplerLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+    const float3 lutcolor = lerp(tex2D(SamplerLUT, lutcoord.xy).xyz, tex2D(SamplerLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz, lerpfact);
 
-    res.xyz = lerp(normalize(res.xyz), normalize(lutcolor.xyz), fLUT_AmountChroma) * 
-              lerp(length(res.xyz),    length(lutcolor.xyz),    fLUT_AmountLuma);
-    res.w = 1.0;
+    res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma) * 
+              lerp(length(res),    length(lutcolor),    fLUT_AmountLuma);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

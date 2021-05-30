@@ -469,7 +469,7 @@ sampler SamplerMultiLUT { Texture = texMultiLUT; };
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-float4 apply(in const float4 color, in const int tex, in const float lut)
+float3 apply(in const float3 color, in const int tex, in const float lut)
 {
     const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
     float3 lutcoord = float3((color.xy * fLUT_TileSizeXY - color.xy + 0.5) * texelsize, (color.z  * fLUT_TileSizeXY - color.z));
@@ -478,11 +478,11 @@ float4 apply(in const float4 color, in const int tex, in const float lut)
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT + lutcoord.y / _SOURCE_MULTILUT_AMOUNT;
 
-    return float4(lerp(tex2D(SamplerMultiLUT, lutcoord.xy), tex2D(SamplerMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact).rgb, color.a);
+    return lerp(tex2D(SamplerMultiLUT, lutcoord.xy).xyz, tex2D(SamplerMultiLUT, float2(lutcoord.x + texelsize.y, lutcoord.y)).xyz, lerpfact);
 }
 
 #if MultiLUTTexture2
-float4 apply2(in const float4 color, in const int tex, in const float lut)
+float3 apply2(in const float3 color, in const int tex, in const float lut)
 {
     const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
     float3 lutcoord = float3((color.xy * fLUT_TileSizeXY - color.xy + 0.5) * texelsize, (color.z * fLUT_TileSizeXY - color.z));
@@ -491,12 +491,12 @@ float4 apply2(in const float4 color, in const int tex, in const float lut)
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT2 + lutcoord.y / _SOURCE_MULTILUT_AMOUNT2;
 
-    return float4(lerp(tex2D(SamplerMultiLUT2, lutcoord.xy), tex2D(SamplerMultiLUT2, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact).rgb, color.a);
+    return lerp(tex2D(SamplerMultiLUT2, lutcoord.xy).xyz, tex2D(SamplerMultiLUT2, float2(lutcoord.x + texelsize.y, lutcoord.y)).xyz, lerpfact);
 }
 #endif
 
 #if MultiLUTTexture3
-float4 apply3(in const float4 color, in const int tex, in const float lut)
+float3 apply3(in const float3 color, in const int tex, in const float lut)
 {
     const float2 texelsize = 1.0 / float2(fLUT_TileSizeXY * fLUT_TileAmount, fLUT_TileSizeXY);
     float3 lutcoord = float3((color.xy * fLUT_TileSizeXY - color.xy + 0.5) * texelsize, (color.z * fLUT_TileSizeXY - color.z));
@@ -505,22 +505,22 @@ float4 apply3(in const float4 color, in const int tex, in const float lut)
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT3 + lutcoord.y / _SOURCE_MULTILUT_AMOUNT3;
 
-    return float4(lerp(tex2D(SamplerMultiLUT3, lutcoord.xy), tex2D(SamplerMultiLUT3, float2(lutcoord.x + texelsize.y, lutcoord.y)), lerpfact).rgb, color.a);
+    return lerp(tex2D(SamplerMultiLUT3, lutcoord.xy).xyz, tex2D(SamplerMultiLUT3, float2(lutcoord.x + texelsize.y, lutcoord.y)).xyz, lerpfact).xyz);
 }
 #endif
 
-void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target)
+void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float3 res : SV_Target)
 {
-    const float4 color = tex2D(ReShade::BackBuffer, texcoord);
+    const float3 color = tex2D(ReShade::BackBuffer, texcoord).xyz;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  Pass 1
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #if !MultiLUTTexture2 && !MultiLUTTexture3
-    const float4 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
+    const float3 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
 #else
-    float4 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
+    float3 lutcolor = lerp(color, apply(color, fLUT_MultiLUTSelector, fLUT_LutSelector), fLUT_Intensity);
 #endif
 
     res = lerp(normalize(color), normalize(lutcolor), fLUT_AmountChroma)
