@@ -123,7 +123,12 @@ uniform int Diffusion_1_Radius <
 	ui_min = 5;
 	ui_max = 20;
 	ui_tooltip = "Set the radius of the first diffusion layer.";
+	ui_bind = "PANDAFX_DIFFUSION_1_RADIUS";
 > = 8;
+
+#ifndef PANDAFX_DIFFUSION_1_RADIUS
+	#define PANDAFX_DIFFUSION_1_RADIUS 8
+#endif
 
 uniform float Diffusion_1_Gamma <
     ui_label = "Diffusion 1 Gamma";
@@ -163,7 +168,12 @@ uniform int Diffusion_2_Radius <
 	ui_min = 5;
 	ui_max = 20;
 	ui_tooltip = "Set the radius of the second diffusion layer.";
+	ui_bind = "PANDAFX_DIFFUSION_2_RADIUS";
 > = 8;
+
+#ifndef PANDAFX_DIFFUSION_2_RADIUS
+	#define PANDAFX_DIFFUSION_2_RADIUS 8
+#endif
 
 uniform float Diffusion_2_Gamma <
     ui_label = "Diffusion 2 Gamma";
@@ -203,7 +213,12 @@ uniform int Diffusion_3_Radius <
 	ui_min = 5;
 	ui_max = 20;
 	ui_tooltip = "Set the radius of the third diffusion layer.";
+	ui_bind = "PANDAFX_DIFFUSION_3_RADIUS";
 > = 8;
+
+#ifndef PANDAFX_DIFFUSION_3_RADIUS
+	#define PANDAFX_DIFFUSION_3_RADIUS 8
+#endif
 
 uniform float Diffusion_3_Gamma <
     ui_label = "Diffusion 3 Gamma";
@@ -270,7 +285,7 @@ float AdjustableSigmoidCurve (float value, float amount) {
         
     else
     { 	
-    	curve = 1.0 - pow(abs(1.0 - value), amount) * pow(2.0, amount) * 0.5; 
+    	curve = 1.0 - pow(max(0.0, 1.0 - value), amount) * pow(2.0, amount) * 0.5; 
     }
 
     return curve;
@@ -352,9 +367,9 @@ void PS_PrePass (float4 pos : SV_Position,
 {
 
 	float4 A = tex2D(ReShade::BackBuffer, uv);
-		   A.r = pow(abs(A.r), Gamma_R);
-		   A.g = pow(abs(A.g), Gamma_G);
-		   A.b = pow(abs(A.b), Gamma_B);
+		   A.r = pow(max(0.0, A.r), Gamma_R);
+		   A.g = pow(max(0.0, A.g), Gamma_G);
+		   A.b = pow(max(0.0, A.b), Gamma_B);
 		   A.r = AdjustableSigmoidCurve(A.r, Contrast_R);
 		   A.g = AdjustableSigmoidCurve(A.g, Contrast_G);
 		   A.b = AdjustableSigmoidCurve(A.b, Contrast_B);
@@ -463,9 +478,9 @@ float4 PandaComposition (float4 vpos : SV_Position,
 				blurLayerMedRes *= Diffusion_2_Amount;
 				blurLayerLoRes *= Diffusion_3_Amount;
 			
-				blurLayer = pow(abs(blurLayer), Diffusion_1_Gamma);
-				blurLayerMedRes = pow(abs(blurLayerMedRes), Diffusion_2_Gamma);
-				blurLayerLoRes = pow(abs(blurLayerLoRes), Diffusion_3_Gamma);
+				blurLayer = pow(max(0.0, blurLayer), Diffusion_1_Gamma);
+				blurLayerMedRes = pow(max(0.0, blurLayerMedRes), Diffusion_2_Gamma);
+				blurLayerLoRes = pow(max(0.0, blurLayerLoRes), Diffusion_3_Gamma);
 
 			if (Enable_Static_Dither)
 			{
@@ -514,7 +529,7 @@ float4 PandaComposition (float4 vpos : SV_Position,
 				C = 2 * Ag * B;
 			}
 
-			C = pow(abs(C), 0.6);
+			C = pow(max(0.0, C), 0.6);
 			A = lerp(A, C, Bleach_Bypass_Amount);
 		}
 
@@ -523,15 +538,15 @@ float4 PandaComposition (float4 vpos : SV_Position,
 
 		if (Enable_Dither)
 		{
-			float4 rndSample = tex2D(NoiseSampler, uv);
-			float uvRnd = Randomize(rndSample.xy * framecount);
-			float uvRnd2 = Randomize(-rndSample.xy * framecount);
+			float rndSample = tex2D(NoiseSampler, uv).x;
+			float uvRnd = Randomize(rndSample * framecount);
+			float uvRnd2 = Randomize(-rndSample * framecount);
 
-			float4 Nt = tex2D(NoiseSampler, uv * uvRnd);
-			float4 Nt2 = tex2D(NoiseSampler, uv * uvRnd2);
-			float4 Nt3 = tex2D(NoiseSampler, -uv * uvRnd);
+			float Nt = tex2D(NoiseSampler, uv * uvRnd).x;
+			float Nt2 = tex2D(NoiseSampler, uv * uvRnd2).x;
+			float Nt3 = tex2D(NoiseSampler, -uv * uvRnd).x;
 
-			float3 noise = float3(Nt.x, Nt2.x, Nt3.x);
+			float3 noise = float3(Nt, Nt2, Nt3);
 
 			float4 B = A;
 
