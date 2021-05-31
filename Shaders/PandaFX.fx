@@ -597,11 +597,11 @@ float4 PandaComposition (float4 vpos : SV_Position,
 
 		const float3 noise = float3(tex2D(NoiseSampler, uv * uvRnd).x, tex2D(NoiseSampler, uv * uvRnd2).x, tex2D(NoiseSampler, -uv * uvRnd).x);
 
-		float4 B = A;
+		float4 Bb = A;
 
-		B.r = SoftLightBlend(noise.r, A.r);
-		B.g = SoftLightBlend(noise.g, A.g);
-		B.b = SoftLightBlend(noise.b, A.b);
+		Bb.r = SoftLightBlend(noise.r, A.r);
+		Bb.g = SoftLightBlend(noise.g, A.g);
+		Bb.b = SoftLightBlend(noise.b, A.b);
 
 		A = lerp(A, B, Dither_Amount);
 #endif
