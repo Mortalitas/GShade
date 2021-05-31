@@ -603,7 +603,7 @@ float4 PandaComposition (float4 vpos : SV_Position,
 		Bb.g = SoftLightBlend(noise.g, A.g);
 		Bb.b = SoftLightBlend(noise.b, A.b);
 
-		A = lerp(A, B, Dither_Amount);
+		A = lerp(A, Bb, Dither_Amount);
 #endif
 
 	// ------ Compress to TV levels if needed ------
