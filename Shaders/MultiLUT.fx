@@ -128,7 +128,7 @@ uniform int fLUT_LutSelector <
 #elif MultiLUTTexture_Source == 10 // Yaes
     ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
 #elif MultiLUTTexture_Source == 11 // Ipsusu
-    ui_items = "Neutral\0Ipsusu\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0";
+    ui_items = "Neutral\0Ipsusu\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0IpsusuAmber\0";
 #elif MultiLUTTexture_Source == 12 // Nightingale
     ui_items = "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0";
 #else
@@ -212,7 +212,7 @@ uniform int fLUT_LutSelector2 <
 #elif MultiLUTTexture2_Source == 10 // Yaes
     ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
 #elif MultiLUTTexture2_Source == 11 // Ipsusu
-    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+    ui_items = "Neutral\0Ipsusu\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0IpsusuAmber\0";
 #elif MultiLUTTexture_Source == 12 // Nightingale
     ui_items = "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0";
 #else
@@ -297,7 +297,7 @@ uniform int fLUT_LutSelector3 <
 #elif MultiLUTTexture3_Source == 10 // Yaes
     ui_items = "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW";
 #elif MultiLUTTexture3_Source == 11 // Ipsusu
-    ui_items = "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0";
+    ui_items = "Neutral\0Ipsusu\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0IpsusuAmber\0";
 #elif MultiLUTTexture_Source == 12 // Nightingale
     ui_items = "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0";
 #else
