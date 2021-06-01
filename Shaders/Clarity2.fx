@@ -338,7 +338,7 @@ ClarityFloat blur = tex2D(Clarity2Sampler, texcoord/ClarityOffsetTwo).CF;
 			//sharp = lerp(2*luma*sharp, 1.0 - 2*(1.0-luma)*(1.0-sharp), step(0.50,luma));
 			#if ClarityRGBMode
 			const float3 A = (2*orig.rgb*sharp);
-			const const float3 B = (1.0 - 2*(1.0-orig.rgb)*(1.0-sharp));
+			const float3 B = (1.0 - 2*(1.0-orig.rgb)*(1.0-sharp));
 			const float3 C = step(0.5,orig.rgb);
 			sharp = lerp(A,B,C);
 			#else
