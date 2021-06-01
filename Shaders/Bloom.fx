@@ -335,7 +335,7 @@ float3 GetBrightPass(float2 coords)
 	if (checkdepth < 0.99999)
 		return float3(0.0, 0.0, 0.0);
 #endif
-	const float3 c = tex2D(ReShade::BackBuffer, coords).rgb;
+	const float3 c = tex2Dlod(ReShade::BackBuffer, float4(coords, 0.0, 0.0)).rgb;
 
 	return lerp(0.0, c, smoothstep(0.0f, 0.5, dot(max(c - fFlareLuminance.xxx, 0.0), 1.0)));
 }
@@ -606,7 +606,7 @@ void LensFlarePass0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out f
 		// !!! also we're calculating .w, so just pull .rgb
 		const float sampledepth = tex2D(ReShade::DepthBuffer, texcoord2).x;
 		float4 sample2;
-		sample2.rgb = tex2D(ReShade::BackBuffer, texcoord2).rgb;
+		sample2.rgb = tex2Dlod(ReShade::BackBuffer, float4(texcoord2, 0.0, 0.0)).rgb;
 		sample2.w = saturate(dot(sample2.xyz, 0.3333) - fGodrayThreshold);
 
 		// !!! mul'ing sample2.r by 1, skip
