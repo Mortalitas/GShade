@@ -19,6 +19,9 @@
 	#define GI_VARIABLE_MIPLEVELS 		0	//[0 or 1] 0 - Manual miplevel set in the shader config. 1 - Automatic miplevels.
 #endif
 #include "ReShade.fxh"
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 
 //===================================================================================================================
 uniform float GI_DIFFUSE_RADIUS <
@@ -239,9 +242,11 @@ float4 PS_GICombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : COL
 	else if (GI_DIFFUSE_DEBUG == 2)
 		res.rgb = diffuse.w;
 
-
-	res.w = 1.0;
-	return res;
+#if GSHADE_DITHER
+	return float4(res.rgb + TriDither(res.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
+	return float4(res.rgb, 1.0);
+#endif
 }
 //===================================================================================================================
 technique Pirate_GI

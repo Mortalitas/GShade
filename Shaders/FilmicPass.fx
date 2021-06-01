@@ -78,6 +78,10 @@ uniform float3 LumCoeff <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 B = lerp(0.01, pow(saturate(tex2D(ReShade::BackBuffer, texcoord).rgb), Linearization), Contrast);
@@ -136,7 +140,12 @@ float3 FilmPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
 	else
 		Cn = (2.0 * N - 1.0) * (sqrt(F) - F) + F;
 
+#if GSHADE_DITHER
+	Cn = lerp(B, pow(max(Cn,0), 1.0 / Linearization), Strength);
+	return Cn + TriDither(Cn, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(B, pow(max(Cn,0), 1.0 / Linearization), Strength);
+#endif
 }
 
 technique FilmicPass

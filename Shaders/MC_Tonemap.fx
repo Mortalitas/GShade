@@ -76,6 +76,10 @@ uniform int LumaCoefs <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 MadCakeToneMapPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 luma;	
@@ -121,7 +125,11 @@ float3 MadCakeToneMapPass(float4 vpos : SV_Position, float2 texcoord : TexCoord)
 		color.rgb = pow(max(color.rgb, 0.0), 2.2);
 	}
 
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 technique MC_ToneMap

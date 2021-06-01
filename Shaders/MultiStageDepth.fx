@@ -46,6 +46,10 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define MULTISTAGEDEPTH_TEX_FORMAT RGBA8
 
 uniform int Tex_Select <
@@ -369,6 +373,10 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
                 passColor = lerp(backColor.rgb, Luminosity(backColor.rgb, passColor.rgb), passColor.a * Stage_Opacity);
                 break;
         }
+
+#if GSHADE_DITHER
+        passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
     }
 }
 

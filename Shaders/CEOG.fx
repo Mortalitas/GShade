@@ -2,6 +2,7 @@
 ///***CEOG***//
 //-----------////
 // Created by 2b3, ported to ReShade 3 by Insomnia, and lightly optimized by Marot Satil.
+
 //Preprocessor
 #define ceog_min 0.00 // [0.00:1.00] //-min value
 #define ceog_max 1.00 // [0.00:1.00] //-max value
@@ -42,6 +43,10 @@ uniform float Saturation <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 CEOGPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -73,7 +78,11 @@ float3 CEOGPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_
 		}
 	}
 	
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 

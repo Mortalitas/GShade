@@ -93,6 +93,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 namespace CinematicDOF
 {
 	#define CINEMATIC_DOF_VERSION "v1.1.18"
@@ -1136,6 +1140,10 @@ namespace CinematicDOF
 				fragment = lerp(fragment, FocusCrosshairColor, FocusCrosshairColor.w * saturate(exp(-BUFFER_HEIGHT * length(focusInfo.texcoord - float2(focusInfo.texcoord.x, focusPointCoords.y)))));
 			}
 		}
+
+#if GSHADE_DITHER
+		fragment.rgb = fragment.rgb + TriDither(fragment.rgb, focusInfo.texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 	}
 
 	//////////////////////////////////////////////////

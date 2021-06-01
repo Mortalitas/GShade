@@ -75,6 +75,10 @@ uniform float coef <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 
 #define BLEND_NONE                      0
 #define BLEND_NORMAL                    1
@@ -229,14 +233,24 @@ sampler UpscaleSampler
 float3 PS_Downscale( float4 pos : SV_Position,
                      float2 uv  : TexCoord0 ) : COLOR
 { 
+#if GSHADE_DITHER
+  const float3 color = tex2D(ReShade::BackBuffer, uv).rgb;
+  return color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH);
+#else
   return tex2D(ReShade::BackBuffer, uv).rgb;
+#endif
 }
 
 
 float3 PS_Final( float4 pos : SV_Position,
                  float2 uv  : TexCoord ) : COLOR
 { 
+#if GSHADE_DITHER
+  const float3 color = tex2D(UpscaleSampler, uv).rgb;
+  return color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH);
+#else
   return tex2D(UpscaleSampler, uv).rgb;
+#endif
 }
 
 

@@ -244,6 +244,10 @@ sampler SamplerLensFlare2 { Texture = texLensFlare2; };
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // modified - Craig - Jul 5th, 2020
 // !!! re-wrote and re-organized most of it
 // !!! see comments in code below
@@ -754,6 +758,9 @@ void LightingCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out 
 
 		color.rgb += lensflareMask * 0.25 * lensflareSample;
 	}
+#if GSHADE_DITHER
+		color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique BloomAndLensFlares

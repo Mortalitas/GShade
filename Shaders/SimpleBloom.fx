@@ -52,6 +52,10 @@ sampler SimpleBloomSampler { Texture = SimpleBloomTarget; };
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 void BloomHorizontalPass(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD,
 out float3 Target : SV_Target)
 {
@@ -135,6 +139,10 @@ out float3 Image : SV_Target)
 
 	if (Debug)
 		Image = Target;
+
+#if GSHADE_DITHER
+	Image += TriDither(Image, UvCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 	  //////////////

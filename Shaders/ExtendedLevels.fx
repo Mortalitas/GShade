@@ -55,6 +55,11 @@
 
 
 #include "ReShade.fxh"
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 static const float PI = 3.141592653589793238462643383279f;
 
 
@@ -317,8 +322,12 @@ float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 
 		OutputColor = ClippedColor;
 	}
-	  
+
+#if GSHADE_DITHER
+	return OutputColor + TriDither(OutputColor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return OutputColor;
+#endif
 }
 
 technique ExtendedLevels

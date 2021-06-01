@@ -8,6 +8,10 @@
 #include "FXShadersDithering.fxh"
 #include "FXShadersTonemap.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //#endregion
 
 //#region Macros
@@ -1187,7 +1191,11 @@ float4 BlendPS(BlendPassParams p) : SV_TARGET
 	if (!MagicMode)
 		color.rgb = tonemap(color.rgb);
 
+#if GSHADE_DITHER
+	return float4(color.rgb + TriDither(color.rgb, p.uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 	return color;
+#endif
 }
 
 //#endregion

@@ -37,6 +37,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define UI_CATEGORY_POSTERIZATION "Posterization"
 #define UI_CATEGORY_COLOR "Color"
 #define UI_CATEGORY_EFFECT "Effect"
@@ -195,7 +199,11 @@ float3 ColorfulPoster_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
     /*******************************************************
         Set overall strength and return
     *******************************************************/
-    return result;
+#if GSHADE_DITHER
+	return result + TriDither(result, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
+	return result;
+#endif
 }
 
 technique ColorfulPoster

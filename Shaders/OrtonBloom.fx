@@ -37,6 +37,10 @@ uniform float BlendStrength <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture OrtonGaussianBlurTex { Width = BUFFER_WIDTH / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Height = BUFFER_HEIGHT / (1 + ORTON_BLOOM_DOWNSCALE_BLUR_RES); Format = RGBA8; };
 sampler OrtonGaussianBlurSampler { Texture = OrtonGaussianBlurTex; };
 
@@ -110,7 +114,12 @@ float3 LevelsAndBlend(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : S
 	const float3 original = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	const float3 color = (tex2D(OrtonGaussianBlurSampler2, texcoord).rgb * white_point_float - (black_point_float * white_point_float)) * mid_point_float;
 
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(max(0.0, max(original, lerp(original, (1 - (1 - saturate(color)) * (1 - saturate(color))), BlendStrength))));
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(max(0.0, max(original, lerp(original, (1 - (1 - saturate(color)) * (1 - saturate(color))), BlendStrength))));
+#endif
 }
 
 technique OrtonBloom

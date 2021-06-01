@@ -21,6 +21,10 @@ uniform float Strength <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 TechnicolorPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float3 cyanfilter = float3(0.0, 1.30, 1.0);
@@ -39,7 +43,12 @@ float3 TechnicolorPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 	const float3 output_g = dot(greenfilter, negative_mul_g).xxx + magentafilter;
 	const float3 output_b = dot(magentafilter2, negative_mul_b).xxx + yellowfilter;
 
+#if GSHADE_DITHER
+	const float3 outcolor = lerp(tcol, output_r * output_g * output_b, Strength);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(tcol, output_r * output_g * output_b, Strength);
+#endif
 }
 
 technique Technicolor

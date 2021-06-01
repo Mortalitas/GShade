@@ -27,6 +27,10 @@ uniform float CrossAmount <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 CrossPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
   const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -45,8 +49,13 @@ float3 CrossPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV
 	image2.r = image1.r * CrossMatrix[0].x + CrossMatrix[0].y;
 	image2.g = image1.g * CrossMatrix[1].x + CrossMatrix[1].y;
 	image2.b = image1.b * CrossMatrix[2].x + CrossMatrix[2].y;
-	
+
+#if GSHADE_DITHER
+	const float3 outcolor = lerp(image1, image2, CrossAmount);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(image1, image2, CrossAmount);
+#endif
 }
 
 

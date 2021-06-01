@@ -3,6 +3,9 @@
 #define DEPTH_TEXTURE_QUALITY		0.5	//[>0.0] 1.0 - Screen resolution. Lowering this might ruin the AO precision. Go from 1.0 to AO texture quality.
 #define DEPTH_AO_MIPLEVELS		5	//[>1] Mip levels to increase speed at the cost of quality
 #include "ReShade.fxh"
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 #undef PixelSize
 #define PixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 //DOF Settings
@@ -404,7 +407,11 @@ float4 PS_DOFCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : CO
 	float4 res = tex2D(SamplerDOF1, texcoord);
 	const float bluramount = abs(tex2D(SamplerFocus, texcoord).r);
 	if (DOF_DEBUG) res.rgb = abs(tex2D(SamplerFocus, texcoord).r);
-	return res;
+		#if GSHADE_DITHER
+		return float4(res.rgb + TriDither(res.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), res.a);
+		#else
+		return res;
+		#endif
 	#else
 	const float bluramount = tex2D(SamplerFocus, texcoord).r;
 	const float4 orig = tex2D(ReShade::BackBuffer, texcoord);
@@ -416,7 +423,11 @@ float4 PS_DOFCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : CO
 		res = lerp(orig, tex2D(SamplerDOF1, texcoord), smoothstep(0.0, DOF_BLEND, bluramount));
 	}
 	if (DOF_DEBUG) res = tex2D(SamplerFocus, texcoord);
-	return res;
+		#if GSHADE_DITHER
+		return float4(res.rgb + TriDither(res.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), res.a);
+		#else
+		return res;
+		#endif
 	#endif
 }
 //===================================================================================================================

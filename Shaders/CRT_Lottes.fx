@@ -8,6 +8,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //Macros///////////////////////////////////////////////////////////////////////////////
 
 #ifndef CRT_LOTTES_TONE
@@ -217,6 +221,9 @@ void PS_CRT_Lottes(
 		fMask,
 		CrtsTone(1.0, 0.0, fThin, fMask)
 	);
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 //Technique////////////////////////////////////////////////////////////////////////////

@@ -20,6 +20,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform int shadowMask <
 	ui_type = "slider";
 	ui_min = -1; ui_max = 10;
@@ -348,7 +352,11 @@ float3 WMASK(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	
 	color = pow(abs(color), float3(1.0,1.0,1.0)/MaskGamma);
 	
+#if GSHADE_DITHER
+	return color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 technique WinUaeMask

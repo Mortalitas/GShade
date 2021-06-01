@@ -25,6 +25,11 @@ in IEEE Access, vol. 6, pp. 5641-5653, 2018, doi: 10.1109/ACCESS.2018.2794340.
 */
 
 #include "ReShade.fxh"
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define CONST_LOG2(x) (\
     (uint((x) & 0xAAAAAAAA) != 0) | \
     (uint(((x) & 0xFFFF0000) != 0) << 4) | \
@@ -226,6 +231,10 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 	{
 		fogRemoved = transmission.xxx;
 	}
+
+#if GSHADE_DITHER
+	fogRemoved += TriDither(fogRemoved, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique DeHaze<ui_tooltip = "This shader attempts to remove fog from the image.\n\n"

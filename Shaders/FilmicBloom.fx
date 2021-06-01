@@ -57,6 +57,10 @@ float get_2D_weight(float2 position)
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 void FilmicBloomPS(float4 vpos : SV_Position, float2 tex_coord : TEXCOORD, out float3 softened : SV_Target)
 {
 	softened = 0.0;
@@ -82,6 +86,10 @@ void FilmicBloomPS(float4 vpos : SV_Position, float2 tex_coord : TEXCOORD, out f
 		) *current_weight;
 	}
 	softened /= total_weight*4.0;
+
+#if GSHADE_DITHER
+	softened += TriDither(softened, tex_coord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 	  //////////////

@@ -26,6 +26,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float uSigma <
 	ui_label = "Standard Deviation Sigma Radius";
 	ui_tooltip = "Standard Deviation Sigma Radius * K Factor Sigma Coefficient = Radius of the circular kernel.";
@@ -92,6 +96,10 @@ void PS_SmartDeNoise (in float4 pos : SV_Position, float2 uv : TEXCOORD, out flo
         }
     }
     color = aBuff / zBuff;
+
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 //  About Standard Deviations (watch Gauss curve)

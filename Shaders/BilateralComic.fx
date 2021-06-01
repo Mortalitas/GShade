@@ -5,6 +5,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture BackBuffer : COLOR;
 texture Luma <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
 texture Sobel <Pooled = true;> {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
@@ -245,6 +249,9 @@ void BilateralFilterPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out
 		}
 	}
 	color.rgb /= weightSum;
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 
@@ -275,7 +282,9 @@ void OutputPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 c
 		}
 	}
 
-		
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique BilateralComic<ui_tooltip = "Cel-shading shader that uses a combination of bilateral filtering, posterization,\n"

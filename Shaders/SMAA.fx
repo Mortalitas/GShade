@@ -127,6 +127,10 @@ uniform int DebugOutput <
 #include "SMAA.fxh"
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // Textures
 
 texture depthTex < pooled = true; >
@@ -293,7 +297,12 @@ float3 SMAANeighborhoodBlendingWrapPS(
 	if (DebugOutput == 2)
 		return tex2D(blendSampler, texcoord).rgb;
 
+#if GSHADE_DITHER
+	const float3 outcolor = SMAANeighborhoodBlendingPS(texcoord, offset, colorLinearSampler, blendSampler).rgb;
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return SMAANeighborhoodBlendingPS(texcoord, offset, colorLinearSampler, blendSampler).rgb;
+#endif
 }
 
 // Rendering passes

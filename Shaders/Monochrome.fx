@@ -40,6 +40,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform int Monochrome_preset <
 	ui_type = "combo";
 	ui_label = "Preset";
@@ -117,7 +121,12 @@ float3 MonochromePass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
 	const float3 grey = dot(Coefficients, color);
 
 	// Adjust the remaining saturation & return the result
+#if GSHADE_DITHER
+	Coefficients = saturate(lerp(grey, color, Monochrome_color_saturation));
+	return Coefficients + TriDither(Coefficients, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(lerp(grey, color, Monochrome_color_saturation));
+#endif
 }
 
 technique Monochrome

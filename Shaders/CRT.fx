@@ -83,6 +83,10 @@ uniform bool Oversample <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define CeeJay_aspect float2(1.0, 0.75)
 
 // A bunch of useful values we'll need in the fragment shader.
@@ -311,7 +315,12 @@ float3 AdvancedCRTPass(float4 position : SV_Position, float2 tex : TEXCOORD) : S
 
 	const float3 color = TEX2D(orig_xy).rgb * cval.xxx;
 
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(lerp(color, mul_res, Amount));
+	return outcolor + TriDither(outcolor, tex, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(lerp(color, mul_res, Amount));
+#endif
 }
 
 technique AdvancedCRT

@@ -143,6 +143,10 @@ uniform float GaussianSigma <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET {
 	const float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	float3 texIJ;
@@ -170,10 +174,22 @@ float3 PS_Denoise_KNN(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
             
 	result /= sum;
 
-	if (counter > (CounterThreshold * iWindowArea))
+	if (counter > (CounterThreshold * iWindowArea)) {
+#if GSHADE_DITHER
+		result = lerp(result, orig, 1.0 - LerpCoefficeint);
+		return result + TriDither(result, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 		return lerp(result, orig, 1.0 - LerpCoefficeint);
-	else
+#endif
+	}
+	else {
+#if GSHADE_DITHER
+		result = lerp(result, orig, LerpCoefficeint);
+		return result + TriDither(result, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 		return lerp(result, orig, LerpCoefficeint);
+#endif
+	}
 }
 
 float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET {
@@ -217,10 +233,22 @@ float3 PS_Denoise_NLM(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD) : S
 
     result /= sum;
 
-	if (counter > (CounterThreshold * iWindowArea))
+	if (counter > (CounterThreshold * iWindowArea)) {
+#if GSHADE_DITHER
+		result = lerp(result, tex2D(ReShade::BackBuffer, texcoord).rgb, 1.0 - LerpCoefficeint);
+		return result + TriDither(result, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 		return lerp(result, tex2D(ReShade::BackBuffer, texcoord).rgb, 1.0 - LerpCoefficeint);
-	else
+#endif
+	}
+	else {
+#if GSHADE_DITHER
+		result = lerp(result, tex2D(ReShade::BackBuffer, texcoord).rgb, LerpCoefficeint);
+		return result + TriDither(result, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 		return lerp(result, tex2D(ReShade::BackBuffer, texcoord).rgb, LerpCoefficeint);
+#endif
+	}
 }
 
 technique KNearestNeighbors

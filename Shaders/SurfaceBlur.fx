@@ -46,6 +46,10 @@ uniform int DebugMode
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define sOffset1x BUFFER_PIXEL_SIZE.x
 #define sOffset1y BUFFER_PIXEL_SIZE.y
 
@@ -232,17 +236,22 @@ float4 SurfaceBlurFinal(in float4 pos : SV_Position, in float2 texcoord : TEXCOO
 		}
 	}		
 	
-if(DebugMode == 1)
-{
-	return float4(Z,Z,Z,0);
-}
+	if(DebugMode == 1)
+	{
+		return float4(Z,Z,Z,0);
+	}
 
-if(DebugMode == 2)
-{
-	return float4(final_color/Z,0);
-}
+	if(DebugMode == 2)
+	{
+		return float4(final_color/Z,0);
+	}
 
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(lerp(orig.rgb, final_color/Z, BlurStrength));
+	return float4(outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH),0.0);
+#else
 	return float4(saturate(lerp(orig.rgb, final_color/Z, BlurStrength)),0.0);
+#endif
 }
 
 #if SurfaceBlurIterations >= 2

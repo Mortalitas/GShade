@@ -37,6 +37,10 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define TEXFORMAT RGBA8
 
 #ifndef Stage5Tex
@@ -336,6 +340,10 @@ void PS_StageDepth5(in float4 position : SV_Position, in float2 texCoord : TEXCO
                 passColor = lerp(backColor.rgb, Luminosity(backColor.rgb, passColor.rgb), passColor.a * Stage5_Opacity);
                 break;
         }
+
+#if GSHADE_DITHER
+        passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
     }
 }
 

@@ -3,6 +3,10 @@
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define PI 3.141592358
 
 uniform float center_x <
@@ -128,7 +132,12 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
     const float lon = atan2(sphere_pnt.y, sphere_pnt.x);
     const float lat = acos(sphere_pnt.z / r);
 
+#if GSHADE_DITHER
+	const float4 outcolor = tex2D(samplerColor, float2(lon, lat) / rads);
+	return float4(outcolor.rgb + TriDither(outcolor.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
+#else
     return tex2D(samplerColor, float2(lon, lat) / rads);
+#endif
 }
 
 // Technique

@@ -1,5 +1,9 @@
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 /* COMPATIBILITY
    - HLSL compilers
    - Cg   compilers
@@ -1326,7 +1330,11 @@ float4 PS_CRTGeomModFinal(float4 vpos : SV_Position, float2 uv : TexCoord) : SV_
 		}
 
 		// Color the texel.
+#if GSHADE_DITHER
+		return float4(screen_col.rgb + TriDither(screen_col.rgb, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 		return float4(screen_col.rgb, 1.0);
+#endif
 	}
 }
 

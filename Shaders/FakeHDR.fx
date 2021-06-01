@@ -25,6 +25,10 @@ uniform float fradius2 <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // !!! modified - Craig - Jul 6th, 2020
 float3 fHDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
@@ -59,8 +63,13 @@ float3 fHDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
 		) * 0.01;
 
 	const float3 HDR = (color + (bloom_sum2 - bloom_sum1)) * (fradius2 - fradius1);
-	
+
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(pow(abs(HDR + color), abs(fHDRPower)) + HDR); // pow - don't use fractions for HDRpower
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(pow(abs(HDR + color), abs(fHDRPower)) + HDR); // pow - don't use fractions for HDRpower
+#endif
 }
 
 technique FakeHDR

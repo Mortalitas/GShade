@@ -1,6 +1,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float fUISpeed <
 	ui_type = "slider";
 	ui_label = "Adaptions Speed";
@@ -125,7 +129,12 @@ namespace RemoveTint {
 		//Don't apply fUIExcludeColor
 		tintRemoved = lerp(tintRemoved, color, saturate(pow(abs(dot(color, fUIExcludeColor)), fUIExcludeColorStrength)));
 
+#if GSHADE_DITHER
+		const float3 outcolor = saturate(lerp(color, tintRemoved, fUIStrength)).rgb;
+		return float4(outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 		return float4(saturate(lerp(color, tintRemoved, fUIStrength)).rgb, 1.0);
+#endif
 	}
 }
 

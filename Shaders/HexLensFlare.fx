@@ -1,4 +1,9 @@
 // Lightly optimized by Marot Satil for the GShade project.
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
   //========//
  // Macros //
 //========//
@@ -294,7 +299,11 @@ float4 PS_Blend(
 
 	#endif
 
+#if GSHADE_DITHER
+	return float4(color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(color, 1.0);
+#endif
 }
 
   //===========//

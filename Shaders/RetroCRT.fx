@@ -51,6 +51,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float Timer < source = "timer"; >;
 
 float4 RetroCRTPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
@@ -66,12 +70,21 @@ float4 RetroCRTPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	// shift R and G channels to simulate NTSC color bleed
 	const float2 colorShift = float2( 0.001, 0 );
 
+#if GSHADE_DITHER
+	const float4 c = float4( tex2D( ReShade::BackBuffer, texcoord + colorShift + shift ).x,			// Red
+					tex2D( ReShade::BackBuffer, texcoord - colorShift + shift ).y * 0.99,	// Green
+					tex2D( ReShade::BackBuffer, texcoord ).z,				// Blue
+					1.0) * clamp( line_intensity, 0.85, 1.0 )
+					+ (sin( ( texcoord.y + GLTimer ) * 4.0 ) * 0.02);
+
+	return float4(c.rgb + TriDither(c.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), c.a);
+#else
 	const float4 c = float4( tex2D( ReShade::BackBuffer, texcoord + colorShift + shift ).x,			// Red
 					tex2D( ReShade::BackBuffer, texcoord - colorShift + shift ).y * 0.99,	// Green
 					tex2D( ReShade::BackBuffer, texcoord ).z,				// Blue
 					1.0) * clamp( line_intensity, 0.85, 1.0 );
-
 	return c + (sin( ( texcoord.y + GLTimer ) * 4.0 ) * 0.02);
+#endif
 }
 
 technique RetroCRT

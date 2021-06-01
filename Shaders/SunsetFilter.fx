@@ -50,6 +50,10 @@ uniform float Offset <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // Overlay blending mode
 float Overlay(float Layer)
 {
@@ -87,6 +91,10 @@ void SunsetFilterPS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out fl
 		Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, 1 - BlendMask));
 	else
 		Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, BlendMask));
+
+#if GSHADE_DITHER
+	Image += TriDither(Image, UvCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique SunsetFilter

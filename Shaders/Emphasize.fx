@@ -60,6 +60,10 @@ uniform float EffectFactor <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef M_PI
 	#define M_PI 3.1415927
 #endif
@@ -98,6 +102,10 @@ void PS_Otis_EMZ_Desaturate(float4 vpos : SV_Position, float2 texcoord : TEXCOOR
 	float4 desColor = float4(greyscaleAverage, greyscaleAverage, greyscaleAverage, depthDiffCoC);
 	desColor = lerp(desColor, float4(BlendColor, depthDiffCoC), BlendFactor);
 	outFragment = lerp(colFragment, desColor, saturate(depthDiffCoC * EffectFactor));
+
+#if GSHADE_DITHER
+	outFragment.rgb += TriDither(outFragment.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique Emphasize

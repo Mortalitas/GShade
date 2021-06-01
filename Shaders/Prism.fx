@@ -50,6 +50,10 @@ uniform int SampleCount <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // Special Hue generator by JMF
 float3 Spectrum(float Hue)
 {
@@ -116,6 +120,10 @@ void ChromaticAberrationPS(float4 vois : SV_Position, float2 texcoord : TexCoord
 		}
 		BluredImage *= 2.0 * Sample;
 	}
+
+#if GSHADE_DITHER
+	BluredImage += TriDither(BluredImage, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 

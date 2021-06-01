@@ -25,6 +25,10 @@ uniform float3 RGB_Gain <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 LiftGammaGainPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -37,7 +41,12 @@ float3 LiftGammaGainPass(float4 position : SV_Position, float2 texcoord : TexCoo
 	color *= RGB_Gain; 
 	
 	// -- Gamma --
+#if GSHADE_DITHER
+	color = saturate(pow(abs(color), 1.0 / RGB_Gamma));
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(pow(abs(color), 1.0 / RGB_Gamma));
+#endif
 }
 
 

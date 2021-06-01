@@ -34,6 +34,10 @@ uniform float FogFactor <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //////////////////////////////////////
 // textures
 //////////////////////////////////////
@@ -108,6 +112,10 @@ void PS_Otis_DEH_BlendBlurWithNormalBuffer(float4 vpos: SV_Position, float2 texc
 	else
 		yFactor = clamp(texcoord.y * 2.0, 0, 1);
 	fragment = lerp(blendedFragment, float4(FogColor, blendedFragment.r), clamp((depth-FogStart) * yFactor * FogFactor, 0.0, 1.0));
+
+#if GSHADE_DITHER
+	fragment.rgb += fragment.rgb + TriDither(fragment.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique DepthHaze

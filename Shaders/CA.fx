@@ -19,6 +19,10 @@ uniform float Strength <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 ChromaticAberrationPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color, colorInput = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -28,7 +32,12 @@ float3 ChromaticAberrationPass(float4 vpos : SV_Position, float2 texcoord : TexC
 	color.b = tex2D(ReShade::BackBuffer, texcoord - (BUFFER_PIXEL_SIZE * Shift)).b;
 
 	// Adjust the strength of the effect
+#if GSHADE_DITHER
+	color = lerp(colorInput, color, Strength);
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(colorInput, color, Strength);
+#endif
 }
 
 technique CAb

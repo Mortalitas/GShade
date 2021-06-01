@@ -45,6 +45,10 @@ uniform bool HighlightClipping <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float black_point_float = BlackPoint / 255.0;
@@ -84,7 +88,11 @@ float3 LevelsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 		color = clipped_colors;
 	}
 
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 technique Levels

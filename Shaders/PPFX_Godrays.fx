@@ -10,6 +10,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //+++++++++++++++++++++++++++++
 // CUSTOM PARAMETERS
 //+++++++++++++++++++++++++++++
@@ -213,7 +217,11 @@ float4 PS_ImageFX(VS_OUTPUT_POST IN) : COLOR
 	const float2 pxCoord = IN.txcoord.xy;
 	const float4 res = tex2D(SamplerColorGRB,pxCoord);
 	
-	return float4(res.xyz,1.0);
+#if GSHADE_DITHER
+	return float4(res.xyz + TriDither(res.xyz, IN.txcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
+	return float4(res.xyz, 1.0);
+#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

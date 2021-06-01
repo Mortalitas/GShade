@@ -92,6 +92,10 @@ uniform float HighlightMaxThreshold <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture LumaInputTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8; MipLevels = 6; };
 sampler LumaInputSampler { Texture = LumaInputTex; MipLODBias = 6.0f; };
 sampler LumaInputSamplerHQ { Texture = LumaInputTex; };
@@ -129,7 +133,7 @@ float SampleLuma(float4 position : SV_Position, float2 texcoord : TexCoord) : SV
 
 float LumaInput(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).xyz;
-	
+
 	return pow(abs((color.r*2 + color.b + color.g*3) / 6), 1/2.2);
 }
 
@@ -222,8 +226,11 @@ float3 ApplyLUT(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_
 			color.xyz = lerp(color.xyz, highlightColor.xyz, range);
 		}
 	}
-
+#if GSHADE_DITHER
+	return color += TriDither(color.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 float SampleLumaLF(float4 position : SV_Position, float2 texcoord: TexCoord) : SV_Target {

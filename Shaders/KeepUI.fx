@@ -80,6 +80,10 @@ uniform int iBlendSource <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture KeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 sampler KeepUI_Sampler { Texture = KeepUI_Tex; };
 
@@ -133,6 +137,10 @@ void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
     const float4 keep = tex2D(KeepUI_Sampler, texcoord);
 
     color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a).rgb, keep.a);
+#endif
+
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
 #endif
 }
 

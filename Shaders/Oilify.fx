@@ -10,6 +10,11 @@
 	Kyprianidis, J. E., Kang, H., &amp; Dã¶Llner, J. (2009). Image and Video Abstraction by Anisotropic Kuwahara Filtering.
 	Computer Graphics Forum, 28(7), 1955-1963. doi:10.1111/j.1467-8659.2009.01574.x
 */
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef OILIFY_SIZE
 	#define OILIFY_SIZE 7
 #endif
@@ -182,6 +187,9 @@ namespace Oilify
 			weightSum += weight;
 		}
 		kuwahara = ((weightedSum) / weightSum) / sharpnessMultiplier;
+#if GSHADE_DITHER
+		kuwahara += TriDither(kuwahara, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 	}
 
 	technique Oilify<ui_tooltip = "Oilify is a revised version of the anisotropic kuwahara filter,\n"

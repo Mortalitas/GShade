@@ -12,6 +12,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //effect parameters
 uniform float fAdp_Delay <
     ui_label = "Adaption Delay";
@@ -204,7 +208,11 @@ float4 PS_Adaption(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Ta
     color.xyz = saturate(luma + chroma);
     color.xyz = pow(abs(color.xyz), 2.2);
 
+#if GSHADE_DITHER
+    return float4(color.xyz + TriDither(color.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), color.w);
+#else
     return color;
+#endif
 }
 
 float PS_StoreAvgLuma(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target

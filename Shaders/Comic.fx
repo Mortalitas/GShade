@@ -35,6 +35,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Version History:
+// 28-may-2021:     v1.2.22   Added support for the TriDither header.
 // 25-jan-2019:     v1.2.21   Modified by Marot for ReShade 4.0 compatibility.
 // 20-nov-2018:     v1.2.2    Update uniforms
 // 17-nov-2018:     v1.2.1    Update code for line width
@@ -52,6 +53,10 @@
 // Lightly optimized by Marot Satil for the GShade project.
 
 #include "ReShade.fxh"
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 
 #define UI_CATEGORY_COLOR "Edges: Color"
 #define UI_CATEGORY_CHROMA "Edges: Chroma"
@@ -606,7 +611,12 @@ namespace Comic {
             }
             return edgeDebugLayer;
         }
+#if GSHADE_DITHER
+        const float3 outcolor = saturate(lerp(color, fUIColor, MAX4(edges) * fUIStrength));
+        return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
         return saturate(lerp(color, fUIColor, MAX4(edges) * fUIStrength));
+#endif
     }
 }
 

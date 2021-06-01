@@ -59,6 +59,10 @@ uniform float BloomWidth <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //////////////////////////////////////
 // textures
 //////////////////////////////////////
@@ -101,6 +105,9 @@ void PS_Otis_AFG_PerformBloom(float4 position : SV_Position, float2 texcoord : T
 	const float3 BlurColor = BlurColor2.rgb * (BloomPower + 4.0);
 	color.rgb = lerp(color.rgb,BlurColor.rgb, Bloomamount);	
 	fragment = saturate(color);
+#if GSHADE_DITHER
+	fragment.rgb += TriDither(fragment.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 
@@ -109,6 +116,9 @@ void PS_Otis_AFG_BlendFogWithNormalBuffer(float4 vpos: SV_Position, float2 texco
 	const float depth = ReShade::GetLinearizedDepth(texcoord).r;
 	const float fogFactor = clamp(saturate(depth - FogStart) * FogCurve, 0.0, MaxFogFactor); 
 	fragment = lerp(tex2D(ReShade::BackBuffer, texcoord), lerp(tex2D(Otis_BloomSampler, texcoord), float4(FogColor, 1.0), fogFactor), fogFactor);
+#if GSHADE_DITHER
+	fragment.rgb += TriDither(fragment.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 technique AdaptiveFog

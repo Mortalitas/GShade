@@ -44,6 +44,9 @@ texture tv_border < source = "TV_Border.png"; >
 sampler sampler_tv_border { Texture = tv_border; };
 
 #include "ReShade.fxh"
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 #include "RetroTV.fxh"
 
 // just samples and returns backbuffer

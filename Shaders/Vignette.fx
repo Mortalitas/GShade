@@ -38,6 +38,9 @@ uniform float2 Center <
 > = float2(0.5, 0.5);
 
 #include "ReShade.fxh"
+#if GSHADE_DITHER
+	#include "TriDither.fxh"
+#endif
 
 float4 VignettePass(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Target
 {
@@ -105,8 +108,11 @@ float4 VignettePass(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Targe
 		const float tex_xy = dot(float4(tex, tex), float4(-tex, 1.0, 1.0)); //dot is actually slower
 		color.rgb = saturate(tex_xy * 4.0) * color.rgb;
 	}
-
+#if GSHADE_DITHER
+	return color += TriDither(color.rgb, tex, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 technique Vignette

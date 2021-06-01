@@ -41,6 +41,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define TEXFORMAT RGBA8
 
 #ifndef SilhouetteForegroundName
@@ -170,6 +174,9 @@ void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoor
     else
     {
         color = lerp(color, Silhouette_Stage.rgb, Silhouette_Stage.a * SForeground_Stage_Opacity);
+#if GSHADE_DITHER
+		color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
     }
 }
 
@@ -186,6 +193,9 @@ void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoor
     else if (depth < SBackground_Stage_depth)	
     {
         color = lerp(color, Silhouette2_Stage.rgb, Silhouette2_Stage.a * SBackground_Stage_Opacity);
+#if GSHADE_DITHER
+		color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
     }
 }
 

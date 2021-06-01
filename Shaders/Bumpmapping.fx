@@ -20,6 +20,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float SMOOTHING <
 	ui_min = 0.0; ui_max = 1.0;
     ui_type = "slider";
@@ -117,7 +121,12 @@ float3 BUMP(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	
 	const float3 b11 = (w00*(c00-c22) + w01*(c01-c21) + w10*(c10-c12)) + c11;
 
+#if GSHADE_DITHER
+	const float3 outcolor = clamp(lerp(c11,b11,-EMBOSS), c11*(1.0-CONTRAST),c11*(1.0+CONTRAST));
+	return outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return clamp(lerp(c11,b11,-EMBOSS), c11*(1.0-CONTRAST),c11*(1.0+CONTRAST));
+#endif
 }
 
 technique BUMPMAPPING

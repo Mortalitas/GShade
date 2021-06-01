@@ -35,6 +35,10 @@ uniform float Strength <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 static const float3x3 RGB = float3x3(
 	 2.6714711726599600, -1.2672360578624100, -0.4109956021722270,
 	-1.0251070293466400,  1.9840911624108900,  0.0439502493584124,
@@ -65,7 +69,12 @@ float3 DPXPass(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 	c0 = (1.0 - Saturation) * luma + Saturation * c0;
 	c0 = mul(RGB, c0);
 
+#if GSHADE_DITHER
+	c0 = lerp(input, c0, Strength);
+	return c0 + TriDither(c0, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(input, c0, Strength);
+#endif
 }
 
 technique DPX

@@ -1,5 +1,9 @@
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 /*
    Downsamples to 16 colors using quantization.
    Uses 4-bit RGBI values for an "EGA"/"Tandy" look
@@ -58,8 +62,13 @@ float3 nearest_rgbi (float3 original) {
 
 float4 PS_EGA(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-	float3 fragcolor = tex2D(SourcePointSampler, texcoord).rgb;
-	return float4(nearest_rgbi(fragcolor*color_enhance), 1);
+	const float3 fragcolor = tex2D(SourcePointSampler, texcoord).rgb;
+#if GSHADE_DITHER
+	const float3 outcolor = nearest_rgbi(fragcolor*color_enhance);
+	return float4(outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
+	return float4(nearest_rgbi(fragcolor*color_enhance), 1.0);
+#endif
 }
 
 technique EGAfilter

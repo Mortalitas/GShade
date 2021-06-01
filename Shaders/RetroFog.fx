@@ -25,6 +25,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //Macros//////////////////////////////////////////////////////////////////////////////////
 
 // Used for scaling screen coordinates while keeping them centered.
@@ -187,6 +191,9 @@ void PS_RetroFog(
     const float3 fog_color = f3Color;
 
     color.rgb = lerp(color.rgb, fog_color, fog);
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 //Technique///////////////////////////////////////////////////////////////////////////////

@@ -12,6 +12,10 @@ For inquiries please contact jakub.m.fober@pm.me
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 
   ////////////
  /// MENU ///
@@ -153,6 +157,10 @@ void LocalConstrastPS(
 	}
 	// Convert to RGB
 	result = mul(ToRGB709, result);
+
+#if GSHADE_DITHER
+	result += TriDither(result, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 

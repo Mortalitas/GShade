@@ -6,6 +6,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+  #include "TriDither.fxh"
+#endif
+
 // UI ELEMENTS /////////////////////////////////////
 ////////////////////////////////////////////////////
   uniform float3 HUERed <
@@ -204,7 +208,12 @@
 ////////////////////////////////////////////////////
   float4	PS_HSLShift(float4 position : SV_Position, float2 txcoord : TexCoord) : SV_Target
   {
+#if GSHADE_DITHER
+      const float3 outcolor = HSLShift(tex2D(ReShade::BackBuffer, txcoord).rgb);
+      return float4(outcolor + TriDither(outcolor, txcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
       return float4(HSLShift(tex2D(ReShade::BackBuffer, txcoord).rgb), 1.0);
+#endif
   }
 
 

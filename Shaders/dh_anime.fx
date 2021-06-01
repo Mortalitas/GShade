@@ -1,5 +1,9 @@
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define getColor_DHa(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
 #define getBlur_DHa(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
 #define getDepth_DHa(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
@@ -187,7 +191,11 @@ namespace DHAnime {
 
 		color = HSLtoRGB(hsl);
 
-		outPixel = float4(color,1.0);	
+#if GSHADE_DITHER
+		outPixel = float4(color.rgb + TriDither(color.rgb, coords, BUFFER_COLOR_BIT_DEPTH),1.0);
+#else
+		outPixel = float4(color,1.0);
+#endif
 	}
 
 //// Techniques

@@ -36,6 +36,10 @@ uniform float BlueAdjust <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 PS_DaltonizeFXmain(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -78,7 +82,12 @@ float3 PS_DaltonizeFXmain(float4 vpos : SV_Position, float2 texcoord : TexCoord)
 	const float3 error = input - float3((0.0809444479f * Daltl) + (-0.130504409f * Daltm) + (0.116721066f * Dalts), (-0.0102485335f * Daltl) + (0.0540193266f * Daltm) + (-0.113614708f * Dalts), (-0.000365296938f * Daltl) + (-0.00412161469f * Daltm) + (0.693511405f * Dalts));
 	
 	// Shift colors towards visible spectrum (apply error modifications) & add compensation to original values
+#if GSHADE_DITHER
+	input = input + float3(0, (error.r * 0.7) + (error.g * 1.0), (error.r * 0.7) + (error.b * 1.0));
+	return input + TriDither(input, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return input + float3(0, (error.r * 0.7) + (error.g * 1.0), (error.r * 0.7) + (error.b * 1.0));
+#endif
 }
 
 technique Daltonize

@@ -40,6 +40,10 @@ uniform float3 FogColor <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 TonemapPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = saturate(tex2D(ReShade::BackBuffer, texcoord).rgb - Defog * FogColor * 2.55); // Defog
@@ -60,7 +64,11 @@ float3 TonemapPass(float4 position : SV_Position, float2 texcoord : TexCoord) : 
 
 	color = (color + diffcolor) / (1 + diffcolor); // Saturation
 
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return color;
+#endif
 }
 
 technique Tonemap

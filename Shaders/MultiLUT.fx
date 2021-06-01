@@ -338,6 +338,10 @@ uniform float fLUT_AmountLuma3 <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #if MultiLUTTexture_Source == 0 // GShade/Angelite MultiLut_GShade.png
     #define _SOURCE_MULTILUT_FILE fLUT_GSTextureName
     #define _SOURCE_MULTILUT_AMOUNT fLUT_LutAmount
@@ -548,6 +552,10 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 
     res = lerp(normalize(res), normalize(lutcolor), fLUT_AmountChroma3)
         * lerp(   length(res),    length(lutcolor),   fLUT_AmountLuma3);
+#endif
+
+#if GSHADE_DITHER
+	res += TriDither(res, texcoord, BUFFER_COLOR_BIT_DEPTH);
 #endif
 }
 

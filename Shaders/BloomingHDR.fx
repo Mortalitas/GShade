@@ -22,6 +22,10 @@
  //*
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float CBT_Adjust <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
@@ -222,7 +226,7 @@ float4 BrightColors(float4 position : SV_Position, float2 texcoords : TEXCOORD) 
 	float4 BC, Color = tex2D(BackBuffer, texcoords);
 	// check whether fragment output is higher than threshold, if so output as brightness color.
     const float brightness = dot(Color.rgb, Luma());
-    
+
     if(brightness > CBT_Adjust)
         BC.rgb = Color.rgb;
     else
@@ -291,10 +295,10 @@ void Past_BackSingleBuffer(float4 position : SV_Position, float2 texcoords : TEX
 float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	float AL = Average_Luminance(texcoord).x, Ex = Exposure;
-	
+
 	if(Auto_Exposure)
 	Ex = Ex * AL;
-         
+
 	float4 Out;
     float3 TM, Color = tex2D(BackBuffer, texcoord).rgb, HDR = tex2D(BackBuffer, texcoord).rgb;      
     float3 bloomColor = LastBlur(texcoord) + tex2D(PSBackBuffer, texcoord).rgb; // Merge Current and past frame.
@@ -303,7 +307,7 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	//HDR
 	HDR += TM;
 	Color = pow(abs(HDR),HDR_Adjust); 
-	
+
 	if (!Debug_View)
 	{
 		Out = float4(Color, 1.0);
@@ -312,8 +316,12 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	{	
 		Out = float4(bloomColor, 1.0);
 	}
-	
+
+#if GSHADE_DITHER
+	return float4(Out.rgb + TriDither(Out.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), Out.a);
+#else
 	return Out;
+#endif
 }
 
 ///////////////////////////////////////////////////////////ReShade.fxh/////////////////////////////////////////////////////////////

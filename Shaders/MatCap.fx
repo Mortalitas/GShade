@@ -1,6 +1,10 @@
 // Lightly optimized by Marot Satil for the GShade project.
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //Macros//////////////////////////////////////////////////////////////////////////////////////////////
 
 #define GET_NORMALS(uv) get_normals(uv)
@@ -97,7 +101,11 @@ float4 PS_Experimental(
 
 	col = lerp(shadow, light, saturate(fresnel));
 
+#if GSHADE_DITHER
+	return float4(col + TriDither(col, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(col, 1.0);
+#endif
 }
 
 //Technique///////////////////////////////////////////////////////////////////////////////////////////

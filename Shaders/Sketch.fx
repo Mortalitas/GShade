@@ -13,6 +13,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef SKETCH_USE_PATTERN_TEXTURE
 #define SKETCH_USE_PATTERN_TEXTURE 0
 #endif
@@ -309,7 +313,12 @@ float3 blur(sampler s, float2 uv, float2 dir)
 
 float4 BlurXPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
+#if GSHADE_DITHER
+	const float3 outcolor = blur(SRGBBackBuffer, uv, float2(BUFFER_RCP_WIDTH, 0.0));
+	return float4(outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(blur(SRGBBackBuffer, uv, float2(BUFFER_RCP_WIDTH, 0.0)), 1.0);
+#endif
 }
 
 float4 BlurYPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
@@ -360,7 +369,11 @@ float4 MainPS(
 	float outline = get_outline(uv);
 	color.rgb *= outline;
 
+#if GSHADE_DITHER
+	return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 	return color;
+#endif
 }
 
 //#endregion

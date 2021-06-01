@@ -75,6 +75,10 @@ uniform float ColormodBrightnessB <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 ColorModPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -84,7 +88,11 @@ float3 ColorModPass(float4 position : SV_Position, float2 texcoord : TexCoord) :
 	color.x = (pow(color.x, ColormodGammaR) - 0.5) * ColormodContrastR + 0.5 + ColormodBrightnessR;
 	color.y = (pow(color.y, ColormodGammaG) - 0.5) * ColormodContrastG + 0.5 + ColormodBrightnessB;
 	color.z = (pow(color.z, ColormodGammaB) - 0.5) * ColormodContrastB + 0.5 + ColormodBrightnessB;
-	return color.rgb;
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
+	return color;
+#endif
 }
 
 

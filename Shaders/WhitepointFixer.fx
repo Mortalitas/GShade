@@ -4,6 +4,10 @@
 #include "FXShadersCommon.fxh"
 #include "FXShadersMath.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 /*
 	0: Manual
 	1: Colorpicker
@@ -399,7 +403,11 @@ float4 MainPS(
 		}
 	#endif
 
+#if GSHADE_DITHER
+	return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 	return color;
+#endif
 }
 
 //#endregion

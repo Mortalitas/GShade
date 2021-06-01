@@ -8,6 +8,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float screenLinesNum <
 	ui_type = "slider";
 	ui_min = 1.0;
@@ -1074,8 +1078,11 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		
 	// col = tex2D(SamplerTape, txcoord.xy).x;
 
-	return float4(col, 1.0); 
-
+#if GSHADE_DITHER
+	return float4(col + TriDither(col, txcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
+	return float4(col, 1.0);
+#endif
 }
 
 float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
@@ -1513,7 +1520,11 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 		rgb *= vignette(p, t*vignetteSpeed); //TODO params //txcoord.xy
 	}
 
-	return float4(rgb, 1.0); 
+#if GSHADE_DITHER
+	return float4(rgb + TriDither(rgb, txcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
+	return float4(rgb, 1.0);
+#endif
 }
 
 //third pass
@@ -1569,7 +1580,11 @@ float4 PS_VHS4(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 		}
 	}
 
-	return float4(col, 1.0); 
+#if GSHADE_DITHER
+	return float4(col + TriDither(col, texcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
+	return float4(col, 1.0);
+#endif
 }
 
 float4 PS_VHSTape(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
@@ -1610,7 +1625,12 @@ float4 PS_VHSTape(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Targ
 
 float4 PS_VHSClear(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
+#if GSHADE_DITHER
+	const float3 outcolor = tex2D(SamplerColorVHS, txcoord).rgb;
+	return float4(outcolor + TriDither(outcolor, txcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(tex2D(SamplerColorVHS, txcoord).rgb, 1.0);  //black
+#endif
 }
 
 /////////////////////////TECHNIQUES/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

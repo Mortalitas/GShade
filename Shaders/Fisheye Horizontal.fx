@@ -33,6 +33,10 @@ uniform float fFisheyeColorshift <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 FISHEYE_CAPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -68,8 +72,11 @@ float3 FISHEYE_CAPass(float4 position : SV_Position, float2 texcoord : TexCoord)
 	color.y = tex2D(ReShade::BackBuffer,gCoords).g;
 	color.z = tex2D(ReShade::BackBuffer,bCoords).b;
 	
-	return color.rgb;
-
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
+	return color;
+#endif
 }
 
 

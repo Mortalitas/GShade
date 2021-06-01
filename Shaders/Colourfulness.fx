@@ -67,6 +67,10 @@ uniform float backbuffer_bits <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #if (temporal_dither == 1)
 	uniform int rnd < source = "random"; min = 0; max = 1000; >;
 #endif
@@ -130,7 +134,12 @@ float3 Colourfulness(float4 vpos : SV_Position, float2 tex : TEXCOORD) : SV_Targ
 			c_diff += noise;
 	}
 
+#if GSHADE_DITHER
+    const float3 outcolor = saturate(c0 + c_diff);
+	return outcolor + TriDither(outcolor, tex, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(c0 + c_diff);
+#endif
 }
 
 technique Colourfulness

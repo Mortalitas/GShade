@@ -35,6 +35,10 @@ uniform float lum_add <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 PS_HQ4X(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 {
 	const float x = s * BUFFER_RCP_WIDTH;
@@ -99,12 +103,22 @@ float3 PS_HQ4X(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	w3 = clamp(w3 + mx, min_w, max_w);
 	w4 = clamp(w4 + mx, min_w, max_w);
 
+#if GSHADE_DITHER
+	const float3 outcolor = (
+		w1 * (i1 + i3) +
+		w2 * (i2 + i4) +
+		w3 * (s1 + s3) +
+		w4 * (s2 + s4) +
+		c) / (2.0 * (w1 + w2 + w3 + w4) + 1.0);
+	return outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return (
 		w1 * (i1 + i3) +
 		w2 * (i2 + i4) +
 		w3 * (s1 + s3) +
 		w4 * (s2 + s4) +
 		c) / (2.0 * (w1 + w2 + w3 + w4) + 1.0);
+#endif
 }
 
 technique HQ4X

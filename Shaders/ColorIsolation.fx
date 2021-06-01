@@ -37,6 +37,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define COLORISOLATION_CATEGORY_SETUP "Setup"
 #define COLORISOLATION_CATEGORY_DEBUG "Debug"
 
@@ -209,7 +213,11 @@ float3 ColorIsolationPS(float4 vpos : SV_Position, float2 texcoord : TexCoord) :
         retVal = DrawDebugOverlay(retVal, param, fUIOverlayPos, iUIOverlaySize, fUIOverlayOpacity, vpos.xy, texcoord);
     }
 
+#if GSHADE_DITHER
+	return retVal + TriDither(retVal, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
     return retVal;
+#endif
 }
 
 technique ColorIsolation {

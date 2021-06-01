@@ -16,15 +16,23 @@ uniform float ReinhardScale <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 ReinhardPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-
 	const float3 x = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	const float W =  ReinhardWhitepoint;	// Linear White Point Value
-    	const float K =  ReinhardScale;        // Scale
+	const float K =  ReinhardScale;        // Scale
 
-    	// gamma space or not?
-    	return (1 + K * x / (W * W)) * x / (x + K);
+	// gamma space or not?
+#if GSHADE_DITHER
+	const float3 outcolor = (1 + K * x / (W * W)) * x / (x + K);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
+	return (1 + K * x / (W * W)) * x / (x + K);
+#endif
 }
 
 technique Reinhard

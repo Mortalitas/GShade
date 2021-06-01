@@ -7,6 +7,10 @@
 #include "FXShadersMath.fxh"
 #include "FXShadersTonemap.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //#endregion
 
 //#region Preprocessor Directives
@@ -657,7 +661,11 @@ float4 TonemapPS(
 
 	color.rgb = ApplyTonemap(color.rgb, uv);
 
+#if GSHADE_DITHER
+	return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 	return color;
+#endif
 }
 
 //#endregion

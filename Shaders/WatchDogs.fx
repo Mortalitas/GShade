@@ -14,6 +14,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float LinearWhite <
 	ui_label = "Tonemap - Curve";
 	ui_type = "slider";
@@ -43,7 +47,12 @@ float3 ColorFilmicToneMappingPass(float4 position : SV_Position, float2 texcoord
 
     // gamma space or not?
 	//return pow(saturate(F_linearColor * 1.25 / F_linearWhite),1.25);
+#if GSHADE_DITHER
+	const float3 outcolor = pow(saturate(F_linearColor * LinearColor / F_linearWhite),LinearWhite);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return pow(saturate(F_linearColor * LinearColor / F_linearWhite),LinearWhite);
+#endif
 }
 
 

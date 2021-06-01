@@ -50,6 +50,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 /*--------------.
 | :: Defines :: |
 '--------------*/
@@ -601,7 +605,11 @@ float3 PS_Nostalgia(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_
 			color = color * ((-grey*grey+grey+grey) * 0.5 + 0.5);
 	}
 
+#if GSHADE_DITHER
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH); //return the pixel
+#else
 	return color; //return the pixel
+#endif
 }
 
 

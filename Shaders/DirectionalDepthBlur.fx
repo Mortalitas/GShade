@@ -42,6 +42,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 namespace DirectionalDepthBlur
 {
 // Uncomment line below for debug info / code / controls
@@ -326,6 +330,9 @@ namespace DirectionalDepthBlur
 		if (rangeEnd > colorDepth)
 			blendFactor = smoothstep(0, 1, 1-((rangeEnd-colorDepth) / pixelInfo.focusRange));
 		fragment.rgb = lerp(fragment.rgb, tex2Dlod(samplerBlurDestination, float4(pixelInfo.texCoords, 0, 0)).rgb, blendFactor);
+#if GSHADE_DITHER
+		fragment.rgb += TriDither(fragment.rgb, pixelInfo.texCoords, BUFFER_COLOR_BIT_DEPTH);
+#endif
 	}
 	
 	void PS_DownSample(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)

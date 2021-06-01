@@ -1,5 +1,8 @@
 //===================================================================================================================
 #include "ReShade.fxh"
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 #undef PixelSize
 #define PixelSize  	float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 //===================================================================================================================
@@ -125,7 +128,11 @@ float4 PS_Combine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : COLOR
 	else if (BLOOM_BLEND == 4) //Color Dodge
 		ret.rgb = BlendColorDodge(ret.rgb, bloom.rgb);
 
+#if GSHADE_DITHER
+	return float4(ret.rgb + TriDither(ret.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), ret.a);
+#else
 	return ret;
+#endif
 }
 	
 

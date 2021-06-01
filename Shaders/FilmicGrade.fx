@@ -36,6 +36,10 @@ uniform float2 LightControl <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // RGB to YUV709
 static const float3x3 ToYUV709 =
 float3x3(
@@ -108,6 +112,10 @@ void FilmicGradePS(float4 vois : SV_Position, float2 texcoord : TexCoord, out fl
 		// Convert YUV to RGB
 		Display = mul(ToRGB601, Display);
 	}
+
+#if GSHADE_DITHER
+	Display += TriDither(Display, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 

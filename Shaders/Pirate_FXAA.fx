@@ -1,5 +1,8 @@
 //===================================================================================================================
 #include "ReShade.fxh"
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 //===================================================================================================================
 
 uniform float FXAA_RADIUS <
@@ -50,7 +53,11 @@ float4 FastFXAA(float4 colorIN : COLOR, float2 coord : TEXCOORD) : COLOR {
 	
 	if (FXAA_DEBUG)	ret.rgb = edge;
 	
+#if GSHADE_DITHER
+	return float4(ret.rgb + TriDither(ret.rgb, coord, BUFFER_COLOR_BIT_DEPTH), ret.a);
+#else
 	return ret;
+#endif
 }
 
 //===================================================================================================================

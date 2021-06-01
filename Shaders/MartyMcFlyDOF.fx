@@ -316,6 +316,10 @@ sampler SamplerHDR2 { Texture = texHDR2; };
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float2 MouseCoords < source = "mousepoint"; >;
 
 float GetCoC(float2 coords)
@@ -1550,6 +1554,10 @@ void PS_McFlyDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	scenecolor.xyz = lerp(scenecolor.xyz, tex2D(ReShade::BackBuffer, texcoord).xyz, smoothstep(2.0,1.2,discRadius));
 
 	scenecolor.w = centerDepth;
+
+#if GSHADE_DITHER
+	scenecolor.xyz += TriDither(scenecolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 void PS_McFlyDOF3(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 scenecolor : SV_Target)
 {
@@ -1593,6 +1601,10 @@ void PS_McFlyDOF3(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 #endif
 
 	//focus preview disabled!
+
+#if GSHADE_DITHER
+	scenecolor.xyz += TriDither(scenecolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 /////////////////////////TECHNIQUES/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -39,6 +39,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef Layer4Tex
 #define Layer4Tex "LayerStage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
@@ -336,6 +340,10 @@ void PS_Layer4(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     }
 
     passColor.a = backColor.a;
+
+#if GSHADE_DITHER
+	passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 // -------------------------------------

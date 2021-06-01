@@ -25,6 +25,10 @@ uniform float Contrast <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float4 colorInput = tex2D(ReShade::BackBuffer, texcoord);
@@ -189,7 +193,11 @@ float4 CurvesPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 		colorInput.rgb = lerp(colorInput.rgb, color, Contrast_blend); //Blend by Contrast
 	}
 
+#if GSHADE_DITHER
+	return float4(colorInput.rgb + TriDither(colorInput.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), colorInput.a);
+#else
 	return colorInput;
+#endif
 }
 
 technique Curves

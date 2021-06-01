@@ -1,5 +1,9 @@
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef BAD_BLOOM_DOWN_SCALE
 #define BAD_BLOOM_DOWN_SCALE 8
 #endif
@@ -159,7 +163,11 @@ float4 PS_Blend(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	color.rgb = mad(blur.rgb, uAmount * uColor, color.rgb);
 	color.rgb = reinhard(color.rgb);
  
+#if GSHADE_DITHER
+	return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 	return color;
+#endif
 }
 
 technique BadBloomPS2 {

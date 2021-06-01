@@ -29,6 +29,10 @@ uniform float Strength <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 TechnicolorPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = saturate(tex2D(ReShade::BackBuffer, texcoord).rgb);
@@ -51,7 +55,12 @@ float3 TechnicolorPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 
 	color = lerp(color, temp2, Strength);
 
+#if GSHADE_DITHER
+	const float3 outcolor = lerp(dot(color, 0.333), color, Saturation);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(dot(color, 0.333), color, Saturation);
+#endif
 }
 
 technique Technicolor2

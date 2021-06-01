@@ -19,6 +19,10 @@ uniform float halationOffset <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture HalationTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 sampler HalationSamp { Texture = HalationTex; };
 
@@ -166,7 +170,12 @@ float3 GaussianBlurV(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD)
 			break;
 	}
 
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(max(color, tex2D(ReShade::BackBuffer, texcoord).rgb));
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(max(color, tex2D(ReShade::BackBuffer, texcoord).rgb));
+#endif
 }
 
 technique Halation

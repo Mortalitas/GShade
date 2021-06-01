@@ -2,6 +2,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //#endregion
 
 //#region Uniforms
@@ -105,7 +109,11 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 		tex2D(ReShade::BackBuffer, uv_g).g,
 		tex2D(ReShade::BackBuffer, uv_b).b);
 
+#if GSHADE_DITHER
+	return float4(color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(color, 1.0);
+#endif
 }
 
 //#endregion

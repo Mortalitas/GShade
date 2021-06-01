@@ -13,6 +13,10 @@ http://creativecommons.org/licenses/by-sa/4.0/.
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 
 	  ////////////
 	 /// MENU ///
@@ -121,6 +125,10 @@ void RimLightPS(in float4 position : SV_Position, in float2 TexCoord : TEXCOORD,
 		color = tex2D(ReShade::BackBuffer, TexCoord).rgb;
 		color += Color * Overlay(rim);
 	}
+
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, TexCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 

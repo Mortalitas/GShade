@@ -1,5 +1,9 @@
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float HardRedCutoff <
     ui_type = "slider";
     ui_min = 0.0; ui_max = 1.0;
@@ -55,8 +59,12 @@ float3 ColShiftPass(float4 position: SV_Position, float2 texcoord: TexCoord): SV
 		else
 			return lerp(input.rgb, input.grb, alphaR);
     }
-	
-    return input;
+
+#if GSHADE_DITHER
+	return input + TriDither(input, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
+	return input;
+#endif
 }
 
 technique ColShift

@@ -1,5 +1,9 @@
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define PI 3.1415926535897932
 #define TILE_SIZE 16.0
 
@@ -131,7 +135,11 @@ float4 PS_Glitch ( float4 pos : SV_Position, float2 fragCoord : TEXCOORD) : SV_T
     wow = clamp(fmod(noise(Timer*0.001 + uv.y), 1.0), 0.0, 1.0) * 2.0 - 1.0;    
     float3 finalColor;
     finalColor += distort(ReShade::BackBuffer, uv, 8.0);
+#if GSHADE_DITHER
+	return float4(finalColor + TriDither(finalColor, texcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(finalColor, 1.0);
+#endif
 }
 
 technique GlitchB {

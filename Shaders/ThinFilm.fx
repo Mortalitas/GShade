@@ -131,6 +131,10 @@ uniform float BlendingAmount <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 
 	  //////////////////////
 	 /// BLENDING MODES ///
@@ -318,7 +322,12 @@ float3 ThinFilmPS(float4 vois : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 
 	if(BlendingAmount == 1.0 && !LumaBlending) return Irridescence;
 	else if(LumaBlending) return lerp(Display, Irridescence, LumaMask(Display) * BlendingAmount);
+#if GSHADE_DITHER
+	const float3 outcolor = lerp(Display, Irridescence, BlendingAmount);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(Display, Irridescence, BlendingAmount);
+#endif
 }
 
 

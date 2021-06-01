@@ -15,6 +15,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // UNIFORMS
 //------------------------------------
 
@@ -280,7 +284,7 @@ uniform float Bleach_Bypass_Amount <
 
 uniform bool Enable_Dither <
 	ui_label = "Dither the final output";
-	ui_tooltip = "Dither the final result of the shader.";
+	ui_tooltip = "Dither the final result of the shader. Leave disabled to use GShade's TriDither implementation.";
 	ui_category = "Legacy Settings";
 	ui_bind = "PANDAFX_ENABLE_DITHER";
 > = false;
@@ -603,14 +607,19 @@ float4 PandaComposition (float4 vpos : SV_Position,
 		Bb.g = SoftLightBlend(noise.g, A.g);
 		Bb.b = SoftLightBlend(noise.b, A.b);
 
-		A = lerp(A, Bb, Dither_Amount);
+		A = lerp(A, B, Dither_Amount);
 #endif
 
 	// ------ Compress to TV levels if needed ------
 		
 		// A = A * 0.9373 + 0.0627;
 
+#if GSHADE_DITHER && !PANDAFX_ENABLE_DITHER
+		const float4 outcolor = lerp(O, A, Blend_Amount);
+		return float4(outcolor.rgb + TriDither(outcolor.rgb, uv, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
+#else
 		return lerp(O, A, Blend_Amount);
+#endif
 }
 
 

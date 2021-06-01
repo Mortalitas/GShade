@@ -348,6 +348,10 @@ uniform float scans <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define TextureSizeGCRT float2(ResolutionXGCRT, ResolutionYGCRT)
 #define InputSizeGCRT float2(ResolutionXGCRT, ResolutionYGCRT)
 #define OutputSizeGCRT float4(BUFFER_SCREEN_SIZE, 1.0 / BUFFER_SCREEN_SIZE)
@@ -815,7 +819,12 @@ float4 GuestPS(float4 position:SV_Position, float2 texcoord:TEXCOORD):SV_Target
 	if(interm < 0.5 || inter > lerp(InputSizeGCRT.y, InputSizeGCRT.x, TATE))
 		color = declip(color, pow(max(max(w1.r, w1.g), w1.b), 0.5));
 
+#if GSHADE_DITHER
+	const float3 outcolor = pow(abs(min(color, lerp(cmask, 1.0, 0.5)) + glow * Bloom1), 1.0 / gamma_out) * corner(pos);
+	return float4(outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(pow(abs(min(color, lerp(cmask, 1.0, 0.5)) + glow * Bloom1), 1.0 / gamma_out) * corner(pos), 1.0);
+#endif
 }
 
 technique GuestCRT

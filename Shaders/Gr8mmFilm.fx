@@ -73,6 +73,10 @@ sampler	Gr8mmFilmColor 	{ Texture = Gr8mmFilmTex; };
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float4 PS_Gr8mmFilm(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	const float4 singleGr8mmFilm = tex2D(Gr8mmFilmColor, float2(texcoord.x, texcoord.y/Gr8mmFilmTileAmount + (CFX_Gr8mmFilm_TY/Gr8mmFilmTextureSizeY)* 
@@ -83,7 +87,12 @@ trunc(filmroll.x/* / speed*/)
 #endif
 ));
 	const float alpha = saturate(saturate(max(abs(texcoord.x-0.5f),abs(texcoord.y-0.5f))*Gr8mmFilmVignettePower + 0.75f - (singleGr8mmFilm.x+singleGr8mmFilm.y+singleGr8mmFilm.z)*CFX_Gr8mmFilm_AP));
+#if GSHADE_DITHER
+	const float4 outcolor = lerp(tex2D(ReShade::BackBuffer, texcoord), singleGr8mmFilm, Gr8mmFilmPower*(alpha*alpha));
+	return float4(outcolor.xyz + TriDither(outcolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), outcolor.w);
+#else
 	return lerp(tex2D(ReShade::BackBuffer, texcoord), singleGr8mmFilm, Gr8mmFilmPower*(alpha*alpha));
+#endif
 }
 
 technique Gr8mmFilm 

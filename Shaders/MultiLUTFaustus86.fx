@@ -50,6 +50,11 @@ uniform float faLUT_AmountLuma <
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #include "ReShade.fxh"
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture texFaMultiLUT < source = faLUT_TextureName; > { Width = faLUT_TileSizeXY*faLUT_TileAmount; Height = faLUT_TileSizeXY * faLUT_LutAmount; Format = RGBA8; };
 sampler	SamplerFaMultiLUT { Texture = texFaMultiLUT; };
 
@@ -57,9 +62,9 @@ sampler	SamplerFaMultiLUT { Texture = texFaMultiLUT; };
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 res : SV_Target0)
+void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float3 res : SV_Target0)
 {
-	const float4 color = tex2D(ReShade::BackBuffer, texcoord.xy);
+	const float3 color = tex2D(ReShade::BackBuffer, texcoord.xy).xyz;
 	float2 texelsize = 1.0 / faLUT_TileSizeXY;
 	texelsize.x /= faLUT_TileAmount;
 
@@ -69,12 +74,14 @@ void PS_MultiLUT_Apply(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, ou
 	const float lerpfact = frac(lutcoord.z);
 	lutcoord.x += (lutcoord.z-lerpfact)*texelsize.y;
 
-	const float3 lutcolor = lerp(tex2D(SamplerFaMultiLUT, lutcoord.xy).xyz, tex2D(SamplerFaMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz,lerpfact);
+	const float3 lutcolor = lerp(tex2D(SamplerFaMultiLUT, lutcoord.xy).xyz, tex2D(SamplerFaMultiLUT, float2(lutcoord.x+texelsize.y,lutcoord.y)).xyz, lerpfact);
 
 	res.xyz = lerp(normalize(color.xyz), normalize(lutcolor.xyz), faLUT_AmountChroma) * 
 	            lerp(length(color.xyz),    length(lutcolor.xyz),    faLUT_AmountLuma);
 
-	res.w = 1.0;
+#if GSHADE_DITHER
+	res += TriDither(res, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

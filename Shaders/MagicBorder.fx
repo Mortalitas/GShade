@@ -33,6 +33,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 namespace MagicBorder
 {
 	#define MAGIC_BORDER_VERSION "v1.0.1"
@@ -224,6 +228,9 @@ namespace MagicBorder
 		fragment = isInPictureArea ? PictureFrameColor : BorderColor;
 		fragment = depthFragment > depthOfFrameAtCoord ? lerp(originalFragment, fragment, fragment.a) : originalFragment;
 		fragment = ShowDepths ? float4(depthOfFrameAtCoord, depthOfFrameAtCoord, depthOfFrameAtCoord, 1.0) : fragment;
+#if GSHADE_DITHER
+		fragment.rgb += TriDither(fragment.rgb, borderInfo.Texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 	}
 	
 	//////////////////////////////////////////////////

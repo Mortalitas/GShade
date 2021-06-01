@@ -1,6 +1,10 @@
 // Lightly optimized by Marot Satil for the GShade project.
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float fCurve <
 	ui_label = "Curve";
 	ui_type = "slider";
@@ -34,7 +38,11 @@ float4 PS_SCurve(
 	col.g = lerp(low.g, high.g, col.g + f4Offsets.z);
 	col.b = lerp(low.b, high.b, col.b + f4Offsets.z);
 
+#if GSHADE_DITHER
+	return float4(col.rgb + TriDither(col.rgb, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(col, 1.0);
+#endif
 }
 
 technique SCurve {

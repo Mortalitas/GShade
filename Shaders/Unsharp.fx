@@ -2,6 +2,10 @@
 #include "FXShadersCommon.fxh"
 #include "FXShadersConvolution.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef UNSHARP_BLUR_SAMPLES
 #define UNSHARP_BLUR_SAMPLES 21
 #endif
@@ -97,9 +101,17 @@ DEF_BLUR_SHADER(3, ColorLinear, float2(0.0, 1.0));
 
 float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
+#if GSHADE_DITHER
+	float4 color = tex2D(Original, uv);
+
+	color.rgb = BlendOverlay(color.rgb, GetLumaGamma(1.0 - tex2D(ColorLinear, uv).rgb) * 0.75, Amount);
+
+	return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 	const float4 color = tex2D(Original, uv);
 
 	return float4(BlendOverlay(color.rgb, GetLumaGamma(1.0 - tex2D(ColorLinear, uv).rgb) * 0.75, Amount), color.a);
+#endif
 }
 
 technique Unsharp

@@ -463,16 +463,26 @@ float4 TVCurvaturePS(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV
 		float2 coords = texcoord;
 		coords = ( coords - 0.5 ) * 2.0;
 	
-		float2 intensity = float2( tv_curvature, tv_curvature ) * 0.1;
+		const float2 intensity = float2( tv_curvature, tv_curvature ) * 0.1;
 	
 		float2 realCoordOffs;
 		realCoordOffs.x = (coords.y * coords.y) * intensity.y * (coords.x);
 		realCoordOffs.y = (coords.x * coords.x) * intensity.x * (coords.y);
 	
-		float2 uv = texcoord + realCoordOffs;	
+		const float2 uv = texcoord + realCoordOffs;
+#if GSHADE_DITHER
+		const float4 outcolor = tex2D(samplerTarget1, uv);
+		return float4(outcolor.rgb + TriDither(outcolor.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
+#else
 		return tex2D(samplerTarget1, uv);
+#endif
 	} else {
+#if GSHADE_DITHER
+		const float4 outcolor = tex2D(samplerTarget1, texcoord);
+		return float4(outcolor.rgb + TriDither(outcolor.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
+#else
 		return tex2D(samplerTarget1, texcoord);
+#endif
 	}
 }
 

@@ -64,6 +64,10 @@ uniform float GaussianBloomStrength
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture GaussianBloomTex { Width = BUFFER_WIDTH*GaussBloomTexScale; Height = BUFFER_HEIGHT*GaussBloomTexScale; Format = RGBA8; };
 texture GaussianBloomTex2 { Width = BUFFER_WIDTH*GaussBloomTexScale; Height = BUFFER_HEIGHT*GaussBloomTexScale; Format = RGBA8; };
 
@@ -85,9 +89,13 @@ float3 GaussianBloomFinal(in float4 pos : SV_Position, in float2 texcoord : TEXC
 	}
 	
 	float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	orig = lerp(orig, (1.0 - ((1.0 - orig) * (1.0 - blur))), GaussianBloomStrength);
+	orig = saturate(lerp(orig, (1.0 - ((1.0 - orig) * (1.0 - blur))), GaussianBloomStrength));
 	
-	return saturate(orig);
+#if GSHADE_DITHER
+	return orig + TriDither(orig, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
+	return orig;
+#endif
 }
 
 float3 GaussianBloomBrightPass(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR

@@ -1,5 +1,10 @@
 #include "ArcaneBloom.fxh"
 //#include "ReShade.fxh"
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 // Lightly optimized by Marot Satil for the GShade project.
 
 // Would be unenecessary if we had "using namespace".
@@ -632,7 +637,11 @@ MAKE_SHADER(Blend) {
 	color = pow(color, 1.0 / uGamma);
 	#endif
 
+#if GSHADE_DITHER
+	return float4(color + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(color, 1.0);
+#endif
 }
 
   //============//

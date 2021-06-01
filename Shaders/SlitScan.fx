@@ -4,6 +4,10 @@
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh";
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float x_col <
     ui_type = "slider";
     ui_label="X";
@@ -112,7 +116,11 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
     if(depth >= min_depth)
         color = lerp(screen, scanned, mask);
     else
-        color = screen; 
+        color = screen;
+
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 

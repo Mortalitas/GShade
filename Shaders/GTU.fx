@@ -7,6 +7,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float texture_sizeX <
 	ui_type = "slider";
 	ui_min = 1.0;
@@ -179,7 +183,11 @@ float4 PS_GTU2(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Target
 		tempColor = clamp(tempColor, 0.0, 1.0);
 	}
 
+#if GSHADE_DITHER
+	return float4(tempColor + TriDither(tempColor, tex, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(tempColor, 1.0);
+#endif
 }
 
 float4 PS_GTU3(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Target
@@ -208,7 +216,11 @@ float4 PS_GTU3(float4 vpos : SV_Position, float2 tex : TexCoord) : SV_Target
 
 	tempColor -= float3(blackLevel, blackLevel, blackLevel);
 	tempColor *= (contrast / float3(1.0 - blackLevel, 1.0 - blackLevel, 1.0 - blackLevel));
+#if GSHADE_DITHER
+	return float4(tempColor + TriDither(tempColor, tex, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(tempColor, 1.0);
+#endif
 }
 
 technique GTUV50 {

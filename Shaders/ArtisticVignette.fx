@@ -3,6 +3,10 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //#endregion
 
 //#region Constants
@@ -322,10 +326,21 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 				break;
 		}
 
+#if GSHADE_DITHER
+		const float3 outcolor = lerp(color.rgb, vig_color, vignette * VignetteColor.a);
+		return float4(outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 		return float4(lerp(color.rgb, vig_color, vignette * VignetteColor.a), color.a);
+#endif
 	}
 	else
+	{
+#if GSHADE_DITHER
+		return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
 		return color;
+#endif
+	}
 }
 
 //#endregion

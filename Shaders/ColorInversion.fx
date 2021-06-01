@@ -61,50 +61,57 @@ uniform float nInversionBlue <
 
 #include "ReShade.fxh"
 
-float4 SV_ColorInversion(float4 pos : SV_Position, float2 col : TEXCOORD) : SV_TARGET
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
+float3 SV_ColorInversion(float4 pos : SV_Position, float2 col : TEXCOORD) : SV_TARGET
 {
-  float4 inversion = tex2D(ReShade::BackBuffer, col);
-	inversion.r = inversion.r * nInversionRed;
-	inversion.g = inversion.g * nInversionGreen;
-	inversion.b = inversion.b * nInversionBlue;
+  float3 inversion = tex2D(ReShade::BackBuffer, col).rgb;
+
+  inversion.r = inversion.r * nInversionRed;
+  inversion.g = inversion.g * nInversionGreen;
+  inversion.b = inversion.b * nInversionBlue;
+
   if (nInversionSelector == 0)
   {
-	  inversion.r = 1.0f - inversion.r;
-	  inversion.g = 1.0f - inversion.g;
-	  inversion.b = 1.0f - inversion.b;
-	}
-	else if (nInversionSelector == 1)
-	{
-	  inversion.r = 1.0f - inversion.r;
-	}
-	else if (nInversionSelector == 2)
-	{
-	  inversion.g = 1.0f - inversion.g;
-	}
-	else if (nInversionSelector == 3)
-	{
-	  inversion.b = 1.0f - inversion.b;
-	}
-	else if (nInversionSelector == 4)
-	{
-	  inversion.r = 1.0f - inversion.r;
-	  inversion.g = 1.0f - inversion.g;
-	}
-	else if (nInversionSelector == 5)
-	{
-	  inversion.r = 1.0f - inversion.r;
-	  inversion.b = 1.0f - inversion.b;
-	}
-	else if (nInversionSelector == 6)
-	{
-	  inversion.g = 1.0f - inversion.g;
-	  inversion.b = 1.0f - inversion.b;
-	}
-	else
-	{
-    return inversion;
+    inversion.r = 1.0f - inversion.r;
+	inversion.g = 1.0f - inversion.g;
+	inversion.b = 1.0f - inversion.b;
   }
-	return inversion;
+  else if (nInversionSelector == 1)
+  {
+    inversion.r = 1.0f - inversion.r;
+  }
+  else if (nInversionSelector == 2)
+  {
+    inversion.g = 1.0f - inversion.g;
+  }
+  else if (nInversionSelector == 3)
+  {
+    inversion.b = 1.0f - inversion.b;
+  }
+  else if (nInversionSelector == 4)
+  {
+    inversion.r = 1.0f - inversion.r;
+    inversion.g = 1.0f - inversion.g;
+  }
+  else if (nInversionSelector == 5)
+  {
+    inversion.r = 1.0f - inversion.r;
+    inversion.b = 1.0f - inversion.b;
+  }
+  else if (nInversionSelector == 6)
+  {
+    inversion.g = 1.0f - inversion.g;
+    inversion.b = 1.0f - inversion.b;
+  }
+
+#if GSHADE_DITHER
+  return inversion + TriDither(inversion, col, BUFFER_COLOR_BIT_DEPTH);
+#else
+  return inversion;
+#endif
 }
 
 technique ColorInversion

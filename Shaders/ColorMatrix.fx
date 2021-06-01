@@ -32,13 +32,22 @@ uniform float Strength <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 ColorMatrixPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
 	const float3x3 ColorMatrix = float3x3(ColorMatrix_Red, ColorMatrix_Green, ColorMatrix_Blue);
 
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(lerp(color, mul(ColorMatrix, color), Strength));
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(lerp(color, mul(ColorMatrix, color), Strength));
+#endif
 }
 
 technique ColorMatrix

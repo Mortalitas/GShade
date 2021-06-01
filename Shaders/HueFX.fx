@@ -6,6 +6,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float hueMid <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
@@ -125,8 +129,12 @@ float3 HUEFXPass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV
          		fxcolor.xyz = greyVal.xxx;
    	}
 
-
+#if GSHADE_DITHER
+	const float3 outcolor = lerp( color.xyz, fxcolor.xyz, fxcolorMix );
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp( color.xyz, fxcolor.xyz, fxcolorMix );
+#endif
 }
 
 technique HueFX

@@ -18,6 +18,10 @@ uniform float EdgeSlope <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 CartoonPass(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -30,7 +34,12 @@ float3 CartoonPass(float4 position : SV_Position, float2 texcoord : TEXCOORD) : 
 
 	const float edge = dot(float2(diff1, diff2), float2(diff1, diff2));
 
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(pow(abs(edge), EdgeSlope) * -Power + color);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(pow(abs(edge), EdgeSlope) * -Power + color);
+#endif
 }
 
 technique Cartoon

@@ -9,6 +9,10 @@
 #include "Tools.fxh"
 #include "Canvas.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #ifndef UI_ADAPTIVE_TINT_DEBUG_WINDOW_WIDTH
 	#define UI_ADAPTIVE_TINT_DEBUG_WINDOW_WIDTH 300
 #endif
@@ -177,7 +181,12 @@ float3 AdaptiveTint_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 	if(iUIDebug == 2) //factor
 		return lerp(BLACK, WHITE, factor);
 
+#if GSHADE_DITHER
+    const float3 color = lerp(backbuffer, result, fUIStrength);
+	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(backbuffer, result, fUIStrength);
+#endif
 }
 
 /*******************************************************

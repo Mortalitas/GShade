@@ -65,6 +65,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //Statics
 
 #ifndef MAGICBLOOM_ADAPT_RESOLUTION
@@ -444,7 +448,11 @@ float4 PS_Blend(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
 	if (iDebug == 1)
 		col = bloom;
 
+#if GSHADE_DITHER
+	return float4(col + TriDither(col, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
     return float4(col, 1.0);
+#endif
 }
 
 #if !MAGICBLOOM_NOADAPT

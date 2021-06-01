@@ -106,6 +106,10 @@ uniform float alLensInt <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+	#include "TriDither.fxh"
+#endif
+
 #ifndef ALightLensTex
 #define ALightLensTex "LensDBA.png"
 #endif
@@ -468,9 +472,22 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 
 		if (baseSampleMix > 0.008)
+		{
+#if GSHADE_DITHER
+			return float4(baseSample.rgb + TriDither(baseSample.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), baseSample.a);
+#else
 			return baseSample;
+#endif
+		}
 		else
+		{
+#if GSHADE_DITHER
+			const float4 outSample = lerp(base, highSampleMix, saturate((alInt - adapt) * 0.85f) * baseSampleMix);
+			return float4(outSample.rgb + TriDither(outSample.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outSample.a);
+#else
 			return lerp(base, highSampleMix, saturate((alInt - adapt) * 0.85f) * baseSampleMix);
+#endif
+		}
 	}
 	else
 	{
@@ -479,9 +496,22 @@ float4 PS_AL_Magic(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 		const float baseSampleMix = baseSample.r + baseSample.g + baseSample.b;
 
 		if (baseSampleMix > 0.008)
+		{
+#if GSHADE_DITHER
+			return float4(baseSample.rgb + TriDither(baseSample.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), baseSample.a);
+#else
 			return baseSample;
+#endif
+		}
 		else
+		{
+#if GSHADE_DITHER
+			const float4 outSample = lerp(base, highSampleMix, saturate(alInt * 0.85f) * baseSampleMix);
+			return float4(outSample.rgb + TriDither(outSample.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outSample.a);
+#else
 			return lerp(base, highSampleMix, saturate(alInt * 0.85f) * baseSampleMix);
+#endif
+		}
 	}
 }
 

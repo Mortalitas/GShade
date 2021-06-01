@@ -8,6 +8,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 uniform float u5XCenter <
   ui_label = "X Position";
 	ui_type = "slider";
@@ -133,7 +137,11 @@ float4 PS_5Spotlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
     // Add some minimum amount of light to very dark pixels.	
     color = max(color, (result - 1.0) * 0.001);
 
+#if GSHADE_DITHER
+	return float4(color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
+#else
 	return float4(color, 1.0);
+#endif
 }
 
 technique Spotlight5 {

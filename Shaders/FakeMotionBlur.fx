@@ -41,6 +41,10 @@ uniform float mbSoftness <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 texture2D currTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 texture2D prevSingleTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 texture2D prevTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
@@ -51,18 +55,18 @@ sampler2D prevColor { Texture = prevTex; };
 
 void PS_Combine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-	float4 curr = tex2D(currColor, texcoord);
-	float4 prevSingle = tex2D(prevSingleColor, texcoord);
+	const float4 curr = tex2D(currColor, texcoord);
+	const float4 prevSingle = tex2D(prevSingleColor, texcoord);
 	float4 prev = tex2D(prevColor, texcoord);
 
-	float3 diff3 = abs(prevSingle.rgb - curr.rgb) * 2.0f;
-	float diff = min(diff3.r + diff3.g + diff3.b, mbRecall);
+	const float3 diff3 = abs(prevSingle.rgb - curr.rgb) * 2.0f;
+	const float diff = min(diff3.r + diff3.g + diff3.b, mbRecall);
 
 	const float weight[11] = { 0.082607, 0.040484, 0.038138, 0.034521, 0.030025, 0.025094, 0.020253, 0.015553, 0.011533, 0.008218, 0.005627 };
 	prev *= weight[0];
 
-	float pixelBlur = (mbSoftness * 13 * (diff)) * (BUFFER_RCP_WIDTH);
-	float pixelBlur2 = (mbSoftness * 11 * (diff)) * (BUFFER_RCP_HEIGHT);
+	const float pixelBlur = (mbSoftness * 13 * (diff)) * (BUFFER_RCP_WIDTH);
+	const float pixelBlur2 = (mbSoftness * 11 * (diff)) * (BUFFER_RCP_HEIGHT);
 
 	[unroll]
 	for (int z = 1; z < 11; z++)
@@ -73,7 +77,11 @@ void PS_Combine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float
 		prev += tex2D(prevColor, texcoord - float2(0.0f, z * pixelBlur2)) * weight[z];
 	}
 
-	color = lerp(curr, prev, diff+0.1);
+	color = lerp(curr, prev, diff + 0.1);
+
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 void PS_CopyFrame(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)

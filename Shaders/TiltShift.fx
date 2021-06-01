@@ -74,6 +74,10 @@ float get_weight(float t)
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 void TiltShiftPass1PS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out float4 Image : SV_Target)
 {
 	// Grab screen texture
@@ -160,6 +164,10 @@ void TiltShiftPass2PS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out 
 	// Image IS Red IF (Line IS True AND Image.a < 0.01), ELSE Image IS Image
 	if (Line && Image.a < 0.01)
 		Image.rgb = float3(1.0, 0.0, 0.0);
+
+#if GSHADE_DITHER
+	Image.rgb += TriDither(Image.rgb, UvCoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 }
 
 

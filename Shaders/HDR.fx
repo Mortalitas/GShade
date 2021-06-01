@@ -27,6 +27,10 @@ uniform float radius2 <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 HDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -58,7 +62,12 @@ float3 HDRPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 	const float3 blend = HDR + color;
 	 
 	// pow - don't use fractions for HDRpower
+#if GSHADE_DITHER
+	const float3 outcolor = saturate(pow(abs(blend), HDRPower) + HDR);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return saturate(pow(abs(blend), HDRPower) + HDR);
+#endif
 }
 
 technique HDR

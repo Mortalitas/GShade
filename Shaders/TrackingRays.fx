@@ -2,6 +2,10 @@
 
 #include "FXShadersCommon.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 //#endregion
 
 //#region Preprocessor
@@ -203,7 +207,12 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 	float4 rays = ZoomBlur(BackBuffer, uv, tex2Dfetch(Pivot, 0).xy, 1.0 + (Scale - 1.0) / Samples * 0.1, Samples);
 	rays.rgb = pow(abs(rays.rgb), Curve);
 
+#if GSHADE_DITHER
+	const float4 outcolor = 1.0 - (1.0 - color) * (1.0 - rays * Intensity);
+	return float4(outcolor.rgb + TriDither(outcolor.rgb, uv, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
+#else
 	return 1.0 - (1.0 - color) * (1.0 - rays * Intensity);
+#endif
 }
 
 //#endregion

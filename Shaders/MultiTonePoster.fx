@@ -5,6 +5,10 @@
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 
 #define MTP_PATTERN_ITEMS "Linear\0Vertical Stripes\0Horizontal Stripes\0Squares\0"
 
@@ -113,7 +117,12 @@ float3 MultiTonePoster_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord)
 	colors[5] = lerp(color, colors[5].rgb, (colors[4].w + colors[6].w) / 2.0);
 	colors[6] = lerp(color, colors[6].rgb, colors[6].w);
 
+#if GSHADE_DITHER
+	const float3 outcolor = lerp(color, colors[(int)floor(luma * numColors)].rgb, fUIStrength);
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(color, colors[(int)floor(luma * numColors)].rgb, fUIStrength);
+#endif
 }
 
 technique MultiTonePoster {

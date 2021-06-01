@@ -40,6 +40,10 @@ uniform int Vibrance_Luma <
 
 #include "ReShade.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 float3 VibrancePass(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	const float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -49,7 +53,12 @@ float3 VibrancePass(float4 position : SV_Position, float2 texcoord : TexCoord) :
 	// Extrapolate between luma and original by 1 + (1-saturation) - current
 	const float3 coeffVibrance = float3(VibranceRGBBalance * Vibrance);
 
+#if GSHADE_DITHER
+	const float3 outcolor = lerp(luma, color, 1.0 + (coeffVibrance * (1.0 - (sign(coeffVibrance) * (max(color.r, max(color.g, color.b)) - min(color.r, min(color.g, color.b)))))));
+	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#else
 	return lerp(luma, color, 1.0 + (coeffVibrance * (1.0 - (sign(coeffVibrance) * (max(color.r, max(color.g, color.b)) - min(color.r, min(color.g, color.b)))))));
+#endif
 }
 
 technique Vibrance
