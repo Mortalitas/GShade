@@ -2,6 +2,7 @@
 /* Tiny Planet Shader v2.0 - by Radegast Stravinsky of Ultros.                                         */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
+#include "ReShade.fxh"
 
 #if GSHADE_DITHER
     #include "TriDither.fxh"
@@ -43,6 +44,14 @@ uniform float z_rotation <
     ui_type = "slider";
     ui_min = 0.0; 
     ui_max = 360.0;
+> = 0.5;
+
+uniform float seam_scale <
+    ui_type = "slider";
+    ui_min = 0.5;
+    ui_max = 1.0;
+    ui_label = "Seam Blending";
+    ui_tooltip = "Blends the ends of the screen so that the seam is somewhat reasonably hidden.";
 > = 0.5;
 
 float3x3 getrot(float3 r)
@@ -111,6 +120,19 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 }
 
 // Pixel Shaders (in order of appearance in the technique)
+float4 PreTP(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
+{
+    const float inv_seam = 1 - seam_scale;
+    float4 tc1 =  tex2D(samplerColor, texcoord + float2(inv_seam, 0.0));
+    float4 tc = tex2D(samplerColor, texcoord * float2(seam_scale, 1.0));
+    
+    if(texcoord.x < inv_seam){ 
+        tc.rgb = lerp(tc1.rgb, tc.rgb, 1- clamp((inv_seam-texcoord.x) * 10., 0, 1));
+    }
+    if(texcoord.x > seam_scale) tc.rgb = lerp(tc.rgb, tc1.rgb, clamp((texcoord.x-seam_scale) * 10., 0, 1));
+    return tc;
+}
+
 float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
     const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
@@ -144,6 +166,11 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
 technique TinyPlanet<ui_label="Tiny Planet";>
 {
     pass p0
+    {
+        VertexShader = FullScreenVS;
+        PixelShader = PreTP;
+    }
+    pass p1
     {
         VertexShader = FullScreenVS;
         PixelShader = TinyPlanet;
