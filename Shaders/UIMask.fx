@@ -98,10 +98,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #ifndef UIMASK_MULTICHANNEL
     #define UIMASK_MULTICHANNEL 0
 #endif
@@ -172,12 +168,8 @@ float4 PS_ApplyMask(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target 
     col = lerp(tex2D(sUIMask_Backup, uv).rgb, col, mask);
     if (bDisplayMask)
 		col = mask;
-
-#if GSHADE_DITHER
-	return float4(col + TriDither(col, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
-#else
+    
     return float4(col, 1.0);
-#endif
 }
 
 technique UIMask_Top {
