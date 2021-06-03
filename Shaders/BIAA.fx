@@ -17,10 +17,6 @@
  //* 																																												
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 uniform float AA_Power <
 	ui_type = "slider";
 	ui_min = 0.5; ui_max = 1;
@@ -140,12 +136,8 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
    	Done = float4(result,1.0);
    else
    	Done = lerp(float4(1.0,0.0,1.0,1.0),Done,saturate(Mask));
-
-#if GSHADE_DITHER
-		return float4(Done.rgb += TriDither(Done.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), Done.a);
-#else
-		return Done;
-#endif
+	
+    	return Done;
 }
 
 ///////////////////////////////////////////////////////////ReShade.fxh/////////////////////////////////////////////////////////////
