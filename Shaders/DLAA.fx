@@ -23,10 +23,6 @@
  //* Lightly optimized by Marot Satil for the GShade project.
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 uniform int View_Mode <
 	ui_type = "combo";
 	ui_items = "DLAA Out\0Mask View A\0Mask View B\0";
@@ -214,12 +210,8 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	{
 		DLAA = lerp(DLAA,float4(1,1,0,1),Mask * 2);
 	}
-
-#if GSHADE_DITHER
-	return float4(DLAA.rgb + TriDither(DLAA.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), DLAA.a);
-#else
+	
 	return DLAA;
-#endif
 }
 
 ///////////////////////////////////////////////////////////ReShade.fxh/////////////////////////////////////////////////////////////

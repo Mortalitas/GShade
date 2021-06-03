@@ -62,10 +62,6 @@ uniform float EdgeThresholdMin <
 #include "FXAA.fxh"
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 // Samplers
 
 sampler FXAATexture
@@ -90,27 +86,6 @@ float4 FXAALumaPass(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_
 
 float4 FXAAPixelShader(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-#if GSHADE_DITHER
-	const float4 outcolor = FxaaPixelShader(
-		texcoord, // pos
-		0, // fxaaConsolePosPos
-		FXAATexture, // tex
-		FXAATexture, // fxaaConsole360TexExpBiasNegOne
-		FXAATexture, // fxaaConsole360TexExpBiasNegTwo
-		BUFFER_PIXEL_SIZE, // fxaaQualityRcpFrame
-		0, // fxaaConsoleRcpFrameOpt
-		0, // fxaaConsoleRcpFrameOpt2
-		0, // fxaaConsole360RcpFrameOpt2
-		Subpix, // fxaaQualitySubpix
-		EdgeThreshold, // fxaaQualityEdgeThreshold
-		EdgeThresholdMin, // fxaaQualityEdgeThresholdMin
-		0, // fxaaConsoleEdgeSharpness
-		0, // fxaaConsoleEdgeThreshold
-		0, // fxaaConsoleEdgeThresholdMin
-		0 // fxaaConsole360ConstDir
-	);
-	return float4(outcolor.rgb + TriDither(outcolor.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
-#else
 	return FxaaPixelShader(
 		texcoord, // pos
 		0, // fxaaConsolePosPos
@@ -129,7 +104,6 @@ float4 FXAAPixelShader(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : 
 		0, // fxaaConsoleEdgeThresholdMin
 		0 // fxaaConsole360ConstDir
 	);
-#endif
 }
 
 // Rendering passes
