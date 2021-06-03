@@ -509,7 +509,7 @@ float3 apply3(in const float3 color, in const int tex, in const float lut)
     lutcoord.x += (lutcoord.z - lerpfact) * texelsize.y;
     lutcoord.y = lut / _SOURCE_MULTILUT_AMOUNT3 + lutcoord.y / _SOURCE_MULTILUT_AMOUNT3;
 
-    return lerp(tex2D(SamplerMultiLUT3, lutcoord.xy).xyz, tex2D(SamplerMultiLUT3, float2(lutcoord.x + texelsize.y, lutcoord.y)).xyz, lerpfact).xyz);
+    return lerp(tex2D(SamplerMultiLUT3, lutcoord.xy).xyz, tex2D(SamplerMultiLUT3, float2(lutcoord.x + texelsize.y, lutcoord.y)).xyz, lerpfact).xyz;
 }
 #endif
 
