@@ -5,10 +5,6 @@
 #include "FXShadersTonemap.fxh"
 #include "FXShadersTransform.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #ifndef MAGIC_LENS_BLUR_SAMPLES
 #define MAGIC_LENS_BLUR_SAMPLES 9
 #endif
@@ -258,12 +254,7 @@ float4 BlendPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 	color.rgb = Tonemap::Apply(Tonemapper, color.rgb);
 
-
-#if GSHADE_DITHER
-	return float4(color.rgb += TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
 	return color;
-#endif
 }
 
 technique LiquidLens
