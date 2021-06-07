@@ -114,7 +114,7 @@ void PS_Otis_DEH_BlendBlurWithNormalBuffer(float4 vpos: SV_Position, float2 texc
 	fragment = lerp(blendedFragment, float4(FogColor, blendedFragment.r), clamp((depth-FogStart) * yFactor * FogFactor, 0.0, 1.0));
 
 #if GSHADE_DITHER
-	fragment.rgb += fragment.rgb + TriDither(fragment.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+	fragment.rgb += TriDither(fragment.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
 #endif
 }
 
