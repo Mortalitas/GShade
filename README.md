@@ -9,9 +9,12 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 
 **GShade is network-unlocked in the following online software and games, but will work with any game that ReShade itself can:**
 * **Baldur’s Gate 3**
+* BeamNG.drive
 * **Black Desert Online**
 * **Cemu**
+* DC Universe Online
 * DiRT Rally 2.0
+* Dragon Nest
 * **Elder Scrolls Online**
 * Fallout 76
 * Farming Simulator 2019
@@ -27,6 +30,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Phasmophobia
 * Remnant: From the Ashes
 * **Ryujinx**
+* Sea of Thieves
 * **Second Life** (Official, Alchemy, Black Dragon, Firestorm, Singularity Viewer)
 * Shroud of the Avatar
 * Star Wars: The Old Republic
