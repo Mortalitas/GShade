@@ -30,6 +30,11 @@ uniform float2 coordinates <
     ui_min = 0.0; ui_max = 1.0;
 > = 0.25;
 
+uniform bool use_mouse_point <
+    ui_label="Use Mouse Coordinates";
+    ui_tooltip="When enabled, uses the mouse's current coordinates instead of those defined by the Coordinates sliders";
+> = false;
+
 uniform float min_depth <
     ui_type = "slider";
     ui_label="Minimum Depth";
@@ -51,10 +56,6 @@ uniform int animate <
     ui_tooltip = "Animates the effect.";
 > = 0;
 
-uniform float anim_rate <
-    source = "timer";
->;
-
 uniform int render_type <
     ui_type = "combo";
     ui_label = "Blending Mode";
@@ -62,6 +63,13 @@ uniform int render_type <
     ui_tooltip = "Choose a blending mode.";
 > = 0;
 
+uniform float anim_rate <
+    source = "timer";
+>;
+
+uniform float2 mouse_coordinates < 
+source= "mousepoint";
+>;
 
 texture texColorBuffer : COLOR;
 
@@ -103,6 +111,9 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
 
     float2 center = coordinates;
+    if (use_mouse_point) 
+        center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH / 2.0, mouse_coordinates.y * BUFFER_RCP_HEIGHT / 2.0);
+
     float2 tc = texcoord - center;
 
     float4 color;

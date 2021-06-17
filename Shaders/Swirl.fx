@@ -37,6 +37,11 @@ uniform float2 coordinates <
     ui_max = 1.0;
 > = float2(0.25, 0.25);
 
+uniform bool use_mouse_point <
+    ui_label="Use Mouse Coordinates";
+    ui_tooltip="When enabled, uses the mouse's current coordinates instead of those defined by the Coordinates sliders";
+> = false;
+
 uniform float aspect_ratio <
     ui_type = "slider";
     ui_label="Aspect Ratio"; 
@@ -60,10 +65,6 @@ uniform int animate <
     ui_tooltip = "Animates the swirl, moving it clockwise and counterclockwise.";
 > = 0;
 
-uniform float anim_rate <
-    source = "timer";
->;
-
 uniform int inverse <
     ui_type = "combo";
     ui_label = "Inverse Angle";
@@ -77,6 +78,14 @@ uniform int render_type <
     ui_items = "Normal\0Add\0Multiply\0Subtract\0Divide\0Darker\0Lighter\0";
     ui_tooltip = "Additively render the effect.";
 > = 0;
+
+uniform float anim_rate <
+    source = "timer";
+>;
+
+uniform float2 mouse_coordinates < 
+source= "mousepoint";
+>;
 
 texture texColorBuffer : COLOR;
 
@@ -92,6 +101,21 @@ sampler samplerColor
     Height = BUFFER_HEIGHT;
     Format = RGBA16;
 };
+
+float2x2 swirlTransform(float theta) {
+    const float c = cos(theta);
+    const float s = sin(theta);
+
+    const float m1 = c;
+    const float m2 = -s;
+    const float m3 = s;
+    const float m4 = c;
+
+    return float2x2(
+        m1, m2,
+        m3, m4
+    );
+}
 
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
@@ -117,27 +141,29 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     const float4 base = tex2D(samplerColor, texcoord);
     const float depth = ReShade::GetLinearizedDepth(texcoord).r;
     float2 center = coordinates;
+    
+    if (use_mouse_point) 
+        center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH / 2.0, mouse_coordinates.y * BUFFER_RCP_HEIGHT / 2.0);
+
     float2 tc = texcoord - center;
     float4 color;
 
     center.x /= ar;
     tc.x /= ar;
 
-    const float dist = distance(tc, center);
-    if (dist < radius && depth >= min_depth)
+    if (depth >= min_depth)
     {
+        const float dist = distance(tc, center);
+        const float dist_radius = radius-dist;
         const float tension_radius = lerp(radius-dist, radius, tension);
-        float percent = (radius-dist) / tension_radius;
-        if (inverse != 0)
-            percent = 1 - percent;
+        float percent = max(dist_radius, 0) / tension_radius;   
+        if(inverse && dist < radius)
+            percent = 1 - percent;     
         const float theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
-        const float s =  sin(theta);
-        const float c =  cos(theta);
-        tc = float2(dot(tc - center, float2(c, -s)), dot(tc - center, float2(s,c)));
 
+        tc = mul(swirlTransform(theta), tc-center);
         tc += (2 * center);
         tc.x *= ar;
-      
       
         color = tex2D(samplerColor, tc);
     }
@@ -146,7 +172,8 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         color = tex2D(samplerColor, texcoord);
     }
 
-    if(depth >= min_depth)
+    if(depth >= min_depth){
+
         switch(render_type)
         {
             case 1: // Add
@@ -170,6 +197,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
                     color = base;
                 break;
         }  
+    }
 
 #if GSHADE_DITHER
     return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
