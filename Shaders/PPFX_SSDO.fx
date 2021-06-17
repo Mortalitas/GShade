@@ -307,7 +307,7 @@ float4 viewSpace(float2 txCoords)
 			const float4 vsFetch = tex2Dlod(SamplerViewSpace,float4(fetchCoords,0,pSSDOSourceLOD));
 			
 			float3 albedoFetch = tex2Dlod(SamplerColorLOD,float4(fetchCoords,0,pSSDOBounceLOD)).xyz;
-			albedoFetch = pow(abs(albedoFetch),pSSDOBounceSaturation);
+			albedoFetch = pow(max(albedoFetch, 1e-5),pSSDOBounceSaturation);
 			albedoFetch = normalize(albedoFetch);
 			albedoFetch *= pSSDOBounceMultiplier;
 			albedoFetch = 1.0-albedoFetch;
