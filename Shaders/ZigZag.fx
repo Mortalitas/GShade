@@ -165,7 +165,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     {
         const float dist = distance(tc, center);
         const float tension_radius = lerp(radius-dist, radius, tension);
-        const float percent = (radius-dist) / tension_radius;
+        const float percent = max(radius-dist, 0) / tension_radius;
         
         const float theta = percent * percent * (animate == 1 ? amplitude * sin(anim_rate * 0.0005) : amplitude) * sin(percent * percent / period * radians(angle) + (phase + (animate == 2 ? 0.00075 * anim_rate : 0)));
 
