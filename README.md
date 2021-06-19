@@ -12,6 +12,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * BeamNG.drive
 * **Black Desert Online**
 * **Cemu**
+* City of Heroes
 * DC Universe Online
 * DiRT Rally 2.0
 * Dragon Nest
