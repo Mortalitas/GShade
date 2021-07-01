@@ -24,7 +24,7 @@
  *  SOFTWARE.
  */
 
-#define PD80_Technique_Name     pd80_02_Bonus_LUT_pack
+#define PD80_Technique_Name     prod80_02_Bonus_LUT_pack
 
 // Texture name which contains the LUT(s) and the Tile Sizes, Amounts, etc.
 #define PD80_LUT_File_Name      "pd80_example-lut.png"

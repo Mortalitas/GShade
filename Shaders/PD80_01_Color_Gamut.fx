@@ -197,21 +197,21 @@ namespace pd80_colorconversion
         float3x3 gamut;
         switch( colorgamut )
         {
-            case 0:  { gamut = XYZ_To_sRGB; } break;
-            case 1:  { gamut = XYZ_To_AdobeRGB; } break;
-            case 2:  { gamut = XYZ_To_AppleRGB; } break;
-            case 3:  { gamut = XYZ_To_BestRGB; } break;
-            case 4:  { gamut = XYZ_To_BetaRGB; } break;
-            case 5:  { gamut = XYZ_To_BruceRGB; } break;
-            case 6:  { gamut = XYZ_To_CIERGB; } break;
-            case 7:  { gamut = XYZ_To_ColorMatch; } break;
-            case 8:  { gamut = XYZ_To_Don; } break;
-            case 9:  { gamut = XYZ_To_ECI; } break;
+            case 0:  { gamut = XYZ_To_sRGB;         } break;
+            case 1:  { gamut = XYZ_To_AdobeRGB;     } break;
+            case 2:  { gamut = XYZ_To_AppleRGB;     } break;
+            case 3:  { gamut = XYZ_To_BestRGB;      } break;
+            case 4:  { gamut = XYZ_To_BetaRGB;      } break;
+            case 5:  { gamut = XYZ_To_BruceRGB;     } break;
+            case 6:  { gamut = XYZ_To_CIERGB;       } break;
+            case 7:  { gamut = XYZ_To_ColorMatch;   } break;
+            case 8:  { gamut = XYZ_To_Don;          } break;
+            case 9:  { gamut = XYZ_To_ECI;          } break;
             case 10: { gamut = XYZ_To_EktaSpacePS5; } break;
-            case 11: { gamut = XYZ_To_NTSC; } break;
-            case 12: { gamut = XYZ_To_PALSECAM; } break;
-            case 13: { gamut = XYZ_To_ProPhoto; } break;
-            case 14: { gamut = XYZ_To_SMPTEC; } break;
+            case 11: { gamut = XYZ_To_NTSC;         } break;
+            case 12: { gamut = XYZ_To_PALSECAM;     } break;
+            case 13: { gamut = XYZ_To_ProPhoto;     } break;
+            case 14: { gamut = XYZ_To_SMPTEC;       } break;
             case 15: { gamut = XYZ_To_WideGamutRGB; } break;
         }
         float3x3 refwhitemat = float3x3(

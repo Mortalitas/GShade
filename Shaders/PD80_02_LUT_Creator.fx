@@ -47,6 +47,8 @@
     Profit.
 */
 
+// "HALD_64.png"
+// "pd80_neutral-lut.png"
 
 #include "ReShade.fxh"
 

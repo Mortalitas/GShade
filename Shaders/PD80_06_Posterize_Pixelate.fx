@@ -117,11 +117,11 @@ namespace pd80_posterizepixelate
         // Dither
         float2 tx         = bwbh.xy / 512.0f;
         tx.xy             *= texcoord.xy;
-        float dnoise      = tex2D( samplerNoise, tx ).x;
+        float3 dnoise     = tex2D( samplerRGBNoise, tx ).xyz;
         float mot         = dither_motion ? pingpong.x + 9 : 1.0f;
-        dnoise            = frac( dnoise + 0.61803398875f * mot );
-        dnoise            = dnoise * 2.0f - 1.0f;
-        color.xyz         = enable_dither ? saturate( color.xyz + dnoise * ( dither_strength / number_of_levels )) : color.xyz;
+        dnoise.xyz        = frac( dnoise + 0.61803398875f * mot );
+        dnoise.xyz        = dnoise * 2.0f - 1.0f;
+        color.xyz         = enable_dither ? saturate( color.xyz + dnoise.xyz * ( dither_strength / number_of_levels )) : color.xyz;
         // Dither end
         float3 orig       = color.xyz;
         color.xyz         = floor( color.xyz * number_of_levels ) / ( number_of_levels - 1 );

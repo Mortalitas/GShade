@@ -195,7 +195,7 @@ namespace pd80_filmgrain
     
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     uniform float Timer < source = "timer"; >;
-
+	
     float4 rnm( float2 tc, float t ) 
     {
         float noise       = sin( dot( tc, float2( 12.9898, 78.233 ))) * ( 43758.5453 + t );

@@ -132,7 +132,6 @@ namespace PD80_NameSpace
         float newluma    = lerp( labcol.x, lablut.x, PD80_MixLuma );
         float2 newAB     = lerp( labcol.yz, lablut.yz, PD80_MixChroma );
         lutcolor.xyz     = pd80_lab_to_srgb( float3( newluma, newAB ));
-
         color.xyz        = lerp( color.xyz, saturate( lutcolor.xyz + dnoise.wzx ), PD80_Intensity );
     }
 

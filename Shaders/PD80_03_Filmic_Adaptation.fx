@@ -3,7 +3,7 @@
     Author      : prod80 (Bas Veth)
     License     : MIT, Copyright (c) 2020 prod80
 
-    Additional credits
+    Additional credits (exposure)
     - Padraic Hennessy for the logic
       https://placeholderart.wordpress.com/2014/11/21/implementing-a-physically-based-camera-manual-exposure/
     - Padraic Hennessy for the logic
