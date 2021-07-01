@@ -78,7 +78,7 @@ namespace pd80_colortemp
         float3 blended   = lerp( color.xyz, color.xyz * kColor.xyz, kMix );
         float3 resHSV    = RGBToHSL( blended.xyz );
         float3 resRGB    = HSLToRGB( float3( resHSV.xy, oLum.z ));
-        color.xyz        = LumPreservation ? resRGB.xyz : blended.xyz;
+        color.xyz        = lerp( blended.xyz, resRGB.xyz, LumPreservation );
         return float4( color.xyz, 1.0f );
     }
 
