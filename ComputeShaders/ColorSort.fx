@@ -75,14 +75,14 @@ namespace ColorSorter
 	> = 1.050;
 	uniform float GradientStrength <
 		ui_type = "slider";
-		ui_min = 0.001; ui_max = 1.000;
+		ui_min = 0.000; ui_max = 1.000;
 		ui_step = 0.001;
 		ui_tooltip = "Strength of the noise applied to the masked area. More noise results in more brightness variance. Only recommended in monotone environments. For color gradients on the sorted area, better apply other effects between Masking and Main effect order.";
 		ui_category = SORTING;
 	> = 0.0;
 	uniform float MaskingNoise <
 		ui_type = "slider";
-		ui_min = 0.001; ui_max = 1.000;
+		ui_min = 0.000; ui_max = 1.000;
 		ui_step = 0.001;
 		ui_tooltip = "Strength of the noise applied to mask itself.";
 		ui_category = SORTING;
@@ -115,7 +115,7 @@ namespace ColorSorter
 	> = 1.0;
 	uniform float ValueRange <
 		ui_type = "slider";
-		ui_min = 0.000; ui_max = 1.000;
+		ui_min = 0.000; ui_max = 1.001;
 		ui_step = 0.001;
 		ui_tooltip = "The tolerance around the value.";
 		ui_category = MASKING_C;
