@@ -8,6 +8,12 @@
     #include "TriDither.fxh"
 #endif
 
+uniform int mode <
+    ui_type = "combo";
+    ui_label = "Mode";
+    ui_items = "Around center\0Out from center\0";
+    ui_tooltip = "Selects the mode the distortion should be processed through.";
+> = 0;
 
 uniform float radius <
     ui_type = "slider";
@@ -126,6 +132,14 @@ float2x2 swirlTransform(float theta) {
     );
 }
 
+float2x2 zigzagTransform(float dist) {
+    const float c = cos(dist);
+    return float2x2(
+        c, 0,
+        0, c
+    );
+}
+
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
@@ -166,12 +180,18 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         const float dist = distance(tc, center);
         const float tension_radius = lerp(radius-dist, radius, tension);
         const float percent = max(radius-dist, 0) / tension_radius;
-        
-        const float theta = percent * percent * (animate == 1 ? amplitude * sin(anim_rate * 0.0005) : amplitude) * sin(percent * percent / period * radians(angle) + (phase + (animate == 2 ? 0.00075 * anim_rate : 0)));
+        const float percentSquared = percent * percent;
+        const float theta = percentSquared * (animate == 1 ? amplitude * sin(anim_rate * 0.0005) : amplitude) * sin(percentSquared / period * radians(angle) + (phase + (animate == 2 ? 0.00075 * anim_rate : 0)));
 
-        const float s =  sin(theta);
-        const float c = cos(theta);
-        tc = mul(swirlTransform(theta), tc-center);
+        if(!mode) 
+        {
+            tc = mul(swirlTransform(theta), tc-center);
+        }
+        else
+        {
+            tc = mul(zigzagTransform(theta), tc-center);
+        }
+
 
         tc += (2.0 * center);
         tc.x *= ar;
