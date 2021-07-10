@@ -1,6 +1,7 @@
 /////////////////////////////////////////////////////////
 // cGravity.fx by SirCobra
-// Version 0.1
+// Version 0.2
+// You can find info and my repository here: https://github.com/LordKobra/CobraFX
 // currently VERY resource-intensive
 // This effect lets pixels gravitate towards the bottom in a 3D environment.
 // It uses a custom seed (currently the Mandelbrot set) to determine the intensity of each pixel.
@@ -213,7 +214,6 @@ float inFocus(float4 rgbval, float scenedepth, float2 texcoord)
 	bool d3 = abs(hsvval.g - Saturation) <= SaturationRange;
 	bool is_color_focus = (d3 && d2 && d1) || FilterColor == 0;
 	//depthfilter
-	float3 col_val = rgbval.rgb;
 	const float scenefocus = FocusDepth;
 	const float desaturateFullRange = FocusRangeDepth + FocusEdgeDepth;
 	float depthdiff;
@@ -292,9 +292,9 @@ void gravityMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 	{
 		uint yi = y + (GRAVITY_HEIGHT - 1 - 2 * y)*InvertGravity;
 		// get your information together
-		float4 rgbval =  tex2Dfetch(ReShade::BackBuffer, int2(id.x*GRAVITY_RES_X, yi*GRAVITY_RES_Y), 0); //access
+		float4 rgbval =  tex2Dfetch(ReShade::BackBuffer, int2(id.x*GRAVITY_RES_X, yi*GRAVITY_RES_Y)); //access
 		float scenedepth = depthlist[yi]; // access
-		float strength = tex2Dfetch(SamplerGravitySeedMap, int2(id.x, yi), 0).r; //access
+		float strength = tex2Dfetch(SamplerGravitySeedMap, int2(id.x, yi)).r; //access
 		strength = strength * GravityIntensity * inFocus(rgbval, scenedepth, float2((id.x*GRAVITY_RES_X + 0.5) / BUFFER_WIDTH, (yi * GRAVITY_RES_Y + 0.5) / BUFFER_HEIGHT)); //access
 		strengthen[yi] = strength = strength * (GRAVITY_HEIGHT - 2);
 		if (!AllowOverlapping) {
@@ -325,7 +325,7 @@ void gravityMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 	for (uint y = 0; y < GRAVITY_HEIGHT; y++)
 	{
 		if (y != finalist[y]) {
-			float4 storeVal = tex2Dfetch(ReShade::BackBuffer, int2(id.x, finalist[y] * GRAVITY_RES_Y), 0); // access
+			float4 storeVal = tex2Dfetch(ReShade::BackBuffer, int2(id.x, finalist[y] * GRAVITY_RES_Y)); // access
 			float blendIntensity = smoothstep(0, strengthen[finalist[y]], distance(y,finalist[y]));
 			storeVal = lerp(storeVal, float4(BlendColor, 1.0), blendIntensity * EffectFactor);
 			tex2Dstore(storageGravityMain, float2(id.x, y), storeVal);
@@ -401,10 +401,10 @@ void prepare_depth(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out fl
 void downsample_gravity(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
 {
 	fragment = tex2D(SamplerGravityMain, texcoord);
-	float depthGravity = tex2D(SamplerGravityDepth, texcoord).x;
+	float depthGravity = tex2D(SamplerGravityDepth, texcoord).r;
 	float depthPixel = ReShade::GetLinearizedDepth(texcoord);
 	fragment = (fragment.a && depthGravity<depthPixel) ? fragment : tex2D(ReShade::BackBuffer, texcoord);
-	fragment = (ShowSelectedHue) ? showHue(texcoord, fragment) : fragment;
+	fragment = (ShowSelectedHue*FilterColor) ? showHue(texcoord, fragment) : fragment;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
