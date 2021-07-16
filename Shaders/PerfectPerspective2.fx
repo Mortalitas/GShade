@@ -1,5 +1,5 @@
 /**
-Pantomorphic PS, version 4.3.2
+Pantomorphic PS, version 4.4.0
 (c) 2021 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -101,17 +101,42 @@ uniform int PresetKy <
 		"y  distance/size\0";
 > = 0;
 
+uniform bool AsymmetricalManual <
+	ui_type = "input";
+	ui_category = "Manual";
+	ui_label = "enable Asymmetrical";
+	ui_spacing = 2;
+	ui_tooltip = "Third option drives the bottom half of the screen.";
+> = false;
+
+uniform int PresetKz <
+	ui_type = "radio";
+	ui_category = "Manual";
+	ui_label = "Vertical-bottom perspective";
+	ui_items =
+		"z  shape/angle\0"
+		"z  speed/aim\0"
+		"z  distance/size\0";
+> = 0;
+
 uniform bool Expert <
 	ui_type = "input";
 	ui_category = "Expert"; ui_category_closed = true;
 	ui_label = "enable Expert";
 > = false;
 
-uniform float2 K <
+uniform bool AsymmetricalExpert <
+	ui_type = "input";
+	ui_category = "Expert";
+	ui_label = "enable Asymmetrical";
+	ui_spacing = 1;
+	ui_tooltip = "Third value of 'k' drives the bottom-half of the screen.";
+> = false;
+
+uniform float3 K <
 	ui_type = "slider";
 	ui_category = "Expert";
-	ui_label = "k 2D";
-	ui_spacing = 1;
+	ui_label = "k 2.5D";
 	ui_tooltip =
 		"K  1 ...Rectilinear projection (standard), preserves straight lines,"
 		" but doesn't preserve proportions, angles or scale.\n"
@@ -124,7 +149,7 @@ uniform float2 K <
 		"K -1 ...Orthographic projection preserves planar luminance as cosine-law,"
 		" has extreme radial compression. Found in peephole viewer.";
 	ui_min = -1; ui_max = 1;
-> = float2(1, 1);
+> = float3(1, 1, 1);
 
 // BORDER
 
@@ -250,7 +275,7 @@ float pantomorphic(float halfOmega, float2 k, inout float2 viewcoord)
 	float rcp_f;
 	{
 		// Horizontal
-		if (k.x>0.0)	  rcp_f = tan(k.x*halfOmega)/k.x;
+		if      (k.x>0.0) rcp_f = tan(k.x*halfOmega)/k.x;
 		else if (k.x<0.0) rcp_f = sin(k.x*halfOmega)/k.x;
 		else              rcp_f = halfOmega;
 	}
@@ -262,13 +287,13 @@ float pantomorphic(float halfOmega, float2 k, inout float2 viewcoord)
 	float2 theta2;
 	{
 		// Horizontal
-		if (k.x>0.0)	  theta2.x = atan(r*k.x*rcp_f)/k.x;
+		if      (k.x>0.0) theta2.x = atan(r*k.x*rcp_f)/k.x;
 		else if (k.x<0.0) theta2.x = asin(r*k.x*rcp_f)/k.x;
-		else			  theta2.x = r*rcp_f;
+		else              theta2.x = r*rcp_f;
 		// Vertical
-		if (k.y>0.0)	  theta2.y = atan(r*k.y*rcp_f)/k.y;
+		if      (k.y>0.0) theta2.y = atan(r*k.y*rcp_f)/k.y;
 		else if (k.y<0.0) theta2.y = asin(r*k.y*rcp_f)/k.y;
-		else			  theta2.y = r*rcp_f;
+		else              theta2.y = r*rcp_f;
 	}
 
 	// Get phi interpolation weights
@@ -349,7 +374,10 @@ float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV
 
 	// Manage presets
 	float2 k;
-	if (Expert) k = clamp(K, -1.0, 1.0);
+	if (Expert) k = clamp(
+		// Create asymmetrical anamorphic
+		(AsymmetricalExpert && sphCoord.y >= 0.0)? K.xz : K.xy,
+		-1.0, 1.0);
 	else if (Manual)
 	{
 		switch (PresetKx)
@@ -359,7 +387,7 @@ float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV
 			case 2:  k.x = -0.5; break; // x Distance/size
 			// ...more
 		}
-		switch (PresetKy)
+		switch ((AsymmetricalManual && sphCoord.y >= 0.0)? PresetKz : PresetKy)
 		{
 			default: k.y =  0.5; break; // y Shape/angle
 			case 1:  k.y =  0.0; break; // y Speed/aim
@@ -369,8 +397,8 @@ float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV
 	}
 	else switch (SimplePresets)
 	{
-		default: k = float2( 0.0, 0.5); break; // Shooting
-		case 1:  k = float2( 0.5,-0.5); break; // Racing
+		default: k = float2( 0.0, sphCoord.y < 0.0? 0.75 :-0.5); break; // Shooting
+		case 1:  k = float2( 0.5, sphCoord.y < 0.0?-0.5  : 0.0); break; // Racing
 		case 2:  k = float2( 0.5, 0.5); break; // Skating (reference)
 		case 3:  k = float2(-0.5, 0.0); break; // Flying
 		case 4:  k = float2( 0.0,-0.5); break; // Stereopsis
@@ -418,7 +446,7 @@ float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV
 technique Pantomorphic <
 	ui_tooltip =
 		"Adjust perspective for distortion-free picture\n"
-		"(anamorphic, fish-eye and vignetting)\n"
+		"(anamorphic (asymmetrical), fish-eye and vignetting)\n"
 		"\nManual:\n"
 		"Fist select proper FOV angle and type.\n"
 		"If FOV type is unknown, set preset to 'skating' and find a round object within the game.\n"
