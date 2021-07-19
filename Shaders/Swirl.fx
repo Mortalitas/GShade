@@ -199,6 +199,8 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
             float cur_splice = max(dist_radius,0)/splice_width;
             cur_splice = cur_splice - frac(cur_splice);
             float splice_angle = (angle / number_splices) * cur_splice;
+            if(dist_radius > radius-inner_radius)
+                splice_angle = angle;
             theta = radians(splice_angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
         }
 
