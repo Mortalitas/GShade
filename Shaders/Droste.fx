@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Droste.fx by SirCobra
-// Version 0.2
+// Version 0.3
 // You can find info and my repository here: https://github.com/LordKobra/CobraFX
-// This effect warps space inside a spiral.
+// This effect warps space inside itself.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -68,6 +68,20 @@ namespace Droste
 		ui_tooltip = "Defines the frequency of the intervals.";
 		ui_category = MASKING_M;
 	> = 1.0;
+	uniform float X_Offset <
+		ui_type = "slider";
+		ui_min = -0.5; ui_max = 0.5;
+		ui_step = 0.01;
+		ui_tooltip = "Change the X position of the center..";
+		ui_category = MASKING_M;
+	> = 1.0;
+	uniform float Y_Offset <
+		ui_type = "slider";
+		ui_min = -0.5; ui_max = 0.5;
+		ui_step = 0.01;
+		ui_tooltip = "Change the Y position of the center..";
+		ui_category = MASKING_M;
+	> = 1.0;
 	uniform int Buffer4 <
 		ui_type = "radio"; ui_label = " ";
 	>;
@@ -97,8 +111,8 @@ namespace Droste
 	{
         //transform coordinate system
         float ar = float(BUFFER_WIDTH) / BUFFER_HEIGHT;
-        float new_x = (texcoord.x-0.5)*ar;
-        float new_y = (texcoord.y-0.5);
+        float new_x = (texcoord.x-0.5+X_Offset)*ar;
+        float new_y = (texcoord.y-0.5+Y_Offset);
 		//calculate and normalize angle
 		float val = atan2_approx(new_x,new_y)+M_PI;
         val /= 2*M_PI;
