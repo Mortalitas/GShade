@@ -133,43 +133,43 @@ namespace Droste
 		const float y_bottom = -0.5;
 		const float x_right  =  0.5;
 		const float x_left   = -0.5;
-		float nnx = (new_x < 0) ?   x_left / new_x : x_right / new_x;
+		//ar normalized towards projection borders
 		float nny = (new_y < 0) ? y_bottom / new_y :   y_top / new_y;
+		float nnx = (new_x < 0) ? x_left * ar / new_x : x_right * ar / new_x; // überleeeegeeeen! Concept: AR+fixed Offset works?
 		float nnc = min(nnx, nny);
-		float normalized_x = new_x * nnc + X_Offset;
-		float normalized_y = new_y * nnc + Y_Offset;		
-		float d_normal = sqrt((normalized_x - X_Offset) * (normalized_x - X_Offset) + (normalized_y - Y_Offset) * (normalized_y - Y_Offset)); // not ar normalized
+		float normalized_x = new_x * nnc + X_Offset * ar;
+		float normalized_y = new_y * nnc + Y_Offset;
+		float d_normal_2 = sqrt((normalized_x - X_Offset * ar) * (normalized_x - X_Offset * ar) + (normalized_y - Y_Offset) * (normalized_y - Y_Offset));	//ar normalized	
 
-		nnx = (new_x < 0) ? x_left * ar / new_x : x_right * ar / new_x; // überleeeegeeeen! Concept: AR+fixed Offset works?
-		nnc = min(nnx, nny);
-		float normalized_x_2 = new_x * nnc + X_Offset;
-		float normalized_y_2 = new_y * nnc + Y_Offset;
-		float d_normal_2 = sqrt((normalized_x_2 - X_Offset) * (normalized_x_2 - X_Offset) + (normalized_y_2 - Y_Offset) * (normalized_y_2 - Y_Offset));	//ar normalized	
-
-		//rounding
+		//rounding screencentered borders
 		float d_left   = x_left   + X_Offset;
 		float d_right  = x_right  + X_Offset;
 		float d_top    = y_top    + Y_Offset;
 		float d_bottom = y_bottom + Y_Offset;
 		float d_x = (new_x < 0) ? d_left * ar / new_x : d_right * ar / new_x;
 		float d_y = (new_y < 0) ? d_bottom    / new_y : d_top        / new_y;
-
+		//radial interpolation
+		float xclose = d_x * new_x;
+		float yclose = d_y * new_y;
+		float ri = (abs(new_x * xclose)+abs(new_y * yclose)) / (abs(new_x) + abs(new_y)) / 0.5;
+		//float tannorm = abs(mod((atan2_approx(new_x,new_y)+M_PI)/(2*M_PI)+(atan2_approx(X_Offset,-Y_Offset)+M_PI)/(2*M_PI)+0.5,1)-0.5);
+		//ri = 0.5*tannorm; Pretty idea, looks bad
 		nnc = min(d_x, d_y);
 		float nx_2 = new_x * nnc;
 		float ny_2 = new_y * nnc;
-		float aar = saturate((sqrt(nx_2 * nx_2 + ny_2 * ny_2)) / d_normal_2); // TODO: remove shitty version and make it usable with a smooth one
-		float r = 1;//aar; // TODO: smaller r reduces visual look although it should increase it - fix one day
+		float aar = saturate(ri - 0.4) + 0.15;//saturate((sqrt(nx_2 * nx_2 + ny_2 * ny_2)) / d_normal_2+0.15); // TODO: remove shitty version and make it usable with a smooth one
+		float r = aar; // TODO: smaller r reduces visual look although it should increase it - fix one day
 		float arr = (1 - r) * ar + r;
 		float d_final = sqrt(new_x * new_x + new_y * new_y) / pow(pow(abs(new_x) / arr * 2, 2.0 / r) + pow(abs(new_y) * 2, 2.0 / r), r / 2.0);
 		//TODO: See if the projection is correct in projectionspace (it once worked in screenspace, so fix it!!!!)
 		float buffer_len = d_normal_2;
 		//TODO: fix rectangle distortions
 		float scale_normal = d_final / buffer_len;
-		normalized_x = EffectType == 0 ? (normalized_x_2 - X_Offset) * scale_normal / ar + X_Offset : normalized_x;
-		normalized_y = EffectType == 0 ? (normalized_y_2 - Y_Offset) * scale_normal      + Y_Offset : normalized_y;
+		normalized_x = EffectType == 0 ? (normalized_x - X_Offset * ar) * scale_normal / ar + X_Offset : normalized_x; //here we leave AR space
+		normalized_y = EffectType == 0 ? (normalized_y - Y_Offset     ) * scale_normal      + Y_Offset : normalized_y;
 		//calculate relative position towards outer and inner ring and interpolate
         float real_scale = (1 - val) * InnerRing + val * OuterRing;
-        float adjusted_x = EffectType == 0 ? normalized_x * real_scale + 0.5 - X_Offset : normalized_x * real_scale + 0.5 - X_Offset;
+        float adjusted_x = EffectType == 0 ? normalized_x * real_scale + 0.5 - X_Offset : normalized_x/ar * real_scale + 0.5 - X_Offset;
         float adjusted_y = normalized_y * real_scale + 0.5 - Y_Offset;
 		fragment = tex2D(ReShade::BackBuffer, float2(adjusted_x, adjusted_y));
 	}
