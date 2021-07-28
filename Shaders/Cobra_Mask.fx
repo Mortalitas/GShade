@@ -16,6 +16,7 @@
 //***************************************                  *******************************************//
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 // Shader Start
 #include "Reshade.fxh"
 
@@ -23,14 +24,14 @@
 namespace Cobra_Masking
 {
 
-//defines
-#define MASKING_M "General Options\n"
-#define MASKING_C "Color Masking\n"
-#define MASKING_D "Depth Masking\n"
+	//defines
+	#define MASKING_M "General Options\n"
+	#define MASKING_C "Color Masking\n"
+	#define MASKING_D "Depth Masking\n"
 
-#ifndef M_PI
-	#define M_PI 3.1415927
-#endif
+	#ifndef M_PI
+		#define M_PI 3.1415927
+	#endif
 
 	//ui
 	uniform int Buffer1 <
@@ -117,7 +118,13 @@ namespace Cobra_Masking
 		ui_step = 0.001;
 		ui_tooltip = "The depth of the range around the manual focus depth which should be emphasized. Outside this range, de-emphasizing takes place";
 		ui_category = MASKING_D;
-	> = 0.010;
+	> = 0.010;	
+	uniform float FocusEdgeDepth <
+		ui_type = "slider";
+		ui_min = 0.000; ui_max = 1.000;
+		ui_tooltip = "The depth of the edge of the focus range. Range from 0.00, which means no depth, so at the edge of the focus range, the effect kicks in at full force,\ntill 1.00, which means the effect is smoothly applied over the range focusRangeEdge-horizon.";
+		ui_step = 0.001;
+	> = 0.050;
 	uniform bool Spherical <
 		ui_tooltip = "Enables Emphasize in a sphere around the focus-point instead of a 2D plane";
 		ui_category = MASKING_D;
@@ -144,21 +151,25 @@ namespace Cobra_Masking
 		ui_type = "radio"; ui_label = " ";
 	>;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-//*************************************                       ****************************************//
-//*************************************  Textures & Samplers  ****************************************//
-//*************************************                       ****************************************//
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//*************************************                       ****************************************//
+	//*************************************  Textures & Samplers  ****************************************//
+	//*************************************                       ****************************************//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 	texture texMask {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 
 	sampler2D SamplerMask { Texture = texMask; };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-//***************************************                  *******************************************//
-//*************************************** Helper Functions *******************************************//
-//***************************************                  *******************************************//
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//***************************************                  *******************************************//
+	//*************************************** Helper Functions *******************************************//
+	//***************************************                  *******************************************//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 	//vector mod and normal fmod
 	float3 mod(float3 x, float y) 
@@ -200,17 +211,16 @@ namespace Cobra_Masking
 		return fragment;
 	}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-//***************************************                  *******************************************//
-//***************************************     Masking      *******************************************//
-//***************************************                  *******************************************//
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//***************************************                  *******************************************//
+	//***************************************     Masking      *******************************************//
+	//***************************************                  *******************************************//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-	bool inFocus(float4 rgbval, float scenedepth, float2 texcoord)
+	float inFocus(float4 rgbval, float scenedepth, float2 texcoord)
 	{
-		float2 txcopy = texcoord;
 		//colorfilter
 		float4 hsvval = rgb2hsv(rgbval);
 		bool d1 = abs(hsvval.b - Value) < ValueRange;
@@ -219,15 +229,15 @@ namespace Cobra_Masking
 		bool is_color_focus = (d3 && d2 && d1) || FilterColor == 0; // color threshold
 		//depthfilter
 		float depthdiff;
+		const float desaturateFullRange = FocusRangeDepth + FocusEdgeDepth;
 		texcoord.x = (texcoord.x - Sphere_FocusHorizontal) * ReShade::ScreenSize.x;
 		texcoord.y = (texcoord.y - Sphere_FocusVertical) * ReShade::ScreenSize.y;
 		const float degreePerPixel = Sphere_FieldOfView / ReShade::ScreenSize.x;
 		const float fovDifference = sqrt((texcoord.x * texcoord.x) + (texcoord.y * texcoord.y)) * degreePerPixel;
 		depthdiff = Spherical ? sqrt((scenedepth * scenedepth) + (FocusDepth * FocusDepth) - (2 * scenedepth * FocusDepth * cos(fovDifference * (2 * M_PI / 360)))) : depthdiff = abs(scenedepth - FocusDepth);
 
-		bool is_depth_focus = (depthdiff < FocusRangeDepth) || FilterDepth == 0;
-
-		return is_color_focus && is_depth_focus;
+		bool is_depth_focus = (depthdiff < desaturateFullRange) || FilterDepth == 0;
+		return (1 - saturate((depthdiff > desaturateFullRange) ? 1.0 : smoothstep(FocusRangeDepth, desaturateFullRange, depthdiff))) * (is_color_focus && is_depth_focus);
 	}
 
 	void mask_start(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
@@ -243,7 +253,7 @@ namespace Cobra_Masking
 	{
 		fragment = tex2D(SamplerMask, texcoord);
 		fragment = ShowMask ? fragment.aaaa : fragment;
-		fragment = (fragment.a && !ShowMask) ? tex2D(ReShade::BackBuffer, texcoord) : fragment;
+		fragment = (!ShowMask) ? lerp(tex2D(ReShade::BackBuffer, texcoord), fragment, 1 - fragment.aaaa) : fragment;
 	}
 
 
