@@ -9,6 +9,7 @@
 // from https://github.com/FransBouma/OtisFX/blob/master/Shaders/Emphasize.fx
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //***************************************                  *******************************************//
 //***************************************   UI & Defines   *******************************************//
@@ -28,159 +29,139 @@ namespace Cobra_Masking
 #define MASKING_D "Depth Masking\n"
 
 #ifndef M_PI
-#define M_PI 3.1415927
+	#define M_PI 3.1415927
 #endif
 
 	//ui
 	uniform int Buffer1 <
-		ui_type = "radio";
-	ui_label = " ";
-	> ;
+		ui_type = "radio"; ui_label = " ";
+	>;	
 	uniform bool InvertMask <
 		ui_tooltip = "Invert the mask.";
-	ui_category = MASKING_M;
+		ui_category = MASKING_M;
 	> = false;
 	uniform bool ShowMask <
 		ui_tooltip = "Show the masked pixels.";
-	ui_category = MASKING_M;
+		ui_category = MASKING_M;
 	> = false;
 	uniform int Buffer2 <
-		ui_type = "radio";
-	ui_label = " ";
-	> ;
+		ui_type = "radio"; ui_label = " ";
+	>;
 	uniform bool FilterColor <
 		ui_tooltip = "Activates the color filter option.";
-	ui_category = MASKING_C;
+		ui_category = MASKING_C;
 	> = false;
 	uniform bool ShowSelectedHue <
 		ui_tooltip = "Display the current selected hue range on the top of the image.";
-	ui_category = MASKING_C;
+		ui_category = MASKING_C;
 	> = false;
 	uniform float Value <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 1.000;
-	ui_step = 0.001;
-	ui_tooltip = "The Value describes the brightness of the hue. 0 is black/no hue and 1 is maximum hue(e.g. pure red).";
-	ui_category = MASKING_C;
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The Value describes the brightness of the hue. 0 is black/no hue and 1 is maximum hue(e.g. pure red).";
+		ui_category = MASKING_C;
 	> = 1.0;
 	uniform float ValueRange <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 1.001;
-	ui_step = 0.001;
-	ui_tooltip = "The tolerance around the value.";
-	ui_category = MASKING_C;
+		ui_min = 0.000; ui_max = 1.001;
+		ui_step = 0.001;
+		ui_tooltip = "The tolerance around the value.";
+		ui_category = MASKING_C;
 	> = 1.0;
 	uniform float Hue <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 1.000;
-	ui_step = 0.001;
-	ui_tooltip = "The hue describes the color category. It can be red, green, blue or a mix of them.";
-	ui_category = MASKING_C;
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The hue describes the color category. It can be red, green, blue or a mix of them.";
+		ui_category = MASKING_C;
 	> = 1.0;
 	uniform float HueRange <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 0.500;
-	ui_step = 0.001;
-	ui_tooltip = "The tolerance around the hue.";
-	ui_category = MASKING_C;
+		ui_min = 0.000; ui_max = 0.500;
+		ui_step = 0.001;
+		ui_tooltip = "The tolerance around the hue.";
+		ui_category = MASKING_C;
 	> = 1.0;
 	uniform float Saturation <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 1.000;
-	ui_step = 0.001;
-	ui_tooltip = "The saturation determines the colorfulness. 0 is greyscale and 1 pure colors.";
-	ui_category = MASKING_C;
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The saturation determines the colorfulness. 0 is greyscale and 1 pure colors.";
+		ui_category = MASKING_C;
 	> = 1.0;
 	uniform float SaturationRange <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 1.000;
-	ui_step = 0.001;
-	ui_tooltip = "The tolerance around the saturation.";
-	ui_category = MASKING_C;
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The tolerance around the saturation.";
+		ui_category = MASKING_C;
 	> = 1.0;
 	uniform int Buffer3 <
-		ui_type = "radio";
-	ui_label = " ";
-	> ;
+		ui_type = "radio"; ui_label = " ";
+	>;
 	uniform bool FilterDepth <
 		ui_tooltip = "Activates the depth filter option.";
-	ui_category = MASKING_D;
+		ui_category = MASKING_D;
 	> = false;
 	uniform float FocusDepth <
 		ui_type = "slider";
-	ui_min = 0.000;
-	ui_max = 1.000;
-	ui_step = 0.001;
-	ui_tooltip = "Manual focus depth of the point which has the focus. Range from 0.0, which means camera is the focus plane, till 1.0 which means the horizon is focus plane.";
-	ui_category = MASKING_D;
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "Manual focus depth of the point which has the focus. Range from 0.0, which means camera is the focus plane, till 1.0 which means the horizon is focus plane.";
+		ui_category = MASKING_D;
 	> = 0.026;
 	uniform float FocusRangeDepth <
 		ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 1.000;
-	ui_step = 0.001;
-	ui_tooltip = "The depth of the range around the manual focus depth which should be emphasized. Outside this range, de-emphasizing takes place";
-	ui_category = MASKING_D;
+		ui_min = 0.0; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The depth of the range around the manual focus depth which should be emphasized. Outside this range, de-emphasizing takes place";
+		ui_category = MASKING_D;
 	> = 0.010;
 	uniform bool Spherical <
 		ui_tooltip = "Enables Emphasize in a sphere around the focus-point instead of a 2D plane";
-	ui_category = MASKING_D;
+		ui_category = MASKING_D;
 	> = false;
 	uniform int Sphere_FieldOfView <
 		ui_type = "slider";
-	ui_min = 1;
-	ui_max = 180;
-	ui_tooltip = "Specifies the estimated Field of View you are currently playing with. Range from 1, which means 1 Degree, till 180 which means 180 Degree (half the scene).\nNormal games tend to use values between 60 and 90.";
-	ui_category = MASKING_D;
+		ui_min = 1; ui_max = 180;
+		ui_tooltip = "Specifies the estimated Field of View you are currently playing with. Range from 1, which means 1 Degree, till 180 which means 180 Degree (half the scene).\nNormal games tend to use values between 60 and 90.";
+		ui_category = MASKING_D;
 	> = 75;
 	uniform float Sphere_FocusHorizontal <
 		ui_type = "slider";
-	ui_min = 0;
-	ui_max = 1;
-	ui_tooltip = "Specifies the location of the focuspoint on the horizontal axis. Range from 0, which means left screen border, till 1 which means right screen border.";
-	ui_category = MASKING_D;
+		ui_min = 0; ui_max = 1;
+		ui_tooltip = "Specifies the location of the focuspoint on the horizontal axis. Range from 0, which means left screen border, till 1 which means right screen border.";
+		ui_category = MASKING_D;
 	> = 0.5;
 	uniform float Sphere_FocusVertical <
 		ui_type = "slider";
-	ui_min = 0;
-	ui_max = 1;
-	ui_tooltip = "Specifies the location of the focuspoint on the vertical axis. Range from 0, which means upper screen border, till 1 which means bottom screen border.";
-	ui_category = MASKING_D;
+		ui_min = 0; ui_max = 1;
+		ui_tooltip = "Specifies the location of the focuspoint on the vertical axis. Range from 0, which means upper screen border, till 1 which means bottom screen border.";
+		ui_category = MASKING_D;
 	> = 0.5;
 	uniform int Buffer4 <
-		ui_type = "radio";
-	ui_label = " ";
-	> ;
+		ui_type = "radio"; ui_label = " ";
+	>;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//*************************************                       ****************************************//
-	//*************************************  Textures & Samplers  ****************************************//
-	//*************************************                       ****************************************//
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//*************************************                       ****************************************//
+//*************************************  Textures & Samplers  ****************************************//
+//*************************************                       ****************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	texture texMask
-	{
-		Width = BUFFER_WIDTH;
-		Height = BUFFER_HEIGHT;
-		Format = RGBA16F;
-	};
+	texture texMask {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 
 	sampler2D SamplerMask { Texture = texMask; };
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//***************************************                  *******************************************//
-	//*************************************** Helper Functions *******************************************//
-	//***************************************                  *******************************************//
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//***************************************                  *******************************************//
+//*************************************** Helper Functions *******************************************//
+//***************************************                  *******************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//vector mod and normal fmod
-	float3 mod(float3 x, float y)
+	float3 mod(float3 x, float y) 
 	{
 		return x - y * floor(x / y);
 	}
@@ -189,9 +170,7 @@ namespace Cobra_Masking
 	float4 hsv2rgb(float4 c)
 	{
 		float3 rgb = clamp(abs(mod(float3(c.x * 6.0, c.x * 6.0 + 4.0, c.x * 6.0 + 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
-
 		rgb = rgb * rgb * (3.0 - 2.0 * rgb); // cubic smoothing
-
 		return float4(c.z * lerp(float3(1.0, 1.0, 1.0), rgb, c.y), 1.0);
 	}
 
@@ -201,7 +180,6 @@ namespace Cobra_Masking
 		const float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
 		float4 p = lerp(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
 		float4 q = lerp(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
-
 		float d = q.x - min(q.w, q.y);
 		const float e = 1.0e-10;
 		return float4(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x, 1.0);
@@ -222,11 +200,13 @@ namespace Cobra_Masking
 		return fragment;
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//***************************************                  *******************************************//
-	//***************************************     Masking      *******************************************//
-	//***************************************                  *******************************************//
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+//***************************************                  *******************************************//
+//***************************************     Masking      *******************************************//
+//***************************************                  *******************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 	bool inFocus(float4 rgbval, float scenedepth, float2 texcoord)
 	{
@@ -250,10 +230,7 @@ namespace Cobra_Masking
 		return is_color_focus && is_depth_focus;
 	}
 
-	void mask_start(float4 vpos
-					: SV_Position, float2 texcoord
-					: TEXCOORD, out float4 fragment
-					: SV_Target)
+	void mask_start(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
 	{
 		float4 color = tex2D(ReShade::BackBuffer, texcoord);
 		float scenedepth = ReShade::GetLinearizedDepth(texcoord);
@@ -261,40 +238,30 @@ namespace Cobra_Masking
 		in_focus = (1 - InvertMask) * in_focus + InvertMask * (1 - in_focus);
 		fragment = float4(color.rgb, in_focus);
 	}
-	void mask_end(float4 vpos
-				  : SV_Position, float2 texcoord
-				  : TEXCOORD, out float4 fragment
-				  : SV_Target)
+
+	void mask_end(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
 	{
 		fragment = tex2D(SamplerMask, texcoord);
 		fragment = ShowMask ? fragment.aaaa : fragment;
 		fragment = (fragment.a && !ShowMask) ? tex2D(ReShade::BackBuffer, texcoord) : fragment;
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//***************************************                  *******************************************//
-	//***************************************     Pipeline     *******************************************//
-	//***************************************                  *******************************************//
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	technique Cobra_Masking_Start < ui_tooltip = "This is the masking part of the shader. It has to be placed before Cobra_Masking_End. The masked area is copied and stored here, meaning all effects applied between Start and End only affect the unmasked area.";
-	>
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//*****************************************                  ******************************************//
+	//*****************************************     Pipeline     ******************************************//
+	//*****************************************                  ******************************************//
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	technique Cobra_Masking_Start 
+	< ui_tooltip = "This is the masking part of the shader. It has to be placed before Cobra_Masking_End. The masked area is copied and stored here, meaning all effects applied between Start and End only affect the unmasked area."; >
 	{
-		pass mask
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = mask_start;
-			RenderTarget = texMask;
-		}
+		pass mask { VertexShader = PostProcessVS; PixelShader = mask_start; RenderTarget = texMask; }
 	}
 
-	technique Cobra_Masking_End < ui_tooltip = "The masked area is applied again onto the screen.";
-	>
+	technique CobraFX_Masking_End < ui_tooltip = "The masked area is applied again onto the screen."; >
 	{
-		pass display
-		{
-			VertexShader = PostProcessVS;
-			PixelShader = mask_end;
-		}
+		pass display { VertexShader = PostProcessVS; PixelShader = mask_end; }
 	}
-} // Namespace End
+}
