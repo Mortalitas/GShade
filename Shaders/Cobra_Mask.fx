@@ -58,7 +58,7 @@ namespace Cobra_Masking
 	> = false;
 	uniform float Value <
 		ui_type = "slider";
-		ui_min = 0.000; ui_max = 1.000;
+		ui_min = 0.000; ui_max = 1.001;
 		ui_step = 0.001;
 		ui_tooltip = "The Value describes the brightness of the hue. 0 is black/no hue and 1 is maximum hue(e.g. pure red).";
 		ui_category = MASKING_C;
@@ -70,6 +70,13 @@ namespace Cobra_Masking
 		ui_tooltip = "The tolerance around the value.";
 		ui_category = MASKING_C;
 	> = 1.0;
+	uniform float ValueEdge <
+		ui_type = "slider";
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The smoothness beyond the value range.";
+		ui_category = MASKING_C;
+	> = 0.0;
 	uniform float Hue <
 		ui_type = "slider";
 		ui_min = 0.000; ui_max = 1.000;
@@ -83,7 +90,7 @@ namespace Cobra_Masking
 		ui_step = 0.001;
 		ui_tooltip = "The tolerance around the hue.";
 		ui_category = MASKING_C;
-	> = 1.0;
+	> = 0.5;
 	uniform float Saturation <
 		ui_type = "slider";
 		ui_min = 0.000; ui_max = 1.000;
@@ -218,26 +225,26 @@ namespace Cobra_Masking
 	//***************************************                  *******************************************//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+	// returns a value between 0 and 1 (1 = in focus)
 	float inFocus(float4 rgbval, float scenedepth, float2 texcoord)
 	{
 		//colorfilter
 		float4 hsvval = rgb2hsv(rgbval);
-		bool d1 = abs(hsvval.b - Value) < ValueRange;
+		float d1_f = abs(hsvval.b - Value) - ValueRange;
+		d1_f = 1 - smoothstep(0, ValueEdge, d1_f);
 		bool d2 = abs(hsvval.r - Hue) < (HueRange + pow(2.71828, -(hsvval.g * hsvval.g) / 0.005)) || (1 - abs(hsvval.r - Hue)) < (HueRange + pow(2.71828, -(hsvval.g * hsvval.g) / 0.01));
 		bool d3 = abs(hsvval.g - Saturation) <= SaturationRange;
-		bool is_color_focus = (d3 && d2 && d1) || FilterColor == 0; // color threshold
+		float is_color_focus = max(d3 * d2 * d1_f, FilterColor == 0); // color threshold
 		//depthfilter
-		float depthdiff;
 		const float desaturateFullRange = FocusRangeDepth + FocusEdgeDepth;
 		texcoord.x = (texcoord.x - Sphere_FocusHorizontal) * ReShade::ScreenSize.x;
 		texcoord.y = (texcoord.y - Sphere_FocusVertical) * ReShade::ScreenSize.y;
 		const float degreePerPixel = Sphere_FieldOfView / ReShade::ScreenSize.x;
 		const float fovDifference = sqrt((texcoord.x * texcoord.x) + (texcoord.y * texcoord.y)) * degreePerPixel;
-		depthdiff = Spherical ? sqrt((scenedepth * scenedepth) + (FocusDepth * FocusDepth) - (2 * scenedepth * FocusDepth * cos(fovDifference * (2 * M_PI / 360)))) : depthdiff = abs(scenedepth - FocusDepth);
-
-		bool is_depth_focus = (depthdiff < desaturateFullRange) || FilterDepth == 0;
-		return (1 - saturate((depthdiff > desaturateFullRange) ? 1.0 : smoothstep(FocusRangeDepth, desaturateFullRange, depthdiff))) * (is_color_focus && is_depth_focus);
+		float depthdiff = Spherical ? sqrt((scenedepth * scenedepth) + (FocusDepth * FocusDepth) - (2 * scenedepth * FocusDepth * cos(fovDifference * (2 * M_PI / 360)))) : abs(scenedepth - FocusDepth);
+		float depthval = 1 - saturate((depthdiff > desaturateFullRange) ? 1.0 : smoothstep(FocusRangeDepth, desaturateFullRange, depthdiff));
+		depthval = max(depthval, FilterDepth == 0);
+		return is_color_focus * depthval;
 	}
 
 	void mask_start(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
@@ -254,6 +261,7 @@ namespace Cobra_Masking
 		fragment = tex2D(SamplerMask, texcoord);
 		fragment = ShowMask ? fragment.aaaa : fragment;
 		fragment = (!ShowMask) ? lerp(tex2D(ReShade::BackBuffer, texcoord), fragment, 1 - fragment.aaaa) : fragment;
+		fragment = (ShowSelectedHue * FilterColor * !ShowMask) ? showHue(texcoord, fragment) : fragment;
 	}
 
 
