@@ -25,7 +25,7 @@ https://github.com/Fubaxiusz/fubax-shaders
 // FIELD OF VIEW
 
 uniform int FovAngle <
-	ui_type = "slider"
+	ui_type = "slider";
 	ui_category = "Game field-of-view"; ui_category_closed = false;
 	ui_label = "FOV angle";
 	ui_tooltip = "This setting should match your in-game FOV (in degrees).";
@@ -33,7 +33,8 @@ uniform int FovAngle <
 	ui_min = 0; ui_max = 170;
 > = 90;
 
-uniform int FovType < __UNIFORM_COMBO_INT1
+uniform int FovType <
+	ui_type = "combo";
 	ui_category = "Game field-of-view";
 	ui_label = "FOV type";
 	ui_tooltip = "This setting should match your in-game FOV type.\n"
