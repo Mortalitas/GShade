@@ -89,9 +89,9 @@ sampler samplerColor
 {
     Texture = texColorBuffer;
 
-    AddressU = WRAP;
-    AddressV = WRAP;
-    AddressW = WRAP;
+    AddressU = MIRROR;
+    AddressV = MIRROR;
+    AddressW = MIRROR;
 
     MagFilter = LINEAR;
     MinFilter = LINEAR;
