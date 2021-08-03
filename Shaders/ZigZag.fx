@@ -309,15 +309,15 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
                 break;
             // Saturation
             case 26:
-                color.rgb = Saturation(base, color.rgb);
+                color.rgb = Saturation(base.rgb, color.rgb);
                 break;
             // ColorB
             case 27:
-                color.rgb = ColorB(base, color.rgb);
+                color.rgb = ColorB(base.rgb, color.rgb);
                 break;
             // Luminosity
             case 28:
-                color.rgb = Luminosity(base, color.rgb);
+                color.rgb = Luminosity(base.rgb, color.rgb);
                 break;
         }
     
