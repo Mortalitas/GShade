@@ -3,6 +3,7 @@
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh"
+#include "Blending.fxh"
 
 uniform float radius <
     ui_type = "slider";
@@ -59,8 +60,8 @@ uniform int animate <
 uniform int render_type <
     ui_type = "combo";
     ui_label = "Blending Mode";
-    ui_items = "Normal\0Add\0Multiply\0Subtract\0Divide\0Darker\0Lighter\0";
-    ui_tooltip = "Choose a blending mode.";
+    ui_items = "Normal\0Darken\0Multiply\0Color Burn\0Linear Burn\0Lighten\0Screen\0Color Dodge\0Linear Dodge\0Addition\0Reflect\0Glow\0Overlay\0Soft Light\0Hard Light\0Vivid Light\0Linear Light\0Pin Light\0Hard Mix\0Difference\0Exclusion\0Subtract\0Divide\0Grain Merge\0Grain Extract\0Hue\0Saturation\0ColorB\0Luminosity\0";
+    ui_tooltip = "Additively render the effect.";
 > = 0;
 
 uniform float anim_rate <
@@ -144,29 +145,121 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     }
 
     if(depth >= min_depth)
-        switch(render_type)
+                switch(render_type)
         {
-            case 1: // Add
-                color += base;
+            // Darken
+            case 1:
+                color.rgb = Darken(base.rgb, color.rgb);
                 break;
-            case 2: // Multiply
-                color *= base;
+            // Multiply
+            case 2:
+                color.rgb = Multiply(base.rgb, color.rgb);
                 break;
-            case 3: // Subtract
-                color -= base;
+            // Color Burn
+            case 3:
+                color.rgb = ColorBurn(base.rgb, color.rgb);
                 break;
-            case 4: // Divide
-                color /= base;
+            // Linear Burn
+            case 4:
+                color.rgb = LinearBurn(base.rgb, color.rgb);
                 break;
-            case 5: // Darker
-                if(length(color.rgb) > length(base.rgb))
-                    color = base;
+            // Lighten
+            case 5:
+                color.rgb = Lighten(base.rgb, color.rgb);
                 break;
-            case 6: // Lighter
-                if(length(color.rgb) < length(base.rgb))
-                    color = base;
+            // Screen
+            case 6:
+                color.rgb = Screen(base.rgb, color.rgb);
                 break;
-        }  
+            // Color Dodge
+            case 7:
+                color.rgb = ColorDodge(base.rgb, color.rgb);
+                break;
+            // Linear Dodge
+            case 8:
+                color.rgb = LinearDodge(base.rgb, color.rgb);
+                break;
+            // Addition
+            case 9:
+                color.rgb = Addition(base.rgb, color.rgb);
+                break;
+            // Reflect
+            case 10:
+                color.rgb = Reflect(base.rgb, color.rgb);
+                break;
+            // Glow
+            case 11:
+                color.rgb = Glow(base.rgb, color.rgb);
+                break;
+            // Overlay
+            case 12:
+                color.rgb = Overlay(base.rgb, color.rgb);
+                break;
+            // Soft Light
+            case 13:
+                color.rgb = SoftLight(base.rgb, color.rgb);
+                break;
+            // Hard Light
+            case 14:
+                color.rgb = HardLight(base.rgb, color.rgb);
+                break;
+            // Vivid Light
+            case 15:
+                color.rgb = VividLight(base.rgb, color.rgb);
+                break;
+            // Linear Light
+            case 16:
+                color.rgb = LinearLight(base.rgb, color.rgb);
+                break;
+            // Pin Light
+            case 17:
+                color.rgb = PinLight(base.rgb, color.rgb);
+                break;
+            // Hard Mix
+            case 18:
+                color.rgb = HardMix(base.rgb, color.rgb);
+                break;
+            // Difference
+            case 19:
+                color.rgb = Difference(base.rgb, color.rgb);
+                break;
+            // Exclusion
+            case 20:
+                color.rgb = Exclusion(base.rgb, color.rgb);
+                break;
+            // Subtract
+            case 21:
+                color.rgb = Subtract(base.rgb, color.rgb);
+                break;
+            // Divide
+            case 22:
+                color.rgb = Divide(base.rgb, color.rgb);
+                break;
+            // Grain Merge
+            case 23:
+                color.rgb = GrainMerge(base.rgb, color.rgb);
+                break;
+            // Grain Extract
+            case 24:
+                color.rgb = GrainExtract(base.rgb, color.rgb);
+                break;
+            // Hue
+            case 25:
+                color.rgb = Hue(base.rgb, color.rgb);
+                break;
+            // Saturation
+            case 26:
+                color.rgb = Saturation(base.rgb, color.rgb);
+                break;
+            // ColorB
+            case 27:
+                color.rgb = ColorB(base.rgb, color.rgb);
+                break;
+            // Luminosity
+            case 28:
+                color.rgb = Luminosity(base.rgb, color.rgb);
+                break;
+        }
 
     return color;
 }
