@@ -137,7 +137,7 @@ namespace ColorSorter
 		ui_step = 0.001;
 		ui_tooltip = "The tolerance around the value.";
 		ui_category = MASKING_C;
-	> = 1.0;
+	> = 1.001;
 	uniform float Hue <
 		ui_type = "slider";
 		ui_min = 0.000; ui_max = 1.000;
@@ -151,7 +151,7 @@ namespace ColorSorter
 		ui_step = 0.001;
 		ui_tooltip = "The tolerance around the hue.";
 		ui_category = MASKING_C;
-	> = 1.0;
+	> = 0.5;
 	uniform float Saturation <
 		ui_type = "slider";
 		ui_min = 0.000; ui_max = 1.000;
@@ -506,6 +506,10 @@ namespace ColorSorter
 		int interval_end = row - 1 + COLOR_HEIGHT / THREAD_HEIGHT + tid.x * COLOR_HEIGHT;
 		uint i;
 		//masking
+		for (i = row; i <= row - 1 + COLOR_HEIGHT / THREAD_HEIGHT; i++)
+		{
+				colortable[i + tid.x * COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i));
+		}
 		if (tid.y == 0)
 		{
 			bool was_focus = false; //last array element
@@ -516,7 +520,7 @@ namespace ColorSorter
 			for (i = 0; i < COLOR_HEIGHT; i++)
 			{
 				//determine focus mask
-				colortable[i + tid.x * COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i)); // how to handle 0.5 val?
+				//colortable[i + tid.x * COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i));
 				is_focus = colortable[i + tid.x * COLOR_HEIGHT].a > 0.4;
 				//thresholding cells
 				is_seperate = fmod(colortable[i + tid.x * COLOR_HEIGHT].a, 0.5) > 0.125;
@@ -524,7 +528,7 @@ namespace ColorSorter
 					maskval++;
 				was_focus = is_focus;
 				was_seperate = is_seperate;
-				colortable[i + tid.x * COLOR_HEIGHT].a = (float)maskval + 0.5 * is_focus; // is the is_focus carryover depreciated?
+				colortable[i + tid.x * COLOR_HEIGHT].a = (float)maskval + 0.5 * is_focus; // is the is_focus carryover depreciated? - Yes :)
 			}
 		}
 		barrier();
