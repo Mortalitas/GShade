@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ColorSort.fx by SirCobra
-// Version 0.3
+// Version 0.5
 // You can find info and my repository here: https://github.com/LordKobra/CobraFX
 // currently resource-intensive
 // This compute shader only runs on the ReShade 4.8 Beta and DX11+ or newer OpenGL games.
@@ -52,8 +52,8 @@ namespace ColorSorter
 	#define THREAD_HEIGHT	((uint)16) // 2^n
 #endif
 
-#define COLOR_NOISE_WIDTH BUFFER_WIDTH
-#define COLOR_NOISE_HEIGHT COLOR_HEIGHT
+#define COLOR_NOISE_WIDTH 4096
+#define COLOR_NOISE_HEIGHT 1024
 
 	//ui
 	uniform int Buffer1 <
@@ -73,6 +73,13 @@ namespace ColorSorter
 		ui_tooltip = "Pixels with brightness close to this parameter serve as threshold for the sorting algorithm and fragment the area.";
 		ui_category = SORTING;
 	> = 1.050;
+	uniform float BrightnessThreshold2 <
+		ui_type = "slider";
+		ui_min = -0.050; ui_max = 1.050;
+		ui_step = 0.001;
+		ui_tooltip = "Pixels with brightness close to this parameter serve as threshold for the sorting algorithm and fragment the area.";
+		ui_category = SORTING;
+	> = 1.050;
 	uniform float GradientStrength <
 		ui_type = "slider";
 		ui_min = 0.000; ui_max = 1.000;
@@ -82,17 +89,28 @@ namespace ColorSorter
 	> = 0.0;
 	uniform float MaskingNoise <
 		ui_type = "slider";
-		ui_min = 0.000; ui_max = 1.000;
+		ui_min = 0.000; ui_max = 1.001;
 		ui_step = 0.001;
 		ui_tooltip = "Strength of the noise applied to mask itself.";
 		ui_category = SORTING;
 	> = 0.0;
+	uniform float NoiseSize <
+		ui_type = "slider";
+		ui_min = 0.001; ui_max = 1;
+		ui_step = 0.001;
+		ui_tooltip = "Size of the noise texture. A lower value means larger noise pixels.";
+		ui_category = SORTING;
+	> = 1.0;
 	uniform bool ReverseSort <
 		ui_tooltip = "While active, it orders from dark to bright, top to bottom. Else it will sort from bright to dark.";
 		ui_category = SORTING;
 	> = false;
 	uniform bool ShowMask <
 		ui_tooltip = "Show the masked pixels.";
+		ui_category = SORTING;
+	> = false;
+	uniform bool HotsamplingMode <
+		ui_tooltip = "The noise will be the same at all resolutions. Activate this, then adjust your options and it will stay the same at all resolutions. Turn this off when you do not intend to hotsample.";
 		ui_category = SORTING;
 	> = false;
 	uniform int Buffer2 <
@@ -209,8 +227,8 @@ namespace ColorSorter
 	storage texColorSortStorage { Texture = texColorSort; };
 
 	sampler2D SamplerHalfRes { Texture = texHalfRes; };
-	sampler2D SamplerNoise { Texture = texNoise; };
-	sampler2D SamplerMask { Texture = texMask; };
+	sampler2D SamplerNoise { Texture = texNoise; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; };
+	sampler2D SamplerMask { Texture = texMask; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; };
 	sampler2D SamplerBackground { Texture = texBackground; };
 	sampler2D SamplerColorSort { Texture = texColorSort; };
 
@@ -353,7 +371,6 @@ namespace ColorSorter
 
 	bool inFocus(float4 rgbval, float scenedepth, float2 texcoord)
 	{
-		float2 txcopy = texcoord;
 		//colorfilter
 		float4 hsvval = rgb2hsv(rgbval);
 		bool d1 = abs(hsvval.b - Value) < ValueRange;
@@ -369,19 +386,28 @@ namespace ColorSorter
 		depthdiff = Spherical ? sqrt((scenedepth * scenedepth) + (FocusDepth * FocusDepth) - (2 * scenedepth * FocusDepth * cos(fovDifference * (2 * M_PI / 360)))) : depthdiff = abs(scenedepth - FocusDepth);
 
 		bool is_depth_focus = (depthdiff < FocusRangeDepth) || FilterDepth == 0;
-		//noise
-		float2 t_noise = float2(frac(txcopy.x * BUFFER_WIDTH / COLOR_NOISE_WIDTH), frac(txcopy.y * COLOR_HEIGHT / COLOR_NOISE_HEIGHT));
-		float noise_1 = tex2D(SamplerNoise, t_noise).r;
-		bool is_not_noisy = MaskingNoise < noise_1;
-		return is_color_focus && is_depth_focus && is_not_noisy;
+		return is_color_focus && is_depth_focus;
 	}
 
 	void mask_color(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float fragment : SV_Target)
 	{
+		//focus
 		float4 color = tex2D(ReShade::BackBuffer, texcoord);
 		float scenedepth = ReShade::GetLinearizedDepth(texcoord);
 		float in_focus = inFocus(color, scenedepth, texcoord);
-		fragment = in_focus;
+		//seperator
+		uint hs_width = HotsamplingMode ? 2036 : COLOR_NOISE_WIDTH;
+		float2 t_noise = float2(texcoord.x, texcoord.y) * NoiseSize;
+		float angle = RotationAngle;
+		float phi = angle * M_PI / 180;
+		t_noise = float2(cos(phi) * t_noise.x - sin(phi) * t_noise.y, sin(phi) * t_noise.x + cos(phi) * t_noise.y);
+		t_noise = float2(fmod(t_noise.x * BUFFER_WIDTH, hs_width) / (float)hs_width, fmod(t_noise.y * COLOR_HEIGHT, COLOR_NOISE_HEIGHT) / (float)COLOR_NOISE_HEIGHT);
+		float noise_1 = tex2D(SamplerNoise, t_noise).r;
+		bool is_noisy = MaskingNoise > noise_1;
+		bool seperator_1 = abs((color.r + color.g + color.b) / 3 - BrightnessThreshold) < 0.04;
+		bool seperator_2 = abs((color.r + color.g + color.b) / 3 - BrightnessThreshold2) < 0.04;
+		bool seperator = is_noisy || seperator_1 || seperator_2;
+		fragment = 0.5 * in_focus + 0.25 * seperator;
 	}
 	void save_background(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
 	{
@@ -410,10 +436,10 @@ namespace ColorSorter
 		float2 texcoord_new = rotate(texcoord, RotationAngle, false);
 		fragment = tex2D(ReShade::BackBuffer, texcoord_new);
 		float mask = tex2D(SamplerMask, texcoord_new).r;
-		fragment.a = 0.5 * mask;
+		fragment.a = mask;
 	}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////  ///////////////////////////////////////FORMATTED TILL HERE 1
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 //***************************************                  *******************************************//
 //***************************************     Sorting      *******************************************//
 //***************************************                  *******************************************//
@@ -478,23 +504,26 @@ namespace ColorSorter
 		int row = tid.y * COLOR_HEIGHT / THREAD_HEIGHT;
 		int interval_start = row + tid.x * COLOR_HEIGHT;
 		int interval_end = row - 1 + COLOR_HEIGHT / THREAD_HEIGHT + tid.x * COLOR_HEIGHT;
-		int i;
+		uint i;
 		//masking
 		if (tid.y == 0)
 		{
 			bool was_focus = false; //last array element
 			bool is_focus = false;	// current array element
+			bool is_seperate = false;
+			bool was_seperate = false;
 			int maskval = 0;
 			for (i = 0; i < COLOR_HEIGHT; i++)
 			{
 				//determine focus mask
-				colortable[i + tid.x * COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i));
-				is_focus = colortable[i + tid.x * COLOR_HEIGHT].a > 0.25;
+				colortable[i + tid.x * COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i)); // how to handle 0.5 val?
+				is_focus = colortable[i + tid.x * COLOR_HEIGHT].a > 0.4;
 				//thresholding cells
-				bool seperate = abs((colortable[i + tid.x * COLOR_HEIGHT].r + colortable[i + tid.x * COLOR_HEIGHT].g + colortable[i + tid.x * COLOR_HEIGHT].b) / 3 - BrightnessThreshold) < 0.04 ? 1 : 0;
-				if (!(is_focus && was_focus && !(seperate)))
+				is_seperate = fmod(colortable[i + tid.x * COLOR_HEIGHT].a, 0.5) > 0.125;
+				if (!(is_focus && was_focus && !(is_seperate && !was_seperate)))
 					maskval++;
 				was_focus = is_focus;
+				was_seperate = is_seperate;
 				colortable[i + tid.x * COLOR_HEIGHT].a = (float)maskval + 0.5 * is_focus; // is the is_focus carryover depreciated?
 			}
 		}
@@ -508,7 +537,7 @@ namespace ColorSorter
 		for (i = 1; i < THREAD_HEIGHT; i = 2 * i) // the amount of merges, just like a normal merge sort
 		{
 			barrier();
-			int groupsize = 2 * i;
+			uint groupsize = 2 * i;
 			//keylist
 			for (int j = 0; j < groupsize; j++) //probably redundancy between threads. optimzable
 			{
@@ -519,7 +548,7 @@ namespace ColorSorter
 			int idy_sorted;
 			int even = tid.y - (tid.y % groupsize);
 			int k = even;
-			int mid = even + groupsize / 2 - 1;
+			int mid = even + groupsize / 2.0 - 1;
 			int odd = mid + 1;
 			int to = even + groupsize - 1;
 			while (even <= mid && odd <= to)
@@ -551,19 +580,19 @@ namespace ColorSorter
 				key_sorted[k++] = key[odd++];
 			}
 			// calculate the real distance
-			int diff_sorted = (idy_sorted % groupsize) - (tid.y % (groupsize / 2));
+			int diff_sorted = (idy_sorted % groupsize) - (tid.y % (groupsize / 2.0 ));
 			int pos1 = tid.y * COLOR_HEIGHT / THREAD_HEIGHT;
-			bool is_even = (tid.y % groupsize) < groupsize / 2;
+			bool is_even = (tid.y % groupsize) < groupsize / 2.0;
 			if (is_even)
 			{
 				evenblock[idy_sorted + tid.x * THREAD_HEIGHT] = pos1;
 				if (diff_sorted == 0)
 				{
-					oddblock[idy_sorted + tid.x * THREAD_HEIGHT] = (tid.y - (tid.y % groupsize) + groupsize / 2) * COLOR_HEIGHT / THREAD_HEIGHT;
+					oddblock[idy_sorted + tid.x * THREAD_HEIGHT] = (tid.y - (tid.y % groupsize) + groupsize / 2.0) * COLOR_HEIGHT / THREAD_HEIGHT;
 				}
 				else
 				{
-					int odd_block_search_start = (tid.y - (tid.y % groupsize) + groupsize / 2 + diff_sorted - 1) * COLOR_HEIGHT / THREAD_HEIGHT;
+					int odd_block_search_start = (tid.y - (tid.y % groupsize) + groupsize / 2.0 + diff_sorted - 1) * COLOR_HEIGHT / THREAD_HEIGHT;
 					for (int i2 = 0; i2 < COLOR_HEIGHT / THREAD_HEIGHT; i2++)
 					{ // n pls make logn in future
 						oddblock[idy_sorted + tid.x * THREAD_HEIGHT] = odd_block_search_start + i2;
@@ -609,7 +638,7 @@ namespace ColorSorter
 			odd_start = oddblock[tid.y + tid.x * THREAD_HEIGHT];
 			if ((tid.y + 1) % groupsize == 0)
 			{
-				even_end = (tid.y - (tid.y % groupsize) + groupsize / 2) * COLOR_HEIGHT / THREAD_HEIGHT;
+				even_end = (tid.y - (tid.y % groupsize) + groupsize / 2.0 ) * COLOR_HEIGHT / THREAD_HEIGHT;
 				odd_end = (tid.y - (tid.y % groupsize) + groupsize) * COLOR_HEIGHT / THREAD_HEIGHT;
 			}
 			else
@@ -643,7 +672,7 @@ namespace ColorSorter
 			//replace
 			barrier();
 			int sorted_array_size = cc;
-			int global_position = odd_start + even_start - (tid.y - (tid.y % groupsize) + groupsize / 2) * COLOR_HEIGHT / THREAD_HEIGHT;
+			int global_position = odd_start + even_start - (tid.y - (tid.y % groupsize) + groupsize / 2.0 ) * COLOR_HEIGHT / THREAD_HEIGHT;
 			for (int w = 0; w < cc; w++)
 			{
 				colortable[global_position + w + tid.x * COLOR_HEIGHT] = sorted_array[w];
