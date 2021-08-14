@@ -396,12 +396,12 @@ namespace ColorSorter
 		float scenedepth = ReShade::GetLinearizedDepth(texcoord);
 		float in_focus = inFocus(color, scenedepth, texcoord);
 		//seperator
-		uint hs_width = HotsamplingMode ? 2036 : COLOR_NOISE_WIDTH;
+		uint hs_width = HotsamplingMode ? 2036 : BUFFER_WIDTH;
 		float2 t_noise = float2(texcoord.x, texcoord.y) * NoiseSize;
 		float angle = RotationAngle;
 		float phi = angle * M_PI / 180;
 		t_noise = float2(cos(phi) * t_noise.x - sin(phi) * t_noise.y, sin(phi) * t_noise.x + cos(phi) * t_noise.y);
-		t_noise = float2(fmod(t_noise.x * BUFFER_WIDTH, hs_width) / (float)hs_width, fmod(t_noise.y * COLOR_HEIGHT, COLOR_NOISE_HEIGHT) / (float)COLOR_NOISE_HEIGHT);
+		t_noise = float2(fmod(t_noise.x * hs_width, COLOR_NOISE_WIDTH) / (float) COLOR_NOISE_WIDTH, fmod(t_noise.y * COLOR_HEIGHT, COLOR_NOISE_HEIGHT) / (float)COLOR_NOISE_HEIGHT);
 		float noise_1 = tex2D(SamplerNoise, t_noise).r;
 		bool is_noisy = MaskingNoise > noise_1;
 		bool seperator_1 = abs((color.r + color.g + color.b) / 3 - BrightnessThreshold) < 0.04;
