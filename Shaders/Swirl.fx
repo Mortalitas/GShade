@@ -303,7 +303,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         color = tex2D(samplerColor, tc);
 
         if(dist < radius)
-            color.rgb = BlendWithBase(base.rgb, color.rgb, percent);
+            color.rgb = BlendWithBase(base.rgb, color.rgb, swirl_mode == 0 ? percent : 1);
     }
     else
     {
