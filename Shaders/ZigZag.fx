@@ -141,6 +141,97 @@ float2x2 zigzagTransform(float dist) {
     );
 }
 
+float3 BlendWithBase (const float3 base,const float3 color, const float percent)
+{
+    switch(render_type) {
+        // Darken
+        case 1:
+            return lerp(base, Darken(base, color), percent);
+        // Multiply
+        case 2:
+            return lerp(base, Multiply(base, color), percent);
+        // Color Burn
+        case 3:
+            return lerp(base, ColorBurn(base, color), percent);
+        // Linear Burn
+        case 4:
+            return lerp(base, LinearBurn(base, color), percent);
+        // Lighten
+        case 5:
+            return lerp(base, Lighten(base, color), percent);
+        // Screen
+        case 6:
+            return lerp(base, Screen(base, color), percent);
+        // Color Dodge
+        case 7:
+            return lerp(base, ColorDodge(base, color), percent);
+        // Linear Dodge
+        case 8:
+            return lerp(base, LinearDodge(base, color), percent);
+        // Addition
+        case 9:
+            return lerp(base, Addition(base, color), percent);
+        // Reflect
+        case 10:
+            return lerp(base, Reflect(base, color), percent);
+        // Glow
+        case 11:
+            return lerp(base, Glow(base, color), percent);
+        // Overlay
+        case 12:
+            return lerp(base, Overlay(base, color), percent);
+        // Soft Light
+        case 13:
+            return lerp(base, SoftLight(base, color), percent);
+        // Hard Light
+        case 14:
+            return lerp(base, HardLight(base, color), percent);
+        // Vivid Light
+        case 15:
+            return lerp(base, VividLight(base, color), percent);
+        // Linear Light
+        case 16:
+            return lerp(base, LinearLight(base, color), percent);
+        // Pin Light
+        case 17:
+            return lerp(base, PinLight(base, color), percent);
+        // Hard Mix
+        case 18:
+            return lerp(base, HardMix(base, color), percent);
+        // Difference
+        case 19:
+            return lerp(base, Difference(base, color), percent);
+        // Exclusion
+        case 20:
+            return lerp(base, Exclusion(base, color), percent);
+        // Subtract
+        case 21:
+            return lerp(base, Subtract(base, color), percent);
+        // Divide
+        case 22:
+            return lerp(base, Divide(base, color), percent);
+        // Grain Merge
+        case 23:
+            return lerp(base, GrainMerge(base, color), percent);
+        // Grain Extract
+        case 24:
+            return lerp(base, GrainExtract(base, color), percent);
+        // Hue
+        case 25:
+            return lerp(base, Hue(base, color), percent);
+        // Saturation
+        case 26:
+            return lerp(base, Saturation(base, color), percent);
+        // ColorB
+        case 27:
+            return lerp(base, ColorB(base, color), percent);
+        // Luminosity
+        case 28:
+            return lerp(base, Luminosity(base, color), percent);
+    }
+    return color;
+}
+
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
@@ -198,129 +289,17 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         tc.x *= ar;
 
         color = tex2D(samplerColor, tc);
+        
+        if(depth >= min_depth && dist < radius)
+            color.rgb = BlendWithBase(base.rgb, color.rgb, percent);
+    
     }
     else
     {
         color = tex2D(samplerColor, texcoord);
     }
     
-    if(depth >= min_depth)
-                switch(render_type)
-        {
-            // Darken
-            case 1:
-                color.rgb = Darken(base.rgb, color.rgb);
-                break;
-            // Multiply
-            case 2:
-                color.rgb = Multiply(base.rgb, color.rgb);
-                break;
-            // Color Burn
-            case 3:
-                color.rgb = ColorBurn(base.rgb, color.rgb);
-                break;
-            // Linear Burn
-            case 4:
-                color.rgb = LinearBurn(base.rgb, color.rgb);
-                break;
-            // Lighten
-            case 5:
-                color.rgb = Lighten(base.rgb, color.rgb);
-                break;
-            // Screen
-            case 6:
-                color.rgb = Screen(base.rgb, color.rgb);
-                break;
-            // Color Dodge
-            case 7:
-                color.rgb = ColorDodge(base.rgb, color.rgb);
-                break;
-            // Linear Dodge
-            case 8:
-                color.rgb = LinearDodge(base.rgb, color.rgb);
-                break;
-            // Addition
-            case 9:
-                color.rgb = Addition(base.rgb, color.rgb);
-                break;
-            // Reflect
-            case 10:
-                color.rgb = Reflect(base.rgb, color.rgb);
-                break;
-            // Glow
-            case 11:
-                color.rgb = Glow(base.rgb, color.rgb);
-                break;
-            // Overlay
-            case 12:
-                color.rgb = Overlay(base.rgb, color.rgb);
-                break;
-            // Soft Light
-            case 13:
-                color.rgb = SoftLight(base.rgb, color.rgb);
-                break;
-            // Hard Light
-            case 14:
-                color.rgb = HardLight(base.rgb, color.rgb);
-                break;
-            // Vivid Light
-            case 15:
-                color.rgb = VividLight(base.rgb, color.rgb);
-                break;
-            // Linear Light
-            case 16:
-                color.rgb = LinearLight(base.rgb, color.rgb);
-                break;
-            // Pin Light
-            case 17:
-                color.rgb = PinLight(base.rgb, color.rgb);
-                break;
-            // Hard Mix
-            case 18:
-                color.rgb = HardMix(base.rgb, color.rgb);
-                break;
-            // Difference
-            case 19:
-                color.rgb = Difference(base.rgb, color.rgb);
-                break;
-            // Exclusion
-            case 20:
-                color.rgb = Exclusion(base.rgb, color.rgb);
-                break;
-            // Subtract
-            case 21:
-                color.rgb = Subtract(base.rgb, color.rgb);
-                break;
-            // Divide
-            case 22:
-                color.rgb = Divide(base.rgb, color.rgb);
-                break;
-            // Grain Merge
-            case 23:
-                color.rgb = GrainMerge(base.rgb, color.rgb);
-                break;
-            // Grain Extract
-            case 24:
-                color.rgb = GrainExtract(base.rgb, color.rgb);
-                break;
-            // Hue
-            case 25:
-                color.rgb = Hue(base.rgb, color.rgb);
-                break;
-            // Saturation
-            case 26:
-                color.rgb = Saturation(base.rgb, color.rgb);
-                break;
-            // ColorB
-            case 27:
-                color.rgb = ColorB(base.rgb, color.rgb);
-                break;
-            // Luminosity
-            case 28:
-                color.rgb = Luminosity(base.rgb, color.rgb);
-                break;
-        }
-    
+
 #if GSHADE_DITHER
 	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
 #else
