@@ -66,18 +66,18 @@ namespace ColorSorter
 		ui_tooltip = "Rotation in Degrees.";
 		ui_category = SORTING;
 	> = 0;
-	uniform float BrightnessThreshold <
+	uniform float BrightnessThresholdStart <
 		ui_type = "slider";
 		ui_min = -0.050; ui_max = 1.050;
 		ui_step = 0.001;
-		ui_tooltip = "Pixels with brightness close to this parameter serve as threshold for the sorting algorithm and fragment the area.";
+		ui_tooltip = "Pixels with brightness close to this parameter serve as starting threshold for the sorting algorithm and fragment the area. Set both to their max value to disable them.";
 		ui_category = SORTING;
 	> = 1.050;
-	uniform float BrightnessThreshold2 <
+	uniform float BrightnessThresholdEnd <
 		ui_type = "slider";
 		ui_min = -0.050; ui_max = 1.050;
 		ui_step = 0.001;
-		ui_tooltip = "Pixels with brightness close to this parameter serve as threshold for the sorting algorithm and fragment the area.";
+		ui_tooltip = "Pixels with brightness close to this parameter serve as finishing threshold for the sorting algorithm and fragment the area. Set both to their max value to disable them.";
 		ui_category = SORTING;
 	> = 1.050;
 	uniform float GradientStrength <
@@ -103,6 +103,10 @@ namespace ColorSorter
 	> = 1.0;
 	uniform bool ReverseSort <
 		ui_tooltip = "While active, it orders from dark to bright, top to bottom. Else it will sort from bright to dark.";
+		ui_category = SORTING;
+	> = false;
+	uniform bool InvertMask <
+		ui_tooltip = "Invert the mask.";
 		ui_category = SORTING;
 	> = false;
 	uniform bool ShowMask <
@@ -147,11 +151,11 @@ namespace ColorSorter
 	> = 1.0;
 	uniform float HueRange <
 		ui_type = "slider";
-		ui_min = 0.000; ui_max = 0.500;
+		ui_min = 0.000; ui_max = 0.501;
 		ui_step = 0.001;
 		ui_tooltip = "The tolerance around the hue.";
 		ui_category = MASKING_C;
-	> = 0.5;
+	> = 0.501;
 	uniform float Saturation <
 		ui_type = "slider";
 		ui_min = 0.000; ui_max = 1.000;
@@ -386,7 +390,8 @@ namespace ColorSorter
 		depthdiff = Spherical ? sqrt((scenedepth * scenedepth) + (FocusDepth * FocusDepth) - (2 * scenedepth * FocusDepth * cos(fovDifference * (2 * M_PI / 360)))) : depthdiff = abs(scenedepth - FocusDepth);
 
 		bool is_depth_focus = (depthdiff < FocusRangeDepth) || FilterDepth == 0;
-		return is_color_focus && is_depth_focus;
+		bool in_focus = is_color_focus && is_depth_focus;
+		return (1 - InvertMask) * in_focus + InvertMask * (1 - in_focus);
 	}
 
 	void mask_color(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float fragment : SV_Target)
@@ -402,12 +407,15 @@ namespace ColorSorter
 		float phi = angle * M_PI / 180;
 		t_noise = float2(cos(phi) * t_noise.x - sin(phi) * t_noise.y, sin(phi) * t_noise.x + cos(phi) * t_noise.y);
 		t_noise = float2(fmod(t_noise.x * hs_width, COLOR_NOISE_WIDTH) / (float) COLOR_NOISE_WIDTH, fmod(t_noise.y * COLOR_HEIGHT, COLOR_NOISE_HEIGHT) / (float)COLOR_NOISE_HEIGHT);
-		float noise_1 = tex2D(SamplerNoise, t_noise).r;
-		bool is_noisy = MaskingNoise > noise_1;
-		bool seperator_1 = abs((color.r + color.g + color.b) / 3 - BrightnessThreshold) < 0.04;
-		bool seperator_2 = abs((color.r + color.g + color.b) / 3 - BrightnessThreshold2) < 0.04;
-		bool seperator = is_noisy || seperator_1 || seperator_2;
-		fragment = 0.5 * in_focus + 0.25 * seperator;
+		float noise_1 = tex2D(SamplerNoise, t_noise).r; // add some point-color.
+		//bool is_noisy = MaskingNoise > noise_1;
+		bool seperator_1 = abs((color.r + color.g + color.b) / 3 - BrightnessThresholdStart) < 0.04;
+		bool seperator_2 = abs((color.r + color.g + color.b) / 3 - BrightnessThresholdEnd) < 0.04;
+		//bool seperator = seperator_1 || seperator_2;
+		noise_1 = 0.5 * noise_1;
+		noise_1 = seperator_1 ? 0.8 : noise_1;
+		noise_1 = seperator_2 ? 0.7 : noise_1;
+		fragment = saturate(!in_focus + noise_1); // 1 -not in focus 0-0.5 infocus+noiselevel 0.8:seperator_1 0.7 sep2
 	}
 	void save_background(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target)
 	{
@@ -514,17 +522,24 @@ namespace ColorSorter
 		{
 			bool was_focus = false; //last array element
 			bool is_focus = false;	// current array element
+			float noise = 0;
 			bool is_seperate = false;
 			bool was_seperate = false;
+			bool active_seperator = BrightnessThresholdStart < 1.02 || BrightnessThresholdEnd < 1.02;
+			bool seperate_area = !active_seperator;
 			int maskval = 0;
 			for (i = 0; i < COLOR_HEIGHT; i++)
 			{
 				//determine focus mask
 				//colortable[i + tid.x * COLOR_HEIGHT] = tex2Dfetch(SamplerHalfRes, int2(id.x, i));
-				is_focus = colortable[i + tid.x * COLOR_HEIGHT].a > 0.4;
+				is_focus = colortable[i + tid.x * COLOR_HEIGHT].a < 0.9;  // 1 -not in focus 0-0.5 infocus+noiselevel 0.8:seperator_1 0.7 sep2
 				//thresholding cells
-				is_seperate = fmod(colortable[i + tid.x * COLOR_HEIGHT].a, 0.5) > 0.125;
-				if (!(is_focus && was_focus && !(is_seperate && !was_seperate)))
+				noise = colortable[i + tid.x * COLOR_HEIGHT].a < 0.6 ? 2 * colortable[i + tid.x * COLOR_HEIGHT].a : 0;
+				is_seperate = is_focus &&  MaskingNoise > noise;
+				seperate_area = active_seperator && is_focus && colortable[i + tid.x * COLOR_HEIGHT].a > 0.75 ? true : seperate_area;
+				seperate_area = active_seperator && is_focus && colortable[i + tid.x * COLOR_HEIGHT].a > 0.65 && is_focus && colortable[i + tid.x * COLOR_HEIGHT].a < 0.75  ? false : seperate_area;
+
+				if (!(is_focus && was_focus && seperate_area && !(is_seperate && !was_seperate)))
 					maskval++;
 				was_focus = is_focus;
 				was_seperate = is_seperate;
@@ -739,5 +754,4 @@ then make an odd even list for both arrays and the keys
 
 TODO:
 -edge detection or other ideas, e.g. the triangle grid
--block size control
 */
