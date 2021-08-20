@@ -45,6 +45,13 @@ namespace RealisticLongExposure {
 		ui_step = 0.001;
 		ui_tooltip = "Disables ISO scaling for values below Threshold to avoid average game brightness to bleed into the long exposure. 0 means black, 1 is white (maximum luminosity).";
 	> = 0;
+	uniform float ThresholdSmoothness <
+		ui_type = "slider";
+		ui_min = 0; ui_max = 1;
+		ui_step = 0.001;
+		ui_tooltip = "A higher smoothness will create a soft gradient between the luminosity affected and not affected by the ISO. Useful when a sharp seperation is not possible.";
+	> = 0;
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //*************************************                       ****************************************//
@@ -100,7 +107,7 @@ namespace RealisticLongExposure {
 	float4 getExposure(float4 rgbval, bool e)
 	{
 		float brightness = (rgbval.r + rgbval.g + rgbval.b) / 3;
-		float enc = (brightness > Threshold) ? 1 + (ISO / 100 - 1) * smoothstep(Threshold, 1, brightness ) : 1; // -> apply smooth function?
+		float enc = (brightness > Threshold) ? 1 + (ISO / 100 - 1) * smoothstep(Threshold, min(Threshold+ThresholdSmoothness, 1), brightness ) : 1; // -> apply smooth function?
 		float dec = 1;
 		rgbval.rgb = e ? enc * rgbval.rgb / 14400 : dec * rgbval.rgb;
 		return rgbval;
