@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.7.9
+Perfect Perspective PS, version 3.8.0
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -216,6 +216,9 @@ uniform int ResScaleScreen <
 		"native screen resolution (using VSR or DSR)";
 > = 1920;
 
+#ifndef SIDE_BY_SIDE_3D
+	#define SIDE_BY_SIDE_3D 0
+#endif
 
   ////////////////
  /// TEXTURES ///
@@ -401,6 +404,10 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 // Main perspective shader pass
 float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_Target
 {
+	#if SIDE_BY_SIDE_3D
+		texCoord.x = frac(texCoord.x*2.0); // Side-by-side 3D content
+	#endif
+
 	// Convert FOV type..
 	float FovType; switch(Type)
 	{
