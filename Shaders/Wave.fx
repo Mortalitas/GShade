@@ -12,55 +12,46 @@
 uniform int wave_type <
     ui_type = "combo";
     ui_label = "Wave Type";
+    ui_tooltip = "Selects the type of distortion to apply.";
     ui_items = "X/X\0X/Y\0";
     ui_tooltip = "Which axis the distortion should be performed against.";
 > = 1;
 
 uniform float angle <
-    #if __RESHADE__ < 40000
-        ui_type = "drag";
-    #else
-        ui_type = "slider";
-    #endif
-    ui_min = -360.0; ui_max = 360.0; ui_step = 1.0;
+    ui_type = "slider";
+    ui_label = "Angle";
+    ui_tooltip = "The angle at which the distortion occurs.";
+    ui_min = -360.0; 
+    ui_max = 360.0; 
+    ui_step = 1.0;
 > = 0.0;
 
 uniform float period <
-    #if __RESHADE__ < 40000
-        ui_type = "drag";
-    #else
-        ui_type = "slider";
-    #endif
-    ui_min = 0.1; ui_max = 10.0;
+    ui_type = "slider";
+    ui_label = "Frequency";
+    ui_min = 0.1; 
+    ui_max = 10.0;
     ui_tooltip = "The wavelength of the distortion. Smaller values make for a longer wavelength.";
 > = 3.0;
 
 uniform float amplitude <
-    #if __RESHADE__ < 40000
-        ui_type = "drag";
-    #else
-        ui_type = "slider";
-    #endif
-    ui_min = -1.0; ui_max = 1.0;
+    ui_type = "slider";
+    ui_label = "Amplitude";
+    ui_min = -1.0; 
+    ui_max = 1.0;
     ui_tooltip = "The amplitude of the distortion in each direction.";
 > = 0.075;
 
 uniform float phase <
-    #if __RESHADE__ < 40000
-        ui_type = "drag";
-    #else
-        ui_type = "slider";
-    #endif
-    ui_min = -5.0; ui_max = 5.0;
+    ui_type = "slider";
+    ui_label = "Phase";
+    ui_min = -5.0; 
+    ui_max = 5.0;
     ui_tooltip = "The offset being applied to the distortion's waves.";
 > = 0.0;
 
 uniform float min_depth <
-    #if __RESHADE__ < 40000
-        ui_type = "drag";
-    #else 
-        ui_type = "slider";
-    #endif
+    ui_type = "slider";
     ui_label="Minimum Depth";
     ui_min=0.0;
     ui_max=1.0;

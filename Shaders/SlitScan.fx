@@ -10,7 +10,8 @@
 
 uniform float x_col <
     ui_type = "slider";
-    ui_label="X";
+    ui_label = "X-Position";
+    ui_tooltip = "Determines which column on the screen to start scanning.";
     ui_max = 1.0;
     ui_min = 0.0;
 > = 0.250;

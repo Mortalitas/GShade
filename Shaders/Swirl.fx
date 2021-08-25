@@ -10,13 +10,19 @@
 #endif
 
 uniform int swirl_mode <
-    ui_type="combo";
-    ui_label="Mode";
-    ui_items="Normal\0Spliced Radial\0";
+    ui_type = "combo";
+    ui_label = "Mode";
+    ui_items = "Normal\0Spliced Radial\0";
+    ui_bind = "SPLICED_RADIALS_ENABLED";
     ui_tooltip="Selects which swirl mode to display.\nNormal Mode -- Contiguously twists pixels around a point.\nSpliced Radials -- Creates incrementally rotated circular splices.";
 > = 0;
 
+#ifndef SPLICED_RADIALS_ENABLED
+    #define SPLICED_RADIALS_ENABLED 0
+#endif
+
 uniform float radius <
+    ui_label= "Radius";
     ui_type = "slider";
     ui_min = 0.0; 
     ui_max = 1.0;
@@ -30,16 +36,24 @@ uniform float inner_radius <
     ui_max = 1.0;
 > = 0;
 
-uniform int number_splices <
-    ui_type = "slider";
-    ui_label = "Number of Splices";
-    ui_tooltip = "(Spliced Radial Mode Only) Sets the number of splices. A higher value makes the effect look closer to Normal mode by increasing the number of splices.";
-    ui_min = 1;
-    ui_max = 50;
-> = 10;
+#if SPLICED_RADIALS_ENABLED
+    uniform int number_splices <
+        ui_type = "slider";
+        ui_label = "Number of Splices";
+        ui_bind = "NUMBER_OF_SPLICES";
+        ui_tooltip = "(Spliced Radial Mode Only) Sets the number of splices. A higher value makes the effect look closer to Normal mode by increasing the number of splices.";
+        ui_min = 1;
+        ui_max = 50;
+    > = 10;
+#endif
+
+#ifndef NUMBER_OF_SPLICES
+    #define NUMBER_OF_SPLICES 10
+#endif
 
 uniform float angle <
     ui_type = "slider";
+    ui_label = "Angle";
     ui_min = -1800.0; 
     ui_max = 1800.0; 
     ui_tooltip = "Controls the angle of the twist.";
@@ -48,6 +62,7 @@ uniform float angle <
 
 uniform float tension <
     ui_type = "slider";
+    ui_label = "Tension";
     ui_min = 0; 
     ui_max = 10; 
     ui_step = 0.001;
@@ -275,7 +290,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         float percent; 
         float theta; 
        
-        if(swirl_mode == 0){
+        if(SPLICED_RADIALS_ENABLED == 0){
             percent = max(dist_radius, 0) / tension_radius;   
             if(inverse && dist < radius)
                 percent = 1 - percent;     
@@ -286,11 +301,11 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         }
         else
         {
-            float splice_width = (tension_radius-inner_radius) / number_splices;
+            float splice_width = (tension_radius-inner_radius) / NUMBER_OF_SPLICES;
             splice_width = frac(splice_width);
             float cur_splice = max(dist_radius,0)/splice_width;
             cur_splice = cur_splice - frac(cur_splice);
-            float splice_angle = (angle / number_splices) * cur_splice;
+            float splice_angle = (angle / NUMBER_OF_SPLICES) * cur_splice;
             if(dist_radius > radius-inner_radius)
                 splice_angle = angle;
             theta = radians(splice_angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));

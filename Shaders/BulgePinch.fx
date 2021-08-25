@@ -7,18 +7,24 @@
 
 uniform float radius <
     ui_type = "slider";
+    ui_label = "Radius";
+    ui_tooltip = "The radius of the distortion.";
     ui_min = 0.0; 
     ui_max = 1.0;
 > = 0.5;
 
 uniform float magnitude <
     ui_type = "slider";
+    ui_label = "Magnitude";
+    ui_label = "The magnitude of the distortion. Positive values cause the image to bulge out. Negative values cause the image to pinch in.";
     ui_min = -1.0; 
     ui_max = 1.0;
 > = -0.5;
 
 uniform float tension <
     ui_type = "slider";
+    ui_label = "Tension";
+    ui_tooltip = "Adjusts how rapidly the image reaches the maximum distortion from the edge to the center.";
     ui_min = 0.; 
     ui_max = 10.; 
     ui_step = 0.001;
@@ -45,7 +51,7 @@ uniform float min_depth <
 
 uniform float aspect_ratio <
     ui_type = "slider";
-    ui_label="Aspect Ratio"; 
+    ui_label = "Aspect Ratio"; 
     ui_min = -100.0; 
     ui_max = 100.0;
 > = 0;
@@ -61,7 +67,7 @@ uniform int render_type <
     ui_type = "combo";
     ui_label = "Blending Mode";
     ui_items = "Normal\0Darken\0Multiply\0Color Burn\0Linear Burn\0Lighten\0Screen\0Color Dodge\0Linear Dodge\0Addition\0Reflect\0Glow\0Overlay\0Soft Light\0Hard Light\0Vivid Light\0Linear Light\0Pin Light\0Hard Mix\0Difference\0Exclusion\0Subtract\0Divide\0Grain Merge\0Grain Extract\0Hue\0Saturation\0ColorB\0Luminosity\0";
-    ui_tooltip = "Additively render the effect.";
+    ui_tooltip = "Blends the effect against the base image.";
 > = 0;
 
 uniform float anim_rate <

@@ -12,36 +12,40 @@
 
 uniform float center_x <
     ui_type = "slider";
+    ui_label = "X Projection Position";
+    ui_tooltip = "Adjusts the X coordinate projection of the sphere onto the display. The value is in degrees.";
     ui_min = 0.0; 
     ui_max = 360.0;
 > = 0;
 
 uniform float center_y <
     ui_type = "slider";
+    ui_label = "Y Projection Position";
+    ui_tooltip = "Adjusts the Y coordinate projection of the sphere onto the display. The value is in degrees.";
     ui_min = 0.0; 
     ui_max = 360.0;
 > =0;
 
-uniform float offset_x <
+uniform float2 offset <
     ui_type = "slider";
-    ui_min = 0.0; 
-    ui_max = 1.0;
-> = 0;
-
-uniform float offset_y <
-    ui_type = "slider";
-    ui_min = 0.0; 
+    ui_label = "Offset";
+    ui_tooltip = "Horizontally/Vertically offsets the center of the display by a certain amount.";
+    ui_min = -.5; 
     ui_max = .5;
 > = 0;
 
 uniform float scale <
     ui_type = "slider";
+    ui_label = "Scale";
+    ui_tooltip = "Determine's the display's Z-position on the projected sphere. Use this to zoom into or zoom out of the planet if it's too small or big respectively.";
     ui_min = 0.0; 
     ui_max = 10.0;
 > = 10.0;
 
 uniform float z_rotation <
     ui_type = "slider";
+    ui_label = "Z-Rotation";
+    ui_tooltip = "Rotates the display along the z-axis. This can help you orient characters or features on your display the way you want.";
     ui_min = 0.0; 
     ui_max = 360.0;
 > = 0.5;
@@ -140,7 +144,6 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
     const float3x3 rot = getrot(float3(center_x,center_y, z_rotation));
 
     const float2 rads = float2(PI * 2.0 , PI);
-    const float2 offset=float2(offset_x, offset_y);
     const float2 pnt = (texcoord - 0.5 - offset).xy * float2(scale, scale*ar);
 
     // Project to Sphere
