@@ -28,7 +28,7 @@ uniform float angle <
 
 uniform float period <
     ui_type = "slider";
-    ui_label = "Frequency";
+    ui_label = "Phase";
     ui_min = 0.1; 
     ui_max = 10.0;
     ui_tooltip = "The wavelength of the distortion. Smaller values make for a longer wavelength.";

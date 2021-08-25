@@ -18,12 +18,15 @@ uniform int mode <
 
 uniform float radius <
     ui_type = "slider";
+    ui_label = "Radius";
     ui_min = 0.0; 
     ui_max = 1.0;
 > = 0.5;
 
 uniform float angle <
     ui_type = "slider";
+    ui_label = "Angle";
+    ui_tooltip = "Serves as a multiplier for the phase and amplitude. Also affects the motion of the animation by phase based on whether the value is negative or positive.";
     ui_tooltip = "Adjusts the ripple angle. Positive and negative values affect the animation direction.";
     ui_min = -999.0; 
     ui_max = 999.0; 
@@ -32,12 +35,16 @@ uniform float angle <
 
 uniform float period <
     ui_type = "slider";
+    ui_type = "Phase";
+    ui_tooltip = "Adjusts the rate of distortion.";
     ui_min = 0.1; 
     ui_max = 10.0;
 > = 0.25;
 
 uniform float amplitude <
     ui_type = "slider";
+    ui_label = "Amplitude";
+    ui_tooltip = "Increases how extreme the picture twists back and forth.";
     ui_min = -10.0; 
     ui_max = 10.0;
 > = 3.0;
@@ -72,6 +79,7 @@ uniform float min_depth <
 uniform float tension <
     ui_type = "slider";
     ui_label = "Tension";
+    ui_tooltip = "Adjusts the rate at which the distortion reaches its maximum value";
     ui_min = 0; 
     ui_max = 10;
     ui_step = 0.001;
@@ -79,6 +87,8 @@ uniform float tension <
 
 uniform float phase <
     ui_type = "slider";
+    ui_label = "Phase";
+    ui_tooltip = "The offset at which the pixels twist back and forth from the center.";
     ui_min = -5.0; 
     ui_max = 5.0;
 > = 0.0;
