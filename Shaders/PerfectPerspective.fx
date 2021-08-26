@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 3.8.0
+Perfect Perspective PS, version 3.8.1
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -405,7 +405,10 @@ float3 DebugViewModePS(float3 display, float2 texCoord, float2 sphCoord)
 float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_Target
 {
 	#if SIDE_BY_SIDE_3D
-		texCoord.x = frac(texCoord.x*2.0); // Side-by-side 3D content
+		// Side-by-side 3D content
+		float SBS3D = texCoord.x*2.0;
+		texCoord.x = frac(SBS3D);
+		SBS3D = floor(SBS3D);
 	#endif
 
 	// Convert FOV type..
@@ -455,6 +458,11 @@ float3 PerfectPerspectivePS(float4 pos : SV_Position, float2 texCoord : TEXCOORD
 	// Back to UV Coordinates
 	sphCoord = sphCoord*0.5+0.5;
 
+	#if SIDE_BY_SIDE_3D
+		// Side-by-side 3D content
+		sphCoord.x = (sphCoord.x+SBS3D)*0.5;
+		texCoord.x = (texCoord.x+SBS3D)*0.5;
+	#endif
 	// Sample display image
 	float3 display = tex2D(BackBuffer, sphCoord).rgb;
 
