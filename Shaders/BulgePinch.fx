@@ -236,7 +236,7 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
         tc.x *= ar;
 
         color = tex2D(samplerColor, tc);
-        color.rgb = BlendWithBase(base.rgb, color.rgb, percent);
+        color.rgb = BlendWithBase(base.rgb, color.rgb, 1-percent);
     }
     else {
         color = tex2D(samplerColor, texcoord);
