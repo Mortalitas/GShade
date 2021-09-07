@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Blending Header (version 0.2)
+    Blending Header (version 0.3)
 
     Authors: originalnicodr, prod80, Uchu Suzume, Marot Satil
 
