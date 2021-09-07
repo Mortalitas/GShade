@@ -1,5 +1,5 @@
 /**
-Pantomorphic PS, version 4.4.3
+Pantomorphic PS, version 4.5.0
 (c) 2021 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work)
@@ -213,6 +213,10 @@ uniform int VignettingStyle <
 	#define G_CONTINUITY_CORNER_ROUNDING 2
 #endif
 
+#ifndef SIDE_BY_SIDE_3D
+	#define SIDE_BY_SIDE_3D 0
+#endif
+
 
   ////////////////
  /// TEXTURES ///
@@ -358,6 +362,13 @@ float BorderMaskPS(float2 borderCoord)
 // Main perspective shader pass
 float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV_Target
 {
+#if SIDE_BY_SIDE_3D
+	// Side-by-side 3D content
+	float SBS3D = texCoord.x*2f;
+	texCoord.x = frac(SBS3D);
+	SBS3D = floor(SBS3D);
+#endif
+
 	// Convert FOV to horizontal
 	float halfHorizontalFov = tan(radians(FovAngle*0.5));
 	// Scale to horizontal tangent
@@ -424,14 +435,23 @@ float3 PantomorphicPS(float4 pos : SV_Position, float2 texCoord : TEXCOORD) : SV
 
 	// Aspect Ratio back to square
 	sphCoord.y *= BUFFER_ASPECT_RATIO;
+	// Get no-border flag
+	bool noBorder = VignettingStyle!=1 && BorderColor.a==0.0 && MirrorBorder;
+	// Outside border mask with Anti-Aliasing
+	float borderMask = noBorder? 0f : BorderMaskPS(sphCoord);
+	// Back to UV Coordinates
+	sphCoord = sphCoord*0.5+0.5;
+
+#if SIDE_BY_SIDE_3D
+	// Side-by-side 3D content
+	sphCoord.x = (sphCoord.x+SBS3D)*0.5;
+	texCoord.x = (texCoord.x+SBS3D)*0.5;
+#endif
 
 	// Sample display image
-	float3 display = tex2D(BackBuffer, sphCoord*0.5+0.5).rgb;
+	float3 display = tex2D(BackBuffer, sphCoord).rgb;
 	// Return image if no border is visible
-	if (VignettingStyle!=1 && BorderColor.a==0.0 && MirrorBorder) return vignetteMask*display;
-
-	// Outside border mask with Anti-Aliasing
-	float borderMask = BorderMaskPS(sphCoord);
+	if (noBorder) return vignetteMask*display;
 
 	// Mask outside-border pixels or mirror
 	if (VignettingStyle==2)
