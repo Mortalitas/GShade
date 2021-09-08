@@ -20,6 +20,22 @@
 
     Version 0.3 by Uchu Suzume & Marot Satil
     * Sorted blending modes in a more logical fashion, grouping by type.
+
+.------------------.
+| :: How To Use :: |
+'------------------/
+
+	Blending two variables using this header in your own shaders is very straightforward.
+	Very basic example code using the "Darken" blending mode follows:
+
+	#include "Blending.fxh"
+
+	float4 inColor = tex2D(ReShade::BackBuffer, texCoord);
+	float4 outColor = inColor * 0.5;
+	
+	outColor.rgb = Darken(outColor.rgb, inColor.rgb);
+
+	outColor = lerp(inColor.rgb, outColor.rgb, inColor.a);
 */
 
 // -------------------------------------
