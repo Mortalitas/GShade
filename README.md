@@ -7,7 +7,7 @@ Note that all shaders in this repository are strictly intended for use with the 
 
 To learn more about how GShade compares to ReShade itself and other forks, [click here](https://gposers.com/gshade/gshade-faq/#comparison).
 
-**GShade is network-unlocked in the following online software and games, but will work with any game that ReShade itself can:**
+**GShade will not disable the depth buffer when network activity is detected in the following online software and games, but will work in the same way as ReShade for anything not present in this list:**
 * **Baldur’s Gate 3**
 * BeamNG.drive
 * **Black Desert Online**
@@ -34,9 +34,12 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * **Ryujinx**
 * Sea of Thieves
 * **Second Life** (Official, Alchemy, Black Dragon, Firestorm, Singularity Viewer)
+* Shin Megami Tensei: IMAGINE Online
 * Shroud of the Avatar
 * Star Wars: The Old Republic
 * TERA Online
+* **The Sims 4**
+* Vintage Story
 * **VRChat**
 * Warframe
 * **World of Warcraft**
@@ -44,6 +47,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 
 **Additional whitelisted software and games with no official support:**
 * DARK SOULS II: Scholar of the First Sin
+* FiveM (GTA V)
 * Genshin Impact
 * Grand Theft Auto V
 * Lord of the Rings Online
