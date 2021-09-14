@@ -25,10 +25,6 @@ uniform float scan_speed <
     ui_min = 0.0;
 > = 1.0;
 
-uniform float anim_rate <
-    source = "framecount";
->;
-
 uniform float min_depth <
     ui_type = "slider";
     ui_label="Minimum Depth";
@@ -42,8 +38,26 @@ uniform int direction <
     ui_label = "Scan Direction";
     ui_items = "Left\0Right\0Up\0Down\0";
     ui_tooltip = "Changes the direction of the scan to the direction specified.";
-
 > = 0;
+
+uniform int animate <
+    ui_type = "combo";
+    ui_label = "Animate";
+    ui_items = "No\0Yes\0";
+    ui_tooltip = "Animates the scanned column, moving it from one end to the other.";
+> = 0;
+
+uniform float frame_rate <
+    source = "framecount";
+>;
+
+uniform float2 anim_rate <
+    source = "pingpong";
+    min = 0.0;
+    max = 1.0;
+    step = 0.001;
+    smoothing = 0.0;
+>;
 
 texture texColorBuffer: COLOR;
 
@@ -108,14 +122,19 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
 {
     float4 col_pixels;
+    float scan_col;
+
+    if(animate) scan_col = anim_rate.x;
+    else scan_col = x_col;
+
     switch(direction) {
         case 0:
         case 1:
-            col_pixels =  tex2D(samplerColor, float2(x_col, texcoord.y));
+            col_pixels =  tex2D(samplerColor, float2(scan_col, texcoord.y));
             break;
         case 2:
         case 3:
-            col_pixels =  tex2D(samplerColor, float2(texcoord.x, x_col));
+            col_pixels =  tex2D(samplerColor, float2(texcoord.x, scan_col));
             break;
 
     } 
@@ -124,11 +143,11 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
     switch(direction){
         case 0:
         case 2:
-            slice_to_fill = (anim_rate * pix_w) % 1;
+            slice_to_fill = (frame_rate * pix_w) % 1;
             break;
         case 1:
         case 3:
-            slice_to_fill = abs(1-((anim_rate * pix_w) % 1));
+            slice_to_fill = abs(1-((frame_rate * pix_w) % 1));
             break;
     } 
 
@@ -160,18 +179,23 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
     float2 uv = texcoord;
     float4 screen = tex2D(samplerColor, texcoord);
     float pix_w = get_pix_w();
+    float scan_col;
+    
+    if(animate) scan_col = anim_rate.x;
+    else scan_col = x_col;
+
     switch(direction) {
         case 0:
-            uv.x +=  (anim_rate * pix_w) - x_col % 1 ;
+            uv.x +=  (frame_rate * pix_w) - scan_col % 1 ;
             break;
         case 1:
-            uv.x -= (anim_rate * pix_w) - (1 - x_col) % 1 ;
+            uv.x -= (frame_rate * pix_w) - (1 - scan_col) % 1 ;
             break;
         case 2:
-            uv.y +=  (anim_rate * pix_w) - x_col % 1 ;
+            uv.y +=  (frame_rate * pix_w) - scan_col % 1 ;
             break;
         case 3:
-            uv.y -=  (anim_rate * pix_w) - (1 - x_col) % 1 ;
+            uv.y -=  (frame_rate * pix_w) - (1 - scan_col) % 1 ;
             break;
     }
     
@@ -181,16 +205,16 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
     float4 mask;
     switch(direction) {
         case 0:
-            mask = step(texcoord.x, x_col);
+            mask = step(texcoord.x, scan_col);
             break;
         case 1:
-            mask = step(x_col, texcoord.x);
+            mask = step(scan_col, texcoord.x);
             break;
         case 2:
-            mask = step(texcoord.y, x_col);
+            mask = step(texcoord.y, scan_col);
             break;
         case 3:
-            mask = step(x_col, texcoord.y);
+            mask = step(scan_col, texcoord.y);
             break;
     }
     if(depth >= min_depth)
