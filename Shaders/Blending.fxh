@@ -2,9 +2,9 @@
 | :: Description :: |
 '-------------------/
 
-    Blending Header (version 0.3)
+    Blending Header (version 0.4)
 
-    Authors: originalnicodr, prod80, Uchu Suzume, Marot Satil
+    Authors: originalnicodr, prod80, uchu suzume, Marot Satil
 
     About:
     Provides a variety of blending methods for you to use as you wish. Just include this header.
@@ -12,14 +12,17 @@
     History:
     (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
     
-    Version 0.1 by Marot Satil & Uchu Suzume
-    * Added and improved upon multiple blending modes thanks to the work of Uchu Suzume, prod80, and originalnicodr.
+    Version 0.1 by Marot Satil & uchu suzume
+    * Added and improved upon multiple blending modes thanks to the work of uchu suzume, prod80, and originalnicodr.
 
-    Version 0.2 by Uchu Suzume & Marot Satil
+    Version 0.2 by uchu suzume & Marot Satil
     * Added Addition, Subtract, Divide blending modes and improved code readability.
 
-    Version 0.3 by Uchu Suzume & Marot Satil
+    Version 0.3 by uchu suzume & Marot Satil
     * Sorted blending modes in a more logical fashion, grouping by type.
+
+	Version 0.4 by uchu suzume
+    * Corrected Color Dodge blending behavior.
 
 .------------------.
 | :: How To Use :: |
@@ -234,7 +237,7 @@ float3 Screen(float3 a, float3 b)
 float3 ColorDodge(float3 a, float3 b)
 {
     if (b.r < 1 && b.g < 1 && b.b < 1)
-        return min(1.5, a / (1.0 - b));
+        return min(1.0, a / (1.0 - b));
     else
         return 1.0;
 }
