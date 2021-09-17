@@ -4,6 +4,7 @@
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh"
 #include "Blending.fxh"
+#include "TriDither.fxh"
 
 uniform float radius <
     ui_type = "slider";
