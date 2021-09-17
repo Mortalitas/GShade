@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Blending Header (version 0.4)
+    Blending Header (version 0.5)
 
     Authors: originalnicodr, prod80, uchu suzume, Marot Satil
 
@@ -24,6 +24,9 @@
 	Version 0.4 by uchu suzume
     * Corrected Color Dodge blending behavior.
 
+    Version 0.5 by Marot Satil & uchu suzume
+    * Added preprocessor macros for uniform variable combo UI element & lerp.
+
 .------------------.
 | :: How To Use :: |
 '------------------/
@@ -31,15 +34,189 @@
 	Blending two variables using this header in your own shaders is very straightforward.
 	Very basic example code using the "Darken" blending mode follows:
 
+    // First, include the header.
 	#include "Blending.fxh"
 
-	float4 inColor = tex2D(ReShade::BackBuffer, texCoord);
-	float4 outColor = inColor * 0.5;
-	
-	outColor.rgb = Darken(outColor.rgb, inColor.rgb);
+    // You can use this preprocessor macro to generate an attractive and functional uniform int UI combo element containing the list of blending techniques:
+    // BLENDING_COMBO(variable_name, label, tooltip, category, spacing, default_value)
+	BLENDING_COMBO(_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "Blending Options", 0, 0)
 
-	outColor = lerp(inColor.rgb, outColor.rgb, inColor.a);
+    // Inside of your function you can call this preprocessor macro to apply the blending option specified by an int (variable) to your float4 (input) via
+    // a lerp between your float4 (input), float4 (output), and a float (blending) for the alpha channel.
+    // BLENDING_LERP(variable, input, output, blending)
+	BLENDING_LERP(_BlendMode, inColor, outColor, outColor.a)
 */
+
+// -------------------------------------
+// Preprocessor Macros
+// -------------------------------------
+
+#define BLENDING_COMBO(variable, name_label, description, group, space, default_value) \
+uniform int variable \
+< \
+	ui_category = group; \
+	ui_items = \
+		   "Normal\0" \
+/* "Darken" */ \
+		   "Darken\0" \
+		   "  Multiply\0" \
+		   "  Color Burn\0" \
+		   "  Linear Burn\0" \
+/* "Lighten" */	\
+		   "Lighten\0" \
+		   "  Screen\0" \
+		   "  Color Dodge\0" \
+		   "  Linear Dodge\0" \
+		   "  Addition\0" \
+		   "  Glow\0" \
+/* "Contrast" */ \
+		   "Overlay\0" \
+		   "  Soft Light\0" \
+		   "  Hard Light\0" \
+		   "  Vivid Light\0" \
+		   "  Linear Light\0" \
+		   "  Pin Light\0" \
+		   "  Hard Mix\0" \
+/* "Inversion" */ \
+		   "Difference\0" \
+		   "  Exclusion\0" \
+/* "Cancelation" */	\
+		   "Subtract\0" \
+		   "  Divide\0" \
+		   "  Reflect\0" \
+		   "  Grain Extract\0" \
+		   "  Grain Merge\0" \
+/* "Component" */ \
+		   "Hue\0" \
+		   "  Saturation\0" \
+		   "  Color\0" \
+		   "  Luminosity\0"; \
+	ui_label = name_label; \
+	ui_tooltip = description; \
+	ui_type = "combo"; \
+	ui_spacing = space; \
+> = default_value;
+
+#define BLENDING_LERP(variable, input, output, blending) \
+switch (variable) \
+{ \
+	/* Normal */ \
+	default: \
+		out = lerp(input, output, blending); \
+		break; \
+	/* Darken */ \
+	case 1: \
+		out = lerp(input.rgb, Darken(input.rgb, output.rgb), blending); \
+		break; \
+	/* Multiply */ \
+	case 2: \
+		out = lerp(input.rgb, Multiply(input.rgb, output.rgb), blending); \
+		break; \
+	/* Color Burn */ \
+	case 3: \
+		out = lerp(input.rgb, ColorBurn(input.rgb, output.rgb), blending); \
+		break; \
+	/* Linear Burn */ \
+	case 4: \
+		out = lerp(input.rgb, LinearBurn(input.rgb, output.rgb), blending); \
+		break; \
+	/* Lighten */ \
+	case 5: \
+		out = lerp(input.rgb, Lighten(input.rgb, output.rgb), blending); \
+		break; \
+	/* Screen */ \
+	case 6: \
+		out = lerp(input.rgb, Screen(input.rgb, output.rgb), blending); \
+		break; \
+	/* Color Dodge */ \
+	case 7: \
+		out = lerp(input.rgb, ColorDodge(input.rgb, output.rgb), blending); \
+		break; \
+	/* Linear Dodge */ \
+	case 8: \
+		out = lerp(input.rgb, LinearDodge(input.rgb, output.rgb), blending); \
+		break; \
+	/* Addition */ \
+	case 9: \
+		out = lerp(input.rgb, Addition(input.rgb, output.rgb), blending); \
+		break; \
+	/* Glow */ \
+	case 10: \
+		out = lerp(input.rgb, Glow(input.rgb, output.rgb), blending); \
+		break; \
+	/* Overlay */ \
+	case 11: \
+		out = lerp(input.rgb, Overlay(input.rgb, output.rgb), blending); \
+		break; \
+	/* Soft Light */ \
+	case 12: \
+		out = lerp(input.rgb, SoftLight(input.rgb, output.rgb), blending); \
+		break; \
+	/* Hard Light */ \
+	case 13: \
+		out = lerp(input.rgb, HardLight(input.rgb, output.rgb), blending); \
+		break; \
+	/* Vivid Light */ \
+	case 14: \
+		out = lerp(input.rgb, VividLight(input.rgb, output.rgb), blending); \
+		break; \
+	/* Linear Light */ \
+	case 15: \
+		out = lerp(input.rgb, LinearLight(input.rgb, output.rgb), blending); \
+		break; \
+	/* Pin Light */ \
+	case 16: \
+		out = lerp(input.rgb, PinLight(input.rgb, output.rgb), blending); \
+		break; \
+	/* Hard Mix */ \
+	case 17: \
+		out = lerp(input.rgb, HardMix(input.rgb, output.rgb), blending); \
+		break; \
+	/* Difference */ \
+	case 18: \
+		out = lerp(input.rgb, Difference(input.rgb, output.rgb), blending); \
+		break; \
+	/* Exclusion */ \
+	case 19: \
+		out = lerp(input.rgb, Exclusion(input.rgb, output.rgb), blending); \
+		break; \
+	/* Subtract */ \
+	case 20: \
+		out = lerp(input.rgb, Subtract(input.rgb, output.rgb), blending); \
+		break; \
+	/* Divide */ \
+	case 21: \
+		out = lerp(input.rgb, Divide(input.rgb, output.rgb), blending); \
+		break; \
+	/* Reflect */ \
+	case 22: \
+		out = lerp(input.rgb, Reflect(input.rgb, output.rgb), blending); \
+		break; \
+	/* Grain Merge */ \
+	case 23: \
+		out = lerp(input.rgb, GrainMerge(input.rgb, output.rgb), blending); \
+		break; \
+	/* Grain Extract */ \
+	case 24: \
+		out = lerp(input.rgb, GrainExtract(input.rgb, output.rgb), blending); \
+		break; \
+	/* Hue */ \
+	case 25: \
+		out = lerp(input.rgb, Hue(input.rgb, output.rgb), blending); \
+		break; \
+	/* Saturation
+	case 26: \ \
+		out = lerp(input.rgb, Saturation(input.rgb, output.rgb), blending); \
+		break; \
+	/* Color */ \
+	case 27: \
+		out = lerp(input.rgb, ColorB(input.rgb, output.rgb), blending); \
+		break; \
+	/* Luminosity */ \
+	case 28: \
+		out = lerp(input.rgb, Luminosity(input.rgb, output.rgb), blending); \
+		break; \
+}
 
 // -------------------------------------
 // Helper Functions
