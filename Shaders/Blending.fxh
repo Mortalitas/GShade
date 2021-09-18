@@ -54,6 +54,7 @@
 // Preprocessor Macros
 // -------------------------------------
 
+#ifndef BLENDING_COMBO
 #define BLENDING_COMBO(variable, name_label, description, group, space, default_value) \
 uniform int variable \
 < \
@@ -101,7 +102,9 @@ uniform int variable \
     ui_type = "combo"; \
     ui_spacing = space; \
 > = default_value;
+#endif
 
+#ifndef BLENDING_LERP
 #define BLENDING_LERP(variable, input, output, blending) \
 switch (variable) \
 { \
@@ -230,6 +233,7 @@ switch (variable) \
         output = lerp(input.rgb, Luminosity(input.rgb, output.rgb), blending); \
         break; \
 }
+#endif
 
 // -------------------------------------
 // Helper Functions
