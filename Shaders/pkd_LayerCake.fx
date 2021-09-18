@@ -17,7 +17,7 @@
 			ui_type = "combo"; \
 			ui_category = label; \
 			ui_label = "Blend Operation for Paste"; \
-			ui_items = "Atop\0Darken\0Multiply\0Color Burn\0Linear Burn\0Lighten\0Screen\0Color Dodge\0Linear Dodge\0Addition\0Reflect\0Glow\0Overlay\0Soft Light\0Hard Light\0Vivid Light\0Linear Light\0Pin Light\0Hard Mix\0Difference\0Exclusion\0Subtract\0Divide\0Grain Merge\0Grain Extract\0Hue\0Saturation\0Color Blend\0Luminosity\0"; \
+			ui_items = "Atop\0Darken\0Multiply\0Color Burn\0Linear Burn\0Lighten\0Screen\0Color Dodge\0Linear Dodge\0Addition\0Reflect\0Glow\0Overlay\0Soft Light\0Hard Light\0Vivid Light\0Linear Light\0Pin Light\0Hard Mix\0Difference\0Exclusion\0Subtract\0Divide\0Divide (Alternative)\0Divide(Photoshop)\0Grain Merge\0Grain Extract\0Hue\0Saturation\0Color Blend\0Luminosity\0"; \
 		> = 0; \
 \
 		uniform bool enableDepthVar < \
@@ -137,12 +137,14 @@ namespace pkd
 		#define LAYERCAKE_BLEND_EXCLUSION 20
 		#define LAYERCAKE_BLEND_SUBTRACT 21
 		#define LAYERCAKE_BLEND_DIVIDE 22
-		#define LAYERCAKE_BLEND_GRAINMERGE 23
-		#define LAYERCAKE_BLEND_GRAINEXTRACT 24
-		#define LAYERCAKE_BLEND_HUE 25
-		#define LAYERCAKE_BLEND_SATURATION 26
-		#define LAYERCAKE_BLEND_COLORBLEND 27
-		#define LAYERCAKE_BLEND_LUMINOSITY 28
+		#define LAYERCAKE_BLEND_DIVIDEALT 23
+		#define LAYERCAKE_BLEND_DIVIDEPS 24
+		#define LAYERCAKE_BLEND_GRAINMERGE 25
+		#define LAYERCAKE_BLEND_GRAINEXTRACT 26
+		#define LAYERCAKE_BLEND_HUE 27
+		#define LAYERCAKE_BLEND_SATURATION 28
+		#define LAYERCAKE_BLEND_COLORBLEND 29
+		#define LAYERCAKE_BLEND_LUMINOSITY 30
 
 		// Layer1
 		LAYERCAKE_LAYER_CONFIG("Layer 1", Tex_Layer1, Samp_Layer1, CFG_LAYERCAKE_DEPTHENABLE_Layer1, CFG_LAYERCAKE_DEPTH_Layer1, CFG_LAYERCAKE_BLEND_Layer1, CFG_LAYERCAKE_OPACITY_Layer1, CFG_LAYERCAKE_MASKENABLE_Layer1, CFG_LAYERCAKE_MASKCOLOR_Layer1, CFG_LAYERCAKE_MASKBLEND_Layer1, CFG_LAYERCAKE_MASKINVERT_Layer1, CFG_LAYERCAKE_ALPHABLEND_Layer1, CFG_LAYERCAKE_ALPHABLEND_DEPTH_Layer1)
@@ -273,6 +275,12 @@ namespace pkd
 					break;				
 				case LAYERCAKE_BLEND_DIVIDE:
 					result = lerp(destination.rgb, Divide(destination.rgb, source.rgb), source.a * opacity);
+					break;				
+				case LAYERCAKE_BLEND_DIVIDEALT:
+					result = lerp(destination.rgb, DivideAlt(destination.rgb, source.rgb), source.a * opacity);
+					break;				
+				case LAYERCAKE_BLEND_DIVIDEPS:
+					result = lerp(destination.rgb, DividePS(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_REFLECT:
 					result = lerp(destination.rgb, Reflect(destination.rgb, source.rgb), source.a * opacity);

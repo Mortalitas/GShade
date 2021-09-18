@@ -4,7 +4,7 @@
 
     Color Chart (version 0.1)
 
-    Authors: CeeJay.dk, seri14, Marot Satil, Uchu Suzume, prod80, originalnicodr
+    Authors: CeeJay.dk, seri14, Marot Satil, uchu suzume, prod80, originalnicodr
     License: MIT
 
     About:
@@ -21,8 +21,8 @@
     History:
     (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
     
-    Veresion 0.1 Uchu Suzume & Marot Satil
-    *Created by Uchu Suzume, with code optimization by Marot Satil.
+    Version 0.1 uchu suzume & Marot Satil
+    * Created by uchu suzume, with code optimization by Marot Satil.
 */
 
 #include "ReShade.fxh"
@@ -158,9 +158,6 @@ sampler Color_Chart_BG_S_Sampler {
 // -------------------------------------
 // Entrypoints
 // -------------------------------------
-
-#include "ReShade.fxh"
-#include "Blending.fxh"
 
     float getLum( in float3 x )
     {

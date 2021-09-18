@@ -66,44 +66,7 @@ uniform float4 VignetteColor
 	ui_category = "Appearance";
 > = float4(0.0, 0.0, 0.0, 1.0);
 
-uniform int BlendMode
-<
-	ui_type = "combo";
-	ui_label = "Blending Mode";
-	ui_tooltip =
-		"Determines the way the vignette is blended with the image.\n"
-		"\nDefault: Mix";
-	ui_category = "Appearance";
-	ui_items = "Mix\0"
-               "Darken\0"
-               "Multiply\0"
-               "Color Burn\0"
-               "Linear Burn\0"
-               "Lighten\0"
-               "Screen\0"
-               "Color Dodge\0"
-               "Linear Dodge\0"
-               "Addition\0"
-               "Glow\0"
-               "Overlay\0"
-               "Soft Light\0"
-               "Hard Light\0"
-               "Vivid Light\0"
-               "Linear Light\0"
-               "Pin Light\0"
-               "Hard Mix\0"
-               "Difference\0"
-               "Exclusion\0"
-               "Subtract\0"
-               "Divide\0"
-               "Reflect\0"
-               "Grain Merge\0"
-               "Grain Extract\0"
-               "Hue\0"
-               "Saturation\0"
-               "Color\0"
-               "Luminosity\0";
-> = 0;
+BLENDING_COMBO(BlendMode, "Blending Mode", "Determines the way the vignette is blended with the image.\n\nDefault: Mix", "Appearance", false, 0, 0)
 
 uniform float2 VignetteStartEnd
 <
@@ -204,133 +167,14 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 		vignette = smoothstep(VignetteStartEnd.x, VignetteStartEnd.y, vignette);
 
-		float3 vig_color;
-
-		switch (BlendMode)
-		{
-			// Mix
-			default:
-				vig_color = VignetteColor.rgb;
-				break;
-			// Darken
-			case 1:
-				vig_color = Darken(color.rgb, VignetteColor.rgb);
-				break;
-			// Multiply
-			case 2:
-				vig_color = Multiply(color.rgb, VignetteColor.rgb);
-				break;
-			// Color Burn
-			case 3:
-				vig_color = ColorBurn(color.rgb, VignetteColor.rgb);
-				break;
-			// Linear Burn
-			case 4:
-				vig_color = LinearBurn(color.rgb, VignetteColor.rgb);
-				break;
-			// Lighten
-			case 5:
-				vig_color = Lighten(color.rgb, VignetteColor.rgb);
-				break;
-			// Screen
-			case 6:
-				vig_color = Screen(color.rgb, VignetteColor.rgb);
-				break;
-			// Color Dodge
-			case 7:
-				vig_color = ColorDodge(color.rgb, VignetteColor.rgb);
-				break;
-			// Linear Dodge
-			case 8:
-				vig_color = LinearDodge(color.rgb, VignetteColor.rgb);
-				break;
-			// Addition
-			case 9:
-				vig_color = Addition(color.rgb, VignetteColor.rgb);
-				break;
-			// Glow
-			   case 10:
-				vig_color = Glow(color.rgb, VignetteColor.rgb);
-				break;
-			// Overlay
-			case 11:
-				vig_color = Overlay(color.rgb, VignetteColor.rgb);
-				break;
-			// Soft Light
-			case 12:
-				vig_color = SoftLight(color.rgb, VignetteColor.rgb);
-				break;
-			// Hard Light
-			case 13:
-				vig_color = HardLight(color.rgb, VignetteColor.rgb);
-				break;
-			// Vivid Light
-			case 14:
-				vig_color = VividLight(color.rgb, VignetteColor.rgb);
-				break;
-			// Linear Light
-			case 15:
-				vig_color = LinearLight(color.rgb, VignetteColor.rgb);
-				break;
-			// Pin Light
-			case 16:
-				vig_color = PinLight(color.rgb, VignetteColor.rgb);
-				break;
-			// Hard Mix
-			case 17:
-				vig_color = HardMix(color.rgb, VignetteColor.rgb);
-				break;
-			// Difference
-			case 18:
-				vig_color = Difference(color.rgb, VignetteColor.rgb);
-				break;
-			// Exclusion
-			case 19:
-				vig_color = Exclusion(color.rgb, VignetteColor.rgb);
-				break;
-			// Subtract
-			case 20:
-				vig_color = Subtract(color.rgb, VignetteColor.rgb);
-				break;
-			// Divide
-			case 21:
-				vig_color = Divide(color.rgb, VignetteColor.rgb);
-				break;
-			// Reflect
-			case 22:
-				vig_color = Reflect(color.rgb, VignetteColor.rgb);
-				break;
-			// Grain Merge
-			case 23:
-				vig_color = GrainMerge(color.rgb, VignetteColor.rgb);
-				break;
-			// Grain Extract
-			case 24:
-				vig_color = GrainExtract(color.rgb, VignetteColor.rgb);
-				break;
-			// Hue
-			case 25:
-				vig_color = Hue(color.rgb, VignetteColor.rgb);
-				break;
-			// Saturation
-			case 26:
-				vig_color = Saturation(color.rgb, VignetteColor.rgb);
-				break;
-			// Color
-			case 27:
-				vig_color = ColorB(color.rgb, VignetteColor.rgb);
-				break;
-			// Luminosity
-			case 28:
-				vig_color = Luminosity(color.rgb, VignetteColor.rgb);
-				break;
-		}
+		float4 vig_color = VignetteColor;
 
 #if GSHADE_DITHER
-		const float3 outcolor = lerp(color.rgb, vig_color, vignette * VignetteColor.a);
-		return float4(outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+		BLENDING_LERP(BlendMode, color, vig_color, vignette * vig_color.a)
+		return float4(vig_color.rgb + TriDither(vig_color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
 #else
-		return float4(lerp(color.rgb, vig_color, vignette * VignetteColor.a), color.a);
+		BLENDING_LERP(BlendMode, color, vig_color, vignette * vig_color.a)
+		return float4(vig_color.rgb, color.a);
 #endif
 	}
 	else

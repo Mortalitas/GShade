@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Copyright (based on Layer) (version 0.9)
+    Copyright (based on Layer) (version 1.0)
 
     Authors: CeeJay.dk, seri14, Marot Satil, uchu suzume, prod80, originalnicodr
     License: MIT
@@ -37,19 +37,23 @@
     * Sorted blending modes in a more logical fashion, grouping by type.
 
     Version 0.9 by uchu suzume
-    *Added some texures.
-    *Fixed blend option applying correctly to alpha pixels by changing the order of code blocks.
-    *Add space of UI and collapsed some parameters for visibility.
-    *Changed the order of parameter in snap rotate.
-    *Experimental features added:
-         *Coloring textures(invert, any color for white / black pixels).
-         *Move texture to mouse position.
-         *Merge and blend background pixels into logo texture(Not sure I said it correctly in English).
-         *Added layer with Gaussian blur can be used for drop shadows or bloom.
-         *Added chromatic aberration layer with gaussian blur.
+    * Added some texures.
+    * Fixed blend option applying correctly to alpha pixels by changing the order of code blocks.
+    * Add space of UI and collapsed some parameters for visibility.
+    * Changed the order of parameter in snap rotate.
+    * Experimental features added:
+         * Coloring textures(invert, any color for white / black pixels).
+         * Move texture to mouse position.
+         * Merge and blend background pixels into logo texture(Not sure I said it correctly in English).
+         * Added layer with Gaussian blur can be used for drop shadows or bloom.
+         * Added chromatic aberration layer with gaussian blur.
+
+    Version 1.0 by Marot Satil & uchu suzume
+    + Implemented Blending.fxh preprocessor macros.
 */
 
 #include "ReShade.fxh"
+#include "Blending.fxh"
 
 #ifndef cLayerTex
 #define cLayerTex "cLayerA.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
@@ -233,50 +237,7 @@ uniform float3 ColorOverride <
     ui_type = "color";
 > = float3(0.0, 1.0, 1.0);
 
-
-uniform int cLayer_BlendMode <
-    ui_label = "Blending Mode";
-    ui_tooltip = "Select the blending mode applied to the texture.   ";
-    ui_type = "combo";
-    ui_spacing = 2;
-    ui_items =
-               "Normal\0"
- // Darken
-               "Darken\0"
-               "  Multiply\0"
-               "  Color Burn\0"
-               "  Linear Burn\0"
-// Lighten
-               "Lighten\0"
-               "  Screen\0"
-               "  Color Dodge\0"
-               "  Linear Dodge\0"
-               "  Addition\0"
-               "  Glow\0"
-// Contrast
-               "Overlay\0"
-               "  Soft Light\0"
-               "  Hard Light\0"
-               "  Vivid Light\0"
-               "  Linear Light\0"
-               "  Pin Light\0"
-               "  Hard Mix\0"
- // Inversion
-               "Difference\0"
-               "  Exclusion\0"
-// Cancelation
-               "Subtract\0"
-               "  Divide\0"
-               "  Reflect\0"
-               "  Grain Extract\0"
-               "  Grain Merge\0"
-// Component
-               "Hue\0"
-               "  Saturation\0"
-               "  Color\0"
-               "  Luminosity\0"
-               ;
-> = 0;
+BLENDING_COMBO(cLayer_BlendMode, "Blending Mode", "Select the blending mode applied to the texture.   ", "", false, 2, 0)
 
 uniform float cLayer_Blend <
     ui_label = "Blending Amount";
@@ -368,95 +329,9 @@ uniform float3 GaussColor <
     ui_tooltip = "Color of the shadow layer";
 > = float3(0.0, 0.0, 0.0);
 
-uniform int cLayer_BlendMode_Gauss <
-    ui_label = "Gaussian Layer Blending Mode";
-    ui_tooltip = "Select the blending mode applied to the Gaussian Layer.   ";
-    ui_category = "Gaussian Layer";
-    ui_type = "combo";
-    ui_items =
-               "Normal\0"
- // Darken
-               "Darken\0"
-               "  Multiply\0"
-               "  Color Burn\0"
-               "  Linear Burn\0"
-// Lighten
-               "Lighten\0"
-               "  Screen\0"
-               "  Color Dodge\0"
-               "  Linear Dodge\0"
-               "  Addition\0"
-               "  Glow\0"
-// Contrast
-               "Overlay\0"
-               "  Soft Light\0"
-               "  Hard Light\0"
-               "  Vivid Light\0"
-               "  Linear Light\0"
-               "  Pin Light\0"
-               "  Hard Mix\0"
- // Inversion
-               "Difference\0"
-               "  Exclusion\0"
-// Cancelation
-               "Subtract\0"
-               "  Divide\0"
-               "  Reflect\0"
-               "  Grain Extract\0"
-               "  Grain Merge\0"
-// Component
-               "Hue\0"
-               "  Saturation\0"
-               "  Color\0"
-               "  Luminosity\0"
-               ;
-> = 0;
+BLENDING_COMBO(cLayer_BlendMode_Gauss, "Gaussian Layer Blending Mode", "Select the blending mode applied to the Gaussian Layer.   ", "Gaussian Layer", false, 0, 0)
 
-
-uniform int cLayer_BlendMode_BG <
-    ui_label = "BG Blending Mode";
-    ui_tooltip = "Select the blending mode applied to the bg-texture.   \n- note -\nWhen using this mode, it requires reducing   \nblending amout of logo texture.   \nThe priority of this mode is to be set to later.   ";
-    ui_category = "BG Blending Mode";
-    ui_category_closed = true;
-    ui_type = "combo";
-    ui_items =
-               "Normal\0"
- // Darken
-               "Darken\0"
-               "  Multiply\0"
-               "  Color Burn\0"
-               "  Linear Burn\0"
-// Lighten
-               "Lighten\0"
-               "  Screen\0"
-               "  Color Dodge\0"
-               "  Linear Dodge\0"
-               "  Addition\0"
-               "  Glow\0"
-// Contrast
-               "Overlay\0"
-               "  Soft Light\0"
-               "  Hard Light\0"
-               "  Vivid Light\0"
-               "  Linear Light\0"
-               "  Pin Light\0"
-               "  Hard Mix\0"
- // Inversion
-               "Difference\0"
-               "  Exclusion\0"
-// Cancelation
-               "Subtract\0"
-               "  Divide\0"
-               "  Reflect\0"
-               "  Grain Extract\0"
-               "  Grain Merge\0"
-// Component
-               "Hue\0"
-               "  Saturation\0"
-               "  Color\0"
-               "  Luminosity\0"
-               ;
-> = 0;
+BLENDING_COMBO(cLayer_BlendMode_BG, "BG Blending Mode", "Select the blending mode applied to the bg-texture.   \n- note -\nWhen using this mode, it requires reducing   \nblending amout of logo texture.   \nThe priority of this mode is to be set to later.   ", "BG Blending Mode", true, 0, 0)
 
 uniform float cLayer_Blend_BG <
     ui_label = "BG Blending Amount";
@@ -837,8 +712,6 @@ sampler Copyright_Sampler_CAb_B
 // Entrypoints
 // -------------------------------------
 
-#include "ReShade.fxh"
-#include "Blending.fxh"
 #define PIXEL_SIZE float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 
 #define pivot float3(0.5, 0.5, 0.0)
