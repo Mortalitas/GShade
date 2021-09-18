@@ -107,127 +107,127 @@ switch (variable) \
 { \
     /* Normal */ \
     default: \
-        out = lerp(input, output, blending); \
+        output = lerp(input, output, blending); \
         break; \
     /* Darken */ \
     case 1: \
-        out = lerp(input.rgb, Darken(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Darken(input.rgb, output.rgb), blending); \
         break; \
     /* Multiply */ \
     case 2: \
-        out = lerp(input.rgb, Multiply(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Multiply(input.rgb, output.rgb), blending); \
         break; \
     /* Color Burn */ \
     case 3: \
-        out = lerp(input.rgb, ColorBurn(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, ColorBurn(input.rgb, output.rgb), blending); \
         break; \
     /* Linear Burn */ \
     case 4: \
-        out = lerp(input.rgb, LinearBurn(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, LinearBurn(input.rgb, output.rgb), blending); \
         break; \
     /* Lighten */ \
     case 5: \
-        out = lerp(input.rgb, Lighten(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Lighten(input.rgb, output.rgb), blending); \
         break; \
     /* Screen */ \
     case 6: \
-        out = lerp(input.rgb, Screen(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Screen(input.rgb, output.rgb), blending); \
         break; \
     /* Color Dodge */ \
     case 7: \
-        out = lerp(input.rgb, ColorDodge(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, ColorDodge(input.rgb, output.rgb), blending); \
         break; \
     /* Linear Dodge */ \
     case 8: \
-        out = lerp(input.rgb, LinearDodge(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, LinearDodge(input.rgb, output.rgb), blending); \
         break; \
     /* Addition */ \
     case 9: \
-        out = lerp(input.rgb, Addition(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Addition(input.rgb, output.rgb), blending); \
         break; \
     /* Glow */ \
     case 10: \
-        out = lerp(input.rgb, Glow(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Glow(input.rgb, output.rgb), blending); \
         break; \
     /* Overlay */ \
     case 11: \
-        out = lerp(input.rgb, Overlay(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Overlay(input.rgb, output.rgb), blending); \
         break; \
     /* Soft Light */ \
     case 12: \
-        out = lerp(input.rgb, SoftLight(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, SoftLight(input.rgb, output.rgb), blending); \
         break; \
     /* Hard Light */ \
     case 13: \
-        out = lerp(input.rgb, HardLight(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, HardLight(input.rgb, output.rgb), blending); \
         break; \
     /* Vivid Light */ \
     case 14: \
-        out = lerp(input.rgb, VividLight(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, VividLight(input.rgb, output.rgb), blending); \
         break; \
     /* Linear Light */ \
     case 15: \
-        out = lerp(input.rgb, LinearLight(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, LinearLight(input.rgb, output.rgb), blending); \
         break; \
     /* Pin Light */ \
     case 16: \
-        out = lerp(input.rgb, PinLight(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, PinLight(input.rgb, output.rgb), blending); \
         break; \
     /* Hard Mix */ \
     case 17: \
-        out = lerp(input.rgb, HardMix(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, HardMix(input.rgb, output.rgb), blending); \
         break; \
     /* Difference */ \
     case 18: \
-        out = lerp(input.rgb, Difference(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Difference(input.rgb, output.rgb), blending); \
         break; \
     /* Exclusion */ \
     case 19: \
-        out = lerp(input.rgb, Exclusion(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Exclusion(input.rgb, output.rgb), blending); \
         break; \
     /* Subtract */ \
     case 20: \
-        out = lerp(input.rgb, Subtract(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Subtract(input.rgb, output.rgb), blending); \
         break; \
     /* Divide */ \
     case 21: \
-        out = lerp(input.rgb, Divide(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Divide(input.rgb, output.rgb), blending); \
         break; \
     /* Divide (Alternative) */ \
     case 22: \
-        out = lerp(input.rgb, DivideAlt(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, DivideAlt(input.rgb, output.rgb), blending); \
         break; \
     /* Divide (Photoshop) */ \
     case 23: \
-        out = lerp(input.rgb, DividePS(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, DividePS(input.rgb, output.rgb), blending); \
         break; \
     /* Reflect */ \
     case 24: \
-        out = lerp(input.rgb, Reflect(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Reflect(input.rgb, output.rgb), blending); \
         break; \
     /* Grain Merge */ \
     case 25: \
-        out = lerp(input.rgb, GrainMerge(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, GrainMerge(input.rgb, output.rgb), blending); \
         break; \
     /* Grain Extract */ \
     case 26: \
-        out = lerp(input.rgb, GrainExtract(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, GrainExtract(input.rgb, output.rgb), blending); \
         break; \
     /* Hue */ \
     case 27: \
-        out = lerp(input.rgb, Hue(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Hue(input.rgb, output.rgb), blending); \
         break; \
     /* Saturation */ \
     case 28: \
-        out = lerp(input.rgb, Saturation(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Saturation(input.rgb, output.rgb), blending); \
         break; \
     /* Color */ \
     case 29: \
-        out = lerp(input.rgb, ColorB(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, ColorB(input.rgb, output.rgb), blending); \
         break; \
     /* Luminosity */ \
     case 30: \
-        out = lerp(input.rgb, Luminosity(input.rgb, output.rgb), blending); \
+        output = lerp(input.rgb, Luminosity(input.rgb, output.rgb), blending); \
         break; \
 }
 
@@ -535,13 +535,13 @@ float3 Subtract(float3 a, float3 b)
 // Divide
 float3 Divide(float3 a, float3 b)
 {
-    return (a / (b + 0.01));
+    return (saturate(a / (b + 0.01)));
 }
 
 // Divide (Alternative)
 float3 DivideAlt(float3 a, float3 b)
 {
-    return (1.0 / (a / b));
+    return (saturate(1.0 / (a / b)));
 }
 
 // Divide (Photoshop)
