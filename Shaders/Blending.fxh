@@ -204,7 +204,7 @@ switch (variable) \
     case 25: \
         out = lerp(input.rgb, Hue(input.rgb, output.rgb), blending); \
         break; \
-    /* Saturation
+    /* Saturation \
     case 26: \ \
         out = lerp(input.rgb, Saturation(input.rgb, output.rgb), blending); \
         break; \
