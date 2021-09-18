@@ -41,8 +41,8 @@
     #include "Blending.fxh"
 
     // You can use this preprocessor macro to generate an attractive and functional uniform int UI combo element containing the list of blending techniques:
-    // BLENDING_COMBO(variable_name, label, tooltip, category, spacing, default_value)
-    BLENDING_COMBO(_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "Blending Options", 0, 0)
+    // BLENDING_COMBO(variable_name, label, tooltip, category, category_closed, spacing, default_value)
+    BLENDING_COMBO(_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "Blending Options", false, 0, 0)
 
     // Inside of your function you can call this preprocessor macro to apply the blending option specified by an int (variable) to your float4 (input) via
     // a lerp between your float4 (input), float4 (output), and a float (blending) for the alpha channel.
@@ -55,10 +55,11 @@
 // -------------------------------------
 
 #undef BLENDING_COMBO
-#define BLENDING_COMBO(variable, name_label, description, group, space, default_value) \
+#define BLENDING_COMBO(variable, name_label, description, group, grp_closed, space, default_value) \
 uniform int variable \
 < \
     ui_category = group; \
+    ui_category_closed = grp_closed; \
     ui_items = \
            "Normal\0" \
 /* "Darken" */ \
