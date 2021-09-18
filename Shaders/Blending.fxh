@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Blending Header (version 0.5)
+    Blending Header (version 0.6)
 
     Authors: originalnicodr, prod80, uchu suzume, Marot Satil
 
@@ -26,6 +26,9 @@
 
     Version 0.5 by Marot Satil & uchu suzume
     * Added preprocessor macros for uniform variable combo UI element & lerp.
+
+    Version 0.6 by Marot Satil & uchu suzume
+    * Added Divide (Alternative) and Divide (Photoshop) blending modes.
 
 .------------------.
 | :: How To Use :: |
