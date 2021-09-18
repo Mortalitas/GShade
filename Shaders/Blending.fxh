@@ -83,6 +83,8 @@ uniform int variable \
 /* "Cancelation" */	\
            "Subtract\0" \
            "  Divide\0" \
+           "  Divide (Alternative)\0" \
+           "  Divide (Photoshop)\0" \
            "  Reflect\0" \
            "  Grain Extract\0" \
            "  Grain Merge\0" \
@@ -188,32 +190,40 @@ switch (variable) \
     case 21: \
         out = lerp(input.rgb, Divide(input.rgb, output.rgb), blending); \
         break; \
-    /* Reflect */ \
+    /* Divide (Alternative) */ \
     case 22: \
+        out = lerp(input.rgb, DivideAlt(input.rgb, output.rgb), blending); \
+        break; \
+    /* Divide (Photoshop) */ \
+    case 23: \
+        out = lerp(input.rgb, DividePS(input.rgb, output.rgb), blending); \
+        break; \
+    /* Reflect */ \
+    case 24: \
         out = lerp(input.rgb, Reflect(input.rgb, output.rgb), blending); \
         break; \
     /* Grain Merge */ \
-    case 23: \
+    case 25: \
         out = lerp(input.rgb, GrainMerge(input.rgb, output.rgb), blending); \
         break; \
     /* Grain Extract */ \
-    case 24: \
+    case 26: \
         out = lerp(input.rgb, GrainExtract(input.rgb, output.rgb), blending); \
         break; \
     /* Hue */ \
-    case 25: \
+    case 27: \
         out = lerp(input.rgb, Hue(input.rgb, output.rgb), blending); \
         break; \
     /* Saturation */ \
-    case 26: \
+    case 28: \
         out = lerp(input.rgb, Saturation(input.rgb, output.rgb), blending); \
         break; \
     /* Color */ \
-    case 27: \
+    case 29: \
         out = lerp(input.rgb, ColorB(input.rgb, output.rgb), blending); \
         break; \
     /* Luminosity */ \
-    case 28: \
+    case 30: \
         out = lerp(input.rgb, Luminosity(input.rgb, output.rgb), blending); \
         break; \
 }
@@ -371,19 +381,19 @@ float Sat(float3 a)
 // Blending Modes
 // -------------------------------------
 
-// Darken Blending Mode
+// Darken
 float3 Darken(float3 a, float3 b)
 {
     return min(a, b);
 }
 
-// Multiply Blending Mode
+// Multiply
 float3 Multiply(float3 a, float3 b)
 {
     return a * b;
 }
 
-// Color Burn Blending Mode
+// Color Burn
 float3 ColorBurn(float3 a, float3 b)
 {
     if (b.r > 0 && b.g > 0 && b.b > 0)
@@ -392,25 +402,25 @@ float3 ColorBurn(float3 a, float3 b)
         return 0.0;
 }
 
-// Linear Burn Blending Mode
+// Linear Burn
 float3 LinearBurn(float3 a, float3 b)
 {
     return max(a + b - 1.0f, 0.0f);
 }
 
-// Lighten Blending Mode
+// Lighten
 float3 Lighten(float3 a, float3 b)
 {
     return max(a, b);
 }
 
-// Screen Blending Mode
+// Screen
 float3 Screen(float3 a, float3 b)
 {
     return 1.0 - (1.0 - a) * (1.0 - b);
 }
 
-// Color Dodge Blending Mode
+// Color Dodge
 float3 ColorDodge(float3 a, float3 b)
 {
     if (b.r < 1 && b.g < 1 && b.b < 1)
@@ -419,7 +429,7 @@ float3 ColorDodge(float3 a, float3 b)
         return 1.0;
 }
 
-// Linear Dodge Blending Mode
+// Linear Dodge
 float3 LinearDodge(float3 a, float3 b)
 {
     return min(a + b, 1.0f);
@@ -431,7 +441,7 @@ float3 Addition(float3 a, float3 b)
     return min((a + b), 1);
 }
 
-// Reflect Blending Mode
+// Reflect
 float3 Reflect(float3 a, float3 b)
 {
     if (b.r >= 0.999999 || b.g >= 0.999999 || b.b >= 0.999999)
@@ -440,19 +450,19 @@ float3 Reflect(float3 a, float3 b)
         return saturate(a * a / (1.0f - b));
 }
 
-// Glow Blending Mode
+// Glow
 float3 Glow(float3 a, float3 b)
 {
     return Reflect(b, a);
 }
 
-// Overlay Blending Mode
+// Overlay
 float3 Overlay(float3 a, float3 b)
 {
     return lerp(2 * a * b, 1.0 - 2 * (1.0 - a) * (1.0 - b), step(0.5, a));
 }
 
-// Soft Light Blending Mode
+// Soft Light
 float3 SoftLight(float3 a, float3 b)
 {
     if (b.r <= 0.5 && b.g <= 0.5 && b.b <= 0.5)
@@ -461,19 +471,19 @@ float3 SoftLight(float3 a, float3 b)
         return clamp(a + (2 * b - 1.0) * (Aux(a) - a), 0, 1);
 }
 
-// Hard Light Blending Mode
+// Hard Light
 float3 HardLight(float3 a, float3 b)
 {
     return lerp(2 * a * b, 1.0 - 2 * (1.0 - b) * (1.0 - a), step(0.5, b));
 }
 
-// Vivid Light Blending Mode
+// Vivid Light
 float3 VividLight(float3 a, float3 b)
 {
     return lerp(2 * a * b, b / (2 * (1.01 - a)), step(0.50, a));
 }
 
-// Linear Light Blending Mode
+// Linear Light
 float3 LinearLight(float3 a, float3 b)
 {
     if (b.r < 0.5 || b.g < 0.5 || b.b < 0.5)
@@ -482,7 +492,7 @@ float3 LinearLight(float3 a, float3 b)
         return LinearDodge(a, (2.0 * (b - 0.5)));
 }
 
-// Pin Light Blending Mode
+// Pin Light
 float3 PinLight(float3 a, float3 b)
 {
     if (b.r < 0.5 || b.g < 0.5 || b.b < 0.5)
@@ -491,7 +501,7 @@ float3 PinLight(float3 a, float3 b)
         return Lighten(a, (2.0 * (b - 0.5)));
 }
 
-// Hard Mix Blending Mode
+// Hard Mix
 float3 HardMix(float3 a, float3 b)
 {
     const float3 vl = VividLight(a, b);
@@ -501,13 +511,13 @@ float3 HardMix(float3 a, float3 b)
         return 1.0;
 }
 
-// Difference Blending Mode
+// Difference
 float3 Difference(float3 a, float3 b)
 {
     return max(a - b, b - a);
 }
 
-// Exclusion Blending Mode
+// Exclusion
 float3 Exclusion(float3 a, float3 b)
 {
     return a + b - 2 * a * b;
@@ -525,6 +535,18 @@ float3 Divide(float3 a, float3 b)
     return (a / (b + 0.01));
 }
 
+// Divide (Alternative)
+float3 DivideAlt(float3 a, float3 b)
+{
+    return (1.0 / (a / b));
+}
+
+// Divide (Photoshop)
+float3 DividePS(float3 a, float3 b)
+{
+    return (saturate(a / b));
+}
+
 // Grain Merge
 float3 GrainMerge(float3 a, float3 b)
 {
@@ -537,25 +559,25 @@ float3 GrainExtract(float3 a, float3 b)
     return saturate(a - b + 0.5);
 }
 
-// Hue Blending Mode
+// Hue
 float3 Hue(float3 a, float3 b)
 {
     return SetLum(SetSat(b, Sat(a)), Lum(a));
 }
 
-// Saturation Blending Mode
+// Saturation
 float3 Saturation(float3 a, float3 b)
 {
     return SetLum(SetSat(a, Sat(b)), Lum(a));
 }
 
-// Color Blending Mode
+// Color
 float3 ColorB(float3 a, float3 b)
 {
     return SetLum(b, Lum(a));
 }
 
-// Luminousity Blending Mode
+// Luminousity
 float3 Luminosity(float3 a, float3 b)
 {
     return SetLum(a, Lum(b));
