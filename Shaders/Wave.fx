@@ -28,7 +28,7 @@ uniform float angle <
 
 uniform float period <
     ui_type = "slider";
-    ui_label = "Phase";
+    ui_label = "Period";
     ui_min = 0.1; 
     ui_max = 10.0;
     ui_tooltip = "The wavelength of the distortion. Smaller values make for a longer wavelength.";
@@ -68,12 +68,15 @@ uniform float anim_rate <
     source = "timer";
 >;
 
-uniform int render_type <
-    ui_type = "combo";
-    ui_label = "Blending Mode";
-    ui_items = "Normal\0Darken\0Multiply\0Color Burn\0Linear Burn\0Lighten\0Screen\0Color Dodge\0Linear Dodge\0Addition\0Reflect\0Glow\0Overlay\0Soft Light\0Hard Light\0Vivid Light\0Linear Light\0Pin Light\0Hard Mix\0Difference\0Exclusion\0Subtract\0Divide\0Grain Merge\0Grain Extract\0Hue\0Saturation\0ColorB\0Luminosity\0";
-    ui_tooltip = "Additively render the effect.";
-> = 0;
+BLENDING_COMBO(
+    render_type, 
+    "Blending Mode", 
+    "Blends the effect with the previous layers.",
+    "Blending",
+    false,
+    0,
+    0
+);
 
 texture texColorBuffer : COLOR;
 
@@ -96,97 +99,6 @@ sampler samplerColor
 
     SRGBTexture = false;
 };
-
-float3 BlendWithBase (const float3 base,const float3 color, const float percent)
-{
-    switch(render_type) {
-        // Darken
-        case 1:
-            return lerp(base, Darken(base, color), percent);
-        // Multiply
-        case 2:
-            return lerp(base, Multiply(base, color), percent);
-        // Color Burn
-        case 3:
-            return lerp(base, ColorBurn(base, color), percent);
-        // Linear Burn
-        case 4:
-            return lerp(base, LinearBurn(base, color), percent);
-        // Lighten
-        case 5:
-            return lerp(base, Lighten(base, color), percent);
-        // Screen
-        case 6:
-            return lerp(base, Screen(base, color), percent);
-        // Color Dodge
-        case 7:
-            return lerp(base, ColorDodge(base, color), percent);
-        // Linear Dodge
-        case 8:
-            return lerp(base, LinearDodge(base, color), percent);
-        // Addition
-        case 9:
-            return lerp(base, Addition(base, color), percent);
-        // Reflect
-        case 10:
-            return lerp(base, Reflect(base, color), percent);
-        // Glow
-        case 11:
-            return lerp(base, Glow(base, color), percent);
-        // Overlay
-        case 12:
-            return lerp(base, Overlay(base, color), percent);
-        // Soft Light
-        case 13:
-            return lerp(base, SoftLight(base, color), percent);
-        // Hard Light
-        case 14:
-            return lerp(base, HardLight(base, color), percent);
-        // Vivid Light
-        case 15:
-            return lerp(base, VividLight(base, color), percent);
-        // Linear Light
-        case 16:
-            return lerp(base, LinearLight(base, color), percent);
-        // Pin Light
-        case 17:
-            return lerp(base, PinLight(base, color), percent);
-        // Hard Mix
-        case 18:
-            return lerp(base, HardMix(base, color), percent);
-        // Difference
-        case 19:
-            return lerp(base, Difference(base, color), percent);
-        // Exclusion
-        case 20:
-            return lerp(base, Exclusion(base, color), percent);
-        // Subtract
-        case 21:
-            return lerp(base, Subtract(base, color), percent);
-        // Divide
-        case 22:
-            return lerp(base, Divide(base, color), percent);
-        // Grain Merge
-        case 23:
-            return lerp(base, GrainMerge(base, color), percent);
-        // Grain Extract
-        case 24:
-            return lerp(base, GrainExtract(base, color), percent);
-        // Hue
-        case 25:
-            return lerp(base, Hue(base, color), percent);
-        // Saturation
-        case 26:
-            return lerp(base, Saturation(base, color), percent);
-        // ColorB
-        case 27:
-            return lerp(base, ColorB(base, color), percent);
-        // Luminosity
-        case 28:
-            return lerp(base, Luminosity(base, color), percent);
-    }
-    return color;
-}
 
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
@@ -260,7 +172,7 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         tc.x *= ar;
 
         color = tex2D(samplerColor, tc);
-        color.rgb = BlendWithBase(base.rgb, color.rgb, 1-amplitude);
+        if(render_type) BLENDING_LERP(render_type, base, color, 1 - amplitude);
     }
     else
     {
