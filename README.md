@@ -54,6 +54,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Microsoft Flight Simulator
 * RemotePlay
 * Star Wars Galaxies
+* Vindictus
 
 **The installer version also includes:**
 * Multi-language Support:
