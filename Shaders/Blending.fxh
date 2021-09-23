@@ -2,9 +2,15 @@
 | :: Description :: |
 '-------------------/
 
-    Blending Header (version 0.6)
+    Blending Header (version 0.7)
 
-    Authors: originalnicodr, prod80, uchu suzume, Marot Satil
+	Blending Algorithm Sources:
+	https://www.khronos.org/registry/OpenGL/extensions/NV/NV_blend_equation_advanced.txt
+
+	http://www.nathanm.com/photoshop-blending-math/
+	(Alt) https://github.com/cplotts/WPFSLBlendModeFx/blob/master/PhotoshopMathFP.hlsl
+
+    Header Authors: originalnicodr, prod80, uchu suzume, Marot Satil
 
     About:
     Provides a variety of blending methods for you to use as you wish. Just include this header.
@@ -22,13 +28,17 @@
     * Sorted blending modes in a more logical fashion, grouping by type.
 
     Version 0.4 by uchu suzume
-    * Corrected Color Dodge blending behavior.
+    x Corrected Color Dodge blending behavior.
 
     Version 0.5 by Marot Satil & uchu suzume
     * Added preprocessor macros for uniform variable combo UI element & lerp.
 
     Version 0.6 by Marot Satil & uchu suzume
     * Added Divide (Alternative) and Divide (Photoshop) blending modes.
+
+    Version 0.7 by prod80
+    - Added original sources for blending algorithms.
+    x Corrected average luminosity values.
 
 .------------------.
 | :: How To Use :: |
@@ -248,7 +258,7 @@ float3 Aux(float3 a)
 
 float Lum(float3 a)
 {
-    return (0.3 * a.r + 0.59 * a.g + 0.11 * a.b);
+    return (0.33333 * a.r + 0.33334 * a.g + 0.33333 * a.b);
 }
 
 float3 SetLum (float3 a, float b){
