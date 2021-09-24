@@ -59,10 +59,10 @@
     // BLENDING_COMBO(variable_name, label, tooltip, category, category_closed, spacing, default_value)
     BLENDING_COMBO(_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "Blending Options", false, 0, 0)
 
-    // Inside of your function you can call this preprocessor macro to apply the blending option specified by an int (variable) to your float4 (input) via
+    // Inside of your function you can call this function to apply the blending option specified by an int (variable) to your float4 (input) via
     // a lerp between your float4 (input), float4 (output), and a float (blending) for the alpha channel.
-    // BLENDING_LERP(variable, input, output, blending)
-    BLENDING_LERP(_BlendMode, inColor, outColor, outColor.a)
+    // ComHeaders::Blending::Blend(int variable, float4 input, float4 output, float blending)
+    outColor.rgb = ComHeaders::Blending::Blend(_BlendMode, inColor, outColor, outColor.a);
 */
 
 
