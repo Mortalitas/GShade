@@ -187,9 +187,7 @@ void PS_Layer5(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     const float4 backColor = tex2D(ReShade::BackBuffer, texCoord);
     passColor = tex2D(Layer5_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
-    BLENDING_LERP(Layer5_BlendMode, backColor, passColor, passColor.a * Layer5_Blend)
-
-    passColor.a = backColor.a;
+    passColor = float4(ComHeaders::Blending::Blend(Layer5_BlendMode, backColor.rgb, passColor.rgb, passColor.a * Layer5_Blend), backColor.a);
 
 #if GSHADE_DITHER
 	passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);

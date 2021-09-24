@@ -214,94 +214,94 @@ namespace pkd
 					result = lerp(destination.rgb, source.rgb, source.a * opacity);
 					break;
 				case LAYERCAKE_BLEND_DARKEN:
-					result = lerp(destination.rgb, Darken(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Darken(destination.rgb, source.rgb), source.a * opacity);
 					break;
 				case LAYERCAKE_BLEND_MULTIPLY:
-					result = lerp(destination.rgb, Multiply(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Multiply(destination.rgb, source.rgb), source.a * opacity);
 					break;
 				case LAYERCAKE_BLEND_COLORBURN:
-					result = lerp(destination.rgb, ColorBurn(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::ColorBurn(destination.rgb, source.rgb), source.a * opacity);
 					break;
 				case LAYERCAKE_BLEND_LINEARBURN:
-					result = lerp(destination.rgb, LinearBurn(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::LinearBurn(destination.rgb, source.rgb), source.a * opacity);
 					break;
 				case LAYERCAKE_BLEND_LIGHTEN:
-					result = lerp(destination.rgb, Lighten(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Lighten(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_SCREEN:
-					result = lerp(destination.rgb, Screen(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Screen(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_COLORDODGE:
-					result = lerp(destination.rgb, ColorDodge(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::ColorDodge(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_LINEARDODGE:
-					result = lerp(destination.rgb, LinearDodge(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::LinearDodge(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_ADDITION:
-					result = lerp(destination.rgb, Addition(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Addition(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_GLOW:
-					result = lerp(destination.rgb, Glow(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Glow(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_OVERLAY:
-					result = lerp(destination.rgb, Overlay(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Overlay(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_SOFTLIGHT:
-					result = lerp(destination.rgb, SoftLight(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::SoftLight(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_HARDLIGHT:
-					result = lerp(destination.rgb, HardLight(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::HardLight(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_VIVIDLIGHT:
-					result = lerp(destination.rgb, VividLight(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::VividLight(destination.rgb, source.rgb), source.a * opacity);
 					break;
 				case LAYERCAKE_BLEND_LINEARLIGHT:
-					result = lerp(destination.rgb, LinearLight(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::LinearLight(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_PINLIGHT:
-					result = lerp(destination.rgb, PinLight(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::PinLight(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_HARDMIX:
-					result = lerp(destination.rgb, HardMix(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::HardMix(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_DIFFERENCE:
-					result = lerp(destination.rgb, Difference(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Difference(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_EXCLUSION:
-					result = lerp(destination.rgb, Exclusion(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Exclusion(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_SUBTRACT:
-					result = lerp(destination.rgb, Subtract(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Subtract(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_DIVIDE:
-					result = lerp(destination.rgb, Divide(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Divide(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_DIVIDEALT:
-					result = lerp(destination.rgb, DivideAlt(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::DivideAlt(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_DIVIDEPS:
-					result = lerp(destination.rgb, DividePS(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::DividePS(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_REFLECT:
-					result = lerp(destination.rgb, Reflect(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Reflect(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_GRAINMERGE:
-					result = lerp(destination.rgb, GrainMerge(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::GrainMerge(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_GRAINEXTRACT:
-					result = lerp(destination.rgb, GrainExtract(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::GrainExtract(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_HUE:
-					result = lerp(destination.rgb, Hue(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Hue(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_SATURATION:
-					result = lerp(destination.rgb, Saturation(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Saturation(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_COLORBLEND:
-					result = lerp(destination.rgb, ColorB(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::ColorB(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 				case LAYERCAKE_BLEND_LUMINOSITY:
-					result = lerp(destination.rgb, Luminosity(destination.rgb, source.rgb), source.a * opacity);
+					result = lerp(destination.rgb, ComHeaders::Blending::Luminosity(destination.rgb, source.rgb), source.a * opacity);
 					break;				
 			}
 

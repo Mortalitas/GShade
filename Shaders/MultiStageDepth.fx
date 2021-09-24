@@ -221,7 +221,7 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
         const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
         passColor = tex2D(MultiStage_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
-        BLENDING_LERP(Stage_BlendMode, backColor, passColor, passColor.a * Stage_Opacity)
+        passColor.rgb = ComHeaders::Blending::Blend(Stage_BlendMode, backColor, passColor.rgb, passColor.a * Stage_Opacity);
 
 #if GSHADE_DITHER
         passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);

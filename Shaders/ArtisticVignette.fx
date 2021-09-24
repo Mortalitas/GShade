@@ -167,14 +167,12 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 		vignette = smoothstep(VignetteStartEnd.x, VignetteStartEnd.y, vignette);
 
-		float4 vig_color = VignetteColor;
-
 #if GSHADE_DITHER
-		BLENDING_LERP(BlendMode, color, vig_color, vignette * vig_color.a)
-		return float4(vig_color.rgb + TriDither(vig_color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
+		const float3 vig_color = ComHeaders::Blending::Blend(BlendMode, color.rgb, VignetteColor.rgb, vignette * VignetteColor.a);
+
+		return float4(vig_color + TriDither(vig_color, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
 #else
-		BLENDING_LERP(BlendMode, color, vig_color, vignette * vig_color.a)
-		return float4(vig_color.rgb, color.a);
+		return float4(ComHeaders::Blending::Blend(BlendMode, color.rgb, VignetteColor.rgb, vignette * VignetteColor.a), color.a);
 #endif
 	}
 	else
