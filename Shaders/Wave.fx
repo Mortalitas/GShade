@@ -172,7 +172,8 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         tc.x *= ar;
 
         color = tex2D(samplerColor, tc);
-        if(render_type) BLENDING_LERP(render_type, base, color, 1 - amplitude);
+        if(render_type)
+            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, 1 - amplitude);
     }
     else
     {

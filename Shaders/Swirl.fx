@@ -230,7 +230,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         color = tex2D(samplerColor, tc);
 
         if(dist < radius)
-            BLENDING_LERP(render_type, base, color, !swirl_mode && render_type ? min(abs(theta), 1) : 1);
+            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, !swirl_mode && render_type ? min(abs(theta), 1) : 1);
     }
     else
     {

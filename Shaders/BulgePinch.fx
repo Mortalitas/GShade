@@ -150,7 +150,7 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
 
         color = tex2D(samplerColor, tc);
         if(render_type)
-            BLENDING_LERP(render_type, base, color, 1 - percent);
+            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, 1 - percent);
     }
     else {
         color = tex2D(samplerColor, texcoord);

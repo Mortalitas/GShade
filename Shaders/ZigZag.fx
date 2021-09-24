@@ -213,7 +213,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         color = tex2D(samplerColor, tc);
         
         if(depth >= min_depth && dist < radius && render_type)
-            BLENDING_LERP(render_type, base, color, min(abs(theta), 1));
+            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, min(abs(theta), 1));
     
     }
     else
