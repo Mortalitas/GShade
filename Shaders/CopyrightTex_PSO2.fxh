@@ -206,4 +206,7 @@ uniform int variable \
 #elif _Copyright_Texture_Source == 39    // Custom
 #define _SOURCE_COPYRIGHT_FILE cLayerTex
 #define _SOURCE_COPYRIGHT_SIZE cLayer_SIZE_X, cLayer_SIZE_Y
+#else // Default
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
+#define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
 #endif
