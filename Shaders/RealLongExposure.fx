@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////
 // RealisticLongExposure.fx by SirCobra
-// Version 0.2
+// Version 0.3
 // You can find descriptions and my other shaders here: https://github.com/LordKobra/CobraFX
 // --------Description---------
 // It will take the games input for a defined amount of seconds to create the final image, just as a camera would do in real life.
@@ -39,18 +39,19 @@ namespace RealisticLongExposure {
 		ui_step = 1;
 		ui_tooltip = "ISO. 100 is normalized to the game. 1600 is 16 times the sensitivity.";
 	> = 100;
-	uniform float Threshold <
+	uniform float Gamma <
 		ui_type = "slider";
-		ui_min = 0; ui_max = 1;
-		ui_step = 0.001;
-		ui_tooltip = "Disables ISO scaling for values below Threshold to avoid average game brightness to bleed into the long exposure. 0 means black, 1 is white (maximum luminosity).";
-	> = 0;
-	uniform float ThresholdSmoothness <
+		ui_min = 0.4; ui_max = 4.4;
+		ui_step = 0.01;
+		ui_tooltip = "The gamma correction value. The default value is 1.";
+	> = 1;
+	uniform uint Delay <
 		ui_type = "slider";
-		ui_min = 0; ui_max = 1;
-		ui_step = 0.001;
-		ui_tooltip = "A higher smoothness will create a soft gradient between the luminosity affected and not affected by the ISO. Useful when a sharp seperation is not possible.";
-	> = 0;
+		ui_min = 0; ui_max = 100;
+		ui_step = 1;
+		ui_tooltip = "Delay before exposure starts in miliseconds.";
+	> = 1;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,12 +105,11 @@ namespace RealisticLongExposure {
 	//***************************************                  *******************************************//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	float4 getExposure(float4 rgbval, bool e)
+	float4 getExposure(float4 rgbval)
 	{
 		float brightness = (rgbval.r + rgbval.g + rgbval.b) / 3;
-		float enc = (brightness > Threshold) ? 1 + (ISO / 100 - 1) * smoothstep(Threshold, min(Threshold+ThresholdSmoothness, 1), brightness ) : 1; // -> apply smooth function?
-		float dec = 1;
-		rgbval.rgb = e ? enc * rgbval.rgb / 14400 : dec * rgbval.rgb;
+		float enc = ISO / 100;
+		rgbval.rgb = enc * pow(rgbval.rgb, Gamma) / 14400;
 		return rgbval;
 	}
 
@@ -119,12 +119,12 @@ namespace RealisticLongExposure {
 		float framecounter = decodeTimer(tex2D(samplerTimer, float2(0.75, 0.5)).r);
 		float4 rgbval = tex2D(ReShade::BackBuffer, texcoord);
 		fragment = tex2D(samplerExposureCopy, texcoord);
-		rgbval = getExposure(rgbval, true); //rgbval / 14400 * ((ISO-100) / 100 +1);//(pow(2.71828,(rgbval.r+rgbval.g+rgbval.b/768))-1);
+		rgbval = getExposure(rgbval);
 		// during exposure
 		// active: add rgb
 		// inactive: keep current
 		// after exposure reset so it is ready for activation
-		if (StartExposure)
+		if (StartExposure && abs(timer - start_time) > Delay)
 		{
 			if (abs(timer - start_time) < 1000 * RealExposureDuration)
 			{
@@ -163,7 +163,7 @@ namespace RealisticLongExposure {
 		{
 			if (abs(timer - start_time) < 1000 * RealExposureDuration)
 			{
-				new_value = framecounter + 1.0;
+				new_value = (StartExposure && abs(timer - start_time) > Delay) ? framecounter + 1 : 0;
 			}
 			else if (StartExposure)
 			{
@@ -188,7 +188,8 @@ namespace RealisticLongExposure {
 		float4 result = float4(0, 0, 0, 1);
 		if (StartExposure && framecounter)
 		{
-			result = getExposure(float4(tex2D(samplerExposure, texcoord).rgb * (14400 / framecounter), result.a), false);
+			result.rgb = exposure_rgb.rgb * (14400 / framecounter);
+			result.rgb = pow(result.rgb, 1 / Gamma);
 		}
 		else
 		{
