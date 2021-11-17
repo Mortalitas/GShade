@@ -32,7 +32,7 @@ The blending and prefiltering methods come from kino-bloom.
 // THE SOFTWARE.
 //
 
-
+#define COMPUTE 1
 #define DIVIDE_ROUNDING_UP(n, d) uint(((n) + (d) - 1) / (d))
 #define FILTER_WIDTH 256
 #define PIXELS_PER_THREAD 256
@@ -42,20 +42,38 @@ The blending and prefiltering methods come from kino-bloom.
 #define V_GROUP_SIZE uint2(64, 1)
 #define PI 3.1415962
 
-#if __RESHADE__ < 50000 && __RENDERER__ == 0xc000
-	#error
-#endif
-#if (((__RENDERER__ >= 0xb000 && __RENDERER__ < 0x10000) || (__RENDERER__ >= 0x14300)) && __RESHADE__ >=40800)
-	#define COMPUTE 1
+#ifndef BESSEL_BLOOM_USE_RGBA16F
+#define BESSEL_BLOOM_USE_RGBA16F 0
 #endif
 
-#if COMPUTE
+#undef FORMAT
+
+#if BESSEL_BLOOM_USE_RGBA16F != 0
+	#define FORMAT RGBA16f
+#else
+	#define FORMAT RGB10A2
+#endif
+
+
+#if __RENDERER__ < 0xb000
+	#warning "DX9 and DX10 APIs are unsupported by compute"
+	#undef COMPUTE
+	#define COMPUTE 0
+#endif
+
+#if __RESHADE__ < 50000 && __RENDERER__ == 0xc000
+	#warning "Due to a bug in the current version of ReShade, this shader is disabled in DX12 until the release of ReShade 5.0."
+	#undef COMPUTE
+	#define COMPUTE 0
+#endif
+
+#if COMPUTE != 0
 static const float4 coefficients = float4(1, 1.5, -0.8333333, 0.1666667);
 namespace Bessel_Bloom
 {
 	texture BackBuffer:COLOR;
-	texture Blur0{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGB10A2;};
-	texture Blur1{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGB10A2;};
+	texture Blur0{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = FORMAT;};
+	texture Blur1{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = FORMAT;};
 
 	sampler sBackBuffer{Texture = BackBuffer;};
 	sampler sBlur0{Texture = Blur0;};
@@ -82,6 +100,14 @@ namespace Bessel_Bloom
 		ui_min = 64; ui_max = 128;
 		ui_step = 0.001;
 	> = 128;
+	
+	uniform float Saturation<
+		ui_type = "slider";
+		ui_label = "Saturation";
+		ui_tooltip = "How strong the effect is.";
+		ui_min = 0; ui_max = 2;
+		ui_step = 0.001;
+	> = 1;
 	
 	uniform float Threshold<
 		ui_type = "slider";
@@ -117,12 +143,43 @@ namespace Bessel_Bloom
 				     "and going to high will make it twice the size it is on medium.";
 	> = 2;
 	
+	uniform bool Debug<
+		ui_label = "Show Bloom";
+	> = 0;
+	
 	// Vertex shader generating a triangle covering the entire screen
 	void PostProcessVS(in uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD)
 	{
 		texcoord.x = (id == 2) ? 2.0 : 0.0;
 		texcoord.y = (id == 1) ? 2.0 : 0.0;
 		position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
+	}
+	
+	float4 PackColors(float3 color)
+	{
+		
+		#if BESSEL_BLOOM_USE_RGBA16F != 0
+		return float4(color.rgb, 1);
+		#else
+		float4 output;
+		output.rgb = color.rgb;
+		float3 outputRcp = rcp(output.rgb);
+		float minRCP = min(min(outputRcp.r, outputRcp.g), outputRcp.b);
+		output.a = (minRCP > 8) ? (3/3) :
+		           (minRCP > 4) ? (2/3) :
+				   (minRCP > 2) ? (1/3) : 0;
+		output.rgb *= exp2(output.a * 3);
+		return output;
+		#endif
+	}
+	
+	float3 UnpackColors(float4 color)
+	{
+		#if BESSEL_BLOOM_USE_RGBA16F != 0
+		return color.rgb;
+		#else
+		return color.rgb * exp2(-(3 * color.a));
+		#endif
 	}
 
 	void PrefilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 output : SV_TARGET0)
@@ -136,7 +193,7 @@ namespace Bessel_Bloom
 		rq = curve.z * rq * rq;
 		output.rgb = color * (max(rq, brightness - Threshold) / max(brightness, 1e-5));
 		output.rgb *= rcp(1-Threshold);
-		output.a = 1;
+		output = PackColors(output.rgb);
 		
 	}
 	
@@ -149,7 +206,7 @@ namespace Bessel_Bloom
 		float denominator = k * k + 3 * k + 3;
 		float3 currWeights = float3(3, 6, 3) / denominator;
 		float2 prevWeights = float2(-6 + 2*k*k, -k*k + 3 * k - 3) / denominator;
-		prev[0] = tex2Dfetch(sBlur1, clamp(float2(coord.x - filterWidth, coord.y), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1)).xyzw;
+		prev[0] = UnpackColors(tex2Dfetch(sBlur1, clamp(float2(coord.x - filterWidth, coord.y), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1))).xyzx;
 		float brightness = max(max(prev[0].r, prev[0].g), prev[0].b);
 		prev[1] = prev[0].yyyy;
 		prev[2] = prev[0].zzzz;
@@ -161,7 +218,7 @@ namespace Bessel_Bloom
 		for(int i = -filterWidth + 1; i < PIXELS_PER_THREAD; i++)
 		{
 			float2 sampleCoord = clamp(float2(coord.x + i, coord.y), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1);
-			float3 newSample = tex2Dfetch(sBlur1, sampleCoord).xyz;
+			float3 newSample = UnpackColors(tex2Dfetch(sBlur1, sampleCoord));
 			[unroll]
 			for(int j = 0; j < 3; j++)
 			{
@@ -170,7 +227,7 @@ namespace Bessel_Bloom
 			}
 			if(i >= 0)
 			{
-				tex2Dstore(wBlur0, int2(coord.x + i, coord.y), float4(prev[0].x, prev[1].x, prev[2].x, 1));
+				tex2Dstore(wBlur0, int2(coord.x + i, coord.y), PackColors(float3(prev[0].x, prev[1].x, prev[2].x)));
 			}
 		}
 	}
@@ -183,7 +240,7 @@ namespace Bessel_Bloom
 		float denominator = k * k + 3 * k + 3;
 		float3 currWeights = float3(3, 6, 3) / denominator;
 		float2 prevWeights = float2(-6 + 2*k*k, -k*k + 3 * k - 3) / denominator;
-		prev[0] = tex2Dfetch(sBlur0, clamp(float2(coord.x + filterWidth, coord.y), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1)).xyzw;
+		prev[0] = UnpackColors(tex2Dfetch(sBlur0, clamp(float2(coord.x + filterWidth, coord.y), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1))).xyzx;
 		prev[1] = prev[0].yyyy;
 		prev[2] = prev[0].zzzz;
 		prev[0] = prev[0].xxxx;
@@ -195,7 +252,7 @@ namespace Bessel_Bloom
 		for(int i = filterWidth - 1; i > -PIXELS_PER_THREAD; i--)
 		{
 			float2 sampleCoord = clamp(float2(coord.x + i, coord.y), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1);
-			float3 newSample = tex2Dfetch(sBlur0, sampleCoord).xyz;
+			float3 newSample = UnpackColors(tex2Dfetch(sBlur0, sampleCoord));
 			[unroll]
 			for(int j = 0; j < 3; j++)
 			{
@@ -206,7 +263,7 @@ namespace Bessel_Bloom
 			{
 				//float storedSample = (prev + tex2Dfetch(sBlur0, int2(coord.x + i, coord.y)).x) * 0.5;
 				barrier();
-				tex2Dstore(wBlur1, int2(coord.x + i, coord.y), float4(prev[0].x, prev[1].x, prev[2].x, 1));
+				tex2Dstore(wBlur1, int2(coord.x + i, coord.y), PackColors(float3(prev[0].x, prev[1].x, prev[2].x)));
 			}
 		}
 	}
@@ -220,7 +277,7 @@ namespace Bessel_Bloom
 		float3 currWeights = float3(3, 6, 3) / denominator;
 		float2 prevWeights = float2(-6 + 2*k*k, -k*k + 3 * k - 3) / denominator;
 		
-		prev[0] = tex2Dfetch(sBlur1, clamp(float2(coord.x, coord.y - filterWidth), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1)).xyzw;
+		prev[0] = UnpackColors(tex2Dfetch(sBlur1, clamp(float2(coord.x, coord.y - filterWidth), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1))).xyzx;
 		prev[1] = prev[0].yyyy;
 		prev[2] = prev[0].zzzz;
 		prev[0] = prev[0].xxxx;
@@ -231,7 +288,7 @@ namespace Bessel_Bloom
 		for(int i = -filterWidth + 1; i < PIXELS_PER_THREAD; i++)
 		{
 			float2 sampleCoord = clamp(float2(coord.x, coord.y + i), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1);
-			float3 newSample = tex2Dfetch(sBlur1, sampleCoord).xyz;
+			float3 newSample = UnpackColors(tex2Dfetch(sBlur1, sampleCoord));
 			[unroll]
 			for(int j = 0; j < 3; j++)
 			{
@@ -240,7 +297,7 @@ namespace Bessel_Bloom
 			}
 			if(i >= 0)
 			{
-				tex2Dstore(wBlur0, int2(coord.x, coord.y + i), float4(prev[0].x, prev[1].x, prev[2].x, 1));
+				tex2Dstore(wBlur0, int2(coord.x, coord.y + i), PackColors(float3(prev[0].x, prev[1].x, prev[2].x)));
 			}
 		}
 	}
@@ -254,7 +311,7 @@ namespace Bessel_Bloom
 		float3 currWeights = float3(3, 6, 3) / denominator;
 		float2 prevWeights = float2(-6 + 2*k*k, -k*k + 3 * k - 3) / denominator;
 
-		prev[0] = tex2Dfetch(sBlur0, clamp(float2(coord.x, coord.y + filterWidth), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1)).xxxx;
+		prev[0] = UnpackColors(tex2Dfetch(sBlur0, clamp(float2(coord.x, coord.y + filterWidth), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1))).xyzx;
 		prev[1] = prev[0].yyyy;
 		prev[2] = prev[0].zzzz;
 		prev[0] = prev[0].xxxx;
@@ -266,7 +323,7 @@ namespace Bessel_Bloom
 		for(int i = filterWidth - 1; i > -PIXELS_PER_THREAD; i--)
 		{
 			float2 sampleCoord = clamp(float2(coord.x, coord.y + i), 0, float2(BUFFER_WIDTH, BUFFER_HEIGHT) - 1);
-			float3 newSample = tex2Dfetch(sBlur0, sampleCoord).xyz;
+			float3 newSample = UnpackColors(tex2Dfetch(sBlur0, sampleCoord));
 			[unroll]
 			for(int j = 0; j < 3; j++)
 			{
@@ -275,7 +332,7 @@ namespace Bessel_Bloom
 			}
 			if(i <= 0)
 			{
-				tex2Dstore(wBlur1, int2(coord.x, coord.y + i), float4(prev[0].x, prev[1].x, prev[2].x, 1));
+				tex2Dstore(wBlur1, int2(coord.x, coord.y + i), PackColors(float3(prev[0].x, prev[1].x, prev[2].x)));
 			}
 		}
 	}
@@ -359,8 +416,17 @@ namespace Bessel_Bloom
 	void OutputPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 output : SV_TARGET0)
 	{
 		float3 color = tex2D(sBackBuffer, texcoord).rgb;
+		float3 bloom = UnpackColors(tex2D(sBlur1, texcoord));
+		float greyComponent = dot(bloom, 0.33333);
+		bloom = lerp(greyComponent, bloom, Saturation);
+		
 		output.a = 1;
-		output.rgb = pow(abs(pow(abs(color), 2.2) + tex2D(sBlur1, texcoord).rgb * Intensity * (1-Threshold)), 1/2.2);
+		output.rgb = pow(abs(pow(abs(color), Gamma) + bloom * Intensity * (1-Threshold)), rcp(Gamma));
+		if(Debug)
+		{
+			output.rgb = pow(abs(bloom * Intensity * (1-Threshold)), rcp(Gamma));
+		}
+			
 	}
 	
 	technique Bessel_Bloom< ui_tooltip = "Instead of using the typical Gaussian filter used by bloom, an approximate is implemented instead\n"
