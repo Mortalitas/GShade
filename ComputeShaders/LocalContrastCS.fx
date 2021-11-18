@@ -11,7 +11,7 @@ Arici, Tarik, and Yucel Altunbasak. “Image Local Contrast Enhancement Using Ad
 #define COMPUTE 1
 #define DIVIDE_ROUNDING_UP(n, d) uint(((n) + (d) - 1) / (d))
 #define FILTER_WIDTH 128
-#define PIXELS_PER_THREAD 256
+#define PIXELS_PER_THREAD 128
 #define H_GROUPS uint2((DIVIDE_ROUNDING_UP(BUFFER_WIDTH, PIXELS_PER_THREAD) * 2), DIVIDE_ROUNDING_UP(BUFFER_HEIGHT, 64))
 #define V_GROUPS uint2(DIVIDE_ROUNDING_UP(BUFFER_WIDTH, 64), (DIVIDE_ROUNDING_UP(BUFFER_HEIGHT, PIXELS_PER_THREAD) * 2))
 #define H_GROUP_SIZE uint2(1, 64)
@@ -73,7 +73,7 @@ namespace Spatial_IIR_Clarity
 		ui_tooltip = "Use this slider to determine how large of a region the shader considers to be local;\n"
 					 "a larger number will correspond to a smaller region, and will result in sharper looking\n"
 					 "details.";
-		ui_min = 3; ui_max = 9;
+		ui_min = 5; ui_max = 12;
 	> = 5;
 	
 	//Constants used by research paper
@@ -101,34 +101,6 @@ namespace Spatial_IIR_Clarity
 	{
 		luma = dot(tex2D(sBackBuffer, texcoord).rgb, float3(0.299, 0.587, 0.114));
 	}
-
-	/*
-	Not as fast, but maybe to be explored later
-	void HorizontalFilterCS0(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
-	{
-		float2 coord = float2(id.x * PIXELS_PER_THREAD, id.y * 2) + 1;
-		float4 curr;
-		float4 prev;
-		float2 weight;
-		prev.yz = tex2DgatherR(sLuma, float2(coord.x - FILTER_WIDTH - 1, coord.y) / float2(BUFFER_WIDTH, BUFFER_HEIGHT)).yz;
-		for(int i = -FILTER_WIDTH; i < PIXELS_PER_THREAD; i += 2)
-		{
-			curr = tex2DgatherR(sLuma, float2(coord.x + i, coord.y) / float2(BUFFER_WIDTH, BUFFER_HEIGHT));
-			weight = 1 - abs(curr.xw - prev.yz);
-			weight = pow(abs(weight), WeightExponent);
-			prev.xw = lerp(curr.xw, prev.yz, weight);
-			weight = 1 - abs(curr.yz - prev.xw);
-			weight = pow(abs(weight), WeightExponent);
-			prev.yz = lerp(curr.yz, prev.xw, weight);
-			if(i >= 0)
-			{
-				tex2Dstore(wBlur0, int2(coord.x + i, coord.y + 1), prev.xxxx);
-				tex2Dstore(wBlur0, int2(coord.x + i + 1, coord.y + 1), prev.yyyy);
-				tex2Dstore(wBlur0, int2(coord.x + i + 1, coord.y ), prev.zzzz);
-				tex2Dstore(wBlur0, int2(coord.x + i, coord.y ), prev.wwww);
-			}
-		}
-	}*/
 	
 	void CombinePS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float output : SV_Target0)
 	{
@@ -138,7 +110,7 @@ namespace Spatial_IIR_Clarity
 	
 	void HorizontalFilterCS0(uint3 id : SV_DispatchThreadID)
 	{
-		if(id.x <= (H_GROUPS.x / 2))
+		if(id.x < (H_GROUPS.x / 2))
 		{
 			float2 coord = float2(id.x * PIXELS_PER_THREAD, id.y) + 0.5;
 			float curr;
@@ -182,7 +154,7 @@ namespace Spatial_IIR_Clarity
 	
 	void VerticalFilterCS0(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 	{
-		if(id.y <= V_GROUPS.y / 2)
+		if(id.y < V_GROUPS.y / 2)
 		{
 			float2 coord = float2(id.x, id.y * PIXELS_PER_THREAD) + 0.5;
 			float curr;
