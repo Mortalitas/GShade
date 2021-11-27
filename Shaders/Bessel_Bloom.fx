@@ -32,6 +32,10 @@ The blending and prefiltering methods come from kino-bloom.
 // THE SOFTWARE.
 //
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 #define COMPUTE 1
 #define DIVIDE_ROUNDING_UP(n, d) uint(((n) + (d) - 1) / (d))
 #define FILTER_WIDTH 256
@@ -426,7 +430,10 @@ namespace Bessel_Bloom
 		{
 			output.rgb = pow(abs(bloom * Intensity * (1-Threshold)), rcp(Gamma));
 		}
-			
+
+#if GSHADE_DITHER
+		output = float4(output.rgb + TriDither(output.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), output.a);
+#endif			
 	}
 	
 	technique Bessel_Bloom< ui_tooltip = "Instead of using the typical Gaussian filter used by bloom, an approximate is implemented instead\n"
