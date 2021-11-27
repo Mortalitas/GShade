@@ -51,6 +51,11 @@ uniform bool bKeepUIOcclude <
     ui_bind = "KeepUIOccludeAssist";
 > = 0;
 
+#ifndef KeepUIOccludeAssist
+	#define KeepUIOccludeAssist 0
+#endif
+
+#if KeepUIOccludeAssist
 uniform float fKeepUIOccludeMinAlpha <
     ui_type = "slider";
     ui_category = "Options";
@@ -58,9 +63,6 @@ uniform float fKeepUIOccludeMinAlpha <
     ui_tooltip = "Set a minimum opacity threshold for occlusion assistance. If UI opacity is below the threshold, occlusion assistance will not be applied. Helps with screenspace illumination and DoF shaders.";
     ui_min = 0; ui_max = 1;
 > = 0;
-
-#ifndef KeepUIOccludeAssist
-	#define KeepUIOccludeAssist 0
 #endif
 
 // Disable occlusion assistance in unsupported games.
