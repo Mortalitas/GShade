@@ -51,6 +51,14 @@ uniform bool bKeepUIOcclude <
     ui_bind = "KeepUIOccludeAssist";
 > = 0;
 
+uniform float fKeepUIOccludeMinAlpha <
+    ui_type = "slider";
+    ui_category = "Options";
+    ui_label = "Occlusion Assistance Alpha Threshold";
+    ui_tooltip = "Set a minimum opacity threshold for occlusion assistance. If UI opacity is below the threshold, occlusion assistance will not be applied. Helps with screenspace illumination and DoF shaders.";
+    ui_min = 0; ui_max = 1;
+> = 0;
+
 #ifndef KeepUIOccludeAssist
 	#define KeepUIOccludeAssist 0
 #endif
@@ -95,7 +103,8 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
 #if KeepUIOccludeAssist
 void PS_OccludeUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-    const float4 keep = tex2D(KeepUI_Sampler, texcoord);
+    float4 keep = tex2D(KeepUI_Sampler, texcoord);
+    keep.a *= step(fKeepUIOccludeMinAlpha, keep.a);
     color = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), float4(0, 0, 0, 0), keep.a).rgb, keep.a);
 }
 #endif
