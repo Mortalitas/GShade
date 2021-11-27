@@ -13,16 +13,12 @@ uniform int swirl_mode <
     ui_type = "combo";
     ui_label = "Mode";
     ui_items = "Normal\0Spliced Radial\0";
-    ui_bind = "SPLICED_RADIALS_ENABLED";
-    ui_tooltip="Selects which swirl mode to display.\nNormal Mode -- Contiguously twists pixels around a point.\nSpliced Radials -- Creates incrementally rotated circular splices.";
+    ui_tooltip="Selects which swirl mode to display.\n(Normal Mode) Contiguously twists pixels around a point.\n(Spliced Radials) Creates incrementally rotated circular splices.";
 > = 0;
-
-#ifndef SPLICED_RADIALS_ENABLED
-    #define SPLICED_RADIALS_ENABLED 0
-#endif
 
 uniform float radius <
     ui_label= "Radius";
+    ui_tooltip = "The size of the distortion.";
     ui_type = "slider";
     ui_min = 0.0; 
     ui_max = 1.0;
@@ -31,25 +27,19 @@ uniform float radius <
 uniform float inner_radius <
     ui_type = "slider";
     ui_label = "Inner Radius";
-    ui_tooltip = "Normal Mode -- Sets the inner radius at which the maximum angle is automatically set.\nSpliced Radial mode -- defines the innermost spliced circle's size.";
+    ui_tooltip = "(Normal Mode) Sets the inner radius at which the maximum angle is automatically set.\n(Spliced Radial mode) defines the innermost spliced circle's size.";
     ui_min = 0.0;
     ui_max = 1.0;
 > = 0;
 
-#if SPLICED_RADIALS_ENABLED
-    uniform int number_splices <
+uniform int number_splices <
         ui_type = "slider";
-        ui_label = "Number of Splices";
-        ui_bind = "NUMBER_OF_SPLICES";
+        ui_label = "(Spliced Radials Mode Only) Number of Splices";
         ui_tooltip = "(Spliced Radial Mode Only) Sets the number of splices. A higher value makes the effect look closer to Normal mode by increasing the number of splices.";
         ui_min = 1;
         ui_max = 50;
-    > = 10;
-#endif
+> = 10;
 
-#ifndef NUMBER_OF_SPLICES
-    #define NUMBER_OF_SPLICES 10
-#endif
 
 uniform float angle <
     ui_type = "slider";
@@ -72,7 +62,7 @@ uniform float tension <
 uniform float2 coordinates <
     ui_type = "slider";
     ui_label="Coordinates"; 
-    ui_tooltip="The X and Y position of the center of the effect.";
+    ui_tooltip="(Use Offset Coordinates Disabled) The X and Y position of the center of the effect.\n(Use Offset Coordinates Enabled) Determines the coordinates of the output distortion on the undistorted source.";
     ui_min = 0.0; 
     ui_max = 1.0;
 > = float2(0.25, 0.25);
@@ -90,12 +80,41 @@ uniform float aspect_ratio <
     ui_tooltip = "Changes the distortion's aspect ratio in regards to the display aspect ratio.";
 > = 0;
 
-uniform float min_depth <
+uniform bool use_offset_coords <
+    ui_label = "Use Offset Coordinates";
+    ui_category = "Offset";
+    ui_tooltip = "Display the distortion in any location besides its original coordinates.";
+> = 0;
+
+uniform float2 offset_coords <
+    ui_label = "Offset Coordinates";
+    ui_tooltip = "(Use Offset Coordinates Enabled) Determines the source coordinates to be distorted when passed along to the output coordinates.";
     ui_type = "slider";
-    ui_label="Minimum Depth";
+    ui_category = "Offset";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = float2(0.5, 0.5);
+
+uniform float depth_threshold <
+    ui_type = "slider";
+    ui_label="Depth Threshold";
+    ui_category = "Depth";
     ui_min=0.0;
     ui_max=1.0;
-    ui_tooltip="The minimum depth to distort.\nAnything closer than the threshold will appear normally. (0 = Near, 1 = Far)";
+> = 0;
+
+uniform int depth_mode <
+    ui_type = "combo";
+    ui_label = "Depth Mode";
+    ui_category = "Depth";
+    ui_items = "Minimum\0Maximum\0";
+    ui_tooltip = "Mask the effect by using the depth of the scene.";
+> = 0;
+
+uniform bool set_max_depth_behind <
+    ui_label = "Set Distortion Behind Foreground";
+    ui_tooltip = "(Maximum Depth Threshold Mode only) When enabled, sets the distorted area behind the objects that should come in front of it.";
+    ui_category = "Depth";
 > = 0;
 
 uniform int animate <
@@ -121,6 +140,8 @@ BLENDING_COMBO(
     0,
     0
 );
+
+
 
 uniform float anim_rate <
     source = "timer";
@@ -183,7 +204,8 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
     const float4 base = tex2D(samplerColor, texcoord);
     const float depth = ReShade::GetLinearizedDepth(texcoord).r;
-    float2 center = coordinates;
+    float2 center = coordinates / 2.0;
+    float2 offset_center = offset_coords / 2.0;
     
     if (use_mouse_point) 
         center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH / 2.0, mouse_coordinates.y * BUFFER_RCP_HEIGHT / 2.0);
@@ -192,57 +214,88 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     float4 color;
 
     center.x /= ar;
+    offset_center.x /= ar;
     tc.x /= ar;
 
-    if (depth >= min_depth)
-    {
-        const float dist = distance(tc, center);
-        const float dist_radius = radius-dist;
-        const float tension_radius = lerp(radius-dist, radius, tension);
-        float percent; 
-        float theta; 
+    
+    const float dist = distance(tc, center);
+    const float dist_radius = radius-dist;
+    const float tension_radius = lerp(radius-dist, radius, tension);
+    float percent; 
+    float theta; 
        
-        if(SPLICED_RADIALS_ENABLED == 0){
-            percent = max(dist_radius, 0) / tension_radius;   
-            if(inverse && dist < radius)
-                percent = 1 - percent;     
+    if(swirl_mode == 0){
+        percent = max(dist_radius, 0) / tension_radius;   
+        if(inverse && dist < radius)
+            percent = 1 - percent;     
         
-            if(dist_radius > radius-inner_radius)
-                percent = 1;
-            theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
-        }
-        else
-        {
-            float splice_width = (tension_radius-inner_radius) / NUMBER_OF_SPLICES;
-            splice_width = frac(splice_width);
-            float cur_splice = max(dist_radius,0)/splice_width;
-            cur_splice = cur_splice - frac(cur_splice);
-            float splice_angle = (angle / NUMBER_OF_SPLICES) * cur_splice;
-            if(dist_radius > radius-inner_radius)
-                splice_angle = angle;
-            theta = radians(splice_angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
-        }
+        if(dist_radius > radius-inner_radius)
+            percent = 1;
+        
+        theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
+    }
+    else
+    {
+        float splice_width = (tension_radius-inner_radius) / number_splices;
+        splice_width = frac(splice_width);
+        float cur_splice = max(dist_radius,0)/splice_width;
+        cur_splice = cur_splice - frac(cur_splice);
+        float splice_angle = (angle / number_splices) * cur_splice;
+        if(dist_radius > radius-inner_radius)
+            splice_angle = angle;
+        theta = radians(splice_angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
+    }
 
-        tc = mul(swirlTransform(theta), tc-center);
+    tc = mul(swirlTransform(theta), tc-center);
+
+    if(use_offset_coords) 
+        tc += (2 * offset_center);
+    else 
         tc += (2 * center);
-        tc.x *= ar;
-      
-        color = tex2D(samplerColor, tc);
 
-        if(dist < radius)
-            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, !swirl_mode && render_type ? min(abs(theta), 1) : 1);
+    tc.x *= ar;
+      
+    float out_depth;
+    bool inDepthBounds;
+    if (depth_mode == 0) 
+    {
+        out_depth =  ReShade::GetLinearizedDepth(texcoord).r;
+        inDepthBounds = out_depth >= depth_threshold;
     }
     else
     {
         color = tex2D(samplerColor, texcoord);
+        out_depth = ReShade::GetLinearizedDepth(tc).r;
+        inDepthBounds = out_depth <= depth_threshold;
+    }
+         
+    if (inDepthBounds)
+    {
+        if(use_offset_coords)
+        {
+            if((!swirl_mode && percent) || (swirl_mode && theta))
+                color = tex2D(samplerColor, tc);
+            else
+                color = tex2D(samplerColor, texcoord);
+        } else
+            color = tex2D(samplerColor, tc);
+
+        if(render_type && ((!swirl_mode && percent) || (swirl_mode && dist <= radius)))
+            BLENDING_LERP(render_type, base, color, !swirl_mode ? dist_radius * tension_radius * 250 : 1);
+    }
+    else
+    {
+        color = base;
     }
 
-    
-#if GSHADE_DITHER
-    return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
-    return color;
-#endif
+    if(set_max_depth_behind) 
+    {
+        const float mask_front = ReShade::GetLinearizedDepth(texcoord).r;
+        if(mask_front < depth_threshold)
+            color = tex2D(samplerColor, texcoord);
+    }
+
+    return color;  
 }
 
 // Technique

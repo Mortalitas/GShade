@@ -50,12 +50,28 @@ uniform float phase <
     ui_tooltip = "The offset being applied to the distortion's waves.";
 > = 0.0;
 
-uniform float min_depth <
+uniform float depth_threshold <
     ui_type = "slider";
-    ui_label="Minimum Depth";
+    ui_label="Depth Threshold";
+    ui_category = "Depth";
     ui_min=0.0;
     ui_max=1.0;
 > = 0;
+
+uniform int depth_mode <
+    ui_type = "combo";
+    ui_label = "Depth Mode";
+    ui_category = "Depth";
+    ui_items = "Minimum\0Maximum\0";
+    ui_tooltip = "Mask the effect by using the depth of the scene.";
+> = 0;
+
+uniform bool set_max_depth_behind <
+    ui_label = "Set Distortion Behind Foreground";
+    ui_tooltip = "(Maximum Depth Threshold Mode only) When enabled, sets the distorted area behind the objects that should come in front of it.";
+    ui_category = "Depth";
+> = 0;
+
 
 uniform int animate <
     ui_type = "combo";
@@ -136,53 +152,69 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     const float _c = cos(-theta);
 
     tc = float2(dot(tc - center, float2(c, -s)), dot(tc - center, float2(s, c)));
-    if(depth >= min_depth){
-        if(wave_type == 0)
-        {
-            switch(animate)
-            {
-                default:
-                    tc.x += amplitude * sin((tc.x * period * 10) + phase);
-                    break;
-                case 1:
-                    tc.x += (sin(anim_rate * 0.001) * amplitude) * sin((tc.x * period * 10) + phase);
-                    break;
-                case 2:
-                    tc.x += amplitude * sin((tc.x * period * 10) + (anim_rate * 0.001));
-                    break;
-            }
-        }
-        else
-        {
-            switch(animate)
-            {
-                default:
-                    tc.x +=  amplitude * sin((tc.y * period * 10) + phase);
-                    break;
-                case 1:
-                    tc.x += (sin(anim_rate * 0.001) * amplitude) * sin((tc.y * period * 10) + phase);
-                    break;
-                case 2:
-                    tc.x += amplitude * sin((tc.y * period * 10) + (anim_rate * 0.001));
-                    break;
-            }
-        }
-        tc = float2(dot(tc, float2(_c, -_s)), dot(tc, float2(_s, _c))) + center;
 
-        tc.x *= ar;
+    if(wave_type == 0)
+    {
+        switch(animate)
+        {
+            default:
+                tc.x += amplitude * sin((tc.x * period * 10) + phase);
+                break;
+            case 1:
+                tc.x += (sin(anim_rate * 0.001) * amplitude) * sin((tc.x * period * 10) + phase);
+                break;
+            case 2:
+                tc.x += amplitude * sin((tc.x * period * 10) + (anim_rate * 0.001));
+                break;
+        }
+    }
+    else
+    {
+        switch(animate)
+        {
+            default:
+                tc.x +=  amplitude * sin((tc.y * period * 10) + phase);
+                break;
+            case 1:
+                tc.x += (sin(anim_rate * 0.001) * amplitude) * sin((tc.y * period * 10) + phase);
+                break;
+            case 2:
+                tc.x += amplitude * sin((tc.y * period * 10) + (anim_rate * 0.001));
+                break;
+        }
+    }
+    tc = float2(dot(tc, float2(_c, -_s)), dot(tc, float2(_s, _c))) + center;
 
+    tc.x *= ar;
+
+    color = tex2D(samplerColor, tc);
+    if(render_type) BLENDING_LERP(render_type, base, color, 1 - amplitude);
+
+
+    float out_depth;
+    bool inDepthBounds;
+    if ( depth_mode == 0) {
+        out_depth =  ReShade::GetLinearizedDepth(texcoord).r;
+        inDepthBounds = out_depth >= depth_threshold;
+    } else {
+        out_depth = ReShade::GetLinearizedDepth(tc).r;
+        inDepthBounds = out_depth <= depth_threshold;
+    }
+
+    if(inDepthBounds){
         color = tex2D(samplerColor, tc);
-        if(render_type)
-            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, 1 - amplitude);
+        if(render_type) BLENDING_LERP(render_type, base, color, abs(amplitude)* lerp(10, 1, abs(amplitude)));
     }
     else
     {
         color = tex2D(samplerColor, texcoord);
     }
 
-#if GSHADE_DITHER
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
+    if(set_max_depth_behind) {
+        const float mask_front = ReShade::GetLinearizedDepth(texcoord).r;
+        if(mask_front < depth_threshold)
+            color = tex2D(samplerColor, texcoord);
+    }
     return color;
 #endif
 }

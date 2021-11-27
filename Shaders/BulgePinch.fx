@@ -43,11 +43,41 @@ uniform bool use_mouse_point <
     ui_tooltip="When enabled, uses the mouse's current coordinates instead of those defined by the Coordinates sliders";
 > = false;
 
-uniform float min_depth <
+uniform bool use_offset_coords <
+    ui_label = "Use Offset Coordinates";
+    ui_category = "Offset";
+    ui_tooltip = "Display the distortion in any location besides its original coordinates.";
+> = 0;
+
+uniform float2 offset_coords <
+    ui_label = "Offset Coordinates";
+    ui_tooltip = "(Use Offset Coordinates Enabled) Determines the source coordinates to be distorted when passed along to the output coordinates.";
     ui_type = "slider";
-    ui_label="Minimum Depth";
+    ui_category = "Offset";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = float2(0.5, 0.5);
+
+uniform float depth_threshold <
+    ui_type = "slider";
+    ui_label="Depth Threshold";
+    ui_category = "Depth";
     ui_min=0.0;
     ui_max=1.0;
+> = 0;
+
+uniform int depth_mode <
+    ui_type = "combo";
+    ui_label = "Depth Mode";
+    ui_category = "Depth";
+    ui_items = "Minimum\0Maximum\0";
+    ui_tooltip = "Mask the effect by using the depth of the scene.";
+> = 0;
+
+uniform bool set_max_depth_behind <
+    ui_label = "Set Distortion Behind Foreground";
+    ui_tooltip = "(Maximum Depth Threshold Mode only) When enabled, sets the distorted area behind the objects that should come in front of it.";
+    ui_category = "Depth";
 > = 0;
 
 uniform float aspect_ratio <
@@ -121,7 +151,9 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
 
-    float2 center = coordinates;
+    float2 center = coordinates / 2.0;
+    float2 offset_center = offset_coords;
+
     if (use_mouse_point) 
         center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH / 2.0, mouse_coordinates.y * BUFFER_RCP_HEIGHT / 2.0);
 
@@ -135,20 +167,45 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     tc.x /= ar;
 
     float dist = distance(tc, center);
-    if (dist < radius && depth >= min_depth)
+    
+    float anim_mag = (animate == 1 ? magnitude * sin(radians(anim_rate * 0.05)) : magnitude);
+    float tension_radius = lerp(dist, radius, tension);
+    float percent = (dist)/tension_radius;
+    if(anim_mag > 0)
+        tc = (tc-center) * lerp(1.0, smoothstep(0.0, radius/dist, percent), anim_mag * 0.75);
+    else
+        tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * radius/dist, 1.0 - percent);
+
+    if(use_offset_coords) {
+        tc += (2 * offset_center);
+    }
+    else 
+        tc += (2 * center);
+
+    tc.x *= ar;
+
+float out_depth;
+    bool inDepthBounds;
+    
+    if (depth_mode == 0) {
+        out_depth =  ReShade::GetLinearizedDepth(texcoord).r;
+        inDepthBounds = out_depth >= depth_threshold;
+    }
+    else{
+        out_depth = ReShade::GetLinearizedDepth(tc).r;
+        inDepthBounds = out_depth <= depth_threshold;
+    }
+       
+    if (tension_radius >= dist && inDepthBounds)
     {
-        float anim_mag = (animate == 1 ? magnitude * sin(radians(anim_rate * 0.05)) : magnitude);
-        float tension_radius = lerp(dist, radius, tension);
-        float percent = (dist)/tension_radius;
-        if(anim_mag > 0)
-            tc = (tc-center) * lerp(1.0, smoothstep(0.0, radius/dist, percent), anim_mag * 0.75);
-        else
-            tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * radius/dist, 1.0 - percent);
+        if(use_offset_coords){
+            if(dist <= tension_radius)
+                color = tex2D(samplerColor, tc);
+            else
+                color = tex2D(samplerColor, texcoord);
+        } else
+            color = tex2D(samplerColor, tc);
 
-        tc += (2*center);
-        tc.x *= ar;
-
-        color = tex2D(samplerColor, tc);
         if(render_type)
             color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, 1 - percent);
     }
@@ -156,11 +213,12 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
         color = tex2D(samplerColor, texcoord);
     }
 
-
-
-#if GSHADE_DITHER
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
+    if(set_max_depth_behind) {
+        const float mask_front = ReShade::GetLinearizedDepth(texcoord).r;
+        if(mask_front < depth_threshold)
+            color = tex2D(samplerColor, texcoord);
+    }
+    
     return color;
 #endif
 }
