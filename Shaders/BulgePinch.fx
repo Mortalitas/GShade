@@ -1,10 +1,14 @@
 /*-----------------------------------------------------------------------------------------------------*/
-/* PBDistort Shader v6.0 - by Radegast Stravinsky of Ultros.                                               */
+/* PBDistort Shader - by Radegast Stravinsky of Ultros.                                               */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh"
 #include "Blending.fxh"
 #include "TriDither.fxh"
+
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
 
 uniform float radius <
     ui_type = "slider";
