@@ -281,7 +281,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
             color = tex2D(samplerColor, tc);
 
         if(render_type && ((!swirl_mode && percent) || (swirl_mode && dist <= radius)))
-            BLENDING_LERP(render_type, base, color, !swirl_mode ? dist_radius * tension_radius * 250 : 1);
+            BLENDING_LERP(render_type, base, color, !swirl_mode ? dist_radius * tension_radius * 10 : 1);
     }
     else
     {
