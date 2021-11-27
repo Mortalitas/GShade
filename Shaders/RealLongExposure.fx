@@ -128,8 +128,7 @@ namespace RealisticLongExposure {
 		{
 			if (abs(timer - start_time) < 1000 * RealExposureDuration)
 			{
-				fragment = tex2D(samplerExposureCopy, texcoord);
-				fragment.rgb += getExposure(tex2D(ReShade::BackBuffer, texcoord), true).rgb;
+				fragment.rgb += rgbval.rgb;
 			}
 		}
 		else
@@ -193,7 +192,7 @@ namespace RealisticLongExposure {
 		}
 		else
 		{
-			result = tex2D(ReShade::BackBuffer, texcoord);
+			result = game_rgb;
 		}
 		fragment = ((int)ShowGreenOnFinish * (int)StartExposure * (int)(timer - start_time > 1000 * RealExposureDuration)) ? show_green(texcoord, result) : result;
 	}
