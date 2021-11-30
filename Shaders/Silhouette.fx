@@ -88,6 +88,11 @@ uniform int SForeground_Tex_Select <
 #define SilhouetteTexture_Source 0
 #endif
 
+uniform bool SDisable_Background_Processing <
+    ui_label = "Disable Background Processing";
+    ui_tooltip = "Enable this to only modify the foreground!";   
+> = false;
+
 uniform bool SEnable_Background_Color <
     ui_label = "Enable Background Color";
     ui_tooltip = "Enable this to use a color instead of a texture for the background!";   
@@ -156,11 +161,22 @@ uniform int SBackground_Tex_Select <
 #define _SOURCE_SILHOUETTE_FILE2 "Silhouette2.png"
 #endif
 
+texture Silhouette_Back_Texture { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = TEXFORMAT; };
+sampler Silhouette_Back_Sampler { Texture = Silhouette_Back_Texture; };
+
 texture Silhouette_Texture <source = _SOURCE_SILHOUETTE_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 sampler Silhouette_Sampler { Texture = Silhouette_Texture; };
 
 texture Silhouette2_Texture < source = _SOURCE_SILHOUETTE_FILE2; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = TEXFORMAT; };
 sampler Silhouette2_Sampler { Texture = Silhouette2_Texture; };
+
+void PS_SilhouetteBackbufffer(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
+{
+    color = tex2D(ReShade::BackBuffer, texcoord).rgb;
+#if GSHADE_DITHER
+		color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
+}
 
 void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
@@ -186,21 +202,34 @@ void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoor
     const float depth = 1 - ReShade::GetLinearizedDepth(texcoord).r;
     color = tex2D(ReShade::BackBuffer, texcoord).rgb;
 
-    if ((SEnable_Background_Color == true) && (depth < SBackground_Stage_depth))
+    if (SEnable_Background_Color && depth < SBackground_Stage_depth)
     {
         color = lerp(color, SBackground_Color.rgb, SBackground_Stage_Opacity);
+    }
+    else if (SDisable_Background_Processing && depth < SBackground_Stage_depth)
+    {
+        color = lerp(color, tex2D(Silhouette_Back_Sampler, texcoord).rgb, SBackground_Stage_Opacity);
+#if GSHADE_DITHER
+        color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
     }
     else if (depth < SBackground_Stage_depth)	
     {
         color = lerp(color, Silhouette2_Stage.rgb, Silhouette2_Stage.a * SBackground_Stage_Opacity);
 #if GSHADE_DITHER
-		color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+        color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
 #endif
     }
 }
 
 technique Silhouette
 {
+    pass
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_SilhouetteBackbufffer;
+		RenderTarget = Silhouette_Back_Texture;
+    }
     pass
     {
         VertexShader = PostProcessVS;
