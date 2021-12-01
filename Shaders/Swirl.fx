@@ -143,7 +143,7 @@ BLENDING_COMBO(
 
 uniform float blending_amount <
     ui_type = "slider";
-    ui_label = "Blending Amount";
+    ui_label = "Opacity";
     ui_category = "Blending";
     ui_tooltip = "Adjusts the blending amount.";
     ui_min = 0.0;
@@ -289,10 +289,14 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
         float blending_factor;
         if(swirl_mode)
-            blending_factor = lerp(0, 1, blending_amount);
-        else
-            blending_factor = lerp(0, dist_radius * tension_radius * 10, blending_amount);
-        if(render_type && ((!swirl_mode && percent) || (swirl_mode && dist <= radius)))
+            blending_factor = blending_amount;
+        else {
+            if(render_type)
+                blending_factor = lerp(0, dist_radius * tension_radius * 10, blending_amount);
+            else
+                blending_factor = blending_amount;
+        }
+        if((!swirl_mode && percent) || (swirl_mode && dist <= radius))
             color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
             
     }
