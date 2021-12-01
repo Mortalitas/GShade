@@ -140,6 +140,15 @@ BLENDING_COMBO(
     0
 );
 
+uniform float blending_amount <
+    ui_type = "slider";
+    ui_label = "Blending Amount";
+    ui_category = "Blending";
+    ui_tooltip = "Adjusts the blending amount.";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = 1.0;
+
 uniform float anim_rate <
     source = "timer";
 >;
@@ -256,6 +265,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         inDepthBounds = out_depth <= depth_threshold;
     }
 
+    float blending_factor = lerp(0, percentSquared, blending_amount);
     if (inDepthBounds)
     {
         if(use_offset_coords){
@@ -265,7 +275,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
             {
                 color = tex2D(samplerColor, tc);
                 if(render_type)
-                    color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, percentSquared);
+                    color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount);
             }
             else
                 color = tex2D(samplerColor, texcoord);
@@ -273,7 +283,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         {
             color = tex2D(samplerColor, tc);
             if(render_type)
-                color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, percentSquared);
+                color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount);
         }
         
         

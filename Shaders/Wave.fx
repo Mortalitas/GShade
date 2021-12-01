@@ -94,6 +94,15 @@ BLENDING_COMBO(
     0
 );
 
+uniform float blending_amount <
+    ui_type = "slider";
+    ui_label = "Blending Amount";
+    ui_category = "Blending";
+    ui_tooltip = "Adjusts the blending amount.";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = 1.0;
+
 texture texColorBuffer : COLOR;
 
 sampler samplerColor
@@ -188,8 +197,10 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     tc.x *= ar;
 
     color = tex2D(samplerColor, tc);
+    float blending_factor = lerp(0, abs(amplitude)* lerp(10, 1, abs(amplitude)), blending_amount);
+    
     if(render_type) 
-        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, abs(amplitude)* lerp(10, 1, abs(amplitude)));
+        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
 
 
     float out_depth;
@@ -205,7 +216,7 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     if(inDepthBounds){
         color = tex2D(samplerColor, tc);
         if(render_type) 
-            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, abs(amplitude)* lerp(10, 1, abs(amplitude)));
+            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
 
     }
     else
