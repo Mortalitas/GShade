@@ -271,7 +271,6 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     }
     else
     {
-        color = tex2D(samplerColor, texcoord);
         out_depth = ReShade::GetLinearizedDepth(tc).r;
         inDepthBounds = out_depth <= depth_threshold;
     }

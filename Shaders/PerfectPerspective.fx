@@ -98,7 +98,8 @@ uniform uint Projection <
 		"Perception of Distance\0";
 > = 0u;
 
-uniform uint AnamorphicSqueeze < __UNIFORM_COMBO_INT1
+uniform uint AnamorphicSqueeze <
+	ui_type = "combo";
 	ui_category = "Perspective (presets)";
 	ui_label = "squeeze factor";
 	ui_tooltip =

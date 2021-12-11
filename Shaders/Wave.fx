@@ -232,7 +232,6 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
             color = tex2D(samplerColor, texcoord);
     }
     return color;
-#endif
 }
 
 technique Wave

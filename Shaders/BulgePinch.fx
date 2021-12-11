@@ -4,7 +4,6 @@
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh"
 #include "Blending.fxh"
-#include "TriDither.fxh"
 
 #if GSHADE_DITHER
     #include "TriDither.fxh"
@@ -238,7 +237,6 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     }
     
     return color;
-#endif
 }
 
 // Technique
