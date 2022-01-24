@@ -337,6 +337,28 @@ uniform float2 p_drunk_speed<
 
 > = 2.0;
 
+uniform float angle <
+    ui_type = "slider";
+    ui_label = "Bending Angle";
+    ui_category = "Distortion";
+    ui_min = -1800.0; 
+    ui_max = 1800.0; 
+    ui_tooltip = "Controls how much the distortion bends.";
+    ui_step = 1.0;
+> = 180.0;
+
+uniform float angle_speed<
+    ui_type = "slider";
+    ui_label = "Bending Speed";
+    ui_category = "Distortion";
+    ui_min = 0.0; 
+    ui_max = 10.0;
+    ui_step = 0.1;
+    ui_tooltip = "Controls the speed of the bending.";    
+
+> = 1.0;
+
+
 BLENDING_COMBO(
     render_type, 
     "Blending Mode", 
@@ -498,11 +520,7 @@ float4 PSDrunkStage1(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV
     float out_depth;
     float4 base = tex2D(samplerColor, texcoord);
     float2 tc = texcoord;
-    const float theta = radians(anim_rate * 0.01 % 3600);
-    const float s =  sin(theta);
-    const float _s = sin(-theta);
-    const float c =  cos(theta);
-    const float _c = cos(-theta);
+    const float theta = radians(angle) * sin(anim_rate * 0.0005 * angle_speed);
 
 	for (uint i = 0; i < 36; i++) {
         uint x = i/6;
