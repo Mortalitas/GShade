@@ -1,9 +1,10 @@
 /////////////////////////////////////////////////////////
-// RealisticLongExposure.fx by SirCobra
-// Version 0.3
+// Realistic Long Exposure by SirCobra (RealLongExposure.fx)
+// Version 0.4
 // You can find descriptions and my other shaders here: https://github.com/LordKobra/CobraFX
 // --------Description---------
-// It will take the games input for a defined amount of seconds to create the final image, just as a camera would do in real life.
+// It will take the games input for a defined amount of seconds to create the final image, 
+// just as a camera would do during a long exposure in real life.
 /////////////////////////////////////////////////////////
 
 
@@ -18,40 +19,51 @@
 uniform float timer < source = "timer"; > ;
 
 //Namespace Everything
-namespace RealisticLongExposure {
+namespace RealisticLongExposure
+{
+	//defines
+	#define RLETIMEMAXVAL 8388608.0 // 2^23
 
 	//ui
 	uniform float RealExposureDuration <
+		ui_label = "Exposure Duration";
 		ui_type = "slider";
-		ui_min = 0.1; ui_max = 120;
+		ui_min = 0.1; ui_max = 120.0;
 		ui_step = 0.1;
-		ui_tooltip = "Exposure Duration in seconds.";
-	> = 1;
+		ui_tooltip = "Exposure duration in seconds.";
+	> = 1.0;
+
 	uniform bool StartExposure <
-		ui_tooltip = "Click to start the Exposure Process. It will run for the given amount of seconds and then freeze. Tip: Bind this to a hotkey to use it conveniently.";
+		ui_label = "Start Exposure";
+		ui_tooltip = "Click to start the exposure process. It will run for the given amount of seconds and then freeze. Tip: Bind this to a hotkey to use it conveniently.";
 	> = false;
+
 	uniform bool ShowGreenOnFinish <
+		ui_label = "Show Green Dot On Finish";
 		ui_tooltip = "Display a green dot at the top to signalize the exposure has finished and entered preview mode.";
 	> = false;
+
 	uniform float ISO <
+		ui_label = "ISO";
 		ui_type = "slider";
-		ui_min = 100; ui_max = 1600;
+		ui_min = 100.0; ui_max = 1600.0;
 		ui_step = 1;
-		ui_tooltip = "ISO. 100 is normalized to the game. 1600 is 16 times the sensitivity.";
-	> = 100;
+		ui_tooltip = "Sensitivity to light. 100 is normalized to the game. 1600 is 16 times the sensitivity.";
+	> = 100.0;
+
 	uniform float Gamma <
 		ui_type = "slider";
 		ui_min = 0.4; ui_max = 4.4;
 		ui_step = 0.01;
 		ui_tooltip = "The gamma correction value. The default value is 1.";
-	> = 1;
+	> = 1.0;
+	
 	uniform uint Delay <
 		ui_type = "slider";
 		ui_min = 0; ui_max = 100;
 		ui_step = 1;
-		ui_tooltip = "Delay before exposure starts in miliseconds.";
+		ui_tooltip = "The delay before exposure starts in milliseconds.";
 	> = 1;
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,15 +72,16 @@ namespace RealisticLongExposure {
 //*************************************                       ****************************************//
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	texture texExposureReal{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA32F; };
-	texture texExposureRealCopy{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA32F; };
-	texture texTimer{ Width = 2; Height = 1; Format = R32F; };
-	texture texTimerCopy{ Width = 2; Height = 1; Format = R32F; };
+	texture texExposureReal{ 		Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA32F; };
+	texture texExposureRealCopy{ 	Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA32F; };
+	texture texTimer{ 		Width = 2; Height = 1; Format = R32F; };
+	texture texTimerCopy{ 	Width = 2; Height = 1; Format = R32F; };
 
-	sampler2D samplerExposure{ Texture = texExposureReal; };
-	sampler2D samplerExposureCopy{ Texture = texExposureRealCopy; };
-	sampler2D samplerTimer{ Texture = texTimer; };
-	sampler2D samplerTimerCopy{ Texture = texTimerCopy; };
+	sampler2D samplerExposure{ 		Texture = texExposureReal; };
+	sampler2D samplerExposureCopy{ 	Texture = texExposureRealCopy; };
+	sampler2D samplerTimer{ 		Texture = texTimer; };
+	sampler2D samplerTimerCopy{ 	Texture = texTimerCopy; };
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //***************************************                  *******************************************//
@@ -78,19 +91,19 @@ namespace RealisticLongExposure {
 
 	float encodeTimer(float value)
 	{
-		return value / 8388608; // 2^23
+		return value / RLETIMEMAXVAL;
 	}
 
 	float decodeTimer(float value)
 	{
-		return value * 8388608; // 2^23
+		return value * RLETIMEMAXVAL;
 	}
 
 	// show the green dot signalizing the frame is finished
 	float4 show_green(float2 texcoord, float4 fragment)
 	{
-		float2 c = float2(0.5, 0.06);
-		float range = 0.02;
+		const float2 c = float2(0.5, 0.06);
+		const float range = 0.02;
 		if (sqrt((c.x - texcoord.x) * (c.x - texcoord.x) + (c.y - texcoord.y) * (c.y - texcoord.y)) < range)
 		{
 			fragment = float4(0.5, 1, 0.5, 1);
@@ -107,9 +120,8 @@ namespace RealisticLongExposure {
 
 	float4 getExposure(float4 rgbval)
 	{
-		float brightness = (rgbval.r + rgbval.g + rgbval.b) / 3;
 		float enc = ISO / 100;
-		rgbval.rgb = enc * pow(rgbval.rgb, Gamma) / 14400;
+		rgbval.rgb = enc * pow(abs(rgbval.rgb), Gamma) / 14400;
 		return rgbval;
 	}
 
@@ -188,7 +200,7 @@ namespace RealisticLongExposure {
 		if (StartExposure && framecounter)
 		{
 			result.rgb = exposure_rgb.rgb * (14400 / framecounter);
-			result.rgb = pow(result.rgb, 1 / Gamma);
+			result.rgb = pow(abs(result.rgb), 1 / Gamma);
 		}
 		else
 		{
