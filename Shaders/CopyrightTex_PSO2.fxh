@@ -17,6 +17,8 @@
     * Added warning message when specified Non-existing source reference numbers.
     x Fixed incorrect specification of PSO2 logo in ui_item and Texture Definition. 
 
+    Version 0.x by Marot Satil & uchu suzume
+    + Added "else" in _Copyright_Texture_Source list to avoid errors when switching *Tex.fxh.    
 */
 
 // -------------------------------------
@@ -206,7 +208,7 @@ uniform int variable \
 #elif _Copyright_Texture_Source == 39    // Custom
 #define _SOURCE_COPYRIGHT_FILE cLayerTex
 #define _SOURCE_COPYRIGHT_SIZE cLayer_SIZE_X, cLayer_SIZE_Y
-#else // Default
+#else 
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
 #define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
 #endif

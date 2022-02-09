@@ -55,6 +55,15 @@
     + Implemented game-based *Tex.fxh headers containing preprocessor macros along with supported game auto-detection.
     * Added a gaussian blur radius option that allows you to adjust the applied area.
     * Improved the accuracy of the BG Blend mode option.
+
+    Version 1.2
+    * Added scale option to gaussian layer.
+    * Added more blending option to CAb layer.
+    * Added Custom List.
+    + Adjusted default value of CAb to more natural look and usable.
+    + Adjusted gaussian blur radius opiton #3 to reduce afterglow.
+    + Expanded moving range of Gaussian layer.
+    + Improved the formulas of Gaussian and CAb layers to keep the coordinate base even after rotation.
 */
 
 #include "ReShade.fxh"
@@ -97,17 +106,20 @@
   #include "CopyrightTex_XIV.fxh"
 #elif TEXTURE_SELECTION == 2
   #include "CopyrightTex_PSO2.fxh"
+#elif TEXTURE_SELECTION == 3
+  #include "CopyrightTex_Custom.fxh"
 #endif
 
 uniform int cLayer_SelectGame <
-    ui_label = "Game Select";
+    ui_label = "List Select";
     ui_tooltip = "Select a name of a game to show copyright logo for.   ";
-    ui_category = "Game Selection";
+    ui_category = "List Selection";
     ui_category_closed = true;
     ui_type = "combo";
     ui_items = "Auto-Select\0"
                "Final Fantasy XIV\0"
                "Phantasy Star Online 2:NGS\0"
+               "Custom List\0"
                ;
     ui_bind = "TEXTURE_SELECTION";
 > = TEXTURE_SELECTION;
@@ -115,7 +127,7 @@ uniform int cLayer_SelectGame <
 TEXTURE_COMBO(
     cLayer_Select,
     "Copyright Logo Selection",
-    "The image/texture you'd like to use.　　",
+    "The image/texture you'd like to use.   ",
 );
 
 uniform float cLayer_Scale <
@@ -143,7 +155,6 @@ uniform float cLayer_Scale <
     ui_step = 0.001;
 > = 1.0;
 
-
 uniform bool  cLayer_Mouse <
     ui_label = "Mouse Following Mode";
     ui_tooltip = "Press right click to logo texture follow the mouse cursor.   \nRight click again to back to Position X and Y coord.";
@@ -166,14 +177,12 @@ uniform float cLayer_PosY <
     ui_step = 0.001;
 > = 0.970;
 
-
 uniform int cLayer_SnapRotate <
     ui_label = "Snap Rotation";
     ui_tooltip = "Snap rotation to a specific angle.\nPress arrow button to rotate 90° each direction.   ";
     ui_type = "combo";
     ui_spacing = 2;
-    ui_items = 
-               "-90 Degrees\0"
+    ui_items = "-90 Degrees\0"
                "0 Degrees\0"
                "90 Degrees\0"
                "180 Degrees\0"
@@ -188,7 +197,6 @@ uniform float cLayer_Rotate <
     ui_max = 180.0;
     ui_step = 0.01;
 > = 0;
-
 
 uniform int cLayer_Color_Override <
     ui_label = "Recolor";
@@ -241,6 +249,34 @@ uniform float Gauss_Blend <
     ui_step = 0.001;
 > = 0.0;
 
+uniform float cLayer_PosX_Gauss <
+    ui_label = "Gaussian Layer Offset X";
+    ui_tooltip = "Offset of the Gaussian layer based on texture's    \ncoordinates.";
+    ui_category = "Gaussian Layer";
+    ui_type = "slider";
+    ui_spacing = 2;
+    ui_min = -0.35; ui_max = 0.35;
+    ui_step = 0.001;
+> = 0.025;
+
+uniform float cLayer_PosY_Gauss <
+    ui_label = "Gaussian Layer Offset Y";
+    ui_tooltip = "Offset of the Gaussian layer based on texture's    \ncoordinates.";
+    ui_category = "Gaussian Layer";
+    ui_type = "slider";
+    ui_min = -0.35; ui_max = 0.35;
+    ui_step = 0.001;
+> = 0.050;
+
+uniform float cLayer_Scale_Gauss <
+    ui_label = "Gaussian Layer Scale";
+    ui_tooltip = "Scale of the Gaussian layer.   ";
+    ui_category = "Gaussian Layer";
+    ui_type = "slider";
+    ui_min = 0.75; ui_max = 1.5;
+    ui_step = 0.001;
+> = 1.000;
+
 uniform int GaussianBlurRadius <
     ui_label = "Gaussian Blur Radius";
     ui_tooltip = "[0|1|2|3] Adjusts the blur radius.\nEach values Assumed to use for better results accord to   \ndifferent sizes of logos.   \nValue 3 is intended as some challenge.";
@@ -252,32 +288,13 @@ uniform int GaussianBlurRadius <
     ui_step = 1;
 > = 1;
 
-uniform float cLayer_PosX_Gauss <
-    ui_label = "Gaussian Layer Offset X";
-    ui_tooltip = "Offset of the Gaussian layer based on texture's    \ncoordinates.";
-    ui_category = "Gaussian Layer";
-    ui_type = "slider";
-    ui_min = -0.3; ui_max = 0.3;
-    ui_step = 0.001;
-> = -0.030;
-
-uniform float cLayer_PosY_Gauss <
-    ui_label = "Gaussian Layer Offset Y";
-    ui_tooltip = "Offset of the Gaussian layer based on texture's    \ncoordinates.";
-    ui_category = "Gaussian Layer";
-    ui_type = "slider";
-    ui_min = -0.3; ui_max = 0.3;
-    ui_step = 0.001;
-> = -0.040;
-
 uniform float GaussWeight <
     ui_label = "Gaussian Weight";
     ui_tooltip = "Weight based on Gaussian Radius.   \nIncreasing value makes more blur.   ";
     ui_category = "Gaussian Layer";
     ui_type = "slider";
-    ui_spacing = 2;
     ui_min = 0.001;
-    ui_max = 10.0;
+    ui_max = 3.0;
     ui_step = 0.001;
 > = 0.600;
 
@@ -320,13 +337,12 @@ BLENDING_COMBO(
     0
 );
 
+
 BLENDING_COMBO(
     cLayer_BlendMode_BG,
     "BG Blending Mode",
-    "Select the blending mode applied to the bg-texture.\n\
-- note -\nWhen using this mode, it requires reducing\n\
-blending amount of logo texture.   \n\
-The priority of this mode is to be set to later.   ",
+        "Select the blending mode applied to the bg-texture.   \n\
+    - note -   \nWhen using this mode, it requires reducing blending\namount of logo texture.   \nThe priority of this mode is to be set to later.   ",
     "BG Blending Mode",
     false,
     2,
@@ -358,16 +374,16 @@ uniform float4 cLayer_CAb_Color_B <
     ui_category = "Chromatic Aberration";
     ui_category_closed = true;
     ui_type = "color";
-> = float4(0.0, 0.0, 1.0, 1.0);
+> = float4(0.0, 1.0, 1.0, 1.0);
 
 uniform float2 cLayer_CAb_Shift <
     ui_label = "CAb Shift";
     ui_tooltip = "Degree of Chromatic Aberration.   ";
     ui_category = "Chromatic Aberration";
     ui_type = "slider";
-    ui_min = -0.3;
-    ui_max = 0.3;
-> = float2(0.02, -0.02);
+    ui_min = -0.2;
+    ui_max = 0.2;
+    > = float2(0.015, -0.015);
 
 uniform float cLayer_CAb_Strength <
     ui_label = "CAb Strength";
@@ -384,8 +400,8 @@ uniform float cLayer_CAb_Blur <
     ui_category = "Chromatic Aberration";
     ui_type = "slider";
     ui_min = 0.0;
-    ui_max = 5.0;
-> = 0.250;
+    ui_max = 1.5;
+> = 0.015;
 
 uniform int cLayer_BlendMode_CAb <
     ui_label = "CAb Blending Mode";
@@ -393,6 +409,9 @@ uniform int cLayer_BlendMode_CAb <
     ui_category = "Chromatic Aberration";
     ui_type = "combo";
     ui_items = "Screen\0"
+               "LinearDodge\0"
+               "Glow\0"
+               "LinearLight\0"
                "Color\0"
                "Grain Merge\0"
                "Divide\0"
@@ -529,6 +548,9 @@ sampler Copyright_Sampler_CAb_B
 #define PosY float(cLayer_Mouse && RightMouseDown? MouseCoords.y * BUFFER_PIXEL_SIZE.y : cLayer_PosY)
 #define PosX_Gauss float(cLayer_PosX_Gauss * 0.1)
 #define PosY_Gauss float(cLayer_PosY_Gauss * 0.1)
+#define ScaleSize_Gauss float2(float2(_SOURCE_COPYRIGHT_SIZE) * ((cLayer_Scale) + (-1 + cLayer_Scale_Gauss)) / BUFFER_SCREEN_SIZE)
+#define ScaleX_Gauss float(AspectX * ScaleSize_Gauss.x)
+#define ScaleY_Gauss float(AspectY * ScaleSize_Gauss.y)
 
 
 float3x3 positionMatrix (in float coord_X, in float coord_Y) {
@@ -536,14 +558,6 @@ float3x3 positionMatrix (in float coord_X, in float coord_Y) {
     1, 0, 0,
     0, 1, 0,
     -coord_X, -coord_Y, 1
-    );
-}
-
-float3x3 positionMatrix_Gauss (in float coord_X, in float coord_Y) {
-    return float3x3 (
-    1, 0, 0,
-    0, 1, 0,
-    -coord_X + PosX_Gauss, -coord_Y + PosY_Gauss, 1
     );
 }
 
@@ -575,6 +589,14 @@ float3x3 rotateMatrix (in float angle) {
     return float3x3 (
     (cos(Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
     (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+    0, 0, 1
+    );
+}
+ 
+float3x3 rotateMatrix_Alt (in float angle) {
+    return float3x3 (
+    (cos(angle) * AspectX), (sin(angle) * AspectX), 0,
+    (-sin(angle) * AspectY), (cos(angle) * AspectY), 0,
     0, 0, 1
     );
 }
@@ -616,8 +638,8 @@ float4 PS_cLayer_Gauss_H(in float4 pos : SV_Position, in float2 texCoord : TEXCO
                  }
                  break;
              case 3:
-                 const float sampleOffsets[6] = { 0.0, 0.25, 0.50, 1.00, 1.25, 1.50 };
-                 const float sampleWeights[6] = { 0.15, 0.25, 0.135, 0.055, 0.0135, 0.005 };
+                 const float sampleOffsets[6] = { 0.0, 0.25, 0.50, 0.75, 1.00, 1.25 };
+                 const float sampleWeights[6] = { 0.15, 0.25, 0.135, 0.055, 0.0135, 0.0015 };
                  color *= sampleWeights[0];
                  for(int i = 1; i < 6; ++i)
                  {
@@ -632,8 +654,8 @@ float4 PS_cLayer_Gauss_H(in float4 pos : SV_Position, in float2 texCoord : TEXCO
 
 float4 PS_cLayer_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix_Gauss(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(ScaleX, ScaleY));
-        float4 color = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(0.5 + PosX_Gauss, 0.5 + PosY_Gauss)), rotateMatrix_Alt(0)), scaleMatrix(ScaleX_Gauss, ScaleY_Gauss));
+        float4 color = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg);
         switch(GaussianBlurRadius)
         {
              default:
@@ -667,8 +689,8 @@ float4 PS_cLayer_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : TEXCO
                  }
                  break;
              case 3:
-                 const float sampleOffsets[6] = { 0.0, 0.25, 0.50, 1.00, 1.25, 1.50 };
-                 const float sampleWeights[6] = { 0.15, 0.25, 0.135, 0.055, 0.0135, 0.005 };
+                 const float sampleOffsets[6] = { 0.0, 0.25, 0.50, 0.75, 1.00, 1.25 };
+                 const float sampleWeights[6] = { 0.15, 0.25, 0.135, 0.055, 0.0135, 0.0015 };
                  color *= sampleWeights[0];
                  for(int i = 1; i < 6; ++i)
                  {
@@ -697,7 +719,8 @@ float4 PS_cLayer_CAb_Gauss_H(in float4 pos : SV_Position, in float2 texCoord : T
 
 float4 PS_cLayer_CAb_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
-        float4 color = tex2D(Copyright_Sampler, texCoord);
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(0.5, 0.5)), rotateMatrix_Alt(0)), scaleMatrix(ScaleX, ScaleY));
+        float4 color = tex2D(Copyright_Sampler, SumUV.rg + float2(0.5, 0.5));
         const float sampleOffsets[6] = { 0.0, 1.4584295168, 3.40398480678, 5.3518057801, 7.302940716, 9.2581597095 };
         const float sampleWeights[6] = { 0.13298, 0.23227575, 0.1353261595, 0.0511557427, 0.01253922, 0.0019913644 };
         color *= sampleWeights[0];
@@ -712,8 +735,8 @@ float4 PS_cLayer_CAb_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : T
 float4 PS_cLayer_CAb_A(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
         const float2 CAb_Shift = cLayer_CAb_Shift * 0.05;
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(PosX + CAb_Shift.x, PosY + CAb_Shift.y)), rotateMatrix(cLayer_Rotate)), scaleMatrix(ScaleX, ScaleY));
-        float4 color = tex2D(Copyright_Sampler_CAb_Gauss_H, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+        const float3 SumUV = mul (mul (mulUV, positionMatrix(0.5 + CAb_Shift.x, 0.5 + CAb_Shift.y)), scaleMatrix(1, 1));
+        float4 color = tex2D(Copyright_Sampler_CAb_Gauss_H, SumUV.rg + pivot.rg) * all(SumUV.rg + pivot.rg == saturate(SumUV.rg + pivot.rg));
         color = float4(cLayer_CAb_Color_A.r, cLayer_CAb_Color_A.g, cLayer_CAb_Color_A.b, color.a * cLayer_CAb_Color_A.a);
         return color;
 }
@@ -721,8 +744,8 @@ float4 PS_cLayer_CAb_A(in float4 pos : SV_Position, in float2 texCoord : TEXCOOR
 float4 PS_cLayer_CAb_B(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
         const float2 CAb_Shift = cLayer_CAb_Shift * 0.05;
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(PosX - CAb_Shift.x, PosY - CAb_Shift.y)), rotateMatrix(cLayer_Rotate)), scaleMatrix(ScaleX , ScaleY));
-        float4 color = tex2D(Copyright_Sampler_CAb_Gauss_H, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+        const float3 SumUV = mul (mul (mulUV, positionMatrix(0.5 - CAb_Shift.x, 0.5 - CAb_Shift.y)), scaleMatrix(1, 1));
+        float4 color = tex2D(Copyright_Sampler_CAb_Gauss_H, SumUV.rg + pivot.rg) * all(SumUV.rg + pivot.rg == saturate(SumUV.rg + pivot.rg));
         color = float4(cLayer_CAb_Color_B.r, cLayer_CAb_Color_B.g, cLayer_CAb_Color_B.b, color.a * cLayer_CAb_Color_B.a);
         return color;
 }
@@ -734,10 +757,12 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     if (Depth < cLayer_Depth)
     {
         const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(ScaleX, ScaleY));
-        float4 GaussOut = tex2D(Copyright_Sampler_Gauss_H, texCoord);
-        float4 CAb_A = tex2D(Copyright_Sampler_CAb_A, texCoord);
-        float4 CAb_B = tex2D(Copyright_Sampler_CAb_B, texCoord);
-        float4 DrawTex = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+        const float3 SumUV_Gauss = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(AspectX, AspectY));
+        float4 GaussOut = tex2D(Copyright_Sampler_Gauss_H, SumUV_Gauss.rg + pivot.rg);       
+        const float3 SumUV_CAb = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(AspectX, AspectY));
+        float4 CAb_A = tex2D(Copyright_Sampler_CAb_A, SumUV_CAb.rg + pivot.rg);
+        float4 CAb_B = tex2D(Copyright_Sampler_CAb_B, SumUV_CAb.rg + pivot.rg);
+        float4 DrawTex = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg) * all(SumUV.rg + pivot.rg == saturate(SumUV.rg + pivot.rg));
 
         GaussOut.rgb = ComHeaders::Blending::Blend(cLayer_BlendMode_Gauss, backColorOrig.rgb, GaussOut.rgb, GaussOut.a * Gauss_Blend);
 
@@ -748,22 +773,34 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Screen(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
                 break;
             case 1:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearDodge(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearDodge(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 2:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Glow(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Glow(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 3:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearLight(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearLight(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 4:
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::ColorB(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::ColorB(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
                 break;
-            case 2:
+            case 5:
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::GrainMerge(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::GrainMerge(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
                 break;
-            case 3:
+            case 6:
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Divide(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Divide(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
                 break;
-            case 4:
+            case 7:
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::DivideAlt(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
                 GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::DivideAlt(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
                 break;
-            case 5:
+            case 8:
                 GaussOut = lerp(GaussOut.rgb, CAb_A.rgb, CAb_A.a * cLayer_CAb_Strength);
                 GaussOut = lerp(GaussOut.rgb, CAb_B.rgb, CAb_B.a * cLayer_CAb_Strength);
                 break;
@@ -950,6 +987,7 @@ technique Copyright< ui_label = "Copyright"; >
         PixelShader = PS_cLayer_Gauss_V;
         RenderTarget = Copyright_Texture_Gauss_Out;
     }
+
     pass pass2
     {
         VertexShader = PostProcessVS;
