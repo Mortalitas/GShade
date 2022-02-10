@@ -585,7 +585,7 @@ float4 PSDrunkStage1(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV
     return result;
 }
 
-technique Drunk
+technique Drunk<ui_label="Drunk";>
 {
 	pass
 	{

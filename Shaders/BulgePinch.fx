@@ -240,7 +240,7 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
 }
 
 // Technique
-technique BulgePinch < ui_label="Bulge/Pinch";>
+technique BulgePinch<ui_label="Bulge/Pinch";>
 {
     pass p0
     {

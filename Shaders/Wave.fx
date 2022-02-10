@@ -234,7 +234,7 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     return color;
 }
 
-technique Wave
+technique Wave<ui_label="Wave";>
 {
     pass p0
     {

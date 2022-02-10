@@ -295,7 +295,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
             else
                 blending_factor = blending_amount;
         }
-        if((!swirl_mode && percent) || (swirl_mode && dist <= radius))
+        if((!swirl_mode && percent) || (swirl_mode && dist <= radius)){}
             color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
             
     }
@@ -315,7 +315,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 }
 
 // Technique
-technique Swirl< ui_label="Swirl";>
+technique Swirl<ui_label="Swirl";>
 {
     pass p0
     {
