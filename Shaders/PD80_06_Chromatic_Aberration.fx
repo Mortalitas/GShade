@@ -262,8 +262,8 @@ namespace pd80_ca
 
         float offsetX     = px * c * caintensity.x;
         float offsetY     = py * s * caintensity.x;
-
-        for( float i = 0; i < sampleSTEPS; i++ )
+        int sSTEPS        = min( sampleSTEPS, 100 );
+        for( float i = 0; i < sSTEPS; i++ )
         {
             huecolor.xyz  = HUEToRGB( i / sampleSTEPS );
             o2            = lerp( -caWidth, caWidth, i / o1 );
