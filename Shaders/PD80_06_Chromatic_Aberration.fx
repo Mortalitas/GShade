@@ -28,6 +28,15 @@
 
 #include "ReShade.fxh"
 
+#if __RENDERER__ == 0x9000
+    #ifndef sampleSTEPS
+        #define CA_sampleSTEPS     24  // [0 to 96]
+        #define CA_DX9_MODE		   1
+    #endif
+#else
+		#define CA_DX9_MODE		   0
+#endif
+
 namespace pd80_ca
 {
     //// UI ELEMENTS ////////////////////////////////////////////////////////////////
@@ -55,6 +64,7 @@ namespace pd80_ca
         ui_min = -150.0f;
         ui_max = 150.0f;
         > = -12.0;
+#if CA_DX9_MODE == 0
     uniform int sampleSTEPS <
         ui_type = "slider";
         ui_label = "Number of Hues";
@@ -64,6 +74,7 @@ namespace pd80_ca
         ui_max = 96;
         ui_step = 1;
         > = 24;
+#endif
     uniform float CA_strength <
         ui_type = "slider";
         ui_label = "CA Effect Strength";
@@ -170,11 +181,6 @@ namespace pd80_ca
         ui_min = 0.05;
         ui_max = 8.0;
         > = 1.0;
-    //// TEXTURES ///////////////////////////////////////////////////////////////////
-
-    //// SAMPLERS ///////////////////////////////////////////////////////////////////
-    
-    //// DEFINES ////////////////////////////////////////////////////////////////////
 
     //// FUNCTIONS //////////////////////////////////////////////////////////////////
     float3 HUEToRGB( float H )
@@ -253,7 +259,11 @@ namespace pd80_ca
 
         float3 huecolor   = 0.0f;
         float3 temp       = 0.0f;
+#if CA_DX9_MODE == 1
+        float o1          = CA_sampleSTEPS - 1.0f;
+#else
         float o1          = sampleSTEPS - 1.0f;
+#endif
         float o2          = 0.0f;
         float3 d          = 0.0f;
 
@@ -262,10 +272,15 @@ namespace pd80_ca
 
         float offsetX     = px * c * caintensity.x;
         float offsetY     = py * s * caintensity.x;
-        int sSTEPS        = min( sampleSTEPS, 100 );
-        for( float i = 0; i < sSTEPS; i++ )
+#if CA_DX9_MODE == 1
+        float sampst      = CA_sampleSTEPS;
+        for( float i = 0; i < CA_sampleSTEPS; i++ )
+#else
+        float sampst      = sampleSTEPS;
+        for( float i = 0; i < sampleSTEPS; i++ )
+#endif
         {
-            huecolor.xyz  = HUEToRGB( i / sampleSTEPS );
+            huecolor.xyz  = HUEToRGB( i / sampst );
             o2            = lerp( -caWidth, caWidth, i / o1 );
             temp.xyz      = tex2Dlod( ReShade::BackBuffer, float4(texcoord.xy + float2( o2 * offsetX, o2 * offsetY ), 0.0, 0.0)).xyz;
             color.xyz     += temp.xyz * huecolor.xyz;
