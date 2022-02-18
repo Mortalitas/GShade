@@ -29,12 +29,12 @@
 #include "ReShade.fxh"
 
 #if __RENDERER__ == 0x9000
-    #ifndef sampleSTEPS
+    #ifndef CA_sampleSTEPS
         #define CA_sampleSTEPS     24  // [0 to 96]
-        #define CA_DX9_MODE		   1
     #endif
+    	#define CA_DX9_MODE        1
 #else
-		#define CA_DX9_MODE		   0
+		#define CA_DX9_MODE        0
 #endif
 
 namespace pd80_ca
