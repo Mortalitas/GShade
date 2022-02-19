@@ -15,6 +15,15 @@
 //
 // UI
 //
+// We need Compute Shader Support
+#if (((__RENDERER__ >= 0xb000 && __RENDERER__ < 0x10000) || (__RENDERER__ >= 0x14300)) && __RESHADE__ >=40800)
+	#define cGRAVITY_COMPUTE 1
+#else
+	#define cGRAVITY_COMPUTE 0
+#endif
+
+// Shader Start
+#if cGRAVITY_COMPUTE != 0
 
 uniform float GravityIntensity <
 	ui_type = "slider";
@@ -427,3 +436,5 @@ technique computeGravity < ui_tooltip = "This effect let's pixels gravitate insi
 	pass UpdateSettings { VertexShader = PostProcessVS; PixelShader = rng_update_settings; RenderTarget = texGravityCurrentSettings; }
 	pass downsampleGravity { VertexShader = PostProcessVS; PixelShader = downsample_gravity; }
 }
+
+#endif // Shader End
