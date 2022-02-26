@@ -32,7 +32,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
-// 22-feb-2022:    v1.2.1 : Removed highlight amplification and properly implemented reinhard-esk de/re-tonemapping for proper highlight calculations. Thanks Marty McFly for the tips.
+// 26-feb-2022:    v1.2.2:  Made the highlight boost also be able to go to -1 to dim highlights a bit in bright scenes.
+// 22-feb-2022:    v1.2.1:  Removed highlight amplification and properly implemented reinhard-esk de/re-tonemapping for proper highlight calculations. Thanks Marty McFly for the tips.
 //                          (1.2.1) small adjustment, added a boost for the highlights which could help in dimly lit scenes. Based on simple levels math.
 // 01-jan-2021:    v1.1.19: Corrected PS_PostSmoothing2AndFocusing's signature as it contained a redundant argument which caused warnings in newer versions of reshade.
 // 23-oct-2020:    v1.1.18: Near-plane bleed blurred the unblurred far plane which leads to artifacts around edges in some cases. This has been rolled back to the earlier versions of
@@ -102,7 +103,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.1"
+	#define CINEMATIC_DOF_VERSION "v1.2.2"
 
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
@@ -266,7 +267,7 @@ namespace CinematicDOF
 		ui_category = "Highlight tweaking";
 		ui_label="Highlight boost factor";
 		ui_type = "drag";
-		ui_min = 0.00; ui_max = 1.00;
+		ui_min = -1.00; ui_max = 1.00;
 		ui_tooltip = "Will boost the highlights a small amount";
 		ui_step = 0.01;
 	> = 0.0;
