@@ -32,6 +32,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 11-mar-2022:    v1.2.3:  Changed the sampling stages to use full HDR so there's no more back/forth calculations to SDR along the way. Highlight boost is now 
+//                          better and upper range has been cranked up.
 // 26-feb-2022:    v1.2.2:  Made the highlight boost also be able to go to -1 to dim highlights a bit in bright scenes.
 // 22-feb-2022:    v1.2.1:  Removed highlight amplification and properly implemented reinhard-esk de/re-tonemapping for proper highlight calculations. Thanks Marty McFly for the tips.
 //                          (1.2.1) small adjustment, added a boost for the highlights which could help in dimly lit scenes. Based on simple levels math.
@@ -103,7 +105,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.2"
+	#define CINEMATIC_DOF_VERSION "v1.2.3"
 
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
@@ -267,7 +269,7 @@ namespace CinematicDOF
 		ui_category = "Highlight tweaking";
 		ui_label="Highlight boost factor";
 		ui_type = "drag";
-		ui_min = -1.00; ui_max = 1.00;
+		ui_min = -4.00; ui_max = 4.00;
 		ui_tooltip = "Will boost the highlights a small amount";
 		ui_step = 0.01;
 	> = 0.0;
@@ -295,6 +297,12 @@ namespace CinematicDOF
 		ui_category = "Debugging";
 		ui_type = "slider";
 		ui_min = 0.00; ui_max = 10.00;
+		ui_step = 0.01;
+	> = 1.0;
+	uniform float DBVal5f <
+		ui_category = "Debugging";
+		ui_type = "drag";
+		ui_min = 0.00; ui_max = 1.00;
 		ui_step = 0.01;
 	> = 1.0;
 	uniform int DBVal5i <
@@ -582,7 +590,7 @@ namespace CinematicDOF
 		const float pointsFirstRing = 7;
 		// luma is stored in alpha
 		float bokehBusyFactorToUse = saturate(1.0-BokehBusyFactor);		// use the busy factor as an edge bias on the blur, not the highlights
-		float4 average = float4(AccentuateWhites(fragment.rgb * fragmentRadiusToUse * bokehBusyFactorToUse, blurInfo.highlightBoostFactor), bokehBusyFactorToUse);
+		float4 average = float4(fragment.rgb * fragmentRadiusToUse * bokehBusyFactorToUse, bokehBusyFactorToUse);
 		float2 pointOffset = float2(0,0);
 		const float nearPlaneBlurInPixels = blurInfo.nearPlaneMaxBlurInPixels * fragmentRadiusToUse;
 		const float2 ringRadiusDeltaCoords = BUFFER_PIXEL_SIZE * (nearPlaneBlurInPixels / (numberOfRings-1));
@@ -607,7 +615,7 @@ namespace CinematicDOF
 				// r contains blurred CoC, g contains original CoC. Original can be negative
 				float2 sampleRadii = tex2Dlod(SamplerCDCoCBlurred, tapCoords).rg;
 				float blurredSampleRadius = sampleRadii.r;
-				average.rgb += AccentuateWhites(tap.rgb, blurInfo.highlightBoostFactor) * weight;
+				average.rgb += tap.rgb * weight;
 				average.w += weight ;
 				angle+=anglePerPoint;
 			}
@@ -625,7 +633,6 @@ namespace CinematicDOF
 			fragment = float4(alpha, alpha, alpha, 1.0);
 		}
 #endif
-		fragment.rgb = CorrectForWhiteAccentuation(fragment.rgb);
 #if CD_DEBUG
 		if(ShowNearPlaneBlurred)
 		{
@@ -639,7 +646,7 @@ namespace CinematicDOF
 	// Calculates the new RGBA fragment for a pixel at texcoord in source using a disc based blur technique described in [Jimenez2014] 
 	// (Though without using tiles). Blurs far plane.
 	// In:	blurInfo, the pre-calculated disc blur information from the vertex shader.
-	// 		source, the source buffer to read RGBA data from. A contains luma.
+	// 		source, the source buffer to read RGBA data from. RGB is in HDR. A not used.
 	// Out: RGBA fragment that's the result of the disc-blur on the pixel at texcoord in source. A contains luma of pixel.
 	float4 PerformDiscBlur(VSDISCBLURINFO blurInfo, sampler2D source)
 	{
@@ -652,9 +659,8 @@ namespace CinematicDOF
 			// near plane fragment, will be done in near plane pass 
 			return fragment;
 		}
-		// luma is stored in alpha
 		float bokehBusyFactorToUse = saturate(1.0-BokehBusyFactor);		// use the busy factor as an edge bias on the blur, not the highlights
-		float4 average = float4(AccentuateWhites(fragment.rgb * fragmentRadius * bokehBusyFactorToUse, blurInfo.highlightBoostFactor), bokehBusyFactorToUse);
+		float4 average = float4(fragment.rgb * fragmentRadius * bokehBusyFactorToUse, bokehBusyFactorToUse);
 		float2 pointOffset = float2(0,0);
 		const float2 ringRadiusDeltaCoords =  (BUFFER_PIXEL_SIZE * blurInfo.farPlaneMaxBlurInPixels * fragmentRadius) / blurInfo.numberOfRings;
 		float2 currentRingRadiusCoords = ringRadiusDeltaCoords;
@@ -677,14 +683,15 @@ namespace CinematicDOF
 				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
 				float sampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).r;
 				float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance);
-				average.rgb += AccentuateWhites(tex2Dlod(source, tapCoords).rgb, blurInfo.highlightBoostFactor) * weight;
+				float4 tap = tex2Dlod(source, tapCoords);
+				average.rgb += tap.rgb * weight;
 				average.w += weight;
 				angle+=anglePerPoint;
 			}
 			pointsOnRing+=pointsFirstRing;
 			currentRingRadiusCoords += ringRadiusDeltaCoords;
 		}
-		fragment.rgb = CorrectForWhiteAccentuation(average.rgb / (average.w + (average.w==0)));
+		fragment.rgb = average.rgb / (average.w + (average.w==0));
 		return fragment;
 	}
 
@@ -737,10 +744,7 @@ namespace CinematicDOF
 			pointsOnRing+=pointsFirstRing;
 			currentRingRadiusCoords += ringRadiusDeltaCoords;
 		}
-		average.rgb = average.rgb/(average.w + (average.w==0));
-		fragment.rgb = CorrectForWhiteAccentuation(average.rgb);
-		// store luma of new rgb in alpha so we don't need to calculate it again.
-		fragment.a = dot(fragment.rgb, float3(0.3, 0.59, 0.11));
+		fragment.rgb = average.rgb/(average.w + (average.w==0));
 		return fragment;
 	}
 
@@ -987,9 +991,10 @@ namespace CinematicDOF
 	void PS_Combiner(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target0)
 	{
 		// first blend far plane with original buffer, then near plane on top of that. 
-		const float4 originalFragment = tex2D(ReShade::BackBuffer, texcoord);
-		const float4 farFragment = tex2D(SamplerCDBuffer3, texcoord);
-		const float4 nearFragment = tex2D(SamplerCDBuffer1, texcoord);
+		float4 originalFragment = tex2D(ReShade::BackBuffer, texcoord);
+		originalFragment.rgb = AccentuateWhites(originalFragment.rgb, ((HighlightBoost * 24.0) / 1000.0) + 1.0f);
+		float4 farFragment = tex2D(SamplerCDBuffer3, texcoord);
+		float4 nearFragment = tex2D(SamplerCDBuffer1, texcoord);
 		// multiply with far plane max blur so if we need to have 0 blur we get full res 
 		const float realCoC = tex2D(SamplerCDCoC, texcoord).r * clamp(0, 1, FarPlaneMaxBlur);
 		// all CoC's > 0.1 are full far fragment, below that, we're going to blend. This avoids shimmering far plane without the need of a 
@@ -1003,6 +1008,7 @@ namespace CinematicDOF
 			fragment = farFragment;
 		}
 #endif
+		fragment.rgb = CorrectForWhiteAccentuation(fragment.rgb);
 		fragment.a = 1.0;
 	}
 
