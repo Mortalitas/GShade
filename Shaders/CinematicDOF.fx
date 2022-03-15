@@ -32,6 +32,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 15-mar-2022:    v1.2.4:  Corrected the LDR to HDR and HDR to LDR conversion functions so they now apply proper gamma correct and boost, so hue shifts are limited now as long 
+//                          as the highlight boost is kept <= 1 
+//                          Added Gamma factor for advanced highlight tweaking.
 // 11-mar-2022:    v1.2.3:  Changed the sampling stages to use full HDR so there's no more back/forth calculations to SDR along the way. Highlight boost is now 
 //                          better and upper range has been cranked up.
 // 26-feb-2022:    v1.2.2:  Made the highlight boost also be able to go to -1 to dim highlights a bit in bright scenes.
@@ -105,7 +108,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.3"
+	#define CINEMATIC_DOF_VERSION "v1.2.4"
 
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
@@ -269,10 +272,18 @@ namespace CinematicDOF
 		ui_category = "Highlight tweaking";
 		ui_label="Highlight boost factor";
 		ui_type = "drag";
-		ui_min = -4.00; ui_max = 4.00;
-		ui_tooltip = "Will boost the highlights a small amount";
+		ui_min = 0.00; ui_max = 1.00;
+		ui_tooltip = "Will boost/dim the highlights a small amount";
+		ui_step = 0.001;
+	> = 0.90;
+	uniform float HighlightGammaFactor <
+		ui_category = "Highlight tweaking";
+		ui_label="Highlight gamma factor";
+		ui_type = "drag";
+		ui_min = 0.001; ui_max = 5.00;
+		ui_tooltip = "Controls the gamma factor to boost/dim highlights\n2.2, the default, gives natural colors and brightness";
 		ui_step = 0.01;
-	> = 0.0;
+	> = 2.2;
 	// ------------- ADVANCED SETTINGS
 	uniform bool ShowCoCValues <
 		ui_category = "Advanced";
@@ -415,18 +426,21 @@ namespace CinematicDOF
 	// Functions
 	//
 	//////////////////////////////////////////////////
-	
-	float3 AccentuateWhites(float3 fragment, float highlightBoostFactor)
+
+	float3 AccentuateWhites(float3 fragment)
 	{
 		// apply small tow to the incoming fragment, so the whitepoint gets slightly lower than max.
 		// De-tonemap color (reinhard). Thanks Marty :) 
-		return fragment / (1.001 - saturate(highlightBoostFactor * fragment.rgb));
+		fragment = pow(abs(fragment), HighlightGammaFactor);
+		return fragment / max((1.001 - (HighlightBoost * fragment)), 0.001);
 	}
+	
 	
 	float3 CorrectForWhiteAccentuation(float3 fragment)
 	{
 		// Re-tonemap color (reinhard). Thanks Marty :) 
-		return fragment / (1.001 + fragment);
+		float3 toReturn = fragment / (1.001 + (HighlightBoost * fragment));
+		return pow(abs(toReturn), 1.0/ HighlightGammaFactor);
 	}
 	
 	// returns 2 vectors, (x,y) are up vector, (z,w) are right vector. 
@@ -706,7 +720,7 @@ namespace CinematicDOF
 		const float radiusFactor = 1.0/max(blurInfo.numberOfRings, 1);
 		const float pointsFirstRing = max(blurInfo.numberOfRings-3, 2); 	// each ring has a multiple of this value of sample points. 
 		float4 fragment = tex2Dlod(source, float4(blurInfo.texcoord, 0, 0));
-		fragment.rgb = AccentuateWhites(fragment.rgb, blurInfo.highlightBoostFactor);
+		fragment.rgb = AccentuateWhites(fragment.rgb);
 		float signedFragmentRadius = tex2Dlod(SamplerCDCoC, float4(blurInfo.texcoord, 0, 0)).x * radiusFactor;
 		float absoluteFragmentRadius = abs(signedFragmentRadius);
 		bool isNearPlaneFragment = signedFragmentRadius < 0;
@@ -737,7 +751,7 @@ namespace CinematicDOF
 				float weight = CalculateSampleWeight(absoluteSampleRadius * blurFactorToUse, ringDistance) * isSamePlaneAsFragment * 
 								(absoluteFragmentRadius - absoluteSampleRadius < 0.001);
 				float3 tap = tex2Dlod(source, tapCoords).rgb;
-				average.rgb += AccentuateWhites(tap.rgb, blurInfo.highlightBoostFactor) * weight;
+				average.rgb += AccentuateWhites(tap.rgb) * weight;
 				average.w += weight;
 				angle+=anglePerPoint;
 			}
@@ -899,7 +913,6 @@ namespace CinematicDOF
 		blurInfo.farPlaneMaxBlurInPixels = (FarPlaneMaxBlur / 100.0) / pixelSizeLength;
 		blurInfo.nearPlaneMaxBlurInPixels = (NearPlaneMaxBlur / 100.0) / pixelSizeLength;
 		blurInfo.cocFactorPerPixel = length(BUFFER_PIXEL_SIZE) * blurInfo.farPlaneMaxBlurInPixels;	// not needed for near plane.
-		blurInfo.highlightBoostFactor = ((HighlightBoost * 24.0) / 1000.0) + 1.0f;
 		return blurInfo;
 	}
 
@@ -992,7 +1005,7 @@ namespace CinematicDOF
 	{
 		// first blend far plane with original buffer, then near plane on top of that. 
 		float4 originalFragment = tex2D(ReShade::BackBuffer, texcoord);
-		originalFragment.rgb = AccentuateWhites(originalFragment.rgb, ((HighlightBoost * 24.0) / 1000.0) + 1.0f);
+		originalFragment.rgb = AccentuateWhites(originalFragment.rgb);
 		float4 farFragment = tex2D(SamplerCDBuffer3, texcoord);
 		float4 nearFragment = tex2D(SamplerCDBuffer1, texcoord);
 		// multiply with far plane max blur so if we need to have 0 blur we get full res 
