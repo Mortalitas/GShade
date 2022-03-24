@@ -35,6 +35,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 25-mar-2022: 	Added vertical/horizontal cloud control and wider range so more cloud details are possible
+//                  Added blending in HDR
 // 22-mar-2022: 	First release
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,13 +44,13 @@
 
 namespace Heightfog
 {
-	#define HEIGHT_FOG_VERSION  "1.0"
+	#define HEIGHT_FOG_VERSION  "1.0.1"
 
-	uniform float4 FogColor <
+	uniform float3 FogColor <
 		ui_category = "General";
 		ui_label = "Fog color";
 		ui_type = "color";
-	> = float4(0.8, 0.8, 0.8, 1.0);
+	> = float3(0.8, 0.8, 0.8);
 	
 	uniform float FogDensity <
 		ui_category = "General";
@@ -116,15 +118,24 @@ namespace Heightfog
 		ui_category = "Cloud configuration";
 	> = 0.4;
 	
-	uniform float FogCloudScale <
+	uniform float FogCloudScaleVertical <
 		ui_type = "slider";
-		ui_label = "Cloud scale";
-		ui_tooltip = "Configures the cloud size of the fog";
-		ui_min = 0.0; ui_max=1;
+		ui_label = "Cloud scale (vertical)";
+		ui_tooltip = "Configures the cloud size of the fog, vertically";
+		ui_min = 0.0; ui_max=20;
 		ui_step = 0.01;
 		ui_category = "Cloud configuration";
 	> = 1.0;
 	
+	uniform float FogCloudScaleHorizontal <
+		ui_type = "slider";
+		ui_label = "Cloud scale (horizotal)";
+		ui_tooltip = "Configures the cloud size of the fog, horizontally";
+		ui_min = 0.0; ui_max=10;
+		ui_step = 0.01;
+		ui_category = "Cloud configuration";
+	> = 1.0;
+
 	uniform float FogCloudFactor <
 		ui_type = "slider";
 		ui_label = "Cloud factor";
@@ -160,6 +171,20 @@ namespace Heightfog
 	texture texFogNoise				< source = "fognoise.jpg"; > { Width = 512; Height = 512; Format = RGBA8; };
 	sampler SamplerFogNoise				{ Texture = texFogNoise; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
 
+	float3 AccentuateWhites(float3 fragment)
+	{
+		fragment = pow(abs(fragment), 2.2);
+		return fragment / max((1.001 - fragment), 0.001);
+	}
+	
+	
+	float3 CorrectForWhiteAccentuation(float3 fragment)
+	{
+		float3 toReturn = fragment / (1.001 + fragment);
+		return pow(abs(toReturn), 1.0 / 2.2);
+	}
+
+
 	float3 uvToProj(float2 uv, float z)
 	{
 		//optimized math to simplify matrix mul
@@ -180,8 +205,8 @@ namespace Heightfog
 	void PS_FogIt(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target0)
 	{
 		float4 originalFragment = tex2D(ReShade::BackBuffer, texcoord);
+		originalFragment.rgb = AccentuateWhites(originalFragment.rgb);
 		float depth = lerp(1.0, 1000.0, ReShade::GetLinearizedDepth(texcoord))/1000.0;
-
 		float phi = PlaneOrientation.x * M_2PI; //I can never tell longitude and latitude apart... let's use wikipedia definitions
 		float theta = PlaneOrientation.y * M_PI;
 
@@ -199,14 +224,16 @@ namespace Heightfog
 		//camera at 0 0 0, so we pass 0.0 for ray origin (the first argument)
 		float distanceToIntersect = planeIntersect(0, rayDirection, iqplane); //produces negative numbers if looking away from camera - makes sense as if you look away, you need to go _backwards_ i.e. in negative view direction
 		float speedFactor = 100000.0 * (1-(MovementSpeed-0.01));
-		float fogTextureValue = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScale + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
-		fogTextureValue = lerp(1.0, fogTextureValue, FogCloudFactor);
-		distanceToIntersect *= fogTextureValue;
+		float fogTextureValueHorizontally = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScaleHorizontal + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		float fogTextureValueVertically = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScaleVertical + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		distanceToIntersect *= lerp(1.0, fogTextureValueVertically, FogCloudFactor);
 		distanceToIntersect = distanceToIntersect < 0 ? 10000000 : distanceToIntersect; //if negative, we didn't hit it, so set hit distance to infinity
 		float distanceTraveled = (depth - distanceToIntersect);
 		fragment.rgb = sceneDistance < distanceToIntersect ? originalFragment.rgb 
 														   : lerp(originalFragment.rgb, FogColor.rgb, 
-																  saturate( saturate(distanceTraveled-FogStart) * FogCurve * FogDensity * fogTextureValue));
+																  saturate(saturate(distanceTraveled-FogStart) * FogCurve * FogDensity * 
+																		   lerp(1.0, fogTextureValueHorizontally, FogCloudFactor)));
+		fragment.rgb = CorrectForWhiteAccentuation(fragment.rgb);
 		fragment.a = 1.0;
 	}
 	
