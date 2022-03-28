@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 28-mar-2022:    v1.2.5:  Made the pre-blur pass optional, as it's not really needed anymore for qualities higher than 4 and reasonable blur values. 
 // 15-mar-2022:    v1.2.4:  Corrected the LDR to HDR and HDR to LDR conversion functions so they now apply proper gamma correct and boost, so hue shifts are limited now as long 
 //                          as the highlight boost is kept <= 1 
 //                          Added Gamma factor for advanced highlight tweaking.
@@ -285,6 +286,11 @@ namespace CinematicDOF
 		ui_step = 0.01;
 	> = 2.2;
 	// ------------- ADVANCED SETTINGS
+	uniform bool MitigateUndersampling <
+		ui_category = "Advanced";
+		ui_label = "Mitigate undersampling";
+		ui_tooltip = "If you see bright pixels in the highlights,\ncheck this checkbox to smoothen the highlights.\nOnly needed with high blur factors and low blur quality.";
+	> = false;	
 	uniform bool ShowCoCValues <
 		ui_category = "Advanced";
 		ui_label = "Show CoC values and focus plane";
@@ -719,8 +725,15 @@ namespace CinematicDOF
 	{
 		const float radiusFactor = 1.0/max(blurInfo.numberOfRings, 1);
 		const float pointsFirstRing = max(blurInfo.numberOfRings-3, 2); 	// each ring has a multiple of this value of sample points. 
+		
 		float4 fragment = tex2Dlod(source, float4(blurInfo.texcoord, 0, 0));
 		fragment.rgb = AccentuateWhites(fragment.rgb);
+		if(!MitigateUndersampling)
+		{
+			// early out as we don't need this step
+			return fragment;
+		}
+
 		float signedFragmentRadius = tex2Dlod(SamplerCDCoC, float4(blurInfo.texcoord, 0, 0)).x * radiusFactor;
 		float absoluteFragmentRadius = abs(signedFragmentRadius);
 		bool isNearPlaneFragment = signedFragmentRadius < 0;
