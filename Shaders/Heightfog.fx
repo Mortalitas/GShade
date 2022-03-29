@@ -35,6 +35,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 29-mar-2022: 	Fixed Fog start, it now works as intended, and added smoothing to the fog so it doesn't create hard edges anymore around geometry. 
+//                  Overall it looks better now.
 // 25-mar-2022: 	Added vertical/horizontal cloud control and wider range so more cloud details are possible
 //                  Added blending in HDR
 // 22-mar-2022: 	First release
@@ -44,7 +46,10 @@
 
 namespace Heightfog
 {
-	#define HEIGHT_FOG_VERSION  "1.0.1"
+	#define HEIGHT_FOG_VERSION  "1.0.2"
+
+// uncomment the line below to enable debug mode
+//#define HF_DEBUG 1
 
 	uniform float3 FogColor <
 		ui_category = "General";
@@ -55,6 +60,7 @@ namespace Heightfog
 	uniform float FogDensity <
 		ui_category = "General";
 		ui_type = "slider";
+		ui_label = "Fog density";
 		ui_min = 0.000; ui_max=1.000;
 		ui_step = 0.001;
 		ui_tooltip = "Controls how thick the fog is at its thickest point";
@@ -62,6 +68,7 @@ namespace Heightfog
 	
 	uniform float FogStart <
 		ui_category = "General";
+		ui_label = "Fog start";
 		ui_type = "slider";
 		ui_min = 0.0; ui_max=1.000;
 		ui_tooltip = "Controls where the fog starts, relative to the camera";
@@ -71,7 +78,8 @@ namespace Heightfog
 	uniform float FogCurve <
 		ui_category = "General";
 		ui_type = "slider";
-		ui_min = 0.001; ui_max=100.00;
+		ui_label = "Fog curve";
+		ui_min = 0.001; ui_max=1000.00;
 		ui_tooltip = "Controls how quickly the fog gets thicker";
 		ui_step = 0.1;
 	> = 25;
@@ -154,6 +162,24 @@ namespace Heightfog
 		ui_category = "Cloud configuration";
 	> = float2(0.0, 0.0);
 
+#ifdef HF_DEBUG
+	uniform bool DBVal1 <
+		ui_label = "DBVal1";
+		ui_category = "Debug";
+	> = false;
+	uniform bool DBVal2 <
+		ui_label = "DBVal2";
+		ui_category = "Debug";
+	> = false;
+	uniform float DBVal3f <
+		ui_type = "slider";
+		ui_label = "DBVal3f";
+		ui_min = 0.0; ui_max=10;
+		ui_step = 0.01;
+		ui_category = "Debug";
+	> = 1.0;
+#endif
+
 	uniform float timer < source = "timer"; >; // Time in milliseconds it took for the last frame 
 
 #ifndef M_PI
@@ -229,10 +255,11 @@ namespace Heightfog
 		distanceToIntersect *= lerp(1.0, fogTextureValueVertically, FogCloudFactor);
 		distanceToIntersect = distanceToIntersect < 0 ? 10000000 : distanceToIntersect; //if negative, we didn't hit it, so set hit distance to infinity
 		float distanceTraveled = (depth - distanceToIntersect);
+		distanceTraveled = saturate(distanceTraveled-saturate(0.5 * (FogStart - distanceToIntersect)));
+		distanceTraveled *= 1 - (1 - distanceTraveled);
+		float lerpFactor = saturate(distanceTraveled * 10.0 * FogCurve * FogDensity * lerp(1.0, fogTextureValueHorizontally, FogCloudFactor));
 		fragment.rgb = sceneDistance < distanceToIntersect ? originalFragment.rgb 
-														   : lerp(originalFragment.rgb, FogColor.rgb, 
-																  saturate(saturate(distanceTraveled-FogStart) * FogCurve * FogDensity * 
-																		   lerp(1.0, fogTextureValueHorizontally, FogCloudFactor)));
+														   : lerp(originalFragment.rgb, FogColor.rgb, lerpFactor);
 		fragment.rgb = CorrectForWhiteAccentuation(fragment.rgb);
 		fragment.a = 1.0;
 	}
