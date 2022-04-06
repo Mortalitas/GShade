@@ -83,8 +83,15 @@ static const uint c_maxLineLength = 128;
 //
 // 
 #ifndef CMAA2_STATIC_QUALITY_PRESET
-    #define CMAA2_STATIC_QUALITY_PRESET 2  // 0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA
+    #define CMAA2_STATIC_QUALITY_PRESET 2  // 0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER
 #endif
+
+#if COMPUTE == 0
+	#ifndef CMAA2_PERFORMANCE_HACK
+		#define CMAA2_PERFORMANCE_HACK 1
+	#endif
+#endif
+
 // presets (for HDR color buffer maybe use higher values)
 //The VERTEX_COUNT_DENOMINATOR is actually set somewhat conservatively so performance could likely be improved by increasing this setting
 #if CMAA2_STATIC_QUALITY_PRESET == 0   // LOW
@@ -121,6 +128,37 @@ static const float c_dampeningEffect          = float( 0.11 );
 #else
 static const float c_dampeningEffect          = float( 0.15 );
 #endif
+uniform bool DebugEdges = false;
+
+
+#if COMPUTE
+uniform int UIHELP <
+    ui_type = "radio";
+	ui_category = "Help";
+	ui_label = "    ";
+    ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
+			   "Can be either 0 or 1. (0 (off) by default) \n\n"
+			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
+		   	   "of the edge detection, higher settings come at a performance cost \n"
+			   "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";    
+
+>;
+#else
+uniform int UIHELP <
+    ui_type = "radio";
+	ui_category = "Help";
+	ui_label = "    ";
+    ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
+			   "Can be either 0 or 1. (0 (off) by default) \n\n"
+			   "CMAA2_PERFORMANCE_HACK - This setting enables a performance hack that greatly improves "
+			   "the performance of the AA at a slight quality cost.\n"
+			   "Can be either 0 or 1. (1 (on) by default) \n\n"
+			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
+		   	   "of the edge detection, higher settings come at a performance cost \n"
+			   "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";    
+
+>;
+#endif
 
 namespace CMAA_2
 {
@@ -143,7 +181,7 @@ sampler sProcessedCandidates{Texture = ProcessedCandidates;};
 #define STACK_ALLOC_PIXELS_PER_THREAD (DIVIDE_ROUNDING_UP((DISPATCH_SIZE.x * DISPATCH_SIZE.y), STACK_ALLOC_THREADS))
 
 
-texture Sum {Width = DISPATCH_SIZE.x; Height = DISPATCH_SIZE.y; Format = R16f;};
+texture Sum {Width = DISPATCH_SIZE.x; Height = DISPATCH_SIZE.y; Format = RG8;};
 texture StackAlloc {Width = DISPATCH_SIZE.x; Height = DISPATCH_SIZE.y; Format = R32f;};
 texture ZShapeCoords {Width = BUFFER_WIDTH; Height = DIVIDE_ROUNDING_UP(BUFFER_HEIGHT, VERTEX_COUNT_DENOMINATOR); Format = R32f;};
 
@@ -158,7 +196,7 @@ storage wZShapeCoords {Texture = ZShapeCoords;};
 #endif
 
 
-uniform bool DebugEdges = false;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // encoding/decoding of various data such as edges
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -222,6 +260,22 @@ void unpackZ(float4 packedZ, out bool horizontal, out bool invertedZ, out float 
 	lineLengthRight = temp.y;
 }
 
+#if COMPUTE
+float2 packSum(uint value)
+{
+	float2 temp;
+	temp.x = (value & 0xFF00) >> 8;
+	temp.y = (value & 0xFF);
+	return (temp) / 255;
+}
+
+uint unpackSum(float2 value)
+{
+	uint2 temp = value * 255.5;
+	return ((temp.x << 8) | temp.y);
+}
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // source color & color conversion helpers
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,6 +314,8 @@ float3 ProcessColorForEdgeDetect( float3 color )
     return sqrt( color ); // just very roughly approximate RGB curve
 }
 
+
+								  
 //
                                     
 // color -> log luma-for-edges conversion
@@ -692,7 +748,7 @@ void ProcessEdges0PS(float4 position : SV_Position, float2 texcoord : TEXCOORD, 
 		
 		if(all(gtid.xy == 0))
 		{
-			tex2Dstore(wSum, gid.xy, count);
+			tex2Dstore(wSum, gid.xy, packSum(count).xyxx);
 		}
 	}
 	
@@ -703,12 +759,12 @@ void ProcessEdges0PS(float4 position : SV_Position, float2 texcoord : TEXCOORD, 
 		barrier();
 		uint index = id.x * STACK_ALLOC_PIXELS_PER_THREAD;
 		uint localPrefixSum[STACK_ALLOC_PIXELS_PER_THREAD];
-		localPrefixSum[0] = tex2Dfetch(sSum, uint2(index % DISPATCH_SIZE.x, index / DISPATCH_SIZE.x)).x;
+		localPrefixSum[0] = unpackSum(tex2Dfetch(sSum, uint2(index % DISPATCH_SIZE.x, index / DISPATCH_SIZE.x)).xy);
 		[unroll]
 		for(int i = 1; i < STACK_ALLOC_PIXELS_PER_THREAD; i++)
 		{
 			uint2 sampleCoord = uint2((index + i) % DISPATCH_SIZE.x, (index + i) / DISPATCH_SIZE.x);
-			localPrefixSum[i] = tex2Dfetch(sSum, sampleCoord).x + localPrefixSum[i - 1];
+			localPrefixSum[i] = unpackSum(tex2Dfetch(sSum, sampleCoord).xy) + localPrefixSum[i - 1];
 		}
 		
 		uint baseCount = atomicAdd(count, localPrefixSum[STACK_ALLOC_PIXELS_PER_THREAD - 1]);
@@ -761,9 +817,32 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 #else
 	uint2 coord = int2((id / 2) % BUFFER_WIDTH, (id / 2) / BUFFER_WIDTH);
 #endif
+#if CMAA2_PERFORMANCE_HACK
+	coord = int2((id / 2) % (BUFFER_WIDTH / 2), (id / 2) / (BUFFER_WIDTH / 2)) * 2;
+	float4 sampA = tex2Dfetch(sZShapes, coord + int2(0, 0));
+	float4 sampB = tex2Dfetch(sZShapes, coord + int2(1, 0));
+	float4 sampC = tex2Dfetch(sZShapes, coord + int2(0, 1));
+	float4 sampD = tex2Dfetch(sZShapes, coord + int2(1, 1));
+	
+	sampA.z = (sampA.w > (3.9f / 255.0f)) ? sampA.z : 1;
+	sampB.z = (sampB.w > (3.9f / 255.0f)) ? sampB.z : 1;
+	sampC.z = (sampC.w > (3.9f / 255.0f)) ? sampC.z : 1;
+	sampD.z = (sampD.w > (3.9f / 255.0f)) ? sampD.z : 1;
+	
+	float q = min(min(sampA.z, sampB.z), min(sampC.z, sampD.z));
+	
+	data = (sampA.z == q) ? sampA :
+		   (sampB.z == q) ? sampB :
+		   (sampC.z == q) ? sampC : sampD;
+		   
+	coord = (sampA.z == q) ? coord + int2(0, 0) :
+		    (sampB.z == q) ? coord + int2(1, 0) :
+		    (sampC.z == q) ? coord + int2(0, 1) : coord + int2(1, 1);
+#else
 	data = tex2Dfetch(sZShapes, coord);
+#endif
 
-	if(all(data == 0))
+	if(!(data.w > (3.9f / 255.0f)))
 	{
 		position = -10;
 		texcoord = -10;
@@ -863,10 +942,6 @@ void ClearPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 
 
 technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morphological Anti-Aliasing) to ReShade\n\n"
-								  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall\n"
-								  "(off by default) \n\n"
-								  "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength\n"
-								  "of the edge detection, with 0 being the weakest and 4 being the strongest (2 by default)\n\n"
 								  "Ported to ReShade by: Lord Of Lunacy";>
 {
 	pass
@@ -934,6 +1009,8 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 		PrimitiveTopology = LINELIST;
 #if COMPUTE
 		VertexCount = (BUFFER_WIDTH *  DIVIDE_ROUNDING_UP(BUFFER_HEIGHT, VERTEX_COUNT_DENOMINATOR) * 2);
+#elif CMAA2_PERFORMANCE_HACK
+		VertexCount = (BUFFER_WIDTH * BUFFER_HEIGHT) / 2;
 #else
 		VertexCount = (BUFFER_WIDTH * BUFFER_HEIGHT * 2);
 #endif
