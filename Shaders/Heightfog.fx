@@ -35,6 +35,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 17-apr-2022: 	Removed HDR blending as it results in fog that's too dark.
 // 29-mar-2022: 	Fixed Fog start, it now works as intended, and added smoothing to the fog so it doesn't create hard edges anymore around geometry. 
 //                  Overall it looks better now.
 // 25-mar-2022: 	Added vertical/horizontal cloud control and wider range so more cloud details are possible
@@ -46,7 +47,7 @@
 
 namespace Heightfog
 {
-	#define HEIGHT_FOG_VERSION  "1.0.2"
+	#define HEIGHT_FOG_VERSION  "1.0.3"
 
 // uncomment the line below to enable debug mode
 //#define HF_DEBUG 1
@@ -197,20 +198,6 @@ namespace Heightfog
 	texture texFogNoise				< source = "fognoise.jpg"; > { Width = 512; Height = 512; Format = RGBA8; };
 	sampler SamplerFogNoise				{ Texture = texFogNoise; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
 
-	float3 AccentuateWhites(float3 fragment)
-	{
-		fragment = pow(abs(fragment), 2.2);
-		return fragment / max((1.001 - fragment), 0.001);
-	}
-	
-	
-	float3 CorrectForWhiteAccentuation(float3 fragment)
-	{
-		float3 toReturn = fragment / (1.001 + fragment);
-		return pow(abs(toReturn), 1.0 / 2.2);
-	}
-
-
 	float3 uvToProj(float2 uv, float z)
 	{
 		//optimized math to simplify matrix mul
@@ -231,7 +218,6 @@ namespace Heightfog
 	void PS_FogIt(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target0)
 	{
 		float4 originalFragment = tex2D(ReShade::BackBuffer, texcoord);
-		originalFragment.rgb = AccentuateWhites(originalFragment.rgb);
 		float depth = lerp(1.0, 1000.0, ReShade::GetLinearizedDepth(texcoord))/1000.0;
 		float phi = PlaneOrientation.x * M_2PI; //I can never tell longitude and latitude apart... let's use wikipedia definitions
 		float theta = PlaneOrientation.y * M_PI;
@@ -260,7 +246,6 @@ namespace Heightfog
 		float lerpFactor = saturate(distanceTraveled * 10.0 * FogCurve * FogDensity * lerp(1.0, fogTextureValueHorizontally, FogCloudFactor));
 		fragment.rgb = sceneDistance < distanceToIntersect ? originalFragment.rgb 
 														   : lerp(originalFragment.rgb, FogColor.rgb, lerpFactor);
-		fragment.rgb = CorrectForWhiteAccentuation(fragment.rgb);
 		fragment.a = 1.0;
 	}
 	
