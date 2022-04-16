@@ -35,7 +35,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
-// 17-apr-2022: 	Removed HDR blending as it results in fog that's too dark.
+// 15-apr-2022: 	Removed HDR blending as it results in fog that's too dark.
 // 29-mar-2022: 	Fixed Fog start, it now works as intended, and added smoothing to the fog so it doesn't create hard edges anymore around geometry. 
 //                  Overall it looks better now.
 // 25-mar-2022: 	Added vertical/horizontal cloud control and wider range so more cloud details are possible
