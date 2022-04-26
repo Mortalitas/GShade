@@ -128,37 +128,48 @@ static const float c_dampeningEffect          = float( 0.11 );
 #else
 static const float c_dampeningEffect          = float( 0.15 );
 #endif
-uniform bool DebugEdges = false;
 
-
-#if COMPUTE
-uniform int UIHELP <
-    ui_type = "radio";
-	ui_category = "Help";
-	ui_label = "    ";
-    ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
-			   "Can be either 0 or 1. (0 (off) by default) \n\n"
-			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
-		   	   "of the edge detection, higher settings come at a performance cost \n"
-			   "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";    
-
->;
-#else
-uniform int UIHELP <
-    ui_type = "radio";
-	ui_category = "Help";
-	ui_label = "    ";
-    ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
-			   "Can be either 0 or 1. (0 (off) by default) \n\n"
-			   "CMAA2_PERFORMANCE_HACK - This setting enables a performance hack that greatly improves "
-			   "the performance of the AA at a slight quality cost.\n"
-			   "Can be either 0 or 1. (1 (on) by default) \n\n"
-			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
-		   	   "of the edge detection, higher settings come at a performance cost \n"
-			   "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";    
-
->;
+// Debug settings.
+#ifndef g_CMAA2_DebugEdges
+    #define g_CMAA2_DebugEdges 0
 #endif
+
+uniform bool bSharp <
+    ui_label = "Extra Sharpness";
+    ui_category = "General Settings";
+    ui_tooltip = "This settings makes the effect of the AA more sharp overall.";
+	ui_bind = "CMAA2_EXTRA_SHARPNESS";
+> = 0;
+
+uniform int iPreset <
+    ui_type = "slider";
+    ui_min = 0;
+    ui_max = 4;
+    ui_label = "Strength";
+    ui_category = "General Settings";
+    ui_tooltip = "This setting adjusts the strength of the edge detection, higher "
+                 "settings come at a performance cost. \n"
+                 "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";
+	ui_bind = "CMAA2_STATIC_QUALITY_PRESET";
+> = 2;
+
+#if !COMPUTE
+uniform bool bPerfHack <
+    ui_label = "Extra Sharpness";
+    ui_category = "General Settings";
+    ui_tooltip = "This setting enables a performance hack that greatly improves "
+                 "the performance of the AA at a slight quality cost."
+	ui_bind = "CMAA2_PERFORMANCE_HACK";
+> = 1;
+#endif
+
+uniform bool bDebugEdges <
+    ui_label = "Debug Edges";
+    ui_category = "Debugging";
+    ui_tooltip = "This setting enables an overlay showing the edges detected "
+                 "by the shader.";
+    ui_bind = "g_CMAA2_DebugEdges";
+> = false;
 
 namespace CMAA_2
 {
@@ -912,11 +923,10 @@ void ApplyPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 	output = tex2Dfetch(sProcessedCandidates, coord);
 
 	
-	if(DebugEdges)
-	{
-		float4 edges = UnpackEdges(tex2Dfetch(sEdges, coord).x * 255.5);
-		output = float4( lerp( edges.xyz, 0.5.xxx, edges.a * 0.2 ), saturate(edges.x + edges.y + edges.z + edges.w) );
-	}
+#if g_CMAA2_DebugEdges
+	const float4 edges = UnpackEdges(tex2Dfetch(sEdges, coord).x * 255.5);
+	output = float4( lerp( edges.xyz, 0.5.xxx, edges.a * 0.2 ), saturate(edges.x + edges.y + edges.z + edges.w) );
+#endif
 	
 	output.rgb /= output.a;
 	
