@@ -20,10 +20,19 @@ uniform float radius <
 uniform float inner_radius <
     ui_type = "slider";
     ui_label = "Inner Radius";
-    ui_tooltip = "Sets the inner radius at which the maximum angle is automatically set.";
+    ui_tooltip = "(Normal Mode) Sets the inner radius at which the maximum angle is automatically set.\n(Spliced Radial mode) defines the innermost spliced circle's size.";
     ui_min = 0.0;
     ui_max = 1.0;
 > = 0;
+
+uniform int number_splices <
+        ui_type = "slider";
+        ui_label = "Number of Splices";
+        ui_tooltip = "Sets the number of splices. A higher value makes the effect look closer to Normal mode by increasing the number of splices.";
+        ui_min = 1;
+        ui_max = 50;
+> = 10;
+
 
 uniform float angle <
     ui_type = "slider";
@@ -105,14 +114,7 @@ uniform int animate <
     ui_type = "combo";
     ui_label = "Animate";
     ui_items = "No\0Yes\0";
-    ui_tooltip = "Animates the swirl, moving it clockwise and counterclockwise.";
-> = 0;
-
-uniform int inverse <
-    ui_type = "combo";
-    ui_label = "Inverse Angle";
-    ui_items = "No\0Yes\0";
-    ui_tooltip = "Inverts the angle of the swirl, making the edges the most distorted.";
+    ui_tooltip = "Animates the splices, moving it clockwise and counterclockwise.";
 > = 0;
 
 BLENDING_COMBO(
@@ -189,7 +191,7 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 }
 
 // Pixel Shaders (in order of appearance in the technique)
-float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
+float4 SplicedRadials(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
@@ -211,18 +213,21 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     
     const float dist = distance(tc, center);
     const float dist_radius = radius-dist;
+    const float dist_center = distance(radius, dist);
     const float tension_radius = lerp(radius-dist, radius, tension);
     float percent; 
     float theta; 
        
-    percent = max(dist_radius, 0) / tension_radius;   
-    if(inverse && dist < radius)
-        percent = 1 - percent;     
-        
-    if(dist_radius > radius-inner_radius)
-        percent = 1;
-        
-    theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
+    float splice_width = (tension_radius-inner_radius) / (number_splices + 1);
+    splice_width = frac(splice_width);
+    float cur_splice = max(lerp(0, 1, dist_radius),0)/splice_width;
+    cur_splice = cur_splice - frac(cur_splice);
+    float splice_angle = (angle / (number_splices + 1)) * (cur_splice);
+    if(dist_radius >= radius-inner_radius)
+        splice_angle = angle;
+
+
+    theta = radians(splice_angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
     tc = mul(swirlTransform(theta), tc-center);
 
     if(use_offset_coords) 
@@ -249,22 +254,15 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     {
         if(use_offset_coords)
         {
-            if(percent)
+            if(theta)
                 color = tex2D(samplerColor, tc);
             else
                 color = tex2D(samplerColor, texcoord);
         } else
             color = tex2D(samplerColor, tc);
-
-        float blending_factor;
-        
-        if(render_type)
-            blending_factor = lerp(0, dist_radius * tension_radius * 10, blending_amount);
-        else
-            blending_factor = blending_amount;
-        
-        if(percent)
-            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
+       
+        if(dist <= radius)
+            color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount);
             
     }
     else
@@ -283,11 +281,11 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 }
 
 // Technique
-technique Swirl<ui_label="Swirl";>
+technique Swirl<ui_label="SplicedRadials";>
 {
     pass p0
     {
         VertexShader = FullScreenVS;
-        PixelShader = Swirl;
+        PixelShader = SplicedRadials;
     }
 };
