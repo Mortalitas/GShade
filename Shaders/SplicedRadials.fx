@@ -20,7 +20,7 @@ uniform float radius <
 uniform float inner_radius <
     ui_type = "slider";
     ui_label = "Inner Radius";
-    ui_tooltip = "(Normal Mode) Sets the inner radius at which the maximum angle is automatically set.\n(Spliced Radial mode) defines the innermost spliced circle's size.";
+    ui_tooltip = "Defines the innermost spliced circle's size.";
     ui_min = 0.0;
     ui_max = 1.0;
 > = 0;
@@ -28,7 +28,7 @@ uniform float inner_radius <
 uniform int number_splices <
         ui_type = "slider";
         ui_label = "Number of Splices";
-        ui_tooltip = "Sets the number of splices. A higher value makes the effect look closer to Normal mode by increasing the number of splices.";
+        ui_tooltip = "Sets the number of splices. A higher value makes the effect look closer to Swirl by increasing the number of splices.";
         ui_min = 1;
         ui_max = 50;
 > = 10;
@@ -39,7 +39,7 @@ uniform float angle <
     ui_label = "Angle";
     ui_min = -1800.0; 
     ui_max = 1800.0; 
-    ui_tooltip = "Controls the angle of the twist.";
+    ui_tooltip = "Controls the angle difference of each radial.";
     ui_step = 1.0;
 > = 180.0;
 
@@ -49,7 +49,7 @@ uniform float tension <
     ui_min = 0; 
     ui_max = 10; 
     ui_step = 0.001;
-    ui_tooltip="Determines how rapidly the swirl reaches the maximum angle.";
+    ui_tooltip="Determines how rapidly the radials reach the maximum angle. Also affects the size of the distortion by a bit.";
 > = 1.0;
 
 uniform float2 coordinates <
