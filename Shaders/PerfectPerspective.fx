@@ -1,5 +1,5 @@
 /**
-Perfect Perspective PS, version 4.0.1
+Perfect Perspective PS, version 4.0.2
 All rights (c) 2018 Jakub Maksymilian Fober (the Author).
 
 The Author provides this shader (the Work) under
@@ -255,7 +255,7 @@ uniform uint BorderGContinuity <
 		" G2 | round\n"
 		" G3 | smooth";
 	ui_min = 1u; ui_max = 3u;
-> = 2u;
+> = 3u;
 
 // DEBUG OPTIONS
 

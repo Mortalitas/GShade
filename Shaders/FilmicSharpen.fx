@@ -1,5 +1,5 @@
 /**
-Filmic Sharpen PS v1.2.8 (c) 2018 Jakub Maximilian Fober
+Filmic Sharpen PS v1.3.0 (c) 2018 Jakub Maximilian Fober
 
 This work is licensed under the Creative Commons
 Attribution-ShareAlike 4.0 International License.
@@ -7,46 +7,48 @@ To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
-// Lightly optimized by Marot Satil for the GShade project.
 
   ////////////
  /// MENU ///
 ////////////
 
-uniform float Strength <
-	ui_label = "Strength";
+uniform uint Strength <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 100.0; ui_step = 0.01;
-> = 60.0;
+	ui_label = "Strength";
+	ui_min = 1u; ui_max = 64u;
+> = 32u;
 
 uniform float Offset <
+	ui_type = "slider";
 	ui_label = "Radius";
 	ui_tooltip = "High-pass cross offset in pixels";
-	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0; ui_step = 0.001;
+	ui_min = 0.05; ui_max = 0.25; ui_step = 0.01;
 > = 0.1;
 
-uniform float Clamp <
-	ui_label = "Clamping";
-	ui_type = "slider";
-	ui_min = 0.5; ui_max = 1.0; ui_step = 0.001;
-> = 0.65;
-
 uniform bool UseMask <
+	ui_type = "input";
 	ui_label = "Sharpen only center";
 	ui_tooltip = "Sharpen only in center of the image";
 > = false;
 
-uniform int Coefficient <
-	ui_tooltip = "For digital video signal use BT.709, for analog (like VGA) use BT.601";
-	ui_label = "YUV coefficients";
-	ui_type = "radio";
-	ui_items = "BT.709 - digital\0BT.601 - analog\0";
+uniform float Clamp <
+	ui_type = "slider";
+	ui_label = "Clamping highlights";
+	ui_min = 0.5; ui_max = 1.0; ui_step = 0.1;
 	ui_category = "Additional settings";
 	ui_category_closed = true;
-> = 0;
+> = 0.6;
+
+uniform uint Coefficient <
+	ui_type = "radio";
+	ui_tooltip = "For digital video signal use BT.709, for analog (like VGA) use BT.601";
+	ui_label = "YUV coefficients";
+	ui_items = "BT.601 - analog\0BT.709 - digital\0";
+	ui_category = "Additional settings";
+> = 0u;
 
 uniform bool Preview <
+	ui_type = "input";
 	ui_label = "Preview sharpen layer";
 	ui_tooltip = "Preview sharpen layer and mask for adjustment.\n"
 		"If you don't see red strokes,\n"
@@ -84,19 +86,11 @@ static const float3 Luma601 = float3(0.299, 0.587, 0.114);
 // Overlay blending mode
 float Overlay(float LayerA, float LayerB)
 {
-	const float MinA = min(LayerA, 0.5);
-	const float MinB = min(LayerB, 0.5);
-	const float MaxA = max(LayerA, 0.5);
-	const float MaxB = max(LayerB, 0.5);
-	return 2.0*((MinA*MinB+MaxA)+(MaxB-MaxA*MaxB))-1.5;
-}
-
-// Overlay blending mode for one input
-float Overlay(float LayerAB)
-{
-	const float MinAB = min(LayerAB, 0.5);
-	const float MaxAB = max(LayerAB, 0.5);
-	return 2.0*((MinAB*MinAB+MaxAB)+(MaxAB-MaxAB*MaxAB))-1.5;
+	float MinA = min(LayerA, 0.5);
+	float MinB = min(LayerB, 0.5);
+	float MaxA = max(LayerA, 0.5);
+	float MaxB = max(LayerB, 0.5);
+	return 2f*((MinA*MinB+MaxA)+(MaxB-MaxA*MaxB))-1.5;
 }
 
 // Convert to linear gamma
@@ -110,25 +104,25 @@ float gamma(float grad) { return pow(abs(grad), 2.2); }
 float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV_Target
 {
 	// Sample display image
-	const float3 Source = tex2D(BackBuffer, UvCoord).rgb;
+	float3 Source = tex2D(BackBuffer, UvCoord).rgb;
 
 	// Generate and apply radial mask
 	float Mask;
 	if (UseMask)
 	{
+		// Center coordinates
+		float2 viewCoord = UvCoord*2f-1f;
+		viewCoord.y *= BUFFER_HEIGHT*BUFFER_RCP_WIDTH;
 		// Generate radial mask
-		Mask = 1.0-length(UvCoord*2.0-1.0);
-		Mask = Overlay(Mask)*Strength;
-		// Bypass
-		if (Mask <= 0) return Source;
+		Mask = Strength-min(dot(viewCoord, viewCoord), 1f)*Strength;
 	}
 	else Mask = Strength;
 
 	// Get pixel size
-	const float2 Pixel = BUFFER_PIXEL_SIZE*Offset;
+	float2 Pixel = BUFFER_PIXEL_SIZE*Offset;
 
 	// Sampling coordinates
-	const float2 NorSouWesEst[4] = {
+	float2 NorSouWesEst[4] = {
 		float2(UvCoord.x, UvCoord.y+Pixel.y),
 		float2(UvCoord.x, UvCoord.y-Pixel.y),
 		float2(UvCoord.x+Pixel.x, UvCoord.y),
@@ -136,16 +130,12 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	};
 
 	// Choose luma coefficient, if False BT.709 luma, else BT.601 luma
-	float3 LumaCoefficient;
-	if (bool(Coefficient))
-		LumaCoefficient = Luma601;
-	else
-		LumaCoefficient = Luma709;
+	const float3 LumaCoefficient = bool(Coefficient) ? Luma709 : Luma601;
 
 	// Luma high-pass
-	float HighPass = 0.0;
+	float HighPass = 0f;
 	[unroll]
-	for(int i=0; i<4; i++)
+	for(uint i=0u; i<4u; i++)
 		HighPass += dot(tex2D(BackBuffer, NorSouWesEst[i]).rgb, LumaCoefficient);
 
 	HighPass = 0.5-0.5*(HighPass*0.25-dot(Source, LumaCoefficient));
@@ -153,18 +143,16 @@ float3 FilmicSharpenPS(float4 pos : SV_Position, float2 UvCoord : TEXCOORD) : SV
 	// Sharpen strength
 	HighPass = lerp(0.5, HighPass, Mask);
 
-	// Clamping sharpen
-	if (Clamp != 1.0)
-		HighPass = clamp(HighPass, 1.0-Clamp, Clamp);
+	// Clamp sharpening
+	HighPass = Clamp!=1f? clamp(HighPass, 1f-Clamp, Clamp) : HighPass;
 
-	if (Preview)
-		return gamma(HighPass);
-	else
-		return float3(
+	float3 Sharpen = float3(
 		Overlay(Source.r, HighPass),
 		Overlay(Source.g, HighPass),
 		Overlay(Source.b, HighPass)
-		);
+	);
+
+	return Preview? gamma(HighPass) : Sharpen;
 }
 
 
