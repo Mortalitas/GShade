@@ -277,7 +277,11 @@ float4 SplicedRadials(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : S
             color = tex2D(samplerColor, texcoord);
     }
 
-    return color;  
+#if GSHADE_DITHER
+	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
+#else
+    return color;
+#endif
 }
 
 // Technique
