@@ -21,15 +21,15 @@ uniform float Strength<
 		ui_tooltip = "Changes how much of the color is from the dots vs. the original image.";
 		ui_min = 0; ui_max = 1;
 		ui_step = 0.001;
-	> = 1;
+> = 1;
 	
-uniform float Gamma<
-	ui_type = "slider";
-	ui_label = "Gamma";
-	ui_tooltip = "Helps make the colors of the halftone conversion appear more accurate.";
-	ui_min = 0; ui_max = 3;
-	ui_step = 0.001;
-> = 2.2;
+uniform float KStrength<
+		ui_type = "slider";
+		ui_label = "K-Strength";
+		ui_tooltip = "Changes how much K is used to subtract from the color dots";
+		ui_min = 0; ui_max = 1;
+		ui_step = 0.001;
+> = 0.5;
 	
 uniform float Angle<
 	ui_type = "slider";
@@ -37,7 +37,7 @@ uniform float Angle<
 	ui_tooltip = "Changles the angle that the dots are laid out in, helps with aliasing patterns.";
 	ui_min = 0; ui_max = 1;
 	ui_step = 0.001;
-> = 0.09;
+> = 0.33;
 
 uniform float Scale<
 		ui_type = "slider";
@@ -45,7 +45,7 @@ uniform float Scale<
 		ui_tooltip = "Changes the size of the dots in the halftone pattern.";
 		ui_min = 1; ui_max = 9;
 		ui_step = 1;
-	> = 2;
+> = 3;
 
 
 
@@ -90,7 +90,7 @@ float4 sRGBToCMYK(float3 sRGB)
 	float4 cmyk;
 	
 	
-	cmyk.w = 1 - max(max(sRGB.r, sRGB.g), sRGB.b);
+	cmyk.w = (1 - max(max(sRGB.r, sRGB.g), sRGB.b)) * KStrength;
 	cmyk.xyz = (1 - sRGB - cmyk.w) / (1 - cmyk.w);
 	return cmyk;
 }
@@ -98,13 +98,13 @@ float4 sRGBToCMYK(float3 sRGB)
 float coveragePercent(float2 dotCenter, float2 pixelCenter, float tonalValue, float scale)
 {
 	//dots in halftoning meet at 70%
-	float radius = (scale * tonalValue * 0.5) / 0.7;
+	float radius = (scale * tonalValue * 0.5) /sqrt(0.7);
 	
 	float2 fromCenter = (pixelCenter - dotCenter) * ASPECT_RATIO / radius;
 	
 	float dist = length(fromCenter);
 	
-	float wd = dist * PI /  float(BUFFER_HEIGHT);
+	float wd = dist * 3 /  float(BUFFER_HEIGHT);
 	
 	return smoothstep(1 + wd, 1 - wd, dist);//coverage;				  
 }
@@ -159,22 +159,25 @@ void OutputPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 
 	values[2] = sRGBToCMYK(tex2D(sBackBuffer, coords[2]).rgb);
 	values[3] = sRGBToCMYK(tex2D(sBackBuffer, coords[3]).rgb);
 	
-	[unroll]
 	for(int i = 0; i < 4; i++)
 	{
+		values[i] = sqrt(values[i]);
+	}
+	
+	[unroll]
+	for(int i = 0; i < 2; i++)
+	{
 		[unroll]
-		for(int j = 0; j < 4; j++)
+		for(int j = 0; j < 2; j++)
 		{
-			float2 offset = (float2(i, j) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) / 4) - (3 * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)) / 8;
+			float2 offset = (float2(i, j) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) / 2) - (1 * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)) / 4;
 			output += CMYKSample(values, texcoord + offset, scale);
 		}
 	}
-
-	output /= 16;
+	output /= 4;
 	float4 value = sRGBToCMYK(tex2D(sBackBuffer, texcoord).rgb);
 	
 	output.xyz = (output.w > 0.99) ? 0 : output.xyz;
-	output = pow(abs(output), 1/Gamma);
 	output = lerp(value, output, Strength);
 	
 	output.rgb = ((1 - output.xyz) * (1 - output.w));
