@@ -176,7 +176,7 @@ namespace CMAA_2
 texture ZShapes <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
 texture BackBuffer : COLOR;
 texture Edges <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-texture ProcessedCandidates <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
+texture ProcessedCandidates <pooled = false;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
 
 sampler sZShapes {Texture = ZShapes;};
 sampler sBackBuffer {Texture = BackBuffer;};
