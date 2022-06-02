@@ -30,6 +30,12 @@ uniform float KStrength<
 		ui_min = 0; ui_max = 1;
 		ui_step = 0.001;
 > = 0.5;
+
+uniform float3 PaperColor<
+		ui_type = "color";
+		ui_label = "Paper Color";
+		ui_min = 0; ui_max = 1;
+> = 1;
 	
 uniform float Angle<
 	ui_type = "slider";
@@ -46,6 +52,8 @@ uniform float Scale<
 		ui_min = 1; ui_max = 9;
 		ui_step = 1;
 > = 3;
+
+uniform bool SuperSample = true;
 
 
 
@@ -65,81 +73,65 @@ float2x2 rotationMatrix(float angle)
 	return float2x2(float2(trig.x, -trig.y), float2(trig.y, trig.x));
 }
 
-void scaledTexcoord(float2 texcoord, float angle, float scale, out float2 scaledTexcoords[4])
+float2 scaledTexcoord(float2 texcoord, float angle, float scale)
 {
 	float2x2 rot = rotationMatrix(angle);
 	
-	float2 offset[4];
+
+	float2 scaledTexcoord = mul((texcoord) * ASPECT_RATIO, rot);
+	scaledTexcoord = (round(scaledTexcoord / scale)) * scale;
+	scaledTexcoord = mul(scaledTexcoord, transpose(rot)) / ASPECT_RATIO;
 	
-	offset[0] = 0;
-	offset[1] = 1;
-	offset[2] = float2(0, 1);
-	offset[3] = float2(1, 0);
-	
-	for(int i = 0; i < 4; i++)
-	{
-		scaledTexcoords[i] = mul((texcoord) * ASPECT_RATIO, rot);
-		scaledTexcoords[i] = (floor(scaledTexcoords[i] / scale) + offset[i]) * scale;
-		scaledTexcoords[i] = mul(scaledTexcoords[i], transpose(rot)) / ASPECT_RATIO;
-	}
-	
+	return scaledTexcoord;
 }
 
 float4 sRGBToCMYK(float3 sRGB)
 {
 	float4 cmyk;
-	
-	
-	cmyk.w = (1 - max(max(sRGB.r, sRGB.g), sRGB.b)) * KStrength;
-	cmyk.xyz = (1 - sRGB - cmyk.w) / (1 - cmyk.w);
-	return cmyk;
+	cmyk.xyz = saturate(PaperColor - sRGB);
+	cmyk.w = (min(min(cmyk.x, cmyk.y), cmyk.z)) * KStrength;
+	cmyk.xyz = (PaperColor - sRGB - cmyk.w) / (1 - cmyk.w);
+	return saturate(cmyk);
 }
 
 float coveragePercent(float2 dotCenter, float2 pixelCenter, float tonalValue, float scale)
 {
-	//dots in halftoning meet at 70%
-	float radius = (scale * tonalValue * 0.5) /sqrt(0.7);
+	//Dots meet at 70% tonal coverage
+	float radius = (scale * tonalValue * 0.5) / 0.7;
 	
-	float2 fromCenter = (pixelCenter - dotCenter) * ASPECT_RATIO / radius;
+	float2 fromCenter = (pixelCenter - dotCenter) * ASPECT_RATIO;
 	
 	float dist = length(fromCenter);
 	
-	float wd = dist * 3 /  float(BUFFER_HEIGHT);
-	
-	return smoothstep(1 + wd, 1 - wd, dist);//coverage;				  
+	float wd = fwidth(dist) * sqrt(0.5);
+	//wd = dist * 3 / float(BUFFER_HEIGHT);
+	return smoothstep(radius+wd, radius-wd, dist);				  
 }
 
-float4 CMYKSample(const float4 value[4], const float2 texcoord, const float scale)
+float4 CMYKSample(const float2 texcoord, const float scale)
 {
 	float4 output;
 	
-	float2 coords[4];
+	float2 coord;
+	float4 value;
 	
 	output = 0;
+	float2 rotatedCoord = mul(texcoord * ASPECT_RATIO, rotationMatrix(PI/4)) / ASPECT_RATIO;
+	coord = scaledTexcoord(texcoord.xy, 0 + Angle, scale);
+	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
+	output.z = coveragePercent(coord, texcoord, value.z, scale);
 	
-	scaledTexcoord(texcoord.xy, 0 + Angle, scale, coords);
-	output.z = coveragePercent(coords[0], texcoord, value[0].z, scale);
-	output.z += coveragePercent(coords[1], texcoord, value[1].z, scale);
-	output.z += coveragePercent(coords[2], texcoord, value[2].z, scale);
-	output.z += coveragePercent(coords[3], texcoord, value[3].z, scale);
+	coord = scaledTexcoord(texcoord.xy, PI/12 + Angle, scale);
+	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
+	output.x = coveragePercent(coord, texcoord, value.x, scale);
 	
-	scaledTexcoord(texcoord.xy, PI/12 + Angle, scale, coords);
-	output.x = coveragePercent(coords[0], texcoord, value[0].x, scale);
-	output.x += coveragePercent(coords[1], texcoord, value[1].x, scale);
-	output.x += coveragePercent(coords[2], texcoord, value[2].x, scale);
-	output.x += coveragePercent(coords[3], texcoord, value[3].x, scale);
+	coord = scaledTexcoord(texcoord.xy, PI/4 + Angle, scale);
+	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
+	output.w = coveragePercent(coord, texcoord, value.w, scale);
 	
-	scaledTexcoord(texcoord.xy, PI/4 + Angle, scale, coords);
-	output.w = coveragePercent(coords[0], texcoord, value[0].w, scale);
-	output.w += coveragePercent(coords[1], texcoord, value[1].w, scale);
-	output.w += coveragePercent(coords[2], texcoord, value[2].w, scale);
-	output.w += coveragePercent(coords[3], texcoord, value[3].w, scale);
-	
-	scaledTexcoord(texcoord.xy, (5*PI)/12 + Angle, scale, coords);
-	output.y = coveragePercent(coords[0], texcoord, value[0].y, scale);
-	output.y += coveragePercent(coords[1], texcoord, value[1].y, scale);
-	output.y += coveragePercent(coords[2], texcoord, value[2].y, scale);
-	output.y += coveragePercent(coords[3], texcoord, value[3].y, scale);
+	coord = scaledTexcoord(texcoord.xy, (5*PI)/12 + Angle, scale);
+	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
+	output.y = coveragePercent(coord, texcoord, value.y, scale);
 	
 	return output;
 }
@@ -153,41 +145,46 @@ void OutputPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 
 	float4 values[4];
 	float2 coords[4];
 	
-	scaledTexcoord(texcoord.xy, 0, scale, coords);
-	values[0] = sRGBToCMYK(tex2D(sBackBuffer, coords[0]).rgb);
-	values[1] = sRGBToCMYK(tex2D(sBackBuffer, coords[1]).rgb);
-	values[2] = sRGBToCMYK(tex2D(sBackBuffer, coords[2]).rgb);
-	values[3] = sRGBToCMYK(tex2D(sBackBuffer, coords[3]).rgb);
 	
 	for(int i = 0; i < 4; i++)
 	{
 		values[i] = sqrt(values[i]);
 	}
-	
-	[unroll]
-	for(int i = 0; i < 2; i++)
+	if(SuperSample)
 	{
+		
 		[unroll]
-		for(int j = 0; j < 2; j++)
+		for(int i = 1; i <= 2; i++)
 		{
-			float2 offset = (float2(i, j) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) / 2) - (1 * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)) / 4;
-			output += CMYKSample(values, texcoord + offset, scale);
+			[unroll]
+			for(int j = 1; j <= 2; j++)
+			{
+				float2 offset = (float2(i, j) / 3) - 0.5;
+				offset *= float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+				output += CMYKSample(texcoord + offset, scale);
+			}
 		}
+		output /= 4;
 	}
-	output /= 4;
+	else
+	{
+	
+		output += CMYKSample(texcoord, scale);
+	}
+
 	float4 value = sRGBToCMYK(tex2D(sBackBuffer, texcoord).rgb);
 	
 	output.xyz = (output.w > 0.99) ? 0 : output.xyz;
 	output = lerp(value, output, Strength);
-	
+	//output.xyw = 0;
 	output.rgb = ((1 - output.xyz) * (1 - output.w));
+	output.rgb = (output.rgb - (1 - PaperColor));
 	output.a = 1;
 	
 }
 
 technique Halftone <ui_tooltip = "This shader emulates the CMYK halftoning commonly found in offset printing, \n"
 								   "to give the image a printer-like effect.\n\n"
-								   "Warning: This shader is performance intensive as it internally performs calculations at 16x res.\n\n"
 								   "Part of Insane Shaders\n"
 								   "By: Lord Of Lunacy";>
 {
