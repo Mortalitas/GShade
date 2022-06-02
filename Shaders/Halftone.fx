@@ -73,13 +73,13 @@ float2x2 rotationMatrix(float angle)
 	return float2x2(float2(trig.x, -trig.y), float2(trig.y, trig.x));
 }
 
-float2 scaledTexcoord(float2 texcoord, float angle, float scale)
+float2 scaledTexcoord(float2 texcoord, float angle, float scale, float2 offset)
 {
 	float2x2 rot = rotationMatrix(angle);
 	
 
 	float2 scaledTexcoord = mul((texcoord) * ASPECT_RATIO, rot);
-	scaledTexcoord = (round(scaledTexcoord / scale)) * scale;
+	scaledTexcoord = (floor(scaledTexcoord / scale) + offset) * scale;
 	scaledTexcoord = mul(scaledTexcoord, transpose(rot)) / ASPECT_RATIO;
 	
 	return scaledTexcoord;
@@ -97,7 +97,7 @@ float4 sRGBToCMYK(float3 sRGB)
 float coveragePercent(float2 dotCenter, float2 pixelCenter, float tonalValue, float scale)
 {
 	//Dots meet at 70% tonal coverage
-	float radius = (scale * tonalValue * 0.5) / 0.7;
+	float radius = (scale * tonalValue * 0.5) / (PI/4);//0.7;
 	
 	float2 fromCenter = (pixelCenter - dotCenter) * ASPECT_RATIO;
 	
@@ -108,7 +108,7 @@ float coveragePercent(float2 dotCenter, float2 pixelCenter, float tonalValue, fl
 	return smoothstep(radius+wd, radius-wd, dist);				  
 }
 
-float4 CMYKSample(const float2 texcoord, const float scale)
+float4 CMYKSample(const float2 texcoord, const float scale, const float2 offset)
 {
 	float4 output;
 	
@@ -117,19 +117,19 @@ float4 CMYKSample(const float2 texcoord, const float scale)
 	
 	output = 0;
 	float2 rotatedCoord = mul(texcoord * ASPECT_RATIO, rotationMatrix(PI/4)) / ASPECT_RATIO;
-	coord = scaledTexcoord(texcoord.xy, 0 + Angle, scale);
+	coord = scaledTexcoord(texcoord.xy, 0 + Angle, scale, offset);
 	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
 	output.z = coveragePercent(coord, texcoord, value.z, scale);
 	
-	coord = scaledTexcoord(texcoord.xy, PI/12 + Angle, scale);
+	coord = scaledTexcoord(texcoord.xy, PI/12 + Angle, scale, offset);
 	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
 	output.x = coveragePercent(coord, texcoord, value.x, scale);
 	
-	coord = scaledTexcoord(texcoord.xy, PI/4 + Angle, scale);
+	coord = scaledTexcoord(texcoord.xy, PI/4 + Angle, scale, offset);
 	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
 	output.w = coveragePercent(coord, texcoord, value.w, scale);
 	
-	coord = scaledTexcoord(texcoord.xy, (5*PI)/12 + Angle, scale);
+	coord = scaledTexcoord(texcoord.xy, (5*PI)/12 + Angle, scale, offset);
 	value = sRGBToCMYK(tex2D(sBackBuffer, coord).rgb);
 	output.y = coveragePercent(coord, texcoord, value.y, scale);
 	
@@ -161,7 +161,10 @@ void OutputPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 
 			{
 				float2 offset = (float2(i, j) / 3) - 0.5;
 				offset *= float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
-				output += CMYKSample(texcoord + offset, scale);
+				output += CMYKSample(texcoord + offset, scale, int2(0, 0));
+				output += CMYKSample(texcoord, scale, int2(0, 1));
+				output += CMYKSample(texcoord, scale, int2(1, 0));
+				output += CMYKSample(texcoord, scale, int2(1, 1));
 			}
 		}
 		output /= 4;
@@ -169,7 +172,11 @@ void OutputPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 
 	else
 	{
 	
-		output += CMYKSample(texcoord, scale);
+		output += CMYKSample(texcoord, scale, int2(0, 0));
+		output += CMYKSample(texcoord, scale, int2(0, 1));
+		output += CMYKSample(texcoord, scale, int2(1, 0));
+		output += CMYKSample(texcoord, scale, int2(1, 1));
+		//output /= 4;
 	}
 
 	float4 value = sRGBToCMYK(tex2D(sBackBuffer, texcoord).rgb);
