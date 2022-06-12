@@ -158,7 +158,7 @@ uniform bool bPerfHack <
     ui_label = "Extra Sharpness";
     ui_category = "General Settings";
     ui_tooltip = "This setting enables a performance hack that greatly improves "
-                 "the performance of the AA at a slight quality cost."
+                 "the performance of the AA at a slight quality cost.";
 	ui_bind = "CMAA2_PERFORMANCE_HACK";
 > = 1;
 #endif
