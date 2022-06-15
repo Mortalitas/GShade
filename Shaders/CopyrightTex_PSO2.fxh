@@ -86,7 +86,7 @@ uniform int variable \
 // Texture Definition
 // -------------------------------------
 
-// (?<=Source == )[\d]{0,999} Regular expression for renumbering. Make sure this line doesn't hit.
+// (?<=Source == )[\d][\S+]{0,999} Regular expression for renumbering.
 
 #if _Copyright_Texture_Source == 0 // PSO2
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
