@@ -35,7 +35,7 @@
 	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
 #endif
 
-#if __APPLICATION__ == 0x6f24790f && KeepUIType == 0 // Final Fantasy XIV
+#if (__APPLICATION__ == 0x6f24790f || __APPLICATION__ == 0xf133c441) && KeepUIType == 0 // Final Fantasy XIV & The Sims 4
 	#undef KeepUIType
 	#define KeepUIType 1
 // Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
