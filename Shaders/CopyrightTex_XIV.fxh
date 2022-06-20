@@ -42,6 +42,7 @@ uniform int variable \
                "Helvetica\0" \
                "Futura\0" \
                "Futura Large\0" \
+               "Sophia DF\0" \
                "Frutiger XCn\0" \
                "Meridien Large\0" \
                "Caslon Old Face\0" \
@@ -54,6 +55,7 @@ uniform int variable \
                "With GShade White\0" \
                "Euphoria Script\0" \
                "Copperplate Gothic\0" \
+               "Sophia DF 2\0" \
                "Rachel DF\0" \
                "Kabel\0" \
                "Futura Square\0" \
@@ -128,79 +130,85 @@ uniform int variable \
 #elif _Copyright_Texture_Source == 13 // Futura Large
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_futura_large.png"
 #define _SOURCE_COPYRIGHT_SIZE 1200.0, 250.0
-#elif _Copyright_Texture_Source == 14 // Frutiger XCn
+#elif _Copyright_Texture_Source == 14 // Sophia DF
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_sophia_df.png"
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 400.0
+#elif _Copyright_Texture_Source == 15 // Frutiger XCn
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_frutiger_xcn.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 300.0
-#elif _Copyright_Texture_Source == 15 // Meridien Large
+#elif _Copyright_Texture_Source == 16 // Meridien Large
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_meridien_large.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 300.0
-#elif _Copyright_Texture_Source == 16 // Caslon Old Face
+#elif _Copyright_Texture_Source == 17 // Caslon Old Face
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_caslon_old_face.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
-#elif _Copyright_Texture_Source == 17 // Basker Ville
+#elif _Copyright_Texture_Source == 18 // Basker Ville
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_baskerville.png"
 #define _SOURCE_COPYRIGHT_SIZE 830.0, 300.0
-#elif _Copyright_Texture_Source == 18 // Josefin Slab
+#elif _Copyright_Texture_Source == 19 // Josefin Slab
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_josefin_slab.png"
 #define _SOURCE_COPYRIGHT_SIZE 700.0, 350.0
-#elif _Copyright_Texture_Source == 19 // Andante
+#elif _Copyright_Texture_Source == 20 // Andante
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_andante.png"
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 250.0
-#elif _Copyright_Texture_Source == 20 // Codex
+#elif _Copyright_Texture_Source == 21 // Codex
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_codex.png"
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 300.0
-#elif _Copyright_Texture_Source == 21 // Empire
+#elif _Copyright_Texture_Source == 22 // Empire
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_empire.png"
 #define _SOURCE_COPYRIGHT_SIZE 800.0, 350.0
-#elif _Copyright_Texture_Source == 22 // GShade Dark
+#elif _Copyright_Texture_Source == 23 // GShade Dark
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_by_gshade_dark_1550.png"
 #define _SOURCE_COPYRIGHT_SIZE 1550.0, 100.0
-#elif _Copyright_Texture_Source == 23 // GShade White
+#elif _Copyright_Texture_Source == 24 // GShade White
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_by_gshade_light_1550.png"
 #define _SOURCE_COPYRIGHT_SIZE 1550.0, 100.0
-#elif _Copyright_Texture_Source == 24 // Euphoria Script
+#elif _Copyright_Texture_Source == 25 // Euphoria Script
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_euphoriascript.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 120.0
-#elif _Copyright_Texture_Source == 25 // Copperplate Gothic
+#elif _Copyright_Texture_Source == 26 // Copperplate Gothic
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_copperplate.png"
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 100.0
-#elif _Copyright_Texture_Source == 26 // Rachel DF
+#elif _Copyright_Texture_Source == 27 // Sophia DF 2
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_sophia_df_2.png"
+#define _SOURCE_COPYRIGHT_SIZE 550.0, 400.0
+#elif _Copyright_Texture_Source == 28 // Rachel DF
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_rachel_df.png"
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 550.0
-#elif _Copyright_Texture_Source == 27 // Kabel
+#elif _Copyright_Texture_Source == 29 // Kabel
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_geometric231(Kabel)_square.png"
 #define _SOURCE_COPYRIGHT_SIZE 550.0, 500.0
-#elif _Copyright_Texture_Source == 28 // Futura Square
+#elif _Copyright_Texture_Source == 30 // Futura Square
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_futura_square.png"
 #define _SOURCE_COPYRIGHT_SIZE 400.0, 400.0
-#elif _Copyright_Texture_Source == 29 // Sophia DF Square
+#elif _Copyright_Texture_Source == 31 // Sophia DF Square
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_sophia_df_square.png"
 #define _SOURCE_COPYRIGHT_SIZE 400.0, 400.0
-#elif _Copyright_Texture_Source == 30 // Meridian Square
+#elif _Copyright_Texture_Source == 32 // Meridian Square
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_meridien_square.png"
 #define _SOURCE_COPYRIGHT_SIZE 500.0, 500.0
-#elif _Copyright_Texture_Source == 31 // Stymie Square
+#elif _Copyright_Texture_Source == 33 // Stymie Square
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_stymie_square.png"
 #define _SOURCE_COPYRIGHT_SIZE 400.0, 400.0
-#elif _Copyright_Texture_Source == 32 // Stymie Square 2
+#elif _Copyright_Texture_Source == 34 // Stymie Square 2
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_stymie_square_2.png"
 #define _SOURCE_COPYRIGHT_SIZE 500.0, 500.0
-#elif _Copyright_Texture_Source == 33 // Broadway Square
+#elif _Copyright_Texture_Source == 35 // Broadway Square
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_broadway.png"
 #define _SOURCE_COPYRIGHT_SIZE 800.0, 500.0
-#elif _Copyright_Texture_Source == 34 // Super Bodoni DF
+#elif _Copyright_Texture_Source == 36 // Super Bodoni DF
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_super_bodoni_df.png"
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 500.0
-#elif _Copyright_Texture_Source == 35 // Bungee Shade
+#elif _Copyright_Texture_Source == 37 // Bungee Shade
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_bungee_shade.png"
 #define _SOURCE_COPYRIGHT_SIZE 600.0, 300.0
-#elif _Copyright_Texture_Source == 36 // Gill Sans Framed
+#elif _Copyright_Texture_Source == 38 // Gill Sans Framed
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_gill_sans_nova_framed.png"
 #define _SOURCE_COPYRIGHT_SIZE 500.0, 330.0
-#elif _Copyright_Texture_Source == 37 // Gill Sans Framed 2
+#elif _Copyright_Texture_Source == 39 // Gill Sans Framed 2
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_gill_sans_nova_framed_2.png"
 #define _SOURCE_COPYRIGHT_SIZE 500.0, 500.0
-#elif _Copyright_Texture_Source == 38    // Custom
+#elif _Copyright_Texture_Source == 40    // Custom
 #define _SOURCE_COPYRIGHT_FILE cLayerTex
 #define _SOURCE_COPYRIGHT_SIZE cLayer_SIZE_X, cLayer_SIZE_Y
 #else // Default
