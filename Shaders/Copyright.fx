@@ -56,7 +56,7 @@
     * Added a gaussian blur radius option that allows you to adjust the applied area.
     * Improved the accuracy of the BG Blend mode option.
 
-    Version 1.2
+    Version 1.2 by uchu suzume
     * Added scale option to gaussian layer.
     * Added more blending option to CAb layer.
     * Added Custom List.
@@ -67,6 +67,11 @@
 
     Version 1.3 by uchu suzume
     + Improved formula for recolor.
+
+    Version 1.4 by Marot Satil & uchu suzume
+    + Implemented new recolor method of changing two colors individually.
+    + Color pickers are switched for in/out as needed depending on the status of recolor option.
+    + Moved inversion option in recolor from a drop-down box to a single check box.
 */
 
 #include "ReShade.fxh"
@@ -89,27 +94,27 @@
 #define TEXFORMAT RGBA8
 #endif
 
-#if TEXTURE_SELECTION == 0
+#if cLayer_TEXTURE_SELECTION == 0
   #if __APPLICATION__ == 0x6f24790f
-    #undef TEXTURE_SELECTION
-    #define TEXTURE_SELECTION 1
+    #undef cLayer_TEXTURE_SELECTION
+    #define cLayer_TEXTURE_SELECTION 1
   #elif __APPLICATION__ == 0x31d39829
-    #undef TEXTURE_SELECTION
-    #define TEXTURE_SELECTION 2
+    #undef cLayer_TEXTURE_SELECTION
+    #define cLayer_TEXTURE_SELECTION 2
   #else
-    #undef TEXTURE_SELECTION
-    #define TEXTURE_SELECTION 0
+    #undef cLayer_TEXTURE_SELECTION
+    #define cLayer_TEXTURE_SELECTION 0
   #endif
 #endif
 
-#if TEXTURE_SELECTION == 0
+#if cLayer_TEXTURE_SELECTION == 0
   #warning "No valid game was detected."
   #include "CopyrightTex_XIV.fxh"
-#elif TEXTURE_SELECTION == 1
+#elif cLayer_TEXTURE_SELECTION == 1
   #include "CopyrightTex_XIV.fxh"
-#elif TEXTURE_SELECTION == 2
+#elif cLayer_TEXTURE_SELECTION == 2
   #include "CopyrightTex_PSO2.fxh"
-#elif TEXTURE_SELECTION == 3
+#elif cLayer_TEXTURE_SELECTION == 3
   #include "CopyrightTex_Custom.fxh"
 #endif
 
@@ -124,8 +129,8 @@ uniform int cLayer_SelectGame <
                "Phantasy Star Online 2:NGS\0"
                "Custom List\0"
                ;
-    ui_bind = "TEXTURE_SELECTION";
-> = TEXTURE_SELECTION;
+    ui_bind = "cLayer_TEXTURE_SELECTION";
+> = cLayer_TEXTURE_SELECTION;
 
 TEXTURE_COMBO(
     cLayer_Select,
@@ -157,6 +162,7 @@ uniform float cLayer_Scale <
     ui_min = 0.001; ui_max = 5.0;
     ui_step = 0.001;
 > = 1.0;
+
 
 uniform bool  cLayer_Mouse <
     ui_label = "Mouse Following Mode";
@@ -201,25 +207,45 @@ uniform float cLayer_Rotate <
     ui_step = 0.01;
 > = 0;
 
+
+uniform bool cLayer_Color_Invert <
+    ui_label = "Invert Colors";
+    ui_tooltip = "Can invert all colors.";
+    ui_spacing = 2;
+> = 0;
+
+#ifndef cLayer_COLOR_OVERRIDE_COMBO
+    #define cLayer_COLOR_OVERRIDE_COMBO 0
+#endif
+
 uniform int cLayer_Color_Override <
     ui_label = "Recolor";
-    ui_tooltip = "Can be invert the color (and) colorize   \nto any color to black/white areas.";
+    ui_tooltip = "Can colorize   \nto any color to black/white areas.";
     ui_type = "combo";
-    ui_spacing = 2;
     ui_items = "None\0"
-               "Invert Color\0"
                "Recolor White Part\0"
                "Recolor Black Part\0"
-               "Invert --> Recolor White Part\0"
-               "Invert --> Recolor Black Part\0"
+               "Recolor Both Parts\0"
                ;
-> = false;
+    ui_bind = "cLayer_COLOR_OVERRIDE_COMBO";
+> = 0;
 
-uniform float3 ColorOverride <
-    ui_label = "Color";
+#if cLayer_COLOR_OVERRIDE_COMBO == 1 || cLayer_COLOR_OVERRIDE_COMBO == 2 || cLayer_COLOR_OVERRIDE_COMBO == 3
+uniform float3 ColorOverrideA <
+    ui_label = "Color A";
     ui_tooltip = "Color applied to recolor.   ";
     ui_type = "color";
 > = float3(0.0, 1.0, 1.0);
+#endif
+
+#if cLayer_COLOR_OVERRIDE_COMBO == 3
+uniform float3 ColorOverrideB <
+    ui_label = "Color B";
+    ui_tooltip = "Color applied to recolor.   ";
+    ui_type = "color";
+> = float3(0.0, 1.0, 1.0);
+#endif
+
 
 BLENDING_COMBO(
     cLayer_BlendMode,
@@ -811,28 +837,13 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
 
         float4 ColorFactor = DrawTex;
 
-        switch(cLayer_Color_Override)
-        {
-            default:
-                break;
-            case 1:
-                ColorFactor = float3(1, 1, 1) - DrawTex.rgb;
-                break;
-            case 2:
-                ColorFactor =  saturate(DrawTex.rgb * ColorOverride.rgb); 
-                break;
-            case 3:
-                ColorFactor =  saturate(ColorFactor.rgb + ColorOverride.rgb);
-                break;
-            case 4:
-                ColorFactor =  float3(1, 1, 1) - DrawTex.rgb;
-                ColorFactor =  saturate(ColorFactor.rgb * ColorOverride.rgb); 
-                break;
-            case 5:
-                ColorFactor =  float3(1, 1, 1) - DrawTex.rgb;
-                ColorFactor =  saturate(ColorFactor.rgb + ColorOverride.rgb); 
-                break;
-        }
+        #if cLayer_COLOR_OVERRIDE_COMBO == 1
+            ColorFactor =  saturate(DrawTex.rgb * ColorOverrideA.rgb);
+        #elif cLayer_COLOR_OVERRIDE_COMBO == 2
+            ColorFactor =  saturate(ColorFactor.rgb + ColorOverrideA.rgb);
+        #elif cLayer_COLOR_OVERRIDE_COMBO == 3
+            ColorFactor = ColorOverrideB.rgb + ColorFactor.rgb * (ColorOverrideA.rgb - ColorOverrideB.rgb);
+        #endif
 
         float4 backColor = GaussOut;
         passColor = lerp(GaussOut, backColorOrig, DrawTex.a);
@@ -841,131 +852,203 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
 
         switch (cLayer_BlendMode)
         {
+            case 0:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Screen(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Screen(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 1:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearDodge(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearDodge(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 2:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Glow(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Glow(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 3:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearLight(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::LinearLight(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 4:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::ColorB(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::ColorB(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 5:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::GrainMerge(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::GrainMerge(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 6:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Divide(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::Divide(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 7:
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::DivideAlt(GaussOut.rgb, CAb_A.rgb), CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, ComHeaders::Blending::DivideAlt(GaussOut.rgb, CAb_B.rgb), CAb_B.a * cLayer_CAb_Strength);
+                break;
+            case 8:
+                GaussOut = lerp(GaussOut.rgb, CAb_A.rgb, CAb_A.a * cLayer_CAb_Strength);
+                GaussOut = lerp(GaussOut.rgb, CAb_B.rgb, CAb_B.a * cLayer_CAb_Strength);
+                break;
+        }
+
+        float3 ColorFactorBlended;
+
+        switch (cLayer_BlendMode)
+        {
             // Normal
             default:
-                passColor = lerp(passColor.rgb, ColorFactor.rgb, DrawTex.a * cLayer_Blend);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactor.rgb : ColorFactor.rgb, DrawTex.a * cLayer_Blend);
                 break;
             // Darken
             case 1:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Darken(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Darken(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Multiply
             case 2:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Multiply(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Multiply(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Color Burn
             case 3:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::ColorBurn(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::ColorBurn(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Linear Burn
             case 4:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::LinearBurn(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::LinearBurn(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Lighten
             case 5:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Lighten(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Lighten(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Screen
             case 6:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Screen(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Screen(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Color Dodge
             case 7:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::ColorDodge(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::ColorDodge(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Linear Dodge
             case 8:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::LinearDodge(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::LinearDodge(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Addition
             case 9:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Addition(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Addition(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Glow
             case 10:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Glow(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Glow(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Overlay
             case 11:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Overlay(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Overlay(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Soft Light
             case 12:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::SoftLight(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::SoftLight(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Hard Light
             case 13:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::HardLight(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::HardLight(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Vivid Light
             case 14:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::VividLight(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::VividLight(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Linear Light
             case 15:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::LinearLight(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::LinearLight(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Pin Light
             case 16:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::PinLight(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::PinLight(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Hard Mix
             case 17:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::HardMix(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::HardMix(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Difference
             case 18:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Difference(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Difference(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Exclusion
             case 19:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Exclusion(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Exclusion(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Subtract
             case 20:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Subtract(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Subtract(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Divide
             case 21:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Divide(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Divide(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Divide (Alternative)
             case 22:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::DivideAlt(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::DivideAlt(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Divide (Photoshop)
             case 23:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::DividePS(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::DividePS(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Reflect
             case 24:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Reflect(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Reflect(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Grain Merge
             case 25:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::GrainMerge(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::GrainMerge(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Grain Extract
             case 26:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::GrainExtract(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::GrainExtract(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Hue
             case 27:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Hue(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Hue(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Saturation
             case 28:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Saturation(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Saturation(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Color
             case 29:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::ColorB(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::ColorB(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
             // Luminosity
             case 30:
-                passColor = lerp(passColor.rgb, ComHeaders::Blending::Luminosity(backColorOrig.rgb, ColorFactor.rgb), DrawTex.a * cLayer_Blend);
+                ColorFactorBlended = ComHeaders::Blending::Luminosity(backColorOrig.rgb, ColorFactor.rgb);
+                passColor = lerp(passColor.rgb, cLayer_Color_Invert ? float3(1, 1, 1) - ColorFactorBlended : ColorFactorBlended, DrawTex.a * cLayer_Blend);
                 break;
-            }
+        }
         passColor.a = backColorOrig.a;
     }
    else
