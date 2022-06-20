@@ -230,7 +230,7 @@ uniform int cLayer_Color_Override <
     ui_bind = "cLayer_COLOR_OVERRIDE_COMBO";
 > = 0;
 
-#if cLayer_COLOR_OVERRIDE_COMBO == 1 || cLayer_COLOR_OVERRIDE_COMBO == 2 || cLayer_COLOR_OVERRIDE_COMBO == 3
+#if cLayer_COLOR_OVERRIDE_COMBO > 0
 uniform float3 ColorOverrideA <
     ui_label = "Color A";
     ui_tooltip = "Color applied to recolor.   ";
