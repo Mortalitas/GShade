@@ -3,6 +3,7 @@
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh";
+#include "Blending.fxh";
 
 #if GSHADE_DITHER
     #include "TriDither.fxh"
@@ -58,6 +59,26 @@ uniform float2 anim_rate <
     step = 0.001;
     smoothing = 0.0;
 >;
+
+BLENDING_COMBO(
+    render_type, 
+    "Blending Mode", 
+    "Blends the effect with the previous layers.",
+    "Blending",
+    false,
+    0,
+    0
+);
+
+uniform float blending_amount <
+    ui_type = "slider";
+    ui_label = "Opacity";
+    ui_category = "Blending";
+    ui_tooltip = "Adjusts the blending amount.";
+    ui_min = 0.0;
+    ui_max = 1.0;
+> = 1.0;
+
 
 texture texColorBuffer: COLOR;
 
@@ -218,7 +239,10 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
             break;
     }
     if(depth >= min_depth)
-        color = lerp(screen, scanned, mask);
+        color = lerp(
+            screen, 
+            float4(ComHeaders::Blending::Blend(render_type, screen.rgb, scanned.rgb, blending_amount), 1.0), 
+            mask);
     else
         color = screen;
 
