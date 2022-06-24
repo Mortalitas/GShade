@@ -61,26 +61,22 @@ uniform float2 offset_coords <
     ui_max = 1.0;
 > = float2(0.5, 0.5);
 
-uniform float depth_threshold <
+uniform float2 depth_bounds <
     ui_type = "slider";
-    ui_label="Depth Threshold";
+    ui_label = "Depth Bounds";
+    ui_category = "Depth";
+    ui_tooltip = "The depth bounds where the effect is calculated.\nThe left value is the \"near\" value and the right value is the \"far\" value.";
+    min = 0.0;
+    max = 1.0;
+> = float2(0.0, 1.0);
+
+uniform float min_depth <
+    ui_type = "slider";
+    ui_label="Minimum Depth";
+    ui_tooltip="Unmasks anything before a set depth.";
     ui_category = "Depth";
     ui_min=0.0;
     ui_max=1.0;
-> = 0;
-
-uniform int depth_mode <
-    ui_type = "combo";
-    ui_label = "Depth Mode";
-    ui_category = "Depth";
-    ui_items = "Minimum\0Maximum\0";
-    ui_tooltip = "Mask the effect by using the depth of the scene.";
-> = 0;
-
-uniform bool set_max_depth_behind <
-    ui_label = "Set Distortion Behind Foreground";
-    ui_tooltip = "(Maximum Depth Threshold Mode only) When enabled, sets the distorted area behind the objects that should come in front of it.";
-    ui_category = "Depth";
 > = 0;
 
 uniform float aspect_ratio <
@@ -184,9 +180,9 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     float tension_radius = lerp(dist, radius, tension);
     float percent = (dist)/tension_radius;
     if(anim_mag > 0)
-        tc = (tc-center) * lerp(1.0, smoothstep(0.0, radius/dist, percent), anim_mag * 0.75);
+        tc = (tc-center) * lerp(1.0, smoothstep(0.0, tension_radius/dist, percent), anim_mag * 0.75);
     else
-        tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * radius/dist, 1.0 - percent);
+        tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * tension_radius/dist, 1.0 - percent);
 
     if(use_offset_coords) {
         tc += (2 * offset_center);
@@ -196,18 +192,9 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
 
     tc.x *= ar;
 
-    float out_depth;
-    bool inDepthBounds;
-    
-    if (depth_mode == 0) {
-        out_depth =  ReShade::GetLinearizedDepth(texcoord).r;
-        inDepthBounds = out_depth >= depth_threshold;
-    }
-    else{
-        out_depth = ReShade::GetLinearizedDepth(tc).r;
-        inDepthBounds = out_depth <= depth_threshold;
-    }
-       
+    float out_depth = ReShade::GetLinearizedDepth(tc).r;
+    bool inDepthBounds = out_depth >= depth_bounds.x && out_depth <= depth_bounds.y;
+      
     float blending_factor;
     if(render_type)
         blending_factor = lerp(0, 1 - percent, blending_amount);
@@ -230,11 +217,8 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
         color = tex2D(samplerColor, texcoord);
     }
 
-    if(set_max_depth_behind) {
-        const float mask_front = ReShade::GetLinearizedDepth(texcoord).r;
-        if(mask_front < depth_threshold)
-            color = tex2D(samplerColor, texcoord);
-    }
+    if(depth < min_depth)
+        color = tex2D(samplerColor, texcoord);
     
     return color;
 }

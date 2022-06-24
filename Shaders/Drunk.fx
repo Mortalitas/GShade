@@ -378,26 +378,22 @@ uniform float blending_amount <
     ui_max = 1.0;
 > = 1.0;
 
-uniform float depth_threshold <
+uniform float2 depth_bounds <
     ui_type = "slider";
-    ui_label="Depth Threshold";
+    ui_label = "Depth Bounds";
+    ui_category = "Depth";
+    ui_tooltip = "The depth bounds where the effect is calculated.\nThe left value is the \"near\" value and the right value is the \"far\" value.";
+    min = 0.0;
+    max = 1.0;
+> = float2(0.0, 1.0);
+
+uniform float min_depth <
+    ui_type = "slider";
+    ui_label="Minimum Depth";
+    ui_tooltip="Unmasks anything before a set depth.";
     ui_category = "Depth";
     ui_min=0.0;
     ui_max=1.0;
-> = 0;
-
-uniform int depth_mode <
-    ui_type = "combo";
-    ui_label = "Depth Mode";
-    ui_category = "Depth";
-    ui_items = "Minimum\0Maximum\0";
-    ui_tooltip = "Mask the effect by using the depth of the scene.";
-> = 0;
-
-uniform bool set_max_depth_behind <
-    ui_label = "Set Distortion Behind Foreground";
-    ui_tooltip = "(Maximum Depth Threshold Mode only) When enabled, sets the distorted area behind the objects that should come in front of it.";
-    ui_category = "Depth";
 > = 0;
 
 uniform float anim_rate <
@@ -510,9 +506,9 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 // Pixel Shader
 float4 PSDrunkStage1(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET {
 
-    float out_depth;
+    
     float4 base = tex2D(samplerColor, texcoord);
-	
+	float depth = ReShade::GetLinearizedDepth(texcoord).r;
 	float2 fade = frac(texcoord.xy * MAX_LINE);
 	fade = (sin((fade - 0.5) * 3.141) + 1.0) * 0.5;
 	
@@ -534,29 +530,19 @@ float4 PSDrunkStage1(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV
 	uv = lerp(uv_t, uv_b, fade.y);
 	
 	float4 result = tex2D(samplerColor, uv);
-    bool inDepthBounds;
-    if (depth_mode == 0) 
-    {
-        out_depth =  ReShade::GetLinearizedDepth(texcoord).r;
-        inDepthBounds = out_depth >= depth_threshold;
-    }
-    else
-    {
-        out_depth = ReShade::GetLinearizedDepth(uv).r;
-        inDepthBounds = out_depth <= depth_threshold;
-    }
+
+    float out_depth = ReShade::GetLinearizedDepth(uv).r;
+    bool inDepthBounds = out_depth >= depth_bounds.x && out_depth <= depth_bounds.y;
+
     if(inDepthBounds) {
         result.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, result.rgb, blending_amount);
         
 
     } else result = base;
 	
-    if(set_max_depth_behind) 
-    {
-        const float mask_front = ReShade::GetLinearizedDepth(texcoord).r;
-        if(mask_front < depth_threshold)
-            result = tex2D(samplerColor, texcoord);
-    }
+    if(depth < min_depth) 
+        result = tex2D(samplerColor, texcoord);
+
     return result;
 }
 
