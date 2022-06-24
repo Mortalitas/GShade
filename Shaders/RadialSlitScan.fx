@@ -147,6 +147,7 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
 void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
 {
     const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+    float4 base = tex2D(samplerColor, texcoord);
     float2 uv = texcoord;
     float2 center = coordinates/2.0;
     float2 tc = texcoord - center;
@@ -163,8 +164,10 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
     float4 scanned;
     tc.x *= ar_raw;
 
-    if(dist < slice_to_fill)
-        color = tex2D(ssTarget, texcoord);
+    if(dist < slice_to_fill){
+        float4 scanned_color = tex2D(ssTarget, texcoord);
+        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, scanned_color.rgb, blending_amount);
+    }
     else if (dist > slice_to_fill && dist <= slice_to_fill + 0.0025){
         color = tex2D(samplerColor, texcoord);
         color.rgba = lerp( screen.rgba, float4(border_color, 1.0), opacity);
