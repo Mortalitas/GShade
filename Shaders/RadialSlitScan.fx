@@ -1,16 +1,16 @@
 #include "Reshade.fxh"
 #include "Blending.fxh"
 
+#if GSHADE_DITHER
+    #include "TriDither.fxh"
+#endif
+
 /*-----------------------------------------------------------------------------------------------------*/
 /* Radial Slit Scan Shader - by Radegast Stravinsky of Ultros.                                         */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
 uniform float2 coordinates <
-    #if __RESHADE__ < 40000
-        ui_type = "drag";
-    #else
-        ui_type = "slider";
-    #endif
+    ui_type = "slider";
     ui_label="Coordinates";
     ui_tooltip="The X and Y position of the center of the effect.";
     ui_min = 0.0; 
@@ -177,6 +177,10 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
 
     if(depth < min_depth)
         color = tex2D(samplerColor, texcoord);
+
+#if GSHADE_DITHER
+	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 
 }
 
