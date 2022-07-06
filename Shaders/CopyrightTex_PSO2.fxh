@@ -135,13 +135,13 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 580.0, 150.0
 #elif _Copyright_Texture_Source == 15 // PSO2 Eurostile Left
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile_left.png"
-#define _SOURCE_COPYRIGHT_SIZE 960.0, 216.0
+#define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
 #elif _Copyright_Texture_Source == 16 // PSO2 Eurostile Right
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile_right.png"
-#define _SOURCE_COPYRIGHT_SIZE 960.0, 216.0
+#define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
 #elif _Copyright_Texture_Source == 17 // PSO2 Eurostile Center
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile_center.png"
-#define _SOURCE_COPYRIGHT_SIZE 960.0, 216.0
+#define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
 #elif _Copyright_Texture_Source == 18 // PSO2 Futura Center
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_futura_center.png"
 #define _SOURCE_COPYRIGHT_SIZE 800.0, 190.0
