@@ -226,6 +226,7 @@ uniform int cLayer_Color_Override <
                "Recolor White Part\0"
                "Recolor Black Part\0"
                "Recolor Both Parts\0"
+               "Recolor Both in One Color\0"
                ;
     ui_bind = "cLayer_COLOR_OVERRIDE_COMBO";
 > = 0;
@@ -382,6 +383,7 @@ uniform float cLayer_Blend_BG <
     ui_label = "BG Blending Amount";
     ui_tooltip = "The amount of blending applied to the bg-texture.   ";
     ui_category = "BG Blending Mode";
+    ui_category_closed = true;
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
@@ -401,7 +403,6 @@ uniform float4 cLayer_CAb_Color_B <
     ui_label = "CAb Color B";
     ui_tooltip = "A Color appling to Chromatic Aberration layer.   ";
     ui_category = "Chromatic Aberration";
-    ui_category_closed = true;
     ui_type = "color";
 > = float4(0.0, 1.0, 1.0, 1.0);
 
@@ -843,6 +844,8 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
             ColorFactor =  saturate(ColorFactor.rgb + ColorOverrideA.rgb);
         #elif cLayer_COLOR_OVERRIDE_COMBO == 3
             ColorFactor = ColorOverrideB.rgb + ColorFactor.rgb * (ColorOverrideA.rgb - ColorOverrideB.rgb);
+        #elif cLayer_COLOR_OVERRIDE_COMBO == 4
+            ColorFactor = ColorOverrideA.rgb;
         #endif
 
         float4 backColor = GaussOut;
