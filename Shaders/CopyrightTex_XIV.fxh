@@ -171,7 +171,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 100.0
 #elif _Copyright_Texture_Source == 27 // Sophia DF 2
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_sophia_df_2.png"
-#define _SOURCE_COPYRIGHT_SIZE 550.0, 400.0
+#define _SOURCE_COPYRIGHT_SIZE 600.0, 400.0
 #elif _Copyright_Texture_Source == 28 // Rachel DF
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_rachel_df.png"
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 550.0
