@@ -1,20 +1,24 @@
-/**
-Perfect Perspective PS, version 4.0.2
-All rights (c) 2018 Jakub Maksymilian Fober (the Author).
+/** Perfect Perspective PS, version 4.1.0
 
-The Author provides this shader (the Work) under
-the Creative Commons CC BY-NC-ND 3.0 license
+This code © 2022 Jakub Maksymilian Fober
+
+Copyright owner provides this code (the Work) under the
+Creative Commons CC BY-NC-ND 3.0 license
 available online at
-http://creativecommons.org/licenses/by-nc-nd/3.0/
+http://creativecommons.org/licenses/by-nc-nd/3.0
 
-The Author further grants permission for commercial reuse of
-screen-shots and game-play recordings derived from the Work, provided
-that any use is accompanied by the link to the Work and a credit to the
-Author. (crediting Author by pseudonym "Fubax" is acceptable)
+Copyright owner further grants permission for commercial reuse of
+image recordings derived from the Work (e.g. let's play video,
+gameplay stream with ReShade filters, screenshots with ReShade
+filters) provided that any use is accompanied by the name of the
+shader used and a link to ReShade website https://reshade.me
 
-For inquiries please contact jakub.m.fober@pm.me
 For updates visit GitHub repository at
-https://github.com/Fubaxiusz/fubax-shaders/
+https://github.com/Fubaxiusz/fubax-shaders
+
+If you want to use this shader code in your commercial game/project,
+contact me at
+jakub.m.fober@protonmail.com
 
 This shader version is based upon research papers
 by Fober, J. M.
@@ -29,22 +33,16 @@ and
 	https://arxiv.org/abs/2010.04077
 */
 
-
-  ////////////
- /// MENU ///
-////////////
+	/* MENU */
 
 // FIELD OF VIEW
 
 uniform uint FOV <
 	ui_type = "slider";
-	ui_text =
-		"Adjust first,\n"
-		"match game settings";
-	ui_category = "Game settings";
-	ui_category_closed = true;
+	ui_category = "Game";
+	ui_text = "(Match game settings)";
 	ui_label = "field of view (FOV)";
-	ui_tooltip = "This setting should match your in-game FOV setting (in degrees)";
+	ui_tooltip = "This setting should match your in-game FOV value.";
 	#if __RESHADE__ < 40000
 		ui_step = 0.2;
 	#endif
@@ -53,191 +51,115 @@ uniform uint FOV <
 
 uniform uint FovType <
 	ui_type = "combo";
-	ui_category = "Game settings";
+	ui_category = "Game";
 	ui_label = "field of view type";
 	ui_tooltip =
-		"This setting should match game-specific FOV type\n\n"
-		"Tip:\n\n"
-		"If image bulges in movement (too high FOV),\n"
-		"change it to 'diagonal'.\n"
-		"When proportions are distorted at the periphery\n"
-		"(too low FOV), choose 'vertical' or '4:3'.\n"
-		"For ultra-wide display you may want '16:9' instead.\n\n"
-		"Adjust so that round objects are still round when\n"
-		"at the corner, and not oblong. Tilt head to see better.\n\n"
-		"* This method works only in 'shape' preset,\n"
-		"or with k = 0.5 in expert mode.";
+		"This setting should match game-specific FOV type.\n"
+		"\n"
+		"Adjust so that round objects are still round when at the corner, and not oblong.\n"
+		"Tilt head to see better.\n"
+		"\n"
+		"Tip:\n"
+		"\n"
+		"	If image bulges in movement, change it to 'diagonal'.\n"
+		"	When proportions are distorted at the periphery, choose 'vertical' or '4:3'.\n"
+		"	For ultra-wide display you may want '16:9' instead.\n"
+		"\n"
+		"* This method only works with k = 0.5 and s = 1.0";
 	ui_items =
 		"horizontal\0"
 		"diagonal\0"
 		"vertical\0"
-		"4:3\0"
-		"16:9\0";
+		"horizontal 4:3\0"
+		"horizontal 16:9\0";
 > = 0u;
 
 // PERSPECTIVE
 
-uniform uint Projection <
-	ui_type = "combo";
-	ui_text =
-		"Adjust second,\n"
-		"distortion amount";
-	ui_category = "Perspective (presets)";
-	ui_category_closed = true;
-	ui_label = "perspective type";
-	ui_tooltip =
-		"Choose type of perspective, according to game-play style.\n\n"
-		" perception |  K   | projection\n"
-		" ------------------------------\n"
-		" Shape      |  0.5 | Stereographic\n"
-		" Position   |  0   | Equidistant\n"
-		" Distance   | -0.5 | Equisolid";
-	ui_items =
-		"Perception of Shape\0"
-		"Perception of Position\0"
-		"Perception of Distance\0";
-> = 0u;
-
-uniform uint AnamorphicSqueeze <
-	ui_type = "combo";
-	ui_category = "Perspective (presets)";
-	ui_label = "squeeze factor";
-	ui_tooltip =
-		"Adjust vertical distortion amount\n\n"
-		" squeeze | example\n"
-		" -----------------\n"
-		"      1x | square\n"
-		"   1.25x | Ultra Panavision 70\n"
-		// "   1.33x | 16x9 TV\n"
-		"    1.5x | Technirama\n"
-		// "    1.6x | digital anamorphic\n"
-		"      2x | golden-standard\n";
-	ui_items =
-		"Anamorphic 1x\0"
-		"Anamorphic 1.25x\0"
-		// "Anamorphic 1.33x\0"
-		"Anamorphic 1.5x\0"
-		// "Anamorphic 1.6x\0"
-		"Anamorphic 2x\0";
-> = 2u;
-
-uniform bool ExpertMode <
-	ui_category = "Perspective (expert)";
-	ui_category_closed = true;
-	ui_tooltip = "Manually adjust projection type and anamorphic squeeze power";
-	ui_label = "Expert mode";
-> = false;
-
 uniform float K <
 	ui_type = "slider";
-	ui_category = "Perspective (expert)";
-	ui_label = "K (projection)";
+	ui_category = "Distortion";
+	ui_label = "'k' projection coefficient";
 	ui_tooltip =
-		"Projection coefficient\n\n"
-		"  K   | perception   | projection\n"
-		" --------------------------------\n"
-		"  1   | Path         | Rectilinear\n"
-		"  0.5 | Shape        | Stereographic\n"
-		"  0   | Position     | Equidistant\n"
-		" -0.5 | Distance     | Equisolid\n"
-		" -1   | Illumination | Orthographic\n\n"
-		"Rectilinear projection (standard):\n"
-		" * doesn't preserve proportion, angle or scale\n"
-		" * common standard projection (pinhole model)\n"
-		"Stereographic projection (navigation, shape):\n"
-		" * preserves angle and proportion\n"
-		" * best for navigation through tight space\n"
-		"Equidistant projection (aiming, speed):\n"
-		" * maintains angular speed of motion\n"
-		" * best for aiming at target\n"
-		"Equisolid projection (distance):\n"
-		" * preserves area relation\n"
-		" * best for navigation in open space\n"
-		"Orthographic projection:\n"
-		" * preserves planar luminance as cosine-law\n"
-		" * found in peephole viewer";
-	ui_min = -1f; ui_max = 1f;
-> = 1f;
+		"Value of 'k' represents projection type:\n"
+		"\n"
+		"k value  projection        perception of \n"
+		"   1 .... Rectilinear ..... straight path \n"
+		" 0.5 .... Stereographic ... shape         \n"
+		"   0 .... Equidistant ..... distance      \n"
+		"-0.5 .... Equisolid ....... depth         \n"
+		"  -1 .... Orthographic .... illumination  \n"
+		"\n"
+		"* [Ctrl+click] to type value";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.05;
+> = 0.5;
 
 uniform float S <
 	ui_type = "slider";
-	ui_category = "Perspective (expert)";
-	ui_label = "S (squeeze)";
+	ui_category = "Distortion";
+	ui_label = "'s' anamorphic factor";
 	ui_tooltip =
-		"Anamorphic squeeze factor\n\n"
-		" squeeze power | example\n"
-		" -----------------------\n"
-		"            1x | square\n"
-		"         1.25x | Ultra Panavision 70\n"
-		"         1.33x | 16x9 TV\n"
-		"          1.5x | Technirama\n"
-		"          1.6x | digital anamorphic\n"
-		"          1.8x | 4x3 full-frame\n"
-		"            2x | golden-standard\n";
-	ui_min = 1f; ui_max = 4f; ui_step = 0.01;
+		"Anamorphic squeeze factor:\n"
+		"\n"
+		"   1x .... spherical lens\n"
+		"1.25x .... Ultra Panavision 70\n"
+		"1.33x .... 16x9 TV\n"
+		" 1.5x .... Technirama\n"
+		" 1.6x .... digital anamorphic\n"
+		" 1.8x .... 4x3 full-frame\n"
+		"   2x .... golden-standard\n";
+	ui_min = 1f; ui_max = 4f; ui_step = 0.05;
 > = 1f;
-
-// PICTURE
-
-uniform float CroppingFactor <
-	ui_type = "slider";
-	ui_text =
-		"Adjust third,\n"
-		"scale image";
-	ui_category = "Picture adjustment";
-	ui_category_closed = true;
-	ui_label = "picture cropping";
-	ui_tooltip =
-		"Adjust image scale and cropped area size\n\n"
-		" value | crop type\n"
-		" -----------------\n"
-		" 0     | Circular\n"
-		" 0.5   | Cropped-circle\n"
-		" 1     | Full-frame";
-	ui_min = 0f; ui_max = 1f;
-> = 0.5;
 
 uniform bool UseVignette <
 	ui_type = "input";
-	ui_category = "Picture adjustment";
-	ui_label = "Add vignetting";
-	ui_tooltip = "Apply lens-correct natural vignetting effect";
+	ui_category = "Distortion";
+	ui_label = "apply vignette";
+	ui_tooltip = "Apply lens-correct natural vignetting effect.";
 > = true;
 
 // BORDER
 
-uniform float4 BorderColor <
-	ui_type = "color";
+uniform float CroppingFactor <
+	ui_type = "slider";
 	ui_category = "Border settings";
 	ui_category_closed = true;
-	ui_label = "Resolution scale map";
-	ui_tooltip = "Color map of the Resolution Scale:\n"
-		" Red   - under-sampling\n"
-		" Green - super-sampling\n"
-		" Blue  - neutral sampling";
-	ui_label = "border color";
-	ui_tooltip = "Use alpha to change border transparency";
-> = float4(0.027, 0.027, 0.027, 0.96);
+	ui_label = "zooming";
+	ui_tooltip =
+		"Adjusts image scale and cropped area size:\n"
+		"\n"
+		"  0 .... circular\n"
+		"0.5 .... cropped-circle\n"
+		"  1 .... full-frame";
+	ui_min = 0f; ui_max = 1f;
+> = 0.5;
 
 uniform bool MirrorBorder <
 	ui_type = "input";
 	ui_category = "Border settings";
-	ui_label = "Mirror border";
-	ui_tooltip = "Choose mirrored or original image on the border";
+	ui_label = "border mirror";
+	ui_tooltip = "Choose mirrored or original image on the border.";
 > = true;
 
 uniform bool BorderVignette <
 	ui_type = "input";
 	ui_category = "Border settings";
-	ui_label = "Vignette on border";
-	ui_tooltip = "Apply vignetting effect to border";
+	ui_label = "border vignette";
+	ui_tooltip = "Apply vignetting effect to border.";
 > = false;
+
+uniform float4 BorderColor <
+	ui_type = "color";
+	ui_category = "Border settings";
+	ui_label = "border color";
+	ui_tooltip = "Use alpha to change border transparency.";
+> = float4(0.027, 0.027, 0.027, 0.96);
 
 uniform float BorderCorner <
 	ui_type = "slider";
 	ui_category = "Border settings";
 	ui_label = "corner size";
-	ui_tooltip = "0.0 gives sharp corners";
+	ui_tooltip = "Value of 0.0 gives sharp corners.";
 	ui_min = 0f; ui_max = 1f;
 > = 0.062;
 
@@ -246,14 +168,12 @@ uniform uint BorderGContinuity <
 	ui_category = "Border settings";
 	ui_label = "corner roundness";
 	ui_tooltip =
-		"G-surfacing continuity level for\n"
-		"the corners\n\n"
-		" G  | corner type\n"
-		" ----------------\n"
-		" G0 | sharp\n"
-		" G1 | circular\n"
-		" G2 | round\n"
-		" G3 | smooth";
+		"G-surfacing continuity level for the corners:\n"
+		"\n"
+		"G0 .... sharp\n"
+		"G1 .... circular\n"
+		"G2 .... smooth\n"
+		"G3 .... very smooth";
 	ui_min = 1u; ui_max = 3u;
 > = 3u;
 
@@ -261,19 +181,16 @@ uniform uint BorderGContinuity <
 
 uniform bool DebugPreview <
 	ui_type = "input";
-	ui_text =
-		"Visualize image scaling,\n"
-		"get optimal value for super-resolution";
+	ui_text = "Get optimal value for super-resolution.";
 	ui_category = "Debugging tools";
 	ui_category_closed = true;
 	ui_label = "Debug mode";
 	ui_tooltip =
-		"Display color map of the resolution scale\n\n"
-		" color | sampling type\n"
-		" ---------------------\n"
-		" Green | over\n"
-		" Blue  | 1:1\n"
-		" Red   | under";
+		"Display color map of the resolution scale:\n"
+		"\n"
+		"  red .... under-sampling\n"
+		"green .... oversampling\n"
+		" blue .... 1:1";
 > = false;
 
 uniform uint ResScaleScreen <
@@ -299,10 +216,7 @@ uniform uint ResScaleVirtual <
 	#define SIDE_BY_SIDE_3D 0
 #endif
 
-
-  ////////////////
- /// TEXTURES ///
-////////////////
+	/* TEXTURES */
 
 #include "ReShade.fxh"
 
@@ -314,17 +228,10 @@ sampler BackBuffer
 	// Border style
 	AddressU = MIRROR;
 	AddressV = MIRROR;
-
-	// Linear workflow
-	#if BUFFER_COLOR_BIT_DEPTH != 10
-		SRGBTexture = true;
-	#endif
 };
 
 
-  /////////////////
- /// FUNCTIONS ///
-/////////////////
+	/* FUNCTIONS */
 
 // ITU REC 601 YCbCr coefficients
 #define KR 0.299
@@ -339,13 +246,12 @@ static const float3 LumaMtx = float3(KR, 1f-KR-KB, KB); // Luma (Y)
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
 
-/**
-G continuity distance function by Jakub Max Fober.
-Determined empirically. (G from 0, to 3)
-	G=0 -> Sharp corners
-	G=1 -> Round corners
-	G=2 -> Smooth corners
-	G=3 -> Luxury corners
+/** G continuity distance function by Jakub Max Fober.
+	Determined empirically. (G from 0, to 3)
+		G=0 .... Sharp corners
+		G=1 .... Round corners
+		G=2 .... Smooth corners
+		G=3 .... Luxury corners
 */
 float glength(uint G, float2 pos)
 {
@@ -356,10 +262,9 @@ float glength(uint G, float2 pos)
 	return pow(pos.x+pos.y, rcp(G)); // Power G+1 root
 }
 
-/**
-Linear pixel step function for anti-aliasing by Jakub Max Fober.
-This algorithm is part of scientific paper:
-	arXiv: 20104077 [cs.GR] (2020)
+/** Linear pixel step function for anti-aliasing by Jakub Max Fober.
+	This algorithm is part of scientific paper:
+	· arXiv: 20104077 [cs.GR] (2020)
 */
 float aastep(float grad)
 {
@@ -369,103 +274,104 @@ float aastep(float grad)
 	return saturate(rsqrt(dot(Del, Del))*grad+0.5); // half-pixel offset
 }
 
-/**
-Universal perspective model by Jakub Max Fober,
-Gnomonic to custom perspective variant.
-This algorithm is part of a scientific paper:
-	arXiv: 2003.10558 [cs.GR] (2020)
-	arXiv: 2010.04077 [cs.GR] (2020)
-Input data:
-	FOV -> Camera Field of View in degrees.
-	viewCoord -> screen coordinates [-1, 1] in R^2,
-		where point [0 0] is at the center of the screen.
-	k -> distortion parameter [-1, 1] in R
-	s -> anamorphic squeeze power [1, 2] in R
-Output data:
-	vignette -> vignetting mask in linear space
-	viewCoord -> texture lookup perspective coordinates
+
+/** Azimuthal spherical perspective projection equations © 2022 Jakub Maksymilian Fober
+	These algorithms are part of the following scientific papers:
+	· arXiv:2003.10558 [cs.GR] (2020)
+	· arXiv:2010.04077 [cs.GR] (2020)
 */
-float UniversalPerspective_vignette(inout float2 viewCoord, float k, float s) // Returns vignette
+float get_r(float theta, float hlfOmega, float k) // Get image radius
+{
+	if (k>0f) // Stereographic, rectilinear projections
+		return tan(theta*k)/tan(hlfOmega*k);
+	else if (k<0f) // Equisolid, orthographic projections
+		return sin(theta*k)/sin(hlfOmega*k);
+	else // if (k==0f) // Equidistant projection
+		return theta/hlfOmega;
+}
+float get_theta(float r, float hlfOmega, float k) // Get spherical θ angle
+{
+	if (k>0f) // Stereographic, rectilinear projections
+		return atan(tan(hlfOmega*k)*r)/k;
+	else if (k<0f) // Equisolid, orthographic projections
+		return asin(sin(hlfOmega*k)*r)/k;
+	else // if (k==0f) // Equidistant projection
+		return r*hlfOmega;
+}
+float get_vignette(float theta, float k) // Get vignetting mask in linear color space
+{
+	// Create spherical vignette
+	// |cos(max(|k|,½)θ)|^(3k/4)
+	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // Limit FOV span, |k| ∈ [0.5, 1] range
+	// Mix cosine-law of illumination and inverse-square law
+	return pow(abs(spherical_vignette), k*0.5+1.5);
+}
+
+/** Universal perspective model © 2022 Jakub Maksymilian Fober
+	Gnomonic to custom perspective variant.
+*/
+float UniversalPerspective_vignette(inout float2 viewCoord) // Returns vignette
 {
 	// Get half field of view
-	const float halfOmega = radians(FOV*0.5);
+	const float hlfOmega = radians(FOV*0.5);
 
 	// Get radius
-	float R = (s==1f)?
-		dot(viewCoord, viewCoord) : // Spherical
-		(viewCoord.x*viewCoord.x)+(viewCoord.y*viewCoord.y)/s; // Anamorphic
+	float R = S==1f ?
+			dot(viewCoord, viewCoord) : // Spherical
+			(viewCoord.x*viewCoord.x)+(viewCoord.y*viewCoord.y)/S // Anamorphic
+		;
 	float rcpR = rsqrt(R); R = sqrt(R);
 
 	// Get incident angle
-	float theta;
-	     if (k>0f) theta = atan(tan(k*halfOmega)*R)/k;
-	else if (k<0f) theta = asin(sin(k*halfOmega)*R)/k;
-	else /*k==0f*/ theta = halfOmega*R;
+	float theta = get_theta(R, hlfOmega, K);
 
 	// Generate vignette
-	float vignetteMask;
-	if (UseVignette && !DebugPreview)
+	bool vignetteIsVisible = UseVignette && !DebugPreview;
+	float vignetteMask = vignetteIsVisible ? get_vignette(theta, K) : 1f;
+	// Anamorphic vignette correction
+	if (vignetteIsVisible && S!=1f)
 	{
-		// Limit FOV span, k+- in [0.5, 1] range
-		float thetaLimit = max(abs(k), 0.5)*theta;
-		// Create spherical vignette
-		vignetteMask = cos(thetaLimit);
-		vignetteMask = lerp(
-			vignetteMask, // Cosine law of illumination
-			vignetteMask*vignetteMask, // Inverse square law
-			clamp(k+0.5, 0f, 1f) // For k in [-0.5, 0.5] range
-		);
-		// Anamorphic vignette
-		if (s!=1f)
-		{
-			// Get anamorphic-incident 3D vector
-			float3 perspVec = float3((sin(theta)*rcpR)*viewCoord, cos(theta));
-			vignetteMask /= dot(perspVec, perspVec); // Inverse square law
-		}
+		// Get anamorphic-incident 3D vector
+		float3 perspVec = float3((sin(theta)*rcpR)*viewCoord, cos(theta));
+		vignetteMask /= dot(perspVec, perspVec); // Inverse square law
 	}
-	else // Bypass
-		vignetteMask = 1f;
 
 	// Radius for gnomonic projection wrapping
-	const float rTanHalfOmega = rcp(tan(halfOmega));
+	const float rcpTanHlfOmega = rcp(tan(hlfOmega));
 	// Transform screen coordinates and normalize to FOV
-	viewCoord *= tan(theta)*rcpR*rTanHalfOmega;
+	viewCoord *= tan(theta)*rcpR*rcpTanHlfOmega;
 
 	// Return vignette
 	return vignetteMask;
 }
 
 // Inverse transformation of universal perspective algorithm
-float UniversalPerspective_inverse(float2 viewCoord, float k, float s) // Returns reciprocal radius
+float UniversalPerspective_inverse(float2 viewCoord) // Returns reciprocal radius
 {
 	// Get half field of view
-	const float halfOmega = radians(FOV*0.5);
+	const float hlfOmega = radians(FOV*0.5);
+	// Get reciprocal radius
+	const float rcp_r = S==1f ?
+			rsqrt(dot(viewCoord, viewCoord)) :
+			rsqrt((viewCoord.y*viewCoord.y)/S+(viewCoord.x*viewCoord.x))
+		;
 
 	// Get incident vector
 	float3 incident;
 	incident.xy = viewCoord;
-	incident.z = rcp(tan(halfOmega));
+	incident.z = rcp(tan(hlfOmega));
 
 	// Get theta angle
-	float theta = (s==1f)?
+	float theta = (S==1f)?
 		acos(normalize(incident).z) : // Spherical
-		acos(incident.z*rsqrt((incident.y*incident.y)/s+dot(incident.xz, incident.xz))); // Anamorphic
-
-	// Get radius
-	float R;
-	     if (k>0f) R = tan(k*theta)/tan(k*halfOmega);
-	else if (k<0f) R = sin(k*theta)/sin(k*halfOmega);
-	else /*k==0f*/ R = theta/halfOmega;
+		acos(incident.z*rsqrt((incident.y*incident.y)/S+dot(incident.xz, incident.xz))); // Anamorphic
 
 	// Calculate transformed position reciprocal radius
-	if (s==1f) return R*rsqrt(dot(viewCoord, viewCoord));
-	else return R*rsqrt((viewCoord.y*viewCoord.y)/s+(viewCoord.x*viewCoord.x));
+	return rcp_r*get_r(theta, hlfOmega, K);
 }
 
 
-  //////////////
- /// SHADER ///
-//////////////
+	/* SHADER */
 
 // Border mask shader with rounded corners
 float GetBorderMask(float2 borderCoord)
@@ -525,14 +431,14 @@ void DebugModeViewPass(inout float3 display, float2 sphCoord)
 float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEXCOORD0) : SV_Target
 {
 	// Bypass
-	if (FOV==0u || ExpertMode && K==1f && !UseVignette)
+	if (FOV==0u || (K==1f && !UseVignette))
 		return tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
 
-	#if SIDE_BY_SIDE_3D // Side-by-side 3D content
-		float SBS3D = sphCoord.x*2f;
-		sphCoord.x = frac(SBS3D);
-		SBS3D = floor(SBS3D);
-	#endif
+#if SIDE_BY_SIDE_3D // Side-by-side 3D content
+	float SBS3D = sphCoord.x*2f;
+	sphCoord.x = frac(SBS3D);
+	SBS3D = floor(SBS3D);
+#endif
 
 	// Convert UV to centered coordinates
 	sphCoord = sphCoord*2f-1f;
@@ -540,7 +446,8 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 	sphCoord.y *= BUFFER_RCP_ASPECT_RATIO;
 
 	// Get FOV type scalar
-	float FovScalar; switch(FovType)
+	static float FovScalar;
+	switch(FovType)
 	{
 		// Horizontal
 		default: FovScalar = 1f; break;
@@ -557,61 +464,38 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 	// Adjust FOV type
 	sphCoord /= FovScalar; // pass 1 of 2
 
-	// Set perspective parameters
-	float k, s; // Projection type and anamorphic squeeze factor
-	if (!ExpertMode) // Perspective expert mode
-	{
-		// Choose projection type
-		switch (Projection)
-		{
-			case 0u: k =  0.5; break; // Stereographic
-			case 1u: k =  0f;  break; // Equidistant
-			case 2u: k = -0.5; break; // Equisolid
-		}
-
-		// Choose anamorphic squeeze factor
-		switch (AnamorphicSqueeze)
-		{
-			case 0u: s = 1f; break;
-			case 1u: s = 1.25; break;
-			// case 1u: s = 1.333; break;
-			case 2u: s = 1.5; break;
-			// case 2u: s = 1.6; break;
-			case 3u: s = 2f; break;
-		}
-	}
-	else // Manual perspective
-	{
-		k = clamp(K,-1f, 1f); // Projection type
-		s = clamp(S, 1f, 4f); // Anamorphic squeeze factor
-	}
-
 	// Scale picture to cropping point
 	{
 		// Get cropping positions: vertical, horizontal, diagonal
 		float2 normalizationPos[3u];
-		normalizationPos[0u].x      // Vertical crop
-			= normalizationPos[1u].y // Horizontal crop
-			= 0f;
-		normalizationPos[2u].x      // Diagonal crop
-			= normalizationPos[1u].x // Horizontal crop
-			= rcp(FovScalar);
-		normalizationPos[2u].y      // Diagonal crop
-			= normalizationPos[0u].y // Vertical crop
-			= normalizationPos[2u].x*BUFFER_RCP_ASPECT_RATIO;
+		// Mode 1
+		normalizationPos[0u].x =     // Vertical crop
+			normalizationPos[1u].y = // Horizontal crop
+			0f;
+		// Mode 2
+		normalizationPos[2u].x =     // Diagonal crop
+			normalizationPos[1u].x = // Horizontal crop
+			rcp(FovScalar);
+		// Mode 3
+		normalizationPos[2u].y =     // Diagonal crop
+			normalizationPos[0u].y = // Vertical crop
+			normalizationPos[2u].x*BUFFER_RCP_ASPECT_RATIO;
 
 		// Get cropping option scalar
 		float crop = CroppingFactor*2f;
 		// Interpolate between cropping states
-		sphCoord *= lerp(
-			UniversalPerspective_inverse(normalizationPos[uint(floor(crop))], k, s),
-			UniversalPerspective_inverse(normalizationPos[uint( ceil(crop))], k, s),
+		const float croppingScalar = lerp(
+			UniversalPerspective_inverse(normalizationPos[uint(floor(crop))]),
+			UniversalPerspective_inverse(normalizationPos[uint( ceil(crop))]),
 			frac(crop) // Weight interpolation
 		);
+
+		// Apply cropping zoom
+		sphCoord *= croppingScalar;
 	}
 
 	// Perspective transform and create vignette
-	float vignetteMask = UniversalPerspective_vignette(sphCoord, k, s);
+	float vignetteMask = UniversalPerspective_vignette(sphCoord);
 
 	// Adjust FOV type
 	sphCoord *= FovScalar; // pass 2 of 2
@@ -625,20 +509,21 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 	// Back to UV Coordinates
 	sphCoord = sphCoord*0.5+0.5;
 
-	#if SIDE_BY_SIDE_3D // Side-by-side 3D content
-		sphCoord.x = (sphCoord.x+SBS3D)*0.5;
-	#endif
+#if SIDE_BY_SIDE_3D // Side-by-side 3D content
+	sphCoord.x = (sphCoord.x+SBS3D)*0.5;
+#endif
 
 	// Sample display image
-	float3 display = (k==1f)?
+	float3 display = K==1f ?
 		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb : // No perspective change
 		tex2D(BackBuffer, sphCoord).rgb; // Spherical perspective
 
-	#if BUFFER_COLOR_BIT_DEPTH == 10 // Manually correct gamma
-		display = TO_LINEAR_GAMMA_HQ(display);
-	#endif
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	// Manually correct gamma
+	display = TO_LINEAR_GAMMA_HQ(display);
+#endif
 
-	if (k!=1f && CroppingFactor!=1f) // Visible borders
+	if (K!=1f && CroppingFactor!=1f) // Visible borders
 	{
 		// Get border
 		float3 border = lerp(
@@ -655,58 +540,61 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 			vignetteMask*lerp(display, border, borderMask) : // Vignette on border
 			lerp(vignetteMask*display, border, borderMask);  // Vignette only inside
 	}
-	else
-		display *= vignetteMask; // Apply vignette
+	else display *= vignetteMask; // Apply vignette
 
 	// Output type choice
 	if (DebugPreview) DebugModeViewPass(display, sphCoord);
 
-	#if BUFFER_COLOR_BIT_DEPTH == 10 // Manually correct gamma
-		return TO_DISPLAY_GAMMA_HQ(display);
-	#else
-		return display;
-	#endif
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	// Manually correct gamma
+	return TO_DISPLAY_GAMMA_HQ(display);
+#else
+	return display;
+#endif
 }
 
 
-  //////////////
- /// OUTPUT ///
-//////////////
+	/* OUTPUT */
 
 technique PerfectPerspective <
 	ui_label = "Perfect Perspective";
 	ui_tooltip =
 		"Adjust perspective for distortion-free picture:\n"
-		" * fish-eye\n"
-		" * panini\n"
-		" * anamorphic\n"
-		" * (natural) vignetting\n\n"
-		"Instruction:\n\n"
-		"Fist select proper FOV angle and type. If FOV type is unknown,\n"
-		"find a round object within the game and look at it upfront,\n"
-		"then rotate the camera so that the object is in the corner.\n"
-		"Change squeeze factor to 1x and adjust FOV type such that\n"
-		"the object does not have an egg shape, but a perfect round shape.\n\n"
-		"Secondly adjust perspective type according to game-play style.\n"
-		"If you look mostly at the horizon, anamorphic squeeze can be\n"
-		"increased. For curved-display correction, set it higher.\n\n"
-		"Thirdly, adjust visible borders. You can change the crop factor,\n"
-		"such that no borders are visible, or that no image area is lost.\n\n"
-		"Additionally for sharp image, use FilmicSharpen.fx or run game at a\n"
-		"Super-Resolution. Debug options can help you find the proper value.\n\n"
+		"\n"
+		"	· Fish-eye\n"
+		"	· Panini\n"
+		"	· Anamorphic\n"
+		"	· Vignetting, natural\n"
+		"\n"
+		"Instruction:\n"
+		"\n"
+		"	1# select proper FOV angle and type. If FOV type is unknown,\n"
+		"	   find a round object within the game and look at it upfront,\n"
+		"	   then rotate the camera so that the object is in the corner.\n"
+		"	   Change squeeze factor to 1x and adjust FOV type such that\n"
+		"	   the object does not have an egg shape, but a perfect round shape.\n"
+		"\n"
+		"	2# adjust perspective type according to game-play style.\n"
+		"	   If you look mostly at the horizon, anamorphic squeeze can be\n"
+		"	   increased. For curved-display correction, set it higher.\n"
+		"\n"
+		"	3# adjust visible borders. You can change the zoom factor,\n"
+		"	   such that no borders are visible, or that no image area is lost.\n"
+		"\n"
+		"	4# additionally for sharp image, use sharpening FX or run game at a\n"
+		"	   Super-Resolution. Debug options can help you find the proper value.\n"
+		"\n"
 		"The algorithm is part of a scientific paper:\n"
-		"arXiv: 2003.10558 [cs.GR] (2020)\n"
-		"arXiv: 2010.04077 [cs.GR] (2020)\n";
+		// "\n"
+		"	arXiv: 2003.10558 [cs.GR] (2020)\n"
+		"	arXiv: 2010.04077 [cs.GR] (2020)\n"
+		"\n"
+		"This effect © 2018 Jakub Maksymilian Fober";
 >
 {
-	pass
+	pass PerspectiveDistortion
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = PerfectPerspectivePS;
-
-		// Linear workflow
-		#if BUFFER_COLOR_BIT_DEPTH != 10
-			SRGBWriteEnable = true;
-		#endif
 	}
 }
