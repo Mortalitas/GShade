@@ -2,14 +2,13 @@
 | :: Description :: |
 '-------------------/
 
-Glamarye Fast Effects for ReShade (version 6.2)
+Glamarye Fast Effects for ReShade (version 6.3)
 ======================================
+
+**New in 6.3:** New advanced option to control whether sharpenning is reduced where jagged edges are found. Previously this was done only if Fast FXAA was enabled; now it's configurable independently from FXAA and is on by default. This improves quality when using sharpen with other anti-aliasing solutions (e.g. in game TAA or DLSS). New advanced option to change the distance at which Fake GI effect fades out. (+) Option to tweak max sharpen color change.
 
 **New in 6.2:** Fixed sharpening bug. Updated HDR detection and configuration for ReShade 5.2. Fake GI: New improved equation that fixes problems with oversaturation in games with strong coloured lighting; the Fake GI sliders work a bit differently now so you might need to tweak any presets. Fix darkening near image edge. Simplified pre-processor definitions.
 
-**New in 6.1:** Tweaked sharpenning to better balance dots & surrounding pixels. Simpler smoother adaptive contrast curve. Fake GI: Reduced light transfer between near/far areas, fixed over saturated colors at image edge.
-
-**New in 6.0:** New sharpening equation that gives cleaner shapes. New and improved Fake GI equations - more realistic colors calculation, and reduce effect of near objects on far ones. Optimized AO implementation for default AO quality level. Added "Cinematic DOF safe mode" option which disables AO and tweaks Fake GI to avoid artefacts in scenes that have a strong depth of field (out of focus background) effect. Allow tonemapping compensation in 10-bit SDR mode. Tweaked adaptive contrast to not overbrighten. 16 bit HDR mode fix for oversaturated GI color. HDR setup now uses ReShade's new BUFFER_COLOR_SPACE definition to help detect right default.
 
 
 Author: Robert Jessop 
@@ -214,6 +213,8 @@ You probably don't want to adjust these, unless your game has visible artefacts 
 
 **AO max distance** - The ambient occlusion effect fades until it is zero at this distance. Helps avoid avoid artefacts if the game uses fog or haze. If you see deep shadows in the clouds then reduce this. If the game has long, clear views then increase it.
 
+**Fake GI max distance** - Fake GI effect will fade out at this distance. The default 1 should be fine for most games.
+
 **AO radius** - Ambient Occlusion area size, as percent of screen. Bigger means larger areas of shade, but too big and you lose detail in the shade around small objects. Bigger can be slower too. 	
 		
 **AO shape modifier** - Ambient occlusion - weight against shading flat areas. Increase if you get deep shade in almost flat areas. Decrease if you get no-shade in concave areas areas that are shallow, but deep enough that they should be occluded. 
@@ -223,6 +224,13 @@ You probably don't want to adjust these, unless your game has visible artefacts 
 **FXAA bias** - Don't anti-alias edges with very small differences than this - this is to make sure subtle details can be sharpened and do not disappear. Decrease for smoother edges but at the cost of detail, increase to only sharpen high-contrast edges. This FXAA algorithm is designed for speed and doesn't look as far along the edges as others - for best quality you might want turn it off and use a different shader, such as SMAA.
 
 **Tone mapping compensation** (available for non-HDR output only) - In the real world we can see a much wider range of brightness than a standard screen can produce. Games use tone mapping to reduce the dynamic range, especially in bright areas, to fit into display limits. To calculate lighting effects like Fake GI accurately on SDR images, we want to undo tone mapping first, then reapply it afterwards. Optimal value depends on tone mapping method the game uses. You won't find that info published anywhere for most games. Our compensation is based on Reinhard tone mapping, but hopefully will be close enough if the game uses another curve like ACES. At 5 it's pretty close to ACES in bright areas but never steeper. In HDR modes this is not required.";
+
+**Sharpen maximum change** - Maximum amount a pixel can be changed by the sharpen effect. Prevents oversharpening already sharp edges. Increase for extra sharp edges at high sharpen values; recommended only if sitting far from a high-res screen.
+
+
+**Sharpen jagged edges less** - If enabled, the sharpen effect is reduced on jagged edges. It uses Fast FXAA's edge detection. If this is disabled the image will be a bit sharper and, if Fast FXAA is also disabled, faster too. However, without this option sharpenning can partially reintroduce jaggies that had been smoothed by Fast FXAA or the game's own anti-aliasing.
+
+**Bigger sharpen & DOF** - Uses a bigger area, making both effects bigger. Affects FXAA too. This is useful for high resolutions, with older games with low resolution textures, or viewing far from the screen. However, very fine details will be less accurate. It increases overall sharpness too. Tip: use about half sharpen strength to get similar overall sharpness but with the bigger area.
 
 **FAST_AO_POINTS** (preprocessor definition - bottom of GUI.) Number of depth sample points in Performance mode. This is your speed vs quality knob; higher is better but slower. Valid range: 2-16. Recommended: 4, 6 or 8 as these have optimized fast code paths. 
 
@@ -321,7 +329,7 @@ Fast Ambient occlusion is pretty simple, but has a couple of tricks that make it
 1. Any sample significantly closer is discarded and replaced with an estimated sample based on the opposite point. This prevents nearby objects casting unrealistic shadows and far away ones. Any sample more than significantly further away is clamped to a maximum. AO is a local effect - we want to measure shade from close objects and surface contours; distant objects should not affect it.
 2. Our 2-10 samples are equally spaced in a circle. We approximate a circle by doing linear interpolation between adjacent points. Textbook algorithms do random sampling; with few sample points that is noisy and requires a lot of blur; also it's less cache efficient.
 3. The average difference between adjacent points is calculated. This variance value is used to add fuzziness to the linear interpolation in step 2 - we assume points on the line randomlyh vary in depth by this amount. This makes shade smoother so you don't get solid bands of equal shade. 
-4. Pixels are split into two groups in a checkerboard pattern (▀▄▀▄▀▄). Alternatve pixels use a circle of samples half of the radius. With small pixels, the eye sees a half-shaded checkerboard as grey, so this is almost as good taking twice as many samples per pixel. More complex dithering patterns were tested but don't look good (░░).
+4. Pixels are split into two groups in a checkerboard pattern (▀▄▀▄▀▄). Alternatve pixels use a circle of samples half of the radius. With small pixels, the eye sees a half-shaded checkerboard as grey, so this is almost as good taking twice as many samples per pixel. More complex dithering patterns were tested (░░), and one is available in the advanced tuning, but the pattern will be too visible unless you are viewing from far away.
 
 Amazingly, this gives quite decent results even with very few points in the circle.
 
@@ -336,7 +344,7 @@ For the rest of the effects we actually use two levels of blur - the big one, an
 
 Adaptive Contrast enhancement uses our the average of our two blurred images as a centre value and moves each pixel value away from it. 
 
-If depth is enabled then we also include a depth channel in the blurred images. Also, where depth==1 (sky) we brighten and completely desaturate the color image - this makes sky and rooftops look better. If depth is enabled and Fake GI offset set then we use ddx & ddy to read the local depth buffer surface slope and move the point we sample the big blur in the direction away from the camera.
+If depth is enabled then we also include a depth channel in the blurred images. Also the blur is adjusted based on the depth - at each step of the blur four sample locations are used - if either of the outer two samples is behind the inner ones then it is not used - as the light from it would likely be blocked. Also, near depth==1 (sky) we brighten and completely desaturate the color image - this makes sky and rooftops look better. If depth is enabled and Fake GI offset set then we use ddx & ddy to read the local depth buffer surface slope and move the point we sample the big blur in the direction away from the camera.
 
 Big AO (large scale ambient occlusion) simply uses the ratio between the current pixel's depth and the big blurred depth value. If the local depth is more than twice the distance it actually reduces the amount of AO to avoid overshading distant areas seen through small gaps or windows. We clamp it to only darken - we don't do AO shine at this scale.
 
@@ -364,6 +372,8 @@ History
 -------
 
 (*) Feature (+) Improvement	(x) Bugfix (-) Information (!) Compatibility
+
+6.3 (+) New advanced option to control whether sharpenning is reduced where jagged edges are found. Previously this was done only if Fast FXAA was enabled; now it's configurable independently from FXAA and is on by default. This improves quality when using sharpen with other anti-aliasing solutions (e.g. in game TAA or DLSS). (+) New advanced option to change the distance at which Fake GI effect fades out. (+) Option to tweak max sharpen color change.
 
 6.2 (x) Fixed sharpening bug. (!) Updated HDR detection and configuration for ReShade 5.2. (+) Fake GI: New improved equation that fixes problems with oversaturation in games with strong coloured lighting; the Fake GI sliders work a bit differently now so you might need to tweak any presets. Fix darkening near image edge. Simplified pre-processor definitions.
 
@@ -735,7 +745,17 @@ uniform float ao_fog_fix <
 	ui_type = "slider";
 > = .5;
 
+uniform float gi_max_distance <
+    ui_type = "slider";
+    ui_category = "Advanced Tuning and Configuration";
+	ui_category_closed=true;
+	ui_min = 0.0; ui_max = 1; ui_step = .05;
+    ui_label = "Fake GI max distance";
+    ui_tooltip = "Fake GI effect will fade out at this distance. \n\nThe default 1 should be fine for most games. \n\nNote: the large scale AO that is part of Fake GI is controlled by the AO max distance control.";
+> = 1;
+
 uniform float ao_radius <
+    ui_type = "slider";
 	ui_category = "Advanced Tuning and Configuration";
 	ui_min = 0.0; ui_max = 2; ui_step = 0.01;
 	ui_tooltip = "Ambient Occlusion area size, as percent of screen. Bigger means larger areas of shade, but too big and you lose detail in the shade around small objects. Bigger can be slower too. ";
@@ -777,6 +797,20 @@ uniform float tone_map <
 	ui_type = "slider";
 > = 3;
 
+uniform float max_sharp_diff <
+    ui_type = "slider";
+	ui_category = "Advanced Tuning and Configuration";
+	ui_min = 0.05; ui_max = .25; ui_step = 0.01;
+	ui_label = "Sharpen maximum change";
+	ui_tooltip = "Maximum amount a pixel can be changed by the sharpen effect. Prevents oversharpening already sharp edges.";
+> = 0.1;
+
+uniform bool edge_detect_sharpen <
+    ui_category = "Advanced Tuning and Configuration";
+    ui_label = "Sharpen jagged edges less";
+    ui_tooltip = "If enabled, the sharpen effect is reduced on jagged edges. It uses Fast FXAA's edge detection. \n\nIf this is disabled the image will be a bit sharper and, if Fast FXAA is also disabled, faster too. However, without this option sharpenning can partially reintroduce jaggies that had been smoothed by Fast FXAA or the game's own anti-aliasing.";
+    ui_type = "radio";
+> = true;
 
 uniform bool big_sharpen <
     ui_category = "Advanced Tuning and Configuration";
@@ -1259,7 +1293,7 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		}
 				
 		//Calculate FXAA before sharpening
-		if(fxaa_enabled) {	
+		if(fxaa_enabled || (sharp_enabled && edge_detect_sharpen) ) {	
 			//Get two more pixels further away on the possible line.
 			const float dist = 3.5;
 			float2 wwpos = horiz ? float2(-dist, 0) : float2(0, +dist) ;
@@ -1292,10 +1326,11 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			ratio = max( 2*score-1, 0);				
 		}
 		
+		float3 sharp_diff = 0;
 		if(sharp_enabled && sharp_strength) {
 			//sharpen... 
 			//This is sharp gives slightly more natural looking shapes - the min+max trick effectively means the final output is weighted a little towards the median of the 4 surrounding values.
-			float3 sharp_diff = 2*c+(ne+nw+se+sw) - 3*(max(max(ne,nw),max(se,sw)) + min(min(ne,nw),min(se,sw)));
+			sharp_diff = 2*c+(ne+nw+se+sw) - 3*(max(max(ne,nw),max(se,sw)) + min(min(ne,nw),min(se,sw)));
 			
 			//Sharpen by luma (brightness) to avoid oversaturated colours at edges.
 			sharp_diff = dot(luma,sharp_diff);
@@ -1309,19 +1344,22 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			//limit sharpness near maximum colour value.
 			max_sharp = min(max_sharp,getMaxColour()-max(smoothed,c));		
 			
-			//finally limit total sharpness to .2 - this helps prevent oversharpening in mid-range
+			//finally limit total sharpness to max_sharp_diff - this helps prevent oversharpening in mid-range
 			//Minimum 0.00001 prevents artefacts when value is 0 or less (it can be less with HDR colour).
-			max_sharp = clamp(max_sharp, 0.00001, .1 );			
+			max_sharp = clamp(max_sharp, 0.00001, max_sharp_diff );			
 						
 			//This is a bit like reinhard tonemapping applied to sharpness - smoother than clamping. steepness of curve chosen via our sharp_strength 
 			sharp_diff = sharp_diff / ( rcp(sharp_strength) +abs(sharp_diff)/(max_sharp));
-			
-			//apply sharpen
-			c = c+sharp_diff ;	
+						
+			//reduce sharpenning if we have detected an edge
+			if(edge_detect_sharpen) sharp_diff *= (1-ratio);			
 		}
 	  		
-		//Now apply FXAA after sharpening		
-		c = lerp(c, smoothed, ratio);	
+		//Now apply FXAA after calculating but before applying sharpening		
+		if(fxaa_enabled) c = lerp(c, smoothed, ratio);	
+		
+		//apply sharpen
+		c+=sharp_diff;
 		
 		//Now apply DOF blur, based on depth. Limit the change % to minimize artefacts on near/far edges.
 		if(dof_enabled) { 			
@@ -1400,7 +1438,7 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		float gi_ratio = min(1, (gi.w+0.00001)/(depth+0.00001));
 				
 		// This adjustment is to fade out as we reach the sky
-		if(gi_use_depth || sky_detect) gi_ratio *= (1-depth*depth*depth);
+		if(gi_use_depth || sky_detect) gi_ratio *= max(0, 1-depth*depth*depth*rcp(gi_max_distance*gi_max_distance*gi_max_distance));
 				
 		c = lerp(c, gi_bounce , .6*gi_ratio);
 	
