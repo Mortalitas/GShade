@@ -2,8 +2,10 @@
 | :: Description :: |
 '-------------------/
 
-Glamarye Fast Effects for ReShade (version 6.3)
+Glamarye Fast Effects for ReShade (version 6.4)
 ======================================
+
+**New in 6.4:** Fixed unexpected color change for local bounce light, most noticable in without_Fake_GI version. Improved quality of adaptive contrast enhancement and made it interact better with other effects; also increased maximum strength. Increased default and maximum Fake GI saturation, as it was too subtle before.
 
 **New in 6.3:** New advanced option to control whether sharpenning is reduced where jagged edges are found. Previously this was done only if Fast FXAA was enabled; now it's configurable independently from FXAA and is on by default. This improves quality when using sharpen with other anti-aliasing solutions (e.g. in game TAA or DLSS). New advanced option to change the distance at which Fake GI effect fades out. (+) Option to tweak max sharpen color change.
 
@@ -373,6 +375,8 @@ History
 
 (*) Feature (+) Improvement	(x) Bugfix (-) Information (!) Compatibility
 
+**New in 6.4:** (x) Fixed unexpected color change for local bounce light, most noticable in without_Fake_GI version. (+) Improved quality of adaptive contrast enhancement and made it interact better with other effects; also increased maximum strength. (-) Increased default and maximum Fake GI saturation, as it was too subtle before.
+
 6.3 (+) New advanced option to control whether sharpenning is reduced where jagged edges are found. Previously this was done only if Fast FXAA was enabled; now it's configurable independently from FXAA and is on by default. This improves quality when using sharpen with other anti-aliasing solutions (e.g. in game TAA or DLSS). (+) New advanced option to change the distance at which Fake GI effect fades out. (+) Option to tweak max sharpen color change.
 
 6.2 (x) Fixed sharpening bug. (!) Updated HDR detection and configuration for ReShade 5.2. (+) Fake GI: New improved equation that fixes problems with oversaturation in games with strong coloured lighting; the Fake GI sliders work a bit differently now so you might need to tweak any presets. Fix darkening near image edge. Simplified pre-processor definitions.
@@ -651,11 +655,11 @@ uniform float gi_saturation <
 
 uniform float gi_contrast <
 	ui_category = "Fake Global Illumination (with_Fake_GI version only)";
-	ui_min = 0; ui_max = 1; ui_step = 0.01;
+	ui_min = 0; ui_max = 1.5; ui_step = 0.01;
 	ui_tooltip = "Increases contrast relative to average light in surrounding area. This makes differences between nearby areas clearer. \n\nHowever, too much contrast looks less realistic and may make near black or near white areas less clear.";
 	ui_label = "Adaptive contrast enhancement";
     ui_type = "slider";
-> = 0.2;
+> = 0.25;
 
 uniform bool gi_use_depth <
 	ui_category = "Fake Global Illumination (with_Fake_GI version only)";	
@@ -1155,7 +1159,7 @@ float4 startGI_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : COLOR
 	
 	c.rgb = getBackBufferLinear(texcoord).rgb;
 	
-	if( GLAMAYRE_COLOR_SPACE == 2) {
+	if( GLAMAYRE_COLOR_SPACE == 2 ) {
 		//This fixes overly saturated colors in F1 2021 - I believe in linear color some lights are just really bright relative to everything and have too big an effect.
 		//this is a reinhard tonemapper limiting brightness to 20. 
 		c=c/(1+0.05*c);	
@@ -1250,14 +1254,14 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 	// multiplier to convert rgb to perceived brightness	
 	static const float3 luma = float3(0.2126, 0.7152, 0.0722);
 	
-	float3 smoothed = c; //set to c just in case we're not running the next section.
-
-
+	
   //skip all processing if in menu or video
   if(!(depth_detect && depth==0) && !(sky_detect && depth == 1) ) { 
 	
 	float ratio=0;		
 	
+	float3 smoothed=c;
+	float3 sharp_diff = 0;
 	if(fxaa_enabled || sharp_enabled || dof_enabled) {
 	
 		//Average of the four nearest pixels to each diagonal.
@@ -1325,8 +1329,7 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			//If score > 0.5 then smooth. Anything less goes to zero,
 			ratio = max( 2*score-1, 0);				
 		}
-		
-		float3 sharp_diff = 0;
+	
 		if(sharp_enabled && sharp_strength) {
 			//sharpen... 
 			//This is sharp gives slightly more natural looking shapes - the min+max trick effectively means the final output is weighted a little towards the median of the 4 surrounding values.
@@ -1363,7 +1366,8 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		
 		//Now apply DOF blur, based on depth. Limit the change % to minimize artefacts on near/far edges.
 		if(dof_enabled) { 			
-			c=lerp(c, clamp(smoothed,c*.5,c*2), dof_strength*depth);			
+			c=lerp(c, clamp(smoothed,c*.5,c*2), dof_strength*depth);
+			sharp_diff *= dof_strength*depth;
 		}		  
 	}
 	
@@ -1372,15 +1376,21 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 	const float shape = ao_shape_modifier*1.1920928955078125e-07F; 		
 	
 	//If bounce lighting isn't enabled we actually pretend it is using c*smoothed to get better color in bright areas (otherwise shade can be too deep or too grey.)
-	float3 bounce=smoothed*normalize(c);
+	float3 bounce=0;
+	
+	float smoke_fix;
+	
+	if(gi_path || ao_enabled) {
+		//prevent AO affecting areas that are white - saturated light areas. These are probably clouds or explosions and shouldn't be shaded.
+	    smoke_fix=max(0,(1-reduce_ao_in_light_areas*length(min(c,smoothed))));
 		
+		//tone map fix helps improve colours in brighter areas.
+		c=undoTonemap(c);		
+	}
+	
 	float4 gi=0;
 	float4 bounce_area = 0;
 	if(gi_path) {		
-		//tone map fix helps with brighter areas.
-		c=undoTonemap(c);
-		smoothed=undoTonemap(smoothed);		
-		bounce=smoothed*normalize(c);
 		
 		bounce_area = tex2Dlod(GITextureSampler, float4(texcoord.x,texcoord.y, 0, 2.5));	
 
@@ -1401,7 +1411,6 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			if(gi_dof_safe_mode) depth=bounce_area.w;
 		}
 		gi = tex2D(VBlurSampler, texcoord+gi_adjust_vector);	
-		
 				
 		if(gi_use_depth) { // calculate local bounce.
 			//Area brightness	
@@ -1418,11 +1427,11 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			bounce=lerp(bounce, unlit_c2*max(0,2*bounce_area.rgb-c), bounce_multiplier);	
 		}
 	
-		//Locally adaptive contrast. 
-		float contrast = 2*length(smoothed/(bounce_area.rgb+gi.rgb));
-		contrast = (2*contrast)/(4+contrast)+.6;
+		float contrast = dot(luma,(c-sharp_diff)/(bounce_area.rgb+gi.rgb));
+		contrast = (contrast)/(1+contrast)+.66666666667;
+		
+		
 		contrast = lerp(1, contrast, gi_contrast);
-		c = c*contrast;	 
 		
 		// Fake Global Illumination - even without depth it works better than you might expect!
 		//estimate ambient light hitting pixel as blend between local and area brighness.		
@@ -1430,10 +1439,10 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		
 		float3 avg_light = length((2*gi_strength)*c+gi.rgb)/(1+2*gi_strength);
 		
-		float3 ambient =  min(avg_light, lerp(1, 1+length(gi.rgb/(c+gi.rgb)),.6*gi_saturation*gi_strength)*gi.rgb );				
+		float3 ambient =  min(avg_light, lerp(1, 1+length(gi.rgb/(c+gi.rgb)),gi_saturation*gi_strength)*gi.rgb );				
 				
-		float3 gi_bounce = (1+.3*gi_saturation*gi_strength)*c*gi.rgb/ambient;
-										
+		float3 gi_bounce = (1+.5*gi_saturation*gi_strength)*c*gi.rgb/ambient;
+												
 		//This adjustment is to avoid neaby objects casting color onto ones much further away.
 		float gi_ratio = min(1, (gi.w+0.00001)/(depth+0.00001));
 				
@@ -1441,7 +1450,7 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		if(gi_use_depth || sky_detect) gi_ratio *= max(0, 1-depth*depth*depth*rcp(gi_max_distance*gi_max_distance*gi_max_distance));
 				
 		c = lerp(c, gi_bounce , .6*gi_ratio);
-	
+		c = c*contrast;	 		 		
  	}
 	
 	
@@ -1749,11 +1758,10 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		
 	}
 	
-	//prevent AO affecting areas that are white - saturated light areas. These are probably clouds or explosions and shouldn't be shaded.
-	float smoke_fix=max(0,(1-reduce_ao_in_light_areas*length(min(c,smoothed))));
+	
 		
 	//debug Show ambient occlusion mode
-	if(debug_mode==2 ) c=.33;
+	if(debug_mode==2 ) c=undoTonemap(.33);
 	
 	//Weaken the AO effect if depth is a long way away. This is to avoid artefacts when there is fog/haze/darkness in the distance.	
 	float fog_fix_multiplier = clamp((1-depth/ao_fog_fix)*2,0,1 );	
@@ -1788,8 +1796,9 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		c = clamp( c*(1-ao) + bounce,  0.25*c, c  );
 	}
 	
+	
 	if(gi_path) {
-		c=reapplyTonemap(c);
+		
 				
 		//Show GI light
 		if(debug_mode==5) c=gi.rgb;	
@@ -1802,8 +1811,9 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		//if(debug_mode==10) c=gi.w;		
 	}
 	
-	// Debug mode: make the smoothed option more highlighted in green.		
-					
+	if(gi_path || ao_enabled) c=reapplyTonemap(c);
+	
+	// Debug mode: make the fxaa edges highlighted in green.							
 	if(debug_mode==1)	c = lerp(c.ggg, float3(0,1,0), ratio*ratio);	
 	if(debug_mode==4)	c = lerp(depth, float3(0,1,0), ratio*ratio);	
 	
