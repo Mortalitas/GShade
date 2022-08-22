@@ -1,11 +1,11 @@
-/** Perfect Perspective PS, version 4.1.0
+/** Perfect Perspective PS, version 4.2.0
 
 This code © 2022 Jakub Maksymilian Fober
 
-Copyright owner provides this code (the Work) under the
-Creative Commons CC BY-NC-ND 3.0 license
-available online at
-http://creativecommons.org/licenses/by-nc-nd/3.0
+This work is licensed under the Creative Commons
+Attribution-NonCommercial-NoDerivs 3.0 Unported License.
+To view a copy of this license, visit
+http://creativecommons.org/licenses/by-nc-nd/3.0/.
 
 Copyright owner further grants permission for commercial reuse of
 image recordings derived from the Work (e.g. let's play video,
@@ -32,6 +32,20 @@ and
 	arXiv: 2010.04077 [cs.GR] (2020)
 	https://arxiv.org/abs/2010.04077
 */
+
+	/* MACROS */
+
+// Stereo 3D mode
+#ifndef SIDE_BY_SIDE_3D
+	#define SIDE_BY_SIDE_3D 0
+#endif
+// ITU REC 601 YCbCr
+#define ITU_REC 601
+
+	/* COMMONS */
+
+#include "ReShade.fxh"
+#include "ColorAndDither.fxh"
 
 	/* MENU */
 
@@ -211,14 +225,8 @@ uniform uint ResScaleVirtual <
 	ui_min = 16u; ui_max = 16384u;
 > = 1920u;
 
-// Stereo 3D mode
-#ifndef SIDE_BY_SIDE_3D
-	#define SIDE_BY_SIDE_3D 0
-#endif
 
 	/* TEXTURES */
-
-#include "ReShade.fxh"
 
 // Define screen texture with mirror tiles
 sampler BackBuffer
@@ -232,16 +240,6 @@ sampler BackBuffer
 
 
 	/* FUNCTIONS */
-
-// ITU REC 601 YCbCr coefficients
-#define KR 0.299
-#define KB 0.114
-// RGB to YCbCr-luma matrix
-static const float3 LumaMtx = float3(KR, 1f-KR-KB, KB); // Luma (Y)
-
-// Convert gamma between linear and sRGB
-#define TO_DISPLAY_GAMMA_HQ(g) ((g)<0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
-#define TO_LINEAR_GAMMA_HQ(g) ((g)<0.04045? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
 
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
@@ -547,7 +545,9 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Manually correct gamma
-	return TO_DISPLAY_GAMMA_HQ(display);
+	display = TO_DISPLAY_GAMMA_HQ(display);
+	// Dither final 8-bit result
+	return BlueNoise::dither(uint2(pixelPos.xy), display);
 #else
 	return display;
 #endif
