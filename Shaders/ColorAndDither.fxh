@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.0.2
+/** Color conversion matrix and blue noise dither library, version 1.0.3
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -13,7 +13,7 @@ http://creativecommons.org/licenses/by/3.0/.
 #pragma once
 // Change this, if you load bigger texture
 #ifndef BLUE_NOISE_TEXTURE
-	#define	BLUE_NOISE_TEXTURE 32u
+	#define BLUE_NOISE_TEXTURE 64u
 #endif
 
 	/* CONSTANTS */
