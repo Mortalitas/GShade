@@ -1,4 +1,4 @@
-/** Motion Blur effect PS, version 1.0.1
+/** Motion Blur effect PS, version 1.0.2
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -48,16 +48,6 @@ sampler InterlacedBufferSampler
 	// Linear workflow
 	SRGBTexture = true;
 };
-// Blue noise linear sampler
-sampler BlueNoiseSampler
-{
-	Texture = BlueNoise::BlueNoiseTex;
-	// Repeat texture coordinates
-	AddressU = REPEAT;
-	AddressV = REPEAT;
-	// Linear workflow
-	SRGBTexture = true;
-};
 
 	/* SHADERS */
 
@@ -81,7 +71,7 @@ void InterlacedTargetPass(float4 pixelPos : SV_Position, out float4 Target : SV_
 	// Get present frame
 	Target.rgb = tex2Dfetch(ReShade::BackBuffer, pixelCoord).rgb;
 	// Get blue noise alpha mask
-	Target.a = tex2Dfetch(BlueNoiseSampler, pixelCoord%BLUE_NOISE_TEXTURE)[framecount%4u];
+	Target.a = tex2Dfetch(BlueNoise::BlueNoiseSampler, pixelCoord%BLUE_NOISE_TEXTURE)[framecount%4u];
 }
 
 // Combine previous and current frame
