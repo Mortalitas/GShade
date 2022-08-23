@@ -1,4 +1,4 @@
-/** Motion Blur effect PS, version 1.0.0
+/** Motion Blur effect PS, version 1.0.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -21,17 +21,17 @@ contact me at
 jakub.m.fober@protonmail.com.
 */
 
-	/*  */
+	/* MACROS */
 
 #include "ReShade.fxh"
 #include "ReShadeUI.fxh"
 #include "ColorAndDither.fxh"
 
-	/*  */
+	/* UNIFORMS */
 
 uniform uint framecount < source = "framecount"; >;
 
-	/*  */
+	/* TEXTURES */
 
 // Previous frame render target buffer
 texture InterlacedTargetBuffer
@@ -45,9 +45,21 @@ sampler InterlacedBufferSampler
 	MagFilter = POINT;
 	MinFilter = POINT;
 	MipFilter = POINT;
+	// Linear workflow
+	SRGBTexture = true;
+};
+// Blue noise linear sampler
+sampler BlueNoiseSampler
+{
+	Texture = BlueNoise::BlueNoiseTex;
+	// Repeat texture coordinates
+	AddressU = REPEAT;
+	AddressV = REPEAT;
+	// Linear workflow
+	SRGBTexture = true;
 };
 
-	/*  */
+	/* SHADERS */
 
 // Generate a triangle covering the entire screen
 float4 InterlacedVS(in uint id : SV_VertexID) : SV_Position
@@ -69,7 +81,7 @@ void InterlacedTargetPass(float4 pixelPos : SV_Position, out float4 Target : SV_
 	// Get present frame
 	Target.rgb = tex2Dfetch(ReShade::BackBuffer, pixelCoord).rgb;
 	// Get blue noise alpha mask
-	Target.a = tex2Dfetch(BlueNoise::BlueNoiseSampler, pixelCoord%BLUE_NOISE_TEXTURE)[framecount%4u];
+	Target.a = tex2Dfetch(BlueNoiseSampler, pixelCoord%BLUE_NOISE_TEXTURE)[framecount%4u];
 }
 
 // Combine previous and current frame
@@ -77,7 +89,7 @@ float4 InterlacedPS(float4 pixelPos : SV_Position) : SV_Target
 { return tex2Dfetch(InterlacedBufferSampler, uint2(pixelPos.xy)); }
 
 
-	/*  */
+	/* OUTPUT */
 
 technique BlueNoiseMotion
 <
@@ -98,6 +110,8 @@ technique BlueNoiseMotion
 		RenderTarget = InterlacedTargetBuffer;
 
 		ClearRenderTargets = false;
+		SRGBWriteEnable = true; // Linear workflow
+
 		BlendEnable = true;
 			BlendOp = ADD; // Mimic linear interpolation
 				SrcBlend = SRCALPHA;
