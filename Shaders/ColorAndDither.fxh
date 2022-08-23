@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.0.3
+/** Color conversion matrix and blue noise dither library, version 1.0.4
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -76,8 +76,12 @@ dot(  LumaMtx, color.rgb) will give you float luma component of YCbCr from sRGB 
 // Convert display gamma for all vector types (approximate)
 #define TO_DISPLAY_GAMMA(g) pow(abs(g), rcp(2.2))
 #define TO_LINEAR_GAMMA(g) pow(abs(g), 2.2)
-#define TO_DISPLAY_GAMMA_HQ(g) ((g)<0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
-#define TO_LINEAR_GAMMA_HQ(g) ((g)<0.04045? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
+/* Convert display gamma for all vector types (sRGB)
+Sourced from International Color Consortium, at:
+https://color.org/chardata/rgb/srgb.xalter
+*/
+#define TO_DISPLAY_GAMMA_HQ(g) ((g)<=0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
+#define TO_LINEAR_GAMMA_HQ(g) ((g)<=0.04049936? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
 
 // Dither
 namespace BlueNoise
