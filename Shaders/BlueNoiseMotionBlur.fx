@@ -24,7 +24,6 @@ jakub.m.fober@protonmail.com.
 	/* MACROS */
 
 #include "ReShade.fxh"
-#include "ReShadeUI.fxh"
 #include "ColorAndDither.fxh"
 
 	/* UNIFORMS */
