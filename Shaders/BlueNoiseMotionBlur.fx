@@ -1,4 +1,4 @@
-/** Motion Blur effect PS, version 1.0.2
+/** Motion Blur effect PS, version 1.0.3
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -70,10 +70,10 @@ void InterlacedTargetPass(float4 pixelPos : SV_Position, out float4 Target : SV_
 	// Get present frame
 	Target.rgb = tex2Dfetch(ReShade::BackBuffer, pixelCoord).rgb;
 	// Get noise channel offset for variability
-	uint offset = uint(4f*tex2Dfetch(BlueNoise::BlueNoiseSampler, pixelCoord/BLUE_NOISE_TEXTURE%BLUE_NOISE_TEXTURE).r);
+	uint offset = uint(4f*tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord/BLUE_NOISE_TEXTURE%BLUE_NOISE_TEXTURE).r);
 	offset += framecount;
 	// Get blue noise alpha mask
-	Target.a = tex2Dfetch(BlueNoise::BlueNoiseSampler, pixelCoord%BLUE_NOISE_TEXTURE)[offset%4u];
+	Target.a = tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord%BLUE_NOISE_TEXTURE)[offset%4u];
 }
 
 // Combine previous and current frame

@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.0.4
+/** Color conversion matrix and blue noise dither library, version 1.0.5
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -86,9 +86,10 @@ https://color.org/chardata/rgb/srgb.xalter
 // Dither
 namespace BlueNoise
 {
-	// The blue noise texture
-	// Obtained under CC0, from
-	// https://momentsingraphics.de/BlueNoise.html
+	/* The blue noise texture
+	Obtained under CC0, from
+	https://momentsingraphics.de/BlueNoise.html
+	*/
 	texture BlueNoiseTex
 	<
 		source = "bluenoise.png";
@@ -99,7 +100,7 @@ namespace BlueNoise
 		Format = RGBA8;
 	};
 	// Sampler for blue noise texture
-	sampler BlueNoiseSampler
+	sampler BlueNoiseTexSmp
 	{
 		Texture = BlueNoiseTex;
 		// Repeat texture coordinates
@@ -109,7 +110,7 @@ namespace BlueNoise
 
 	/* Dither functions
 	Usage:
-	Transform final color by this function at the very end of a pixel shader:
+	Transform final color by this function, at the very end of a pixel shader:
 		return BlueNoise::dither(uint2(pos.xy), color);
 	where "pos.xy" is a variable mapped to
 	SV_Position input from a pixel shader.
@@ -119,7 +120,7 @@ namespace BlueNoise
 		// Scale to 8-bit range
 		gradient *= 255f;
 		// Dither quantization
-		return frac(gradient) >= tex2Dfetch(BlueNoiseSampler, pixelPos%BLUE_NOISE_TEXTURE).r ?
+		return frac(gradient) >= tex2Dfetch(BlueNoiseTexSmp, pixelPos%BLUE_NOISE_TEXTURE)[0] ?
 			 ceil(gradient)/255f :
 			floor(gradient)/255f;
 	}
@@ -128,13 +129,13 @@ namespace BlueNoise
 		// Scale to 8-bit range
 		color *= 255f;
 		// Get blue noise repeated texture
-		float3 noise = tex2Dfetch(BlueNoiseSampler, pixelPos%BLUE_NOISE_TEXTURE).rgb;
+		float3 noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%BLUE_NOISE_TEXTURE).rgb;
 		// Get threshold for noise amount
 		float3 slope = frac(color);
 		// Dither quantization
 		[unroll]
 		for (uint i=0u; i<3u; i++)
-			color[i] = slope[i] >= noise ? ceil(color[i])/255f : floor(color[i])/255f;
+			color[i] = slope[i] >= noise[i] ? ceil(color[i])/255f : floor(color[i])/255f;
 
 		// Dithered color
 		return color;
@@ -144,13 +145,13 @@ namespace BlueNoise
 		// Scale to 8-bit range
 		color *= 255f;
 		// Get blue noise repeated texture
-		float4 noise = tex2Dfetch(BlueNoiseSampler, pixelPos%BLUE_NOISE_TEXTURE);
+		float4 noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%BLUE_NOISE_TEXTURE);
 		// Get threshold for noise amount
 		float4 slope = frac(color);
 		// Dither quantization
 		[unroll]
 		for (uint i=0u; i<4u; i++)
-			color[i] = slope[i] >= noise ? ceil(color[i])/255f : floor(color[i])/255f;
+			color[i] = slope[i] >= noise[i] ? ceil(color[i])/255f : floor(color[i])/255f;
 
 		// Dithered color
 		return color;
