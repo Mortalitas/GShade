@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.2.0
+/** Perfect Perspective PS, version 4.2.3
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -11,10 +11,10 @@ Copyright owner further grants permission for commercial reuse of
 image recordings derived from the Work (e.g. let's play video,
 gameplay stream with ReShade filters, screenshots with ReShade
 filters) provided that any use is accompanied by the name of the
-shader used and a link to ReShade website https://reshade.me
+shader used and a link to ReShade website https://reshade.me.
 
 For updates visit GitHub repository at
-https://github.com/Fubaxiusz/fubax-shaders
+https://github.com/Fubaxiusz/fubax-shaders.
 
 If you want to use this shader code in your commercial game/project,
 contact me at
@@ -45,6 +45,7 @@ and
 	/* COMMONS */
 
 #include "ReShade.fxh"
+#include "ReShadeUI.fxh"
 #include "ColorAndDither.fxh"
 
 	/* MENU */
@@ -232,7 +233,9 @@ uniform uint ResScaleVirtual <
 sampler BackBuffer
 {
 	Texture = ReShade::BackBufferTex;
-
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	SRGBTexture = true;
+#endif
 	// Border style
 	AddressU = MIRROR;
 	AddressV = MIRROR;
@@ -396,10 +399,17 @@ float GetBorderMask(float2 borderCoord)
 // Debug view mode shader
 void DebugModeViewPass(inout float3 display, float2 sphCoord)
 {
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Define Mapping color
 	const float3   underSmpl = TO_LINEAR_GAMMA_HQ(float3(1f, 0f, 0.2)); // Red
 	const float3   superSmpl = TO_LINEAR_GAMMA_HQ(float3(0f, 1f, 0.5)); // Green
 	const float3 neutralSmpl = TO_LINEAR_GAMMA_HQ(float3(0f, 0.5, 1f)); // Blue
+#else
+	// Define Mapping color
+	const float3   underSmpl = float3(1f, 0f, 0.2); // Red
+	const float3   superSmpl = float3(0f, 1f, 0.5); // Green
+	const float3 neutralSmpl = float3(0f, 0.5, 1f); // Blue
+#endif
 
 	// Calculate Pixel Size difference
 	float pixelScaleMap;
@@ -430,7 +440,7 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 {
 	// Bypass
 	if (FOV==0u || (K==1f && !UseVignette))
-		return tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+		return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
 
 #if SIDE_BY_SIDE_3D // Side-by-side 3D content
 	float SBS3D = sphCoord.x*2f;
@@ -516,21 +526,23 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb : // No perspective change
 		tex2D(BackBuffer, sphCoord).rgb; // Spherical perspective
 
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-	// Manually correct gamma
-	display = TO_LINEAR_GAMMA_HQ(display);
-#endif
-
 	if (K!=1f && CroppingFactor!=1f) // Visible borders
 	{
 		// Get border
 		float3 border = lerp(
 			// Border background
 			MirrorBorder? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 			// Border color
 			TO_LINEAR_GAMMA_HQ(BorderColor.rgb),
 			// Border alpha
 			TO_LINEAR_GAMMA_HQ(BorderColor.a)
+#else
+			// Border color
+			BorderColor.rgb,
+			// Border alpha
+			BorderColor.a
+#endif
 		);
 
 		// Apply vignette with border
@@ -556,7 +568,8 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 
 	/* OUTPUT */
 
-technique PerfectPerspective <
+technique PerfectPerspective
+<
 	ui_label = "Perfect Perspective";
 	ui_tooltip =
 		"Adjust perspective for distortion-free picture:\n"
@@ -585,11 +598,11 @@ technique PerfectPerspective <
 		"	   Super-Resolution. Debug options can help you find the proper value.\n"
 		"\n"
 		"The algorithm is part of a scientific paper:\n"
-		// "\n"
 		"	arXiv: 2003.10558 [cs.GR] (2020)\n"
 		"	arXiv: 2010.04077 [cs.GR] (2020)\n"
 		"\n"
-		"This effect © 2018 Jakub Maksymilian Fober";
+		"This effect © 2018 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
 >
 {
 	pass PerspectiveDistortion

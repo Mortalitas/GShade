@@ -1,4 +1,4 @@
-/** Motion Blur effect PS, version 1.0.3
+/** Motion Blur effect PS, version 1.0.5
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -59,7 +59,7 @@ float4 InterlacedVS(in uint id : SV_VertexID) : SV_Position
 		float2(-1f,-3f), // Bottom left
 		float2( 3f, 1f)  // Top right
 	};
-	return float4(vertexPos[id], 0.0, 1.0);
+	return float4(vertexPos[id], 0f, 1f);
 }
 
 // Preserve previous frame
@@ -92,7 +92,8 @@ technique BlueNoiseMotion
 		"\n"
 		"To get higher quality results, the game should be running at higher FPS.\n"
 		"\n"
-		"This effect © 2022 Jakub Maksymilian Fober";
+		"This effect © 2022 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
 >{
 	pass
 	{
