@@ -30,44 +30,50 @@ uniform int variable \
 < \
     ui_items = \
                "PSO2\0" \
-               "PSO2 Century\0" \
-               "PSO2 Schoolbell\0" \
-               "PSO2 Helvetica Condensed\0" \
-               "PSO2 with GShade Dark\0" \
-               "PSO2 with GShade White\0" \
-               "PSO2 Montserrat\0" \
-               "PSO2 Montserrat Simple\0" \
-               "PSO2 With Flat Logo\0" \
-               "PSO2 Eurostile\0" \
-               "PSO2 Metro No. 2 Cutout\0" \
-               "PSO2 Kranky\0" \
-               "PSO2 GN Fuyu-iro Script\0" \
-               "PSO2 Sacramento\0" \
-               "PSO2 Century Rectangle\0" \
-               "PSO2 Eurostile Left\0" \
-               "PSO2 Eurostile Right\0" \
-               "PSO2 Eurostile Center\0" \
-               "PSO2 Futura Center\0" \
-               "PSO2 Neuzeit Grotesk\0" \
-               "PSO2 Krona One\0" \
-               "PSO2 Mouse Memories\0" \
-               "PSO2 Swanky And Moo Moo\0" \
-               "PSO2 Staccato555 A\0" \
-               "PSO2 Staccato555 B\0" \
-               "PSO2 PSO2 Lato Cutout\0" \
-               "PSO2 Rockwell Nova\0" \
-               "PSO2 Kabel Heavy\0" \
-               "PSO2 Poiret One Small\0" \
-               "PSO2 Poiret One Large\0" \
-               "PSO2 Kranky Large\0" \
-               "PSO2 Futura Triangle\0" \
-               "PSO2 Helvetica Square\0" \
-               "PSO2 Righteous\0" \
-               "PSO2 Poppins\0" \
-               "PSO2 Bank Gothic\0" \
-               "PSO2 Flat Logo\0" \
-               "PSO2 Yanone Kaffeesatz A\0" \
-               "PSO2 Yanone Kaffeesatz B\0" \
+               "Century\0" \
+               "Schoolbell\0" \
+               "Helvetica Condensed\0" \
+               "Sophia DF\0" \
+               "with GShade Dark\0" \
+               "with GShade White\0" \
+               "Montserrat\0" \
+               "Montserrat Simple\0" \
+               "With Flat Logo\0" \
+               "Eurostile\0" \
+               "Metro No. 2 Cutout\0" \
+               "Kranky\0" \
+               "GN Fuyu-iro Script\0" \
+               "Sacramento\0" \
+               "Century Rectangle\0" \
+               "Eurostile Left\0" \
+               "Eurostile Right\0" \
+               "Eurostile Center\0" \
+               "Sophia DF Rectangle\0" \
+               "Futura Center\0" \
+               "Sophia DF Center\0" \
+               "Neuzeit Grotesk\0" \
+               "Krona One\0" \
+               "Grand Master" \
+               "Mouse Memories\0" \
+               "Swanky And Moo Moo\0" \
+               "Staccato555 A\0" \
+               "Staccato555 B\0" \
+               "PSO2 Lato Cutout\0" \
+               "Rockwell Nova\0" \
+               "Kabel Heavy\0" \
+               "Sophia DF SEGA\0" \
+               "Sophia DF PSO2\0" \
+               "Poiret One Small\0" \
+               "Poiret One Large\0" \
+               "Kranky Large\0" \
+               "Futura Triangle\0" \
+               "Helvetica Square\0" \
+               "Righteous\0" \
+               "Poppins\0" \
+               "Bank Gothic\0" \
+               "Flat Logo\0" \
+               "Yanone Kaffeesatz A\0" \
+               "Yanone Kaffeesatz B\0" \
                "Custom\0" \
                ; \
     ui_bind = "_Copyright_Texture_Source"; \
@@ -90,122 +96,146 @@ uniform int variable \
 
 #if _Copyright_Texture_Source == 0 // PSO2
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
-#define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
-#elif _Copyright_Texture_Source == 1 // PSO2 Century
+#define _SOURCE_COPYRIGHT_SIZE 500.0, 60.0
+#elif _Copyright_Texture_Source == 1 // Century
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_century.png"
-#define _SOURCE_COPYRIGHT_SIZE 700.0, 40.0
-#elif _Copyright_Texture_Source == 2 // PSO2 Schoolbell
+#define _SOURCE_COPYRIGHT_SIZE 750.0, 60.0
+#elif _Copyright_Texture_Source == 2 // Schoolbell
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_schoolbell.png"
-#define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
-#elif _Copyright_Texture_Source == 3 // PSO2 Helvetica Condensed
+#define _SOURCE_COPYRIGHT_SIZE 700.0, 60.0
+#elif _Copyright_Texture_Source == 3 // Helvetica Condensed
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_helvetica_condenced.png"
-#define _SOURCE_COPYRIGHT_SIZE 540.0, 54.0
-#elif _Copyright_Texture_Source == 4 // PSO2 With GShade Dark
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_w_gshade_dark.png"
-#define _SOURCE_COPYRIGHT_SIZE 1092.0, 66.0
-#elif _Copyright_Texture_Source == 5 // PSO2 With GShade White
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_w_gshade_white.png"
-#define _SOURCE_COPYRIGHT_SIZE 1092.0, 66.0
-#elif _Copyright_Texture_Source == 6 // PSO2 Montserrat
+#define _SOURCE_COPYRIGHT_SIZE 1000.0, 60.0
+#elif _Copyright_Texture_Source == 4 // Sophia DF
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_2.png"
+#define _SOURCE_COPYRIGHT_SIZE 1150.0, 150.0
+#elif _Copyright_Texture_Source == 5 // With GShade Dark
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_by_gshade_dark.png"
+#define _SOURCE_COPYRIGHT_SIZE 1200.0, 120.0
+#elif _Copyright_Texture_Source == 6 // With GShade White
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_by_gshade_white.png"
+#define _SOURCE_COPYRIGHT_SIZE 1200.0, 120.0
+#elif _Copyright_Texture_Source == 7 // Montserrat
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_montserrat.png"
-#define _SOURCE_COPYRIGHT_SIZE 880.0, 90.0
-#elif _Copyright_Texture_Source == 7 // PSO2 Montserrat Simple
+#define _SOURCE_COPYRIGHT_SIZE 950.0, 120.0
+#elif _Copyright_Texture_Source == 8 // Montserrat Simple
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_montserrat_simple.png"
-#define _SOURCE_COPYRIGHT_SIZE 1030.0, 90.0
-#elif _Copyright_Texture_Source == 8 // PSO2 With Flat Logo
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_w_flat_logo.png"
-#define _SOURCE_COPYRIGHT_SIZE 1000.0, 70.0
-#elif _Copyright_Texture_Source == 9 // PSO2 Eurostile
+#define _SOURCE_COPYRIGHT_SIZE 950.0, 120.0
+#elif _Copyright_Texture_Source == 9 // With Flat Logo
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_frutiger_with_flat_logo.png"
+#define _SOURCE_COPYRIGHT_SIZE 1100.0, 120.0
+#elif _Copyright_Texture_Source == 10 // Eurostile
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile.png"
-#define _SOURCE_COPYRIGHT_SIZE 900.0, 120.0
-#elif _Copyright_Texture_Source == 10 // PSO2 Metro No. 2 Cutout
+#define _SOURCE_COPYRIGHT_SIZE 1000.0, 60.0
+#elif _Copyright_Texture_Source == 11 // Metro No. 2 Cutout
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_metro_no2_cutout.png"
-#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
-#elif _Copyright_Texture_Source == 11 // PSO2 Kranky
+#define _SOURCE_COPYRIGHT_SIZE 850.0, 150.0
+#elif _Copyright_Texture_Source == 12 // Kranky
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_kranky.png"
-#define _SOURCE_COPYRIGHT_SIZE 1280.0, 120.0
-#elif _Copyright_Texture_Source == 12 // PSO2 GN Fuyu-iro Script
+#define _SOURCE_COPYRIGHT_SIZE 1300.0, 150.0
+#elif _Copyright_Texture_Source == 13 // GN Fuyu-iro Script
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_gn-fuyu-iro_script.png"
-#define _SOURCE_COPYRIGHT_SIZE 820.0, 160.0
-#elif _Copyright_Texture_Source == 13 // PSO2 Sacramento
+#define _SOURCE_COPYRIGHT_SIZE 850.0, 200.0
+#elif _Copyright_Texture_Source == 14 // Sacramento
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sacramento.png"
 #define _SOURCE_COPYRIGHT_SIZE 800.0, 150.0
-#elif _Copyright_Texture_Source == 14 // PSO2 Century Rectangle
+#elif _Copyright_Texture_Source == 15 // Century Rectangle
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_century_rectangle.png"
-#define _SOURCE_COPYRIGHT_SIZE 580.0, 150.0
-#elif _Copyright_Texture_Source == 15 // PSO2 Eurostile Left
+#define _SOURCE_COPYRIGHT_SIZE 850.0, 250.0
+#elif _Copyright_Texture_Source == 16 // Eurostile Left
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile_left.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
-#elif _Copyright_Texture_Source == 16 // PSO2 Eurostile Right
+#elif _Copyright_Texture_Source == 17 // Eurostile Right
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile_right.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
-#elif _Copyright_Texture_Source == 17 // PSO2 Eurostile Center
+#elif _Copyright_Texture_Source == 18 // Eurostile Center
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile_center.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 250.0
-#elif _Copyright_Texture_Source == 18 // PSO2 Futura Center
+#elif _Copyright_Texture_Source == 19 // Sophia DF Rectangle
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_5.png"
+#define _SOURCE_COPYRIGHT_SIZE 950.0, 400.0
+#elif _Copyright_Texture_Source == 20 // Futura Center
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_futura_center.png"
-#define _SOURCE_COPYRIGHT_SIZE 800.0, 190.0
-#elif _Copyright_Texture_Source == 19 // PSO2 Neuzeit Grotesk
+#define _SOURCE_COPYRIGHT_SIZE 850.0, 200.0
+#elif _Copyright_Texture_Source == 21 // Sophia DF Center
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_4.png"
+#define _SOURCE_COPYRIGHT_SIZE 950.0, 300.0
+#elif _Copyright_Texture_Source == 22 // Neuzeit Grotesk
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_neuzeit_grotesk.png"
 #define _SOURCE_COPYRIGHT_SIZE 800.0, 350.0
-#elif _Copyright_Texture_Source == 20 // PSO2 Krona One
+#elif _Copyright_Texture_Source == 23 // Krona One
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_krona_one.png"
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 300.0
-#elif _Copyright_Texture_Source == 21 // PSO2 Mouse Memories
+#elif _Copyright_Texture_Source == 24 // Grand Mater
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_grandmaster_ngs_2.png"
+#define _SOURCE_COPYRIGHT_SIZE 600.0, 400.0
+#elif _Copyright_Texture_Source == 25 // Mouse Memories
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_mouse_memories.png"
-#define _SOURCE_COPYRIGHT_SIZE 660.0, 240.0
-#elif _Copyright_Texture_Source == 22 // PSO2 Swanky And Moo Moo
+#define _SOURCE_COPYRIGHT_SIZE 700.0, 300.0
+#elif _Copyright_Texture_Source == 26 // Swanky And Moo Moo
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_swanky_and_moo_moo.png"
 #define _SOURCE_COPYRIGHT_SIZE 600.0, 150.0
-#elif _Copyright_Texture_Source == 23 // PSO2 Staccato555 A
+#elif _Copyright_Texture_Source == 27 // Staccato555 A
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_staccato555_a.png"
-#define _SOURCE_COPYRIGHT_SIZE 820.0, 350.0
-#elif _Copyright_Texture_Source == 24 // PSO2 Staccato555 B
+#define _SOURCE_COPYRIGHT_SIZE 850.0, 400.0
+#elif _Copyright_Texture_Source == 28 // Staccato555 B
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_staccato555_b.png"
-#define _SOURCE_COPYRIGHT_SIZE 870.0, 320.0
-#elif _Copyright_Texture_Source == 25 // PSO2 Lato Cutout
+#define _SOURCE_COPYRIGHT_SIZE 900.0, 350.0
+#elif _Copyright_Texture_Source == 29 // Lato Cutout
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_lato_cutout.png"
-#define _SOURCE_COPYRIGHT_SIZE 600.0, 180.0
-#elif _Copyright_Texture_Source == 26 // PSO2 Rockwell Nova
+#define _SOURCE_COPYRIGHT_SIZE 650.0, 250.0
+#elif _Copyright_Texture_Source == 30 // Rockwell Nova
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_rockwell_nova.png"
-#define _SOURCE_COPYRIGHT_SIZE 400.0, 130.0
-#elif _Copyright_Texture_Source == 27 // PSO2 Kabel Heavy
+#define _SOURCE_COPYRIGHT_SIZE 400.0, 150.0
+#elif _Copyright_Texture_Source == 31 // Kabel Heavy
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_kabel_heavy.png"
-#define _SOURCE_COPYRIGHT_SIZE 600.0, 240.0
-#elif _Copyright_Texture_Source == 28 // PSO2 Poiret One Small
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poiret_one_s.png"
-#define _SOURCE_COPYRIGHT_SIZE 600.0, 210.0
-#elif _Copyright_Texture_Source == 29 // PSO2 Poiret One Large
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poiret_one_l.png"
-#define _SOURCE_COPYRIGHT_SIZE 1440.0, 500.0
-#elif _Copyright_Texture_Source == 30 // PSO2 Kranky Large
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_kranky_l.png"
-#define _SOURCE_COPYRIGHT_SIZE 830.0, 340.0
-#elif _Copyright_Texture_Source == 31 // PSO2 Futura Triangle
+#define _SOURCE_COPYRIGHT_SIZE 600.0, 200.0
+#elif _Copyright_Texture_Source == 32 // Sophia DF SEGA
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_6.png"
+#define _SOURCE_COPYRIGHT_SIZE 550.0, 250.0
+#elif _Copyright_Texture_Source == 33 // Sophia DF SEGA 2
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_8.png"
+#define _SOURCE_COPYRIGHT_SIZE 550.0, 150.0
+#elif _Copyright_Texture_Source == 34 // Sophia DF PSO2
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_6.png"
+#define _SOURCE_COPYRIGHT_SIZE 650.0, 300.0
+#elif _Copyright_Texture_Source == 35 // Poiret One Small
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poiret_one.png"
+#define _SOURCE_COPYRIGHT_SIZE 600.0, 250.0
+#elif _Copyright_Texture_Source == 36 // Poiret One Large
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poiret_one_huge.png"
+#define _SOURCE_COPYRIGHT_SIZE 1400.0, 550.0
+#elif _Copyright_Texture_Source == 37 // Kranky Large
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_kranky_large.png"
+#define _SOURCE_COPYRIGHT_SIZE 900.0, 350.0
+#elif _Copyright_Texture_Source == 38 // Futura Triangle
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_futura_tri.png"
-#define _SOURCE_COPYRIGHT_SIZE 329.0, 432.0
-#elif _Copyright_Texture_Source == 32 // PSO2 Helvetica Square
+#define _SOURCE_COPYRIGHT_SIZE 350.0, 450.0
+#elif _Copyright_Texture_Source == 39 // Sophia DF Triangle
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_tri.png"
+#define _SOURCE_COPYRIGHT_SIZE 350.0, 450.0
+#elif _Copyright_Texture_Source == 40 // Helvetica Square
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_helvetica_square.png"
-#define _SOURCE_COPYRIGHT_SIZE 360.0, 400.0
-#elif _Copyright_Texture_Source == 33 // PSO2 Righteous
+#define _SOURCE_COPYRIGHT_SIZE 350.0, 400.0
+#elif _Copyright_Texture_Source == 41 // Righteous
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_righteous.png"
 #define _SOURCE_COPYRIGHT_SIZE 550.0, 300.0
-#elif _Copyright_Texture_Source == 34 // PSO2 Poppins
+#elif _Copyright_Texture_Source == 42 // Poppins
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poppins.png"
 #define _SOURCE_COPYRIGHT_SIZE 600.0, 200.0
-#elif _Copyright_Texture_Source == 35 // PSO2 Bank Gothic
+#elif _Copyright_Texture_Source == 43 // Bank Gothic
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_bank_gothic.png"
 #define _SOURCE_COPYRIGHT_SIZE 650.0, 300.0
-#elif _Copyright_Texture_Source == 36 // PSO2 Flat Logo
+#elif _Copyright_Texture_Source == 44 // Flat Logo
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_flat_logo.png"
 #define _SOURCE_COPYRIGHT_SIZE 700.0, 400.0
-#elif _Copyright_Texture_Source == 37 // PSO2 Yanone Kaffeesatz A
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_yanone_kaffeesatz_a.png"
-#define _SOURCE_COPYRIGHT_SIZE 300.0, 300.0
-#elif _Copyright_Texture_Source == 38 // PSO2 Yanone Kaffeesatz B
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_yanone_kaffeesatz_b.png"
-#define _SOURCE_COPYRIGHT_SIZE 300.0, 300.0
-#elif _Copyright_Texture_Source == 39    // Custom
+#elif _Copyright_Texture_Source == 45 // Yanone Kaffeesatz A
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_yanone_kaffeesatz_square.png"
+#define _SOURCE_COPYRIGHT_SIZE 400.0, 400.0
+#elif _Copyright_Texture_Source == 46 // Yanone Kaffeesatz B
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_yanone_kaffeesatz_square_2.png"
+#define _SOURCE_COPYRIGHT_SIZE 400.0, 400.0
+#elif _Copyright_Texture_Source == 47 // Custom
 #define _SOURCE_COPYRIGHT_FILE cLayerTex
 #define _SOURCE_COPYRIGHT_SIZE cLayer_SIZE_X, cLayer_SIZE_Y
 #else 

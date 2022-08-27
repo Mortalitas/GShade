@@ -839,11 +839,11 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
         float4 ColorFactor = DrawTex;
 
         #if cLayer_COLOR_OVERRIDE_COMBO == 1
-            ColorFactor =  saturate(DrawTex.rgb * ColorOverrideA.rgb);
+            ColorFactor = saturate(DrawTex.rgb * ColorOverrideA.rgb);
         #elif cLayer_COLOR_OVERRIDE_COMBO == 2
-            ColorFactor =  saturate(ColorFactor.rgb + ColorOverrideA.rgb);
+            ColorFactor = saturate(ColorFactor.rgb + ColorOverrideA.rgb);
         #elif cLayer_COLOR_OVERRIDE_COMBO == 3
-            ColorFactor = ColorOverrideB.rgb + ColorFactor.rgb * (ColorOverrideA.rgb - ColorOverrideB.rgb);
+            ColorFactor = lerp(lerp(ColorOverrideB.rgb, ColorOverrideA.rgb, ColorFactor.rgb), ColorOverrideA.rgb, ColorFactor.rgb);
         #elif cLayer_COLOR_OVERRIDE_COMBO == 4
             ColorFactor = ColorOverrideA.rgb;
         #endif
