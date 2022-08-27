@@ -53,7 +53,7 @@ uniform int variable \
                "Sophia DF Center\0" \
                "Neuzeit Grotesk\0" \
                "Krona One\0" \
-               "Grand Master" \
+               "Grand Master\0" \
                "Mouse Memories\0" \
                "Swanky And Moo Moo\0" \
                "Staccato555 A\0" \
@@ -62,11 +62,13 @@ uniform int variable \
                "Rockwell Nova\0" \
                "Kabel Heavy\0" \
                "Sophia DF SEGA\0" \
+               "Sophia DF SEGA 2\0" \
                "Sophia DF PSO2\0" \
                "Poiret One Small\0" \
                "Poiret One Large\0" \
                "Kranky Large\0" \
                "Futura Triangle\0" \
+               "Sophia DF Triangle\0" \
                "Helvetica Square\0" \
                "Righteous\0" \
                "Poppins\0" \
@@ -128,7 +130,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_eurostile.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 60.0
 #elif _Copyright_Texture_Source == 11 // Metro No. 2 Cutout
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_metro_no2_cutout.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_metro_no.2_cutout.png"
 #define _SOURCE_COPYRIGHT_SIZE 850.0, 150.0
 #elif _Copyright_Texture_Source == 12 // Kranky
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_kranky.png"
@@ -197,7 +199,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_8.png"
 #define _SOURCE_COPYRIGHT_SIZE 550.0, 150.0
 #elif _Copyright_Texture_Source == 34 // Sophia DF PSO2
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_6.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_7.png"
 #define _SOURCE_COPYRIGHT_SIZE 650.0, 300.0
 #elif _Copyright_Texture_Source == 35 // Poiret One Small
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poiret_one.png"
@@ -215,14 +217,14 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_sophia_df_tri.png"
 #define _SOURCE_COPYRIGHT_SIZE 350.0, 450.0
 #elif _Copyright_Texture_Source == 40 // Helvetica Square
-#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_helvetica_square.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_pso2_helvetica(Swis721)_square.png"
 #define _SOURCE_COPYRIGHT_SIZE 350.0, 400.0
 #elif _Copyright_Texture_Source == 41 // Righteous
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_righteous.png"
 #define _SOURCE_COPYRIGHT_SIZE 550.0, 300.0
 #elif _Copyright_Texture_Source == 42 // Poppins
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_poppins.png"
-#define _SOURCE_COPYRIGHT_SIZE 600.0, 200.0
+#define _SOURCE_COPYRIGHT_SIZE 650.0, 200.0
 #elif _Copyright_Texture_Source == 43 // Bank Gothic
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_bank_gothic.png"
 #define _SOURCE_COPYRIGHT_SIZE 650.0, 300.0
@@ -240,5 +242,5 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE cLayer_SIZE_X, cLayer_SIZE_Y
 #else 
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
-#define _SOURCE_COPYRIGHT_SIZE 435.0, 31.0
+#define _SOURCE_COPYRIGHT_SIZE 500.0, 60.0
 #endif
