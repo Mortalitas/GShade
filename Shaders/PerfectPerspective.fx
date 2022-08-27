@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.2.3
+/** Perfect Perspective PS, version 4.2.4
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -13,24 +13,23 @@ gameplay stream with ReShade filters, screenshots with ReShade
 filters) provided that any use is accompanied by the name of the
 shader used and a link to ReShade website https://reshade.me.
 
+If you need additional licensing for your commercial product, contact
+me at jakub.m.fober@protonmail.com.
+
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 
-If you want to use this shader code in your commercial game/project,
-contact me at
-jakub.m.fober@protonmail.com
-
-This shader version is based upon research papers
-by Fober, J. M.
+This shader version is based upon following research papers:
 	Perspective picture from Visual Sphere:
 	a new approach to image rasterization
-	arXiv: 2003.10558 [cs.GR] (2020)
+	arXiv:2003.10558 [cs.GR] (2020)
 	https://arxiv.org/abs/2003.10558
 and
 	Temporally-smooth Antialiasing and Lens Distortion
 	with Rasterization Map
-	arXiv: 2010.04077 [cs.GR] (2020)
+	arXiv:2010.04077 [cs.GR] (2020)
 	https://arxiv.org/abs/2010.04077
+by Fober, J. M.
 */
 
 	/* MACROS */
@@ -45,7 +44,6 @@ and
 	/* COMMONS */
 
 #include "ReShade.fxh"
-#include "ReShadeUI.fxh"
 #include "ColorAndDither.fxh"
 
 	/* MENU */
@@ -56,8 +54,8 @@ uniform uint FOV <
 	ui_type = "slider";
 	ui_category = "Game";
 	ui_text = "(Match game settings)";
-	ui_label = "field of view (FOV)";
-	ui_tooltip = "This setting should match your in-game FOV value.";
+	ui_label = "Field of view (FOV)";
+	ui_tooltip = "This should match your in-game FOV value.";
 	#if __RESHADE__ < 40000
 		ui_step = 0.2;
 	#endif
@@ -67,20 +65,19 @@ uniform uint FOV <
 uniform uint FovType <
 	ui_type = "combo";
 	ui_category = "Game";
-	ui_label = "field of view type";
+	ui_label = "Field of view type";
 	ui_tooltip =
-		"This setting should match game-specific FOV type.\n"
+		"This should match game-specific FOV type.\n"
 		"\n"
 		"Adjust so that round objects are still round when at the corner, and not oblong.\n"
 		"Tilt head to see better.\n"
 		"\n"
 		"Tip:\n"
-		"\n"
 		"	If image bulges in movement, change it to 'diagonal'.\n"
 		"	When proportions are distorted at the periphery, choose 'vertical' or '4:3'.\n"
 		"	For ultra-wide display you may want '16:9' instead.\n"
 		"\n"
-		"* This method only works with k = 0.5 and s = 1.0";
+		"	This method only works with k = 0.5 and s = 1.0.";
 	ui_items =
 		"horizontal\0"
 		"diagonal\0"
@@ -94,42 +91,46 @@ uniform uint FovType <
 uniform float K <
 	ui_type = "slider";
 	ui_category = "Distortion";
-	ui_label = "'k' projection coefficient";
+	ui_label = "Projection type 'k'";
 	ui_tooltip =
-		"Value of 'k' represents projection type:\n"
+		"Projection coefficient 'k', represents\n"
+		"various azimuthal projections types:\n"
 		"\n"
-		"k value  projection        perception of \n"
-		"   1 .... Rectilinear ..... straight path \n"
-		" 0.5 .... Stereographic ... shape         \n"
-		"   0 .... Equidistant ..... distance      \n"
-		"-0.5 .... Equisolid ....... depth         \n"
-		"  -1 .... Orthographic .... illumination  \n"
+		"Value  Projection      Perception\n"
 		"\n"
-		"* [Ctrl+click] to type value";
+		" 1     Rectilinear     straight path\n"
+		" 0.5   Stereographic   shape\n"
+		" 0     Equidistant     distance\n"
+		"-0.5   Equisolid       depth\n"
+		"-1     Orthographic    illumination\n"
+		"\n"
+		"\n"
+		"[Ctrl+click] to type value.";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.05;
 > = 0.5;
 
 uniform float S <
 	ui_type = "slider";
 	ui_category = "Distortion";
-	ui_label = "'s' anamorphic factor";
+	ui_label = "Anamorphic squeeze 's'";
 	ui_tooltip =
-		"Anamorphic squeeze factor:\n"
+		"Anamorphic squeeze factor 's', affects\n"
+		"vertical axis:\n"
 		"\n"
-		"   1x .... spherical lens\n"
-		"1.25x .... Ultra Panavision 70\n"
-		"1.33x .... 16x9 TV\n"
-		" 1.5x .... Technirama\n"
-		" 1.6x .... digital anamorphic\n"
-		" 1.8x .... 4x3 full-frame\n"
-		"   2x .... golden-standard\n";
+		"1      spherical lens\n"
+		"1.25   Ultra Panavision 70\n"
+		"1.33   16x9 TV\n"
+		"1.5    Technirama\n"
+		"1.6    digital anamorphic\n"
+		"1.8    4x3 full-frame\n"
+		"2      golden-standard";
 	ui_min = 1f; ui_max = 4f; ui_step = 0.05;
 > = 1f;
 
 uniform bool UseVignette <
 	ui_type = "input";
 	ui_category = "Distortion";
-	ui_label = "apply vignette";
+	ui_label = "Apply vignetting";
 	ui_tooltip = "Apply lens-correct natural vignetting effect.";
 > = true;
 
@@ -137,58 +138,60 @@ uniform bool UseVignette <
 
 uniform float CroppingFactor <
 	ui_type = "slider";
-	ui_category = "Border settings";
+	ui_category = "Border";
 	ui_category_closed = true;
-	ui_label = "zooming";
+	ui_label = "Cropping";
 	ui_tooltip =
 		"Adjusts image scale and cropped area size:\n"
 		"\n"
-		"  0 .... circular\n"
-		"0.5 .... cropped-circle\n"
-		"  1 .... full-frame";
+		"Value Cropping\n"
+		"\n"
+		"0     circular\n"
+		"0.5   cropped-circle\n"
+		"1     full-frame";
 	ui_min = 0f; ui_max = 1f;
 > = 0.5;
 
 uniform bool MirrorBorder <
 	ui_type = "input";
-	ui_category = "Border settings";
-	ui_label = "border mirror";
+	ui_category = "Border";
+	ui_label = "Mirror on border";
 	ui_tooltip = "Choose mirrored or original image on the border.";
 > = true;
 
 uniform bool BorderVignette <
 	ui_type = "input";
-	ui_category = "Border settings";
-	ui_label = "border vignette";
+	ui_category = "Border";
+	ui_label = "Vignette on border";
 	ui_tooltip = "Apply vignetting effect to border.";
 > = false;
 
 uniform float4 BorderColor <
 	ui_type = "color";
-	ui_category = "Border settings";
-	ui_label = "border color";
+	ui_category = "Border";
+	ui_label = "Border color";
 	ui_tooltip = "Use alpha to change border transparency.";
 > = float4(0.027, 0.027, 0.027, 0.96);
 
 uniform float BorderCorner <
 	ui_type = "slider";
-	ui_category = "Border settings";
-	ui_label = "corner size";
+	ui_category = "Border";
+	ui_label = "Corner radius";
 	ui_tooltip = "Value of 0.0 gives sharp corners.";
 	ui_min = 0f; ui_max = 1f;
 > = 0.062;
 
 uniform uint BorderGContinuity <
 	ui_type = "slider";
-	ui_category = "Border settings";
-	ui_label = "corner roundness";
+	ui_category = "Border";
+	ui_label = "Corner roundness";
 	ui_tooltip =
 		"G-surfacing continuity level for the corners:\n"
 		"\n"
-		"G0 .... sharp\n"
-		"G1 .... circular\n"
-		"G2 .... smooth\n"
-		"G3 .... very smooth";
+		"G0   sharp\n"
+		"G1   circular\n"
+		"G2   smooth\n"
+		"G3   very smooth";
 	ui_min = 1u; ui_max = 3u;
 > = 3u;
 
@@ -199,29 +202,32 @@ uniform bool DebugPreview <
 	ui_text = "Get optimal value for super-resolution.";
 	ui_category = "Debugging tools";
 	ui_category_closed = true;
-	ui_label = "Debug mode";
+	ui_label = "Debug mode colors";
 	ui_tooltip =
-		"Display color map of the resolution scale:\n"
+		"Display color map of the resolution scale.\n"
+		"Can indicate if super-resolution is required:\n"
 		"\n"
-		"  red .... under-sampling\n"
-		"green .... oversampling\n"
-		" blue .... 1:1";
+		"Color   Definition\n"
+		"\n"
+		"red     under-sampling\n"
+		"green   oversampling\n"
+		"blue    1:1";
 > = false;
 
 uniform uint ResScaleScreen <
 	ui_type = "input";
 	ui_category = "Debugging tools";
-	ui_label = "screen (native) resolution";
-	ui_tooltip = "Set it to default screen resolution";
+	ui_label = "Screen (native) resolution";
+	ui_tooltip = "Set it to default screen resolution.";
 > = 1920u;
 
 uniform uint ResScaleVirtual <
 	ui_type = "drag";
 	ui_category = "Debugging tools";
-	ui_label = "virtual resolution";
+	ui_label = "Virtual resolution";
 	ui_tooltip =
 		"Simulates application running beyond native\n"
-		"screen resolution (using VSR or DSR)";
+		"screen resolution (using VSR or DSR).";
 	ui_step = 0.2;
 	ui_min = 16u; ui_max = 16384u;
 > = 1920u;
@@ -533,15 +539,11 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 			// Border background
 			MirrorBorder? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			// Border color
-			TO_LINEAR_GAMMA_HQ(BorderColor.rgb),
-			// Border alpha
-			TO_LINEAR_GAMMA_HQ(BorderColor.a)
+			TO_LINEAR_GAMMA_HQ(BorderColor.rgb), // Border color
+			TO_LINEAR_GAMMA_HQ(BorderColor.a)    // Border alpha
 #else
-			// Border color
-			BorderColor.rgb,
-			// Border alpha
-			BorderColor.a
+			BorderColor.rgb, // Border color
+			BorderColor.a    // Border alpha
 #endif
 		);
 
@@ -602,7 +604,7 @@ technique PerfectPerspective
 		"	arXiv: 2010.04077 [cs.GR] (2020)\n"
 		"\n"
 		"This effect © 2018 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
+		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source)";
 >
 {
 	pass PerspectiveDistortion
