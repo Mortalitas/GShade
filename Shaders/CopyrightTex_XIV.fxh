@@ -98,19 +98,19 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_FILE "CopyrightYWhH.png"
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 150.0
 #elif _Copyright_Texture_Source == 3 // Neneko Fipps
-#define _SOURCE_COPYRIGHT_FILE "copyright_neneko_fipps.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_neneko_fipps.png"
 #define _SOURCE_COPYRIGHT_SIZE 1200.0, 250.0
 #elif _Copyright_Texture_Source == 4 // Neneko Foglihten No.07
-#define _SOURCE_COPYRIGHT_FILE "copyright_neneko_foglihten_no07.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_neneko_foglihten_no07.png"
 #define _SOURCE_COPYRIGHT_SIZE 1200.0, 250.0
 #elif _Copyright_Texture_Source == 5 // Neneko 000webfont
-#define _SOURCE_COPYRIGHT_FILE "copyright_neneko_000webfont.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_neneko_000webfont.png"
 #define _SOURCE_COPYRIGHT_SIZE 1200.0, 400.0
 #elif _Copyright_Texture_Source == 6 // Neneko !Sketchy Times
-#define _SOURCE_COPYRIGHT_FILE "copyright_neneko_!sketchy_times.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_neneko_!sketchy_times.png"
 #define _SOURCE_COPYRIGHT_SIZE 1200.0, 350.0
 #elif _Copyright_Texture_Source == 7 // Neneko Arual Square
-#define _SOURCE_COPYRIGHT_FILE "copyright_neneko_arual.png"
+#define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_neneko_arual.png"
 #define _SOURCE_COPYRIGHT_SIZE 600.0, 600.0
 #elif _Copyright_Texture_Source == 8 // Poppins
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_poppins.png"
