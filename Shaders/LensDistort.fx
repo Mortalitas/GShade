@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.0.0
+/** Lens Distortion PS, version 1.0.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -19,7 +19,7 @@ me at jakub.m.fober@protonmail.com.
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 
-This shader version is based upon following research papers:
+This shader version is based upon following research article:
 	Temporally-smooth Antialiasing and Lens Distortion
 	with Rasterization Map
 	arXiv:2010.04077 [cs.GR] (2020)
@@ -526,7 +526,7 @@ technique LensDistort
 		"	· Chromatic aberration\n"
 		"	· Lens vignetting\n"
 		"\n"
-		"The algorithm is part of a scientific papers:\n"
+		"The algorithm is part of a scientific article:\n"
 		"	arXiv:2010.04077 [cs.GR] (2020)\n"
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
 		"\n"

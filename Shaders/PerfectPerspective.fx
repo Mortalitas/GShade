@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.2.5
+/** Perfect Perspective PS, version 4.2.5.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -19,7 +19,7 @@ me at jakub.m.fober@protonmail.com.
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 
-This shader version is based upon following research papers:
+This shader version is based upon following research article:
 	Perspective picture from Visual Sphere:
 	a new approach to image rasterization
 	arXiv:2003.10558 [cs.GR] (2020)
@@ -592,7 +592,7 @@ technique PerfectPerspective
 		"	4# additionally for sharp image, use sharpening FX or run game at a\n"
 		"	   Super-Resolution. Debug options can help you find the proper value.\n"
 		"\n"
-		"The algorithm is part of a scientific paper:\n"
+		"The algorithm is part of a scientific article:\n"
 		"	arXiv: 2003.10558 [cs.GR] (2020)\n"
 		"	arXiv: 2010.04077 [cs.GR] (2020)\n"
 		"\n"
