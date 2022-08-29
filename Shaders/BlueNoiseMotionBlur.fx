@@ -1,4 +1,4 @@
-/** Motion Blur effect PS, version 1.0.5
+/** Motion Blur effect PS, version 1.0.6
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -13,12 +13,11 @@ gameplay stream with ReShade filters, screenshots with ReShade
 filters) provided that any use is accompanied by the name of the
 shader used and a link to ReShade website https://reshade.me.
 
+If you need additional licensing for your commercial product, contact
+me at jakub.m.fober@protonmail.com.
+
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
-
-If you want to use this shader code in your commercial game/project,
-contact me at
-jakub.m.fober@protonmail.com.
 */
 
 	/* MACROS */
@@ -70,10 +69,10 @@ void InterlacedTargetPass(float4 pixelPos : SV_Position, out float4 Target : SV_
 	// Get present frame
 	Target.rgb = tex2Dfetch(ReShade::BackBuffer, pixelCoord).rgb;
 	// Get noise channel offset for variability
-	uint offset = uint(4f*tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord/BLUE_NOISE_TEXTURE%BLUE_NOISE_TEXTURE).r);
+	uint offset = uint(4f*tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord/DITHER_SIZE_TEX%DITHER_SIZE_TEX).r);
 	offset += framecount;
 	// Get blue noise alpha mask
-	Target.a = tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord%BLUE_NOISE_TEXTURE)[offset%4u];
+	Target.a = tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord%DITHER_SIZE_TEX)[offset%4u];
 }
 
 // Combine previous and current frame
@@ -95,7 +94,7 @@ technique BlueNoiseMotion
 		"This effect © 2022 Jakub Maksymilian Fober\n"
 		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
 >{
-	pass
+	pass GatherFrames
 	{
 		VertexShader = InterlacedVS;
 		PixelShader = InterlacedTargetPass;
@@ -110,7 +109,7 @@ technique BlueNoiseMotion
 				SrcBlend = SRCALPHA;
 				DestBlend = INVSRCALPHA;
 	}
-	pass
+	pass DisplayEffect
 	{
 		VertexShader = InterlacedVS;
 		PixelShader = InterlacedPS;
