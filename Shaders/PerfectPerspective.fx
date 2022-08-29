@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.2.4
+/** Perfect Perspective PS, version 4.2.5
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -253,13 +253,12 @@ sampler BackBuffer
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
 
-/** G continuity distance function by Jakub Max Fober.
-	Determined empirically. (G from 0, to 3)
-		G=0 .... Sharp corners
-		G=1 .... Round corners
-		G=2 .... Smooth corners
-		G=3 .... Luxury corners
-*/
+/* G continuity distance function by Jakub Max Fober.
+   Determined empirically. (G from 0, to 3)
+   G=0   Sharp corners
+   G=1   Round corners
+   G=2   Smooth corners
+   G=3   Luxury corners */
 float glength(uint G, float2 pos)
 {
 	// Sharp corner
@@ -269,10 +268,9 @@ float glength(uint G, float2 pos)
 	return pow(pos.x+pos.y, rcp(G)); // Power G+1 root
 }
 
-/** Linear pixel step function for anti-aliasing by Jakub Max Fober.
-	This algorithm is part of scientific paper:
-	· arXiv: 20104077 [cs.GR] (2020)
-*/
+/* Linear pixel step function for anti-aliasing by Jakub Max Fober.
+   This algorithm is part of scientific paper:
+   · arXiv:2010.04077 [cs.GR] (2020) */
 float aastep(float grad)
 {
 	// Differential vector
@@ -281,12 +279,10 @@ float aastep(float grad)
 	return saturate(rsqrt(dot(Del, Del))*grad+0.5); // half-pixel offset
 }
 
-
-/** Azimuthal spherical perspective projection equations © 2022 Jakub Maksymilian Fober
-	These algorithms are part of the following scientific papers:
-	· arXiv:2003.10558 [cs.GR] (2020)
-	· arXiv:2010.04077 [cs.GR] (2020)
-*/
+/* Azimuthal spherical perspective projection equations © 2022 Jakub Maksymilian Fober
+   These algorithms are part of the following scientific papers:
+   · arXiv:2003.10558 [cs.GR] (2020)
+   · arXiv:2010.04077 [cs.GR] (2020) */
 float get_r(float theta, float hlfOmega, float k) // Get image radius
 {
 	if (k>0f) // Stereographic, rectilinear projections
@@ -314,9 +310,8 @@ float get_vignette(float theta, float k) // Get vignetting mask in linear color 
 	return pow(abs(spherical_vignette), k*0.5+1.5);
 }
 
-/** Universal perspective model © 2022 Jakub Maksymilian Fober
-	Gnomonic to custom perspective variant.
-*/
+/* Universal perspective model © 2022 Jakub Maksymilian Fober
+   Gnomonic to custom perspective variant. */
 float UniversalPerspective_vignette(inout float2 viewCoord) // Returns vignette
 {
 	// Get half field of view
@@ -376,7 +371,6 @@ float UniversalPerspective_inverse(float2 viewCoord) // Returns reciprocal radiu
 	// Calculate transformed position reciprocal radius
 	return rcp_r*get_r(theta, hlfOmega, K);
 }
-
 
 	/* SHADER */
 
@@ -567,7 +561,6 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 #endif
 }
 
-
 	/* OUTPUT */
 
 technique PerfectPerspective
@@ -604,7 +597,7 @@ technique PerfectPerspective
 		"	arXiv: 2010.04077 [cs.GR] (2020)\n"
 		"\n"
 		"This effect © 2018 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source)";
+		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
 >
 {
 	pass PerspectiveDistortion

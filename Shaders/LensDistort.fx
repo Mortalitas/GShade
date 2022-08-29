@@ -254,13 +254,12 @@ sampler BackBuffer
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
 
-/** G continuity distance function by Jakub Max Fober.
-	Determined empirically. (G from 0, to 3)
-		G=0 .... Sharp corners
-		G=1 .... Round corners
-		G=2 .... Smooth corners
-		G=3 .... Luxury corners
-*/
+/* G continuity distance function by Jakub Max Fober.
+   Determined empirically. (G from 0, to 3)
+   G=0   Sharp corners
+   G=1   Round corners
+   G=2   Smooth corners
+   G=3   Luxury corners */
 float glength(uint G, float2 pos)
 {
 	// Sharp corner
@@ -270,10 +269,9 @@ float glength(uint G, float2 pos)
 	return pow(pos.x+pos.y, rcp(G)); // Power G+1 root
 }
 
-/** Linear pixel step function for anti-aliasing by Jakub Max Fober.
-	This algorithm is part of scientific paper:
-	· arXiv:2010.04077 [cs.GR] (2020)
-*/
+/* Linear pixel step function for anti-aliasing by Jakub Max Fober.
+   This algorithm is part of scientific paper:
+   · arXiv:2010.04077 [cs.GR] (2020) */
 float aastep(float grad)
 {
 	// Differential vector
@@ -282,10 +280,9 @@ float aastep(float grad)
 	return saturate(rsqrt(dot(Del, Del))*grad+0.5); // half-pixel offset
 }
 
-/** Chromatic aberration hue color generator by Fober J. M.
-    hue = index/samples;
-    where index ∊ [0, samples-1] and samples is an even number
-*/
+/* Chromatic aberration hue color generator by Fober J. M.
+   hue = index/samples;
+   where index ∊ [0, samples-1] and samples is an even number */
 float3 Spectrum(float hue)
 {
 	float3 hueColor;
