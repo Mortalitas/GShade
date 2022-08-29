@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.0.1
+/** Lens Distortion PS, version 1.0.2
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -37,6 +37,8 @@ by Fober, J. M.
 #ifndef PATNOMORPHIC_LENS_MODE
 	#define PATNOMORPHIC_LENS_MODE 0
 #endif
+// Maximum number of samples for chromatic aberration
+#define CHROMATIC_ABERRATION_MAX_SAMPLES 64u
 
 	/* COMMONS */
 
@@ -430,7 +432,7 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		// Get distortion offset vector
 		float2 distortion = texCoord-orygTexCoord;
 		// Get even number of samples to avoid color cast
-		uint evenSampleCount = ChromaticSamples-ChromaticSamples%2u;
+		uint evenSampleCount = clamp(ChromaticSamples-ChromaticSamples%2u, 2u, CHROMATIC_ABERRATION_MAX_SAMPLES); // Clamp value
 		// Sample background with multiple color filters at multiple offsets
 		color = 0f; // initialize color
 		for (uint i=0u; i<evenSampleCount; i++)
