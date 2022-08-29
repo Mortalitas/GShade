@@ -41,12 +41,12 @@ by Fober, J. M.
 	/* COMMONS */
 
 #include "ReShade.fxh"
-#include "ReShadeUI.fxh"
 #include "ColorAndDither.fxh"
 
 	/* MENU */
 
-uniform bool ShowGrid < __UNIFORM_INPUT_BOOL1
+uniform bool ShowGrid <
+	ui_type = "input";
 	ui_label = "Display calibration grid";
 	ui_tooltip =
 		"This can be used in conjunction with Image.fx\n"
@@ -55,7 +55,8 @@ uniform bool ShowGrid < __UNIFORM_INPUT_BOOL1
 > = false;
 
 #if PATNOMORPHIC_LENS_MODE==0
-	uniform float4 K < __UNIFORM_DRAG_FLOAT4
+	uniform float4 K <
+		ui_type = "drag";
 		ui_min = -0.2;
 		ui_max =  0.2;
 		ui_label = "Radial distortion";
@@ -63,7 +64,8 @@ uniform bool ShowGrid < __UNIFORM_INPUT_BOOL1
 		ui_category = "Geometrical lens distortions";
 	> = 0f;
 
-	uniform float S < __UNIFORM_SLIDER_FLOAT1
+	uniform float S <
+		ui_type = "slider";
 		ui_min = 1f;
 		ui_max = 2f;
 		ui_step = 0.05;
@@ -82,7 +84,8 @@ uniform bool ShowGrid < __UNIFORM_INPUT_BOOL1
 		ui_category = "Geometrical lens distortions";
 	> = 1f;
 #else
-	uniform float4 Ky < __UNIFORM_DRAG_FLOAT4
+	uniform float4 Ky <
+		ui_type = "drag";
 		ui_min = -0.2;
 		ui_max =  0.2;
 		ui_label = "Radial distortion - vertical";
@@ -92,7 +95,8 @@ uniform bool ShowGrid < __UNIFORM_INPUT_BOOL1
 		ui_category = "Geometrical lens distortions";
 	> = 0f;
 
-	uniform float4 Kx < __UNIFORM_DRAG_FLOAT4
+	uniform float4 Kx <
+		ui_type = "drag";
 		ui_min = -0.2;
 		ui_max =  0.2;
 		ui_label = "Radial distortion - horizontal";
@@ -105,13 +109,15 @@ uniform bool ShowGrid < __UNIFORM_INPUT_BOOL1
 
 // Color
 
-uniform bool UseVignette < __UNIFORM_DRAG_FLOAT2
+uniform bool UseVignette <
+	ui_type = "drag";
 	ui_label = "Brightness aberration";
 	ui_tooltip = "Automatically change image brightness based on projection area.";
 	ui_category = "Color aberrations";
 > = true;
 
-uniform float T < __UNIFORM_DRAG_FLOAT1
+uniform float T <
+	ui_type = "drag";
 	ui_min = -0.2;
 	ui_max =  0.2;
 	ui_label = "Chromatic radius";
@@ -121,7 +127,8 @@ uniform float T < __UNIFORM_DRAG_FLOAT1
 
 // Miss-alignment
 
-uniform float2 P < __UNIFORM_DRAG_FLOAT2
+uniform float2 P <
+	ui_type = "drag";
 	ui_min = -0.1;
 	ui_max =  0.1;
 	ui_label = "Decentering";
@@ -129,7 +136,8 @@ uniform float2 P < __UNIFORM_DRAG_FLOAT2
 	ui_category = "Elements misalignment";
 > = 0f;
 
-uniform float2 Q < __UNIFORM_DRAG_FLOAT2
+uniform float2 Q <
+	ui_type = "drag";
 	ui_min = -0.05;
 	ui_max =  0.05;
 	ui_label = "Thin prism";
@@ -137,7 +145,8 @@ uniform float2 Q < __UNIFORM_DRAG_FLOAT2
 	ui_category = "Elements misalignment";
 > = 0f;
 
-uniform float2 C < __UNIFORM_DRAG_FLOAT2
+uniform float2 C <
+	ui_type = "drag";
 	ui_min = -0.05;
 	ui_max =  0.05;
 	ui_label = "Center";
@@ -147,33 +156,38 @@ uniform float2 C < __UNIFORM_DRAG_FLOAT2
 
 // Border
 
-uniform bool MirrorBorder < __UNIFORM_INPUT_BOOL1
+uniform bool MirrorBorder <
+	ui_type = "input";
 	ui_label = "Mirror on border";
 	ui_tooltip = "Choose between mirrored image or original background on the border.";
 	ui_category = "Border";
 	ui_category_closed = true;
 > = true;
 
-uniform bool BorderVignette < __UNIFORM_INPUT_BOOL1
+uniform bool BorderVignette <
+	ui_type = "input";
 	ui_label = "Brightness aberration on border";
 	ui_tooltip = "Apply brightness aberration effect to the border.";
 	ui_category = "Border";
 > = true;
 
-uniform float4 BorderColor < __UNIFORM_COLOR_FLOAT4
+uniform float4 BorderColor <
+	ui_type = "color";
 	ui_label = "Border color";
 	ui_tooltip = "Use alpha to change border transparency.";
 	ui_category = "Border";
 > = float4(0.027, 0.027, 0.027, 0.96);
 
-uniform float BorderCorner < __UNIFORM_SLIDER_FLOAT1
+uniform float BorderCorner <
+	ui_type = "slider";
 	ui_min = 0f; ui_max = 1f;
 	ui_label = "Corner radius";
 	ui_tooltip = "Value of 0.0 gives sharp corners.";
 	ui_category = "Border";
 > = 0.062;
 
-uniform uint BorderGContinuity < __UNIFORM_SLIDER_INT1
+uniform uint BorderGContinuity <
+	ui_type = "slider";
 	ui_min = 1u; ui_max = 3u;
 	ui_label = "Corner roundness";
 	ui_tooltip =
@@ -188,7 +202,8 @@ uniform uint BorderGContinuity < __UNIFORM_SLIDER_INT1
 
 // GRID
 
-uniform float DimGridBackground < __UNIFORM_SLIDER_FLOAT1
+uniform float DimGridBackground <
+	ui_type = "slider";
 	ui_min = 0.25; ui_max = 1f; ui_step = 0.1;
 	ui_label = "Dim background";
 	ui_tooltip = "Adjust background visibility.";
@@ -199,7 +214,8 @@ uniform float DimGridBackground < __UNIFORM_SLIDER_FLOAT1
 		"lens distortion with a real-world camera profile.";
 > = 1f;
 
-uniform uint GridLook < __UNIFORM_COMBO_INT1
+uniform uint GridLook <
+	ui_type = "combo";
 	ui_items =
 		"yellow grid\0"
 		"black grid\0"
@@ -210,14 +226,16 @@ uniform uint GridLook < __UNIFORM_COMBO_INT1
 	ui_category = "Grid";
 > = 0u;
 
-uniform uint GridSize < __UNIFORM_SLIDER_INT1
+uniform uint GridSize <
+	ui_type = "slider";
 	ui_min = 1u; ui_max = 32u;
 	ui_label = "Grid size";
 	ui_tooltip = "Adjust calibration grid size.";
 	ui_category = "Grid";
 > = 16u;
 
-uniform uint GridWidth < __UNIFORM_SLIDER_INT1
+uniform uint GridWidth <
+	ui_type = "slider";
 	ui_min = 1u; ui_max = 8u;
 	ui_label = "Grid bar width";
 	ui_tooltip = "Adjust calibration grid bar width in pixels.";
@@ -226,7 +244,8 @@ uniform uint GridWidth < __UNIFORM_SLIDER_INT1
 
 // Performance
 
-uniform uint ChromaticSamples < __UNIFORM_SLIDER_INT1
+uniform uint ChromaticSamples <
+	ui_type = "slider";
 	ui_min = 6u; ui_max = 32u; ui_step = 2u;
 	ui_label = "Chromatic aberration samples";
 	ui_tooltip =
