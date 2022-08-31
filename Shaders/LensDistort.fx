@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.1.2
+/** Lens Distortion PS, version 1.1.3
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -262,11 +262,11 @@ uniform uint GridSize <
 
 uniform uint GridWidth <
 	ui_type = "slider";
-	ui_min = 1u; ui_max = 8u;
+	ui_min = 2u; ui_max = 16u;
 	ui_label = "Grid bar width";
 	ui_tooltip = "Adjust calibration grid bar width in pixels.";
-	ui_category = "Grid";
-> = 1u;
+	ui_category = "Debugging tools";
+> = 2u;
 
 // Performance
 
@@ -555,11 +555,19 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 			rsqrt(dot(delY, delY))
 		)/GridSize; // Pixel density
 		// Set grid with
-		viewCoord = GridWidth-abs(viewCoord);
+		viewCoord = GridWidth*0.5-abs(viewCoord);
 		viewCoord = saturate(viewCoord); // Clamp values
 
 		// Adjust grid look
-		color *= DimGridBackground;
+		color = lerp(
+	#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+			TO_LINEAR_GAMMA_HQ(16f/255f),
+	#else
+			16f/255f,
+	#endif
+			color,
+			DimGridBackground
+		);
 		switch (GridLook)
 		{
 			default:
