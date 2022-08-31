@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.1.3
+/** Lens Distortion PS, version 1.2.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -169,7 +169,8 @@ uniform float2 C <
 #if PARALLAX_ABERRATION
 // Parallax
 
-uniform float4 Kp < __UNIFORM_DRAG_FLOAT4
+uniform float4 Kp <
+	ui_type = "drag";
 	ui_min = -0.2;
 	ui_max = 0f;
 	ui_label = "Radial parallax";
@@ -265,8 +266,17 @@ uniform uint GridWidth <
 	ui_min = 2u; ui_max = 16u;
 	ui_label = "Grid bar width";
 	ui_tooltip = "Adjust calibration grid bar width in pixels.";
-	ui_category = "Debugging tools";
+	ui_category = "Grid";
 > = 2u;
+
+uniform float GridTilt <
+	ui_type = "slider";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+	ui_label = "Tilt grid";
+	ui_tooltip = "Adjust calibration grid tilt in degrees.";
+	ui_category = "Grid";
+> = 0f;
+
 
 // Performance
 
@@ -281,7 +291,8 @@ uniform uint ChromaticSamples <
 > = 8u;
 
 #if PARALLAX_ABERRATION
-uniform uint ParallaxSamples < __UNIFORM_SLIDER_INT1
+uniform uint ParallaxSamples <
+	ui_type = "slider";
 	ui_min = 2u; ui_max = 64u;
 	ui_label = "Parallax aberration samples";
 	ui_tooltip =
@@ -541,6 +552,24 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 	{
 		// Sample background without distortion
 		color = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+
+		// Tilt view coordinates
+		{
+			// Convert angle to radians
+			float tiltRad = radians(GridTilt);
+			// Get rotation matrix components
+			float tiltSin = sin(tiltRad);
+			float tiltCos = cos(tiltRad);
+			// Rotate coordinates
+			viewCoord = mul(
+				// Get rotation matrix
+				float2x2(
+					 tiltCos, tiltSin,
+					-tiltSin, tiltCos
+				),
+				viewCoord
+			);
+		}
 
 		// Get coordinates pixel size
 		float2 delX = float2(ddx(viewCoord.x), ddy(viewCoord.x));
