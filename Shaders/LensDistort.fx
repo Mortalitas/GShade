@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.1.0
+/** Lens Distortion PS, version 1.1.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -472,7 +472,7 @@ void ParallaxPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, out 
 		float reverseDepth = GetLinearizedReverseDepth(texCoord-centerCoord*offset);
 		if (offset <= reverseDepth)
 		{
-			float prevOffset = (counter+1u)*stepSize;
+			float prevOffset = (counter+3u)*stepSize;
 			float prevDifference = prevOffset-GetLinearizedReverseDepth(texCoord-centerCoord*prevOffset);
 			// Interpolate offset
 			offset = lerp(prevOffset, offset, prevDifference/(prevDifference+reverseDepth-offset));
