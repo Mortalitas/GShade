@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.2.6
+/** Perfect Perspective PS, version 4.3.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -197,28 +197,94 @@ uniform uint BorderGContinuity <
 
 // DEBUG OPTIONS
 
+// GRID
+
 uniform bool DebugPreview <
 	ui_type = "input";
-	ui_text = "Get optimal value for super-resolution.";
+	ui_label = "Preview debug mode";
+	ui_tooltip =
+		"Display calibration grid for lens-matching or\n"
+		"pixel scale-map for resolution matching.";
 	ui_category = "Debugging tools";
 	ui_category_closed = true;
-	ui_label = "Debug mode colors";
-	ui_tooltip =
-		"Display color map of the resolution scale.\n"
-		"Can indicate if super-resolution is required:\n"
-		"\n"
-		"Color   Definition\n"
-		"\n"
-		"red     under-sampling\n"
-		"green   oversampling\n"
-		"blue    1:1";
 > = false;
+
+uniform uint DebugMode <
+	ui_type = "combo";
+	ui_items =
+		"calibration grid\0"
+		"pixel scale-map\0";
+	ui_label = "Select debug mode";
+	ui_tooltip =
+		"Calibration grid:\n"
+		"\n"
+		"	Display distorted grid on-top of undistorted image.\n"
+		"	This can be used in conjunction with Image.fx\n"
+		"	to display real-world camera lens image and\n"
+		"	match its distortion profile.\n"
+		"\n"
+		"Pixel scale-map:\n"
+		"\n"
+		"	Display color map of the resolution scale.\n"
+		"	Can indicate if super-resolution is required:\n"
+		"\n"
+		"	Color   Definition\n"
+		"\n"
+		"	red     under-sampling\n"
+		"	green   oversampling\n"
+		"	blue    1:1";
+	ui_category = "Debugging tools";
+> = 0u;
+
+uniform float DimGridBackground <
+	ui_type = "slider";
+	ui_min = 0.25; ui_max = 1f; ui_step = 0.1;
+	ui_label = "Dim grid background";
+	ui_tooltip = "Adjust background visibility.";
+	ui_text =
+		"Use calibration grid in conjunction with Image.fx, to match\n"
+		"lens distortion with a real-world camera profile.";
+	ui_category = "Debugging tools";
+	ui_spacing = 1u;
+> = 1f;
+
+uniform uint GridLook <
+	ui_type = "combo";
+	ui_items =
+		"yellow grid\0"
+		"black grid\0"
+		"white grid\0"
+		"red-green grid\0";
+	ui_label = "Grid look";
+	ui_tooltip = "Select look of the grid.";
+	ui_category = "Debugging tools";
+> = 0u;
+
+uniform uint GridSize <
+	ui_type = "slider";
+	ui_min = 1u; ui_max = 32u;
+	ui_label = "Grid size";
+	ui_tooltip = "Adjust calibration grid size.";
+	ui_category = "Debugging tools";
+> = 16u;
+
+uniform uint GridWidth <
+	ui_type = "slider";
+	ui_min = 2u; ui_max = 16u;
+	ui_label = "Grid bar width";
+	ui_tooltip = "Adjust calibration grid bar width in pixels.";
+	ui_category = "Debugging tools";
+> = 2u;
+
+// Pixel scale map
 
 uniform uint ResScaleScreen <
 	ui_type = "input";
-	ui_category = "Debugging tools";
 	ui_label = "Screen (native) resolution";
 	ui_tooltip = "Set it to default screen resolution.";
+	ui_text = "Use pixel scale-map to get optimal resolution for super-sampling.";
+	ui_category = "Debugging tools";
+	ui_spacing = 1u;
 > = 1920u;
 
 uniform uint ResScaleVirtual <
@@ -396,6 +462,65 @@ float GetBorderMask(float2 borderCoord)
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
+// Generate lens-match grid
+float3 GridModeViewPass(uint2 pixelCoord, float2 texCoord, float3 display)
+{
+	// Sample background without distortion
+	display = tex2Dfetch(BackBuffer, pixelCoord).rgb;
+
+	// Get view coordinates, normalized at the corner
+	texCoord = (texCoord*2f-1f)*normalize(BUFFER_SCREEN_SIZE);
+
+	// Get coordinates pixel size
+	float2 delX = float2(ddx(texCoord.x), ddy(texCoord.x));
+	float2 delY = float2(ddx(texCoord.y), ddy(texCoord.y));
+	// Scale coordinates to grid size and center
+	texCoord = frac(texCoord*GridSize)-0.5;
+	/* Scale coordinates to pixel size for anti-aliasing of grid
+	   using anti-aliasing step function from research paper
+	   arXiv:2010.04077 [cs.GR] (2020) */
+	texCoord *= float2(
+		rsqrt(dot(delX, delX)),
+		rsqrt(dot(delY, delY))
+	)/GridSize; // Pixel density
+	// Set grid with
+	texCoord = GridWidth*0.5-abs(texCoord);
+	texCoord = saturate(texCoord); // Clamp values
+
+	// Adjust grid look
+	display = lerp(
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+		TO_LINEAR_GAMMA_HQ(16f/255f),
+#else
+		16f/255f,
+#endif
+		display,
+		DimGridBackground
+	);
+	switch (GridLook)
+	{
+		default:
+		// Yellow
+			display = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y));
+			break;
+		case 1:
+		// Black
+			display *= (1f-texCoord.x)*(1f-texCoord.y);
+			break;
+		case 2:
+		// White
+			display = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display);
+			break;
+		case 3:
+		// display red-green
+			display = lerp(display, float3(1f, 0f, 0f), texCoord.y);
+			display = lerp(display, float3(0f, 1f, 0f), texCoord.x);
+			break;
+	}
+
+	return display;
+}
+
 // Debug view mode shader
 float3 DebugModeViewPass(float2 texCoord, float3 display)
 {
@@ -442,7 +567,18 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 	if (FOV==0u || (K==1f && !UseVignette))
 		if (DebugPreview)
 		{
-			float3 display = DebugModeViewPass(sphCoord, tex2D(BackBuffer, sphCoord).rgb);
+			float3 display; // Initialize variable
+			switch (DebugMode) // Choose output type
+			{
+				default:
+					// Calibration grid
+					display = GridModeViewPass(uint2(pixelPos.xy), sphCoord, display);
+					break;
+				case 1u:
+					// Pixel scale-map
+					display = DebugModeViewPass(sphCoord, tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
+					break;
+			}
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 			// Manually correct gamma
 			display = TO_DISPLAY_GAMMA_HQ(display);
@@ -560,8 +696,18 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 	}
 	else display *= vignetteMask; // Apply vignette
 
-	// Output type choice
-	if (DebugPreview) display = DebugModeViewPass(sphCoord, display);
+	if (DebugPreview) // display in debug mode
+		switch (DebugMode) // Choose output type
+		{
+			default:
+				// Calibration grid
+				display = GridModeViewPass(uint2(pixelPos.xy), sphCoord, display);
+				break;
+			case 1u:
+				// Pixel scale-map
+				display = DebugModeViewPass(sphCoord, display);
+				break;
+		}
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Manually correct gamma
