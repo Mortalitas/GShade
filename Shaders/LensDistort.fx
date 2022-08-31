@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.0.2
+/** Lens Distortion PS, version 1.1.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -37,8 +37,16 @@ by Fober, J. M.
 #ifndef PATNOMORPHIC_LENS_MODE
 	#define PATNOMORPHIC_LENS_MODE 0
 #endif
+// Parallax aberration mode
+#ifndef PARALLAX_ABERRATION
+	#define PARALLAX_ABERRATION 1
+#endif
 // Maximum number of samples for chromatic aberration
 #define CHROMATIC_ABERRATION_MAX_SAMPLES 64u
+#if PARALLAX_ABERRATION
+	// Maximum number of samples for parallax aberration
+	#define PARRALLAX_ABERRATION_MAX_SAMPLES 255u
+#endif
 
 	/* COMMONS */
 
@@ -55,6 +63,8 @@ uniform bool ShowGrid <
 		"to display real-world camera lens image and\n"
 		"match its distortion profile.";
 > = false;
+
+// Main distortion
 
 #if PATNOMORPHIC_LENS_MODE==0
 	uniform float4 K <
@@ -156,6 +166,20 @@ uniform float2 C <
 	ui_category = "Elements misalignment";
 > = 0f;
 
+#if PARALLAX_ABERRATION
+// Parallax
+
+uniform float4 Kp < __UNIFORM_DRAG_FLOAT4
+	ui_min = -0.2;
+	ui_max = 0f;
+	ui_label = "Radial parallax";
+	ui_tooltip =
+		"Parallax aberration radial coefficients K1, K2, K3, K4.\n"
+		"Requires depth-buffer access.";
+	ui_category = "Parallax aberration";
+> = 0f;
+#endif
+
 // Border
 
 uniform bool MirrorBorder <
@@ -256,6 +280,16 @@ uniform uint ChromaticSamples <
 	ui_category = "Performance";
 > = 8u;
 
+#if PARALLAX_ABERRATION
+uniform uint ParallaxSamples < __UNIFORM_SLIDER_INT1
+	ui_min = 2u; ui_max = 64u;
+	ui_label = "Parallax aberration samples";
+	ui_tooltip =
+		"Amount of samples (steps) for parallax aberration mapping.";
+	ui_category = "Performance";
+> = 32u;
+#endif
+
 	/* TEXTURES */
 
 // Define screen texture with mirror tiles
@@ -269,6 +303,16 @@ sampler BackBuffer
 	AddressU = MIRROR;
 	AddressV = MIRROR;
 };
+#if PARALLAX_ABERRATION
+// Define depth texture with mirror tiles
+sampler DepthBuffer
+{
+	Texture = ReShade::DepthBufferTex;
+	// Border style
+	AddressU = MIRROR;
+	AddressV = MIRROR;
+};
+#endif
 
 	/* FUNCTIONS */
 
@@ -337,6 +381,40 @@ float GetBorderMask(float2 borderCoord)
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
+#if PARALLAX_ABERRATION
+// Get reverse depth function with mirror tiles, from ReShade.fxh
+float GetLinearizedReverseDepth(float2 texCoord)
+{
+	#if RESHADE_DEPTH_INPUT_IS_UPSIDE_DOWN
+	texCoord.y = 1f-texCoord.y;
+	#endif
+	texCoord.x /= RESHADE_DEPTH_INPUT_X_SCALE;
+	texCoord.y /= RESHADE_DEPTH_INPUT_Y_SCALE;
+	#if RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET
+	texCoord.x -= RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET*BUFFER_RCP_WIDTH;
+	#else // Do not check RESHADE_DEPTH_INPUT_X_OFFSET, since it may be a decimal number, which the preprocessor cannot handle
+	texCoord.x -= RESHADE_DEPTH_INPUT_X_OFFSET/2.000000001;
+	#endif
+	#if RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET
+	texCoord.y += RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET * BUFFER_RCP_HEIGHT;
+	#else
+	texCoord.y += RESHADE_DEPTH_INPUT_Y_OFFSET/2.000000001;
+	#endif
+	float depth = tex2Dlod(DepthBuffer, float4(texCoord, 0f, 0f)).x*RESHADE_DEPTH_MULTIPLIER;
+
+	#if RESHADE_DEPTH_INPUT_IS_LOGARITHMIC
+	const float C = 0.01;
+	depth = (exp(depth*log(C+1f))-1f)/C;
+	#endif
+	#if RESHADE_DEPTH_INPUT_IS_REVERSED
+	depth = 1f-depth;
+	#endif
+	depth /= RESHADE_DEPTH_LINEARIZATION_FAR_PLANE-depth*(RESHADE_DEPTH_LINEARIZATION_FAR_PLANE-1f);
+
+	return 1f-depth;
+}
+#endif
+
 	/* SHADERS */
 
 // Vertex shader generating a triangle covering the entire screen
@@ -357,6 +435,61 @@ void LensDistortVS(in uint id : SV_VertexID, out float4 position : SV_Position, 
 	// Export vertex position
 	position = float4(vertexPos[id], 0f, 1f);
 }
+
+#if PARALLAX_ABERRATION
+// Parallax aberration pixel shader
+void ParallaxPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, out float3 color : SV_Target)
+{
+	if (all(Kp==0f)) // bypass parallax aberration
+	{
+		color = tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
+		return;
+	}
+
+	// Get aspect-ratio transform vector for the view coordinates
+	const float2 aspectScalar = 0.5/normalize(BUFFER_SCREEN_SIZE);
+	// Transform view coordinates to texture coordinates
+	float2 texCoord = viewCoord*aspectScalar+0.5;
+
+	// Get radius at increasing even powers
+	float4 R;
+	R[0] = dot(viewCoord, viewCoord); // r²
+	R[1] = R[0]*R[0]; // r⁴
+	R[2] = R[1]*R[0]; // r⁶
+	R[3] = R[2]*R[0]; // r⁸
+	// Parallax aberration amount
+	float2 centerCoord = texCoord-0.5;
+	centerCoord *= rcp(1f+dot(Kp, R))-1f;
+
+	// Get maximum allowed number of steps
+	uint maxStepAmount = clamp(ParallaxSamples, 2u, PARRALLAX_ABERRATION_MAX_SAMPLES);
+	// Initialize
+	float offset; // Found offset value
+	float stepSize = rcp(maxStepAmount-1u);
+	for (int counter = maxStepAmount-1u; counter >= 0; counter--)
+	{
+		offset = counter*stepSize;
+		float reverseDepth = GetLinearizedReverseDepth(texCoord-centerCoord*offset);
+		if (offset <= reverseDepth)
+		{
+			float prevOffset = (counter+1u)*stepSize;
+			float prevDifference = prevOffset-GetLinearizedReverseDepth(texCoord-centerCoord*prevOffset);
+			// Interpolate offset
+			offset = lerp(prevOffset, offset, prevDifference/(prevDifference+reverseDepth-offset));
+			break;
+		}
+	}
+	// Apply parallax offset
+	texCoord -= centerCoord*offset;
+
+	color = tex2D(BackBuffer, texCoord).rgb;
+
+	#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	color = TO_DISPLAY_GAMMA_HQ(color); // Correct gamma
+	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
+	#endif
+}
+#endif
 
 // Lens distortion pixel shader
 void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, out float3 color : SV_Target)
@@ -544,6 +677,9 @@ technique LensDistort
 #else
 		"	· Pantomorphic distortion\n"
 #endif
+#if PARALLAX_ABERRATION
+		"	· Parallax aberration\n"
+#endif
 		"	· Chromatic aberration\n"
 		"	· Lens vignetting\n"
 		"\n"
@@ -555,7 +691,14 @@ technique LensDistort
 		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
 >
 {
-	pass
+#if PARALLAX_ABERRATION
+	pass Parallax
+	{
+		VertexShader = LensDistortVS;
+		PixelShader = ParallaxPS;
+	}
+#endif
+	pass Distort
 	{
 		VertexShader = LensDistortVS;
 		PixelShader = LensDistortPS;
