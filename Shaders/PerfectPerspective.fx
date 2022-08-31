@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.2.5.1
+/** Perfect Perspective PS, version 4.2.6
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -397,42 +397,42 @@ float GetBorderMask(float2 borderCoord)
 }
 
 // Debug view mode shader
-void DebugModeViewPass(inout float3 display, float2 sphCoord)
+float3 DebugModeViewPass(float2 texCoord, float3 display)
 {
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Define Mapping color
-	const float3   underSmpl = TO_LINEAR_GAMMA_HQ(float3(1f, 0f, 0.2)); // Red
-	const float3   superSmpl = TO_LINEAR_GAMMA_HQ(float3(0f, 1f, 0.5)); // Green
-	const float3 neutralSmpl = TO_LINEAR_GAMMA_HQ(float3(0f, 0.5, 1f)); // Blue
-#else
-	// Define Mapping color
-	const float3   underSmpl = float3(1f, 0f, 0.2); // Red
-	const float3   superSmpl = float3(0f, 1f, 0.5); // Green
-	const float3 neutralSmpl = float3(0f, 0.5, 1f); // Blue
-#endif
+	const float3   underSmpl = float3(1f, 0f, 0f); // Red
+	const float3   superSmpl = float3(0f, 1f, 0f); // Green
+	const float3 neutralSmpl = float3(0f, 0f, 1f); // Blue
 
-	// Calculate Pixel Size difference
-	float pixelScaleMap;
-	// and simulate Dynamic Super Resolution (DSR) scalar
-	pixelScaleMap  = ResScaleScreen*BUFFER_PIXEL_SIZE.x*BUFFER_PIXEL_SIZE.y;
-	pixelScaleMap /= ResScaleVirtual*ddx(sphCoord.x)*ddy(sphCoord.y);
-	pixelScaleMap -= 1f;
-
-	// Generate super-sampled/under-sampled color map
-	float3 resMap = lerp(
+	// Scale texture coordinates to pixel size
+	texCoord *= BUFFER_SCREEN_SIZE*ResScaleVirtual/float(ResScaleScreen);
+	texCoord = float2(
+		length(float2(ddx(texCoord.x), ddy(texCoord.x))),
+		length(float2(ddx(texCoord.y), ddy(texCoord.y)))
+	);
+	// Get pixel area
+	float pixelScale = texCoord.x*texCoord.y;
+	// Get pixel area in false-color
+	float3 pixelScaleMap = lerp(
+		lerp(
+			underSmpl,
+			neutralSmpl,
+			saturate(pixelScale) // in [0, 1] area range
+		),
 		superSmpl,
-		underSmpl,
-		step(0f, pixelScaleMap)
+		saturate(pixelScale-1f) // in [1, 2] area range
 	);
 
-	// Create black-white gradient mask of scale-neutral pixels
-	pixelScaleMap = saturate(1f-4f*abs(pixelScaleMap)); // Clamp to more representative values
-
-	// Color neutral scale pixels
-	resMap = lerp(resMap, neutralSmpl, pixelScaleMap);
-
-	// Blend color map with display image
-	display = (0.8*dot(LumaMtx, display)+0.2)*resMap;
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	display = TO_DISPLAY_GAMMA_HQ(display);
+#endif
+	// Get luma channel mapped to save range
+	display.x = lerp(0.8, 1f, dot(LumaMtx, display));
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	display.x = TO_LINEAR_GAMMA_HQ(display.x);
+#endif
+	// Mix pixel scale map with the background
+	return display.x*pixelScaleMap;
 }
 
 // Main perspective shader pass
@@ -440,7 +440,19 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 {
 	// Bypass
 	if (FOV==0u || (K==1f && !UseVignette))
-		return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
+		if (DebugPreview)
+		{
+			float3 display = DebugModeViewPass(sphCoord, tex2D(BackBuffer, sphCoord).rgb);
+#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+			// Manually correct gamma
+			display = TO_DISPLAY_GAMMA_HQ(display);
+			// Dither final 8-bit result
+			return BlueNoise::dither(uint2(pixelPos.xy), display);
+#else
+			return display;
+#endif
+		}
+		else return tex2D(ReShade::BackBuffer, sphCoord).rgb;
 
 #if SIDE_BY_SIDE_3D // Side-by-side 3D content
 	float SBS3D = sphCoord.x*2f;
@@ -549,7 +561,7 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 	else display *= vignetteMask; // Apply vignette
 
 	// Output type choice
-	if (DebugPreview) DebugModeViewPass(display, sphCoord);
+	if (DebugPreview) display = DebugModeViewPass(sphCoord, display);
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Manually correct gamma
