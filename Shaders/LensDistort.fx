@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.1.1
+/** Lens Distortion PS, version 1.1.2
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -303,16 +303,6 @@ sampler BackBuffer
 	AddressU = MIRROR;
 	AddressV = MIRROR;
 };
-#if PARALLAX_ABERRATION
-// Define depth texture with mirror tiles
-sampler DepthBuffer
-{
-	Texture = ReShade::DepthBufferTex;
-	// Border style
-	AddressU = MIRROR;
-	AddressV = MIRROR;
-};
-#endif
 
 	/* FUNCTIONS */
 
@@ -381,40 +371,6 @@ float GetBorderMask(float2 borderCoord)
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
-#if PARALLAX_ABERRATION
-// Get reverse depth function with mirror tiles, from ReShade.fxh
-float GetLinearizedReverseDepth(float2 texCoord)
-{
-	#if RESHADE_DEPTH_INPUT_IS_UPSIDE_DOWN
-	texCoord.y = 1f-texCoord.y;
-	#endif
-	texCoord.x /= RESHADE_DEPTH_INPUT_X_SCALE;
-	texCoord.y /= RESHADE_DEPTH_INPUT_Y_SCALE;
-	#if RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET
-	texCoord.x -= RESHADE_DEPTH_INPUT_X_PIXEL_OFFSET*BUFFER_RCP_WIDTH;
-	#else // Do not check RESHADE_DEPTH_INPUT_X_OFFSET, since it may be a decimal number, which the preprocessor cannot handle
-	texCoord.x -= RESHADE_DEPTH_INPUT_X_OFFSET/2.000000001;
-	#endif
-	#if RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET
-	texCoord.y += RESHADE_DEPTH_INPUT_Y_PIXEL_OFFSET * BUFFER_RCP_HEIGHT;
-	#else
-	texCoord.y += RESHADE_DEPTH_INPUT_Y_OFFSET/2.000000001;
-	#endif
-	float depth = tex2Dlod(DepthBuffer, float4(texCoord, 0f, 0f)).x*RESHADE_DEPTH_MULTIPLIER;
-
-	#if RESHADE_DEPTH_INPUT_IS_LOGARITHMIC
-	const float C = 0.01;
-	depth = (exp(depth*log(C+1f))-1f)/C;
-	#endif
-	#if RESHADE_DEPTH_INPUT_IS_REVERSED
-	depth = 1f-depth;
-	#endif
-	depth /= RESHADE_DEPTH_LINEARIZATION_FAR_PLANE-depth*(RESHADE_DEPTH_LINEARIZATION_FAR_PLANE-1f);
-
-	return 1f-depth;
-}
-#endif
-
 	/* SHADERS */
 
 // Vertex shader generating a triangle covering the entire screen
@@ -469,11 +425,11 @@ void ParallaxPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, out 
 	for (int counter = maxStepAmount-1u; counter >= 0; counter--)
 	{
 		offset = counter*stepSize;
-		float reverseDepth = GetLinearizedReverseDepth(texCoord-centerCoord*offset);
+		float reverseDepth = 1f-ReShade::GetLinearizedDepth(texCoord-centerCoord*offset);
 		if (offset <= reverseDepth)
 		{
 			float prevOffset = (counter+3u)*stepSize;
-			float prevDifference = prevOffset-GetLinearizedReverseDepth(texCoord-centerCoord*prevOffset);
+			float prevDifference = prevOffset-1f+ReShade::GetLinearizedDepth(texCoord-centerCoord*prevOffset);
 			// Interpolate offset
 			offset = lerp(prevOffset, offset, prevDifference/(prevDifference+reverseDepth-offset));
 			break;
