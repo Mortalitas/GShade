@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.2.0
+/** Lens Distortion PS, version 1.3.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -280,15 +280,16 @@ uniform float GridTilt <
 
 // Performance
 
-uniform uint ChromaticSamples <
+uniform uint ChromaticSamplesLimit <
 	ui_type = "slider";
-	ui_min = 6u; ui_max = 32u; ui_step = 2u;
-	ui_label = "Chromatic aberration samples";
+	ui_min = 6u; ui_max = CHROMATIC_ABERRATION_MAX_SAMPLES; ui_step = 2u;
+	ui_label = "Chromatic aberration samples limit";
 	ui_tooltip =
-		"Amount of samples (steps) for color fringing.\n"
+		"Sample count is generated automatically per pixel, based on visible amount.\n"
+		"This option limits maximum sample (steps) count allowed for color fringing.\n"
 		"Only even numbers are accepted, odd numbers will be clamped.";
 	ui_category = "Performance";
-> = 8u;
+> = 32u;
 
 #if PARALLAX_ABERRATION
 uniform uint ParallaxSamples <
@@ -531,8 +532,13 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		float2 orygTexCoord = (pixelPos.xy+0.5)*BUFFER_PIXEL_SIZE;
 		// Get distortion offset vector
 		float2 distortion = texCoord-orygTexCoord;
-		// Get even number of samples to avoid color cast
-		uint evenSampleCount = clamp(ChromaticSamples-ChromaticSamples%2u, 2u, CHROMATIC_ABERRATION_MAX_SAMPLES); // Clamp value
+		// Get maximum number of samples allowed
+		uint evenSampleCount = min(ChromaticSamplesLimit-ChromaticSamplesLimit%2u, CHROMATIC_ABERRATION_MAX_SAMPLES); // Clamp value
+		// Get total offset in pixels for automatic sample amount
+		uint totalPixelOffset = uint(ceil(length(T*(distortion*BUFFER_SCREEN_SIZE))));
+		// Set dynamic even number sample count, limited in range
+		evenSampleCount = clamp(totalPixelOffset+totalPixelOffset%2u, 4u, evenSampleCount);
+
 		// Sample background with multiple color filters at multiple offsets
 		color = 0f; // initialize color
 		for (uint i=0u; i<evenSampleCount; i++)
