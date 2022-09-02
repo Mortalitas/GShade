@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.4.1
+/** Perfect Perspective PS, version 4.4.2
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -146,11 +146,11 @@ uniform float CroppingFactor <
 		"\n"
 		"Value Cropping\n"
 		"\n"
-		"0     circular\n"
-		"0.5   cropped-circle\n"
-		"1     full-frame";
-	ui_min = 0f; ui_max = 1f;
-> = 0.5;
+		"  0   circular\n"
+		"  1   cropped-circle\n"
+		"  2   full-frame";
+	ui_min = 0f; ui_max = 2f;
+> = 1f;
 
 uniform bool MirrorBorder <
 	ui_type = "input";
@@ -177,7 +177,7 @@ uniform float BorderCorner <
 	ui_type = "slider";
 	ui_category = "Border";
 	ui_label = "Corner radius";
-	ui_tooltip = "Value of 0.0 gives sharp corners.";
+	ui_tooltip = "Value of 0 gives sharp corners.";
 	ui_min = 0f; ui_max = 1f;
 > = 0.062;
 
@@ -201,7 +201,7 @@ uniform uint BorderGContinuity <
 
 uniform bool DebugModePreview <
 	ui_type = "input";
-	ui_label = "Enable debugging mode";
+	ui_label = "Display debug mode";
 	ui_tooltip =
 		"Display calibration grid for lens-matching or\n"
 		"pixel scale-map for resolution matching.";
@@ -225,7 +225,7 @@ uniform uint DebugMode <
 		"\n"
 		"Pixel scale-map:\n"
 		"\n"
-		"	Display color map of the resolution scale.\n"
+		"	Display resolution-scale color map.\n"
 		"	Can indicate if super-resolution is required:\n"
 		"\n"
 		"	Color   Definition\n"
@@ -357,28 +357,27 @@ float aastep(float grad)
    These algorithms are part of the following scientific papers:
    · arXiv:2003.10558 [cs.GR] (2020)
    · arXiv:2010.04077 [cs.GR] (2020) */
-float get_r(float theta, float hlfOmega, float k) // Get image radius
+float get_radius(float halfOmega, float theta, float k) // Get image radius
 {
 	if (k>0f) // Stereographic, rectilinear projections
-		return tan(theta*k)/tan(hlfOmega*k);
+		return tan(theta*k)/tan(halfOmega*k);
 	else if (k<0f) // Equisolid, orthographic projections
-		return sin(theta*k)/sin(hlfOmega*k);
+		return sin(theta*k)/sin(halfOmega*k);
 	else // if (k==0f) // Equidistant projection
-		return theta/hlfOmega;
+		return theta/halfOmega;
 }
-float get_theta(float r, float hlfOmega, float k) // Get spherical θ angle
+float get_theta(float halfOmega, float radius, float k) // Get spherical θ angle
 {
 	if (k>0f) // Stereographic, rectilinear projections
-		return atan(tan(hlfOmega*k)*r)/k;
+		return atan(tan(halfOmega*k)*radius)/k;
 	else if (k<0f) // Equisolid, orthographic projections
-		return asin(sin(hlfOmega*k)*r)/k;
+		return asin(sin(halfOmega*k)*radius)/k;
 	else // if (k==0f) // Equidistant projection
-		return r*hlfOmega;
+		return radius*halfOmega;
 }
 float get_vignette(float theta, float k) // Get vignetting mask in linear color space
 {
-	// Create spherical vignette
-	// |cos(max(|k|,½)θ)|^(3k/4)
+	// Create spherical vignette |cos(max(|k|,½)θ)|^(3k/4)
 	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // Limit FOV span, |k| ∈ [0.5, 1] range
 	// Mix cosine-law of illumination and inverse-square law
 	return pow(abs(spherical_vignette), k*0.5+1.5);
@@ -389,17 +388,17 @@ float get_vignette(float theta, float k) // Get vignetting mask in linear color 
 float UniversalPerspective_vignette(inout float2 viewCoord) // Returns vignette
 {
 	// Get half field of view
-	const float hlfOmega = radians(FOV*0.5);
+	const float halfOmega = radians(FOV*0.5);
 
-	// Get radius
-	float R = S==1f ?
-			dot(viewCoord, viewCoord) : // Spherical
-			(viewCoord.x*viewCoord.x)+(viewCoord.y*viewCoord.y)/S // Anamorphic
-		;
-	float rcpR = rsqrt(R); R = sqrt(R);
+	// Get picture radius
+	float radius = S==1f ?
+		dot(viewCoord, viewCoord):                             // Spherical
+		(viewCoord.x*viewCoord.x)+(viewCoord.y*viewCoord.y)/S; // Anamorphic
+	float rcpRadius = rsqrt(radius);
+	      radius    = sqrt(radius);
 
 	// Get incident angle
-	float theta = get_theta(R, hlfOmega, K);
+	float theta = get_theta(halfOmega, radius, K);
 
 	// Generate vignette
 	bool vignetteIsVisible = UseVignette && !DebugModePreview;
@@ -408,14 +407,14 @@ float UniversalPerspective_vignette(inout float2 viewCoord) // Returns vignette
 	if (vignetteIsVisible && S!=1f)
 	{
 		// Get anamorphic-incident 3D vector
-		float3 perspVec = float3((sin(theta)*rcpR)*viewCoord, cos(theta));
+		float3 perspVec = float3((sin(theta)*rcpRadius)*viewCoord, cos(theta));
 		vignetteMask /= dot(perspVec, perspVec); // Inverse square law
 	}
 
 	// Radius for gnomonic projection wrapping
-	const float rcpTanHlfOmega = rcp(tan(hlfOmega));
+	const float rcpTanHalfOmega = rcp(tan(halfOmega));
 	// Transform screen coordinates and normalize to FOV
-	viewCoord *= tan(theta)*rcpR*rcpTanHlfOmega;
+	viewCoord *= tan(theta)*rcpRadius*rcpTanHalfOmega;
 
 	// Return vignette
 	return vignetteMask;
@@ -425,9 +424,9 @@ float UniversalPerspective_vignette(inout float2 viewCoord) // Returns vignette
 float UniversalPerspective_inverse(float2 viewCoord) // Returns reciprocal radius
 {
 	// Get half field of view
-	const float hlfOmega = radians(FOV*0.5);
+	const float halfOmega = radians(FOV*0.5);
 	// Get reciprocal radius
-	const float rcp_r = S==1f ?
+	const float rcpRadius = S==1f ?
 			rsqrt(dot(viewCoord, viewCoord)) :
 			rsqrt((viewCoord.y*viewCoord.y)/S+(viewCoord.x*viewCoord.x))
 		;
@@ -435,15 +434,20 @@ float UniversalPerspective_inverse(float2 viewCoord) // Returns reciprocal radiu
 	// Get incident vector
 	float3 incident;
 	incident.xy = viewCoord;
-	incident.z = rcp(tan(hlfOmega));
+	incident.z = rcp(tan(halfOmega));
 
 	// Get theta angle
 	float theta = (S==1f)?
 		acos(normalize(incident).z) : // Spherical
-		acos(incident.z*rsqrt((incident.y*incident.y)/S+dot(incident.xz, incident.xz))); // Anamorphic
+		acos(incident.z
+			*rsqrt(
+				 (incident.y*incident.y)/S
+				+dot(incident.xz, incident.xz)
+			)
+		); // Anamorphic
 
 	// Calculate transformed position reciprocal radius
-	return rcp_r*get_r(theta, hlfOmega, K);
+	return rcpRadius*get_radius(halfOmega, theta, K);
 }
 
 	/* SHADER */
@@ -466,12 +470,15 @@ float GetBorderMask(float2 borderCoord)
 		// Round corner
 		return aastep(glength(BorderGContinuity, borderCoord)-1f); // ...with G1 to G3 continuity
 	}
-	else // Just sharp corner, G0
+	else // just sharp corner, G0
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
 // Generate lens-match grid
-float3 GridModeViewPass(uint2 pixelCoord, float2 texCoord, float3 display)
+float3 GridModeViewPass(
+	uint2  pixelCoord,
+	float2 texCoord,
+	float3 display)
 {
 	// Sample background without distortion
 	display = tex2Dfetch(BackBuffer, pixelCoord).rgb;
@@ -479,7 +486,7 @@ float3 GridModeViewPass(uint2 pixelCoord, float2 texCoord, float3 display)
 	// Get view coordinates, normalized at the corner
 	texCoord = (texCoord*2f-1f)*normalize(BUFFER_SCREEN_SIZE);
 
-	// Tilt view coordinates
+	if (GridTilt!=0f) // tilt view coordinates
 	{
 		// Convert angle to radians
 		float tiltRad = radians(GridTilt);
@@ -587,7 +594,9 @@ float3 DebugModeViewPass(float2 texCoord, float3 display)
 }
 
 // Main perspective shader pass
-float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEXCOORD0) : SV_Target
+float3 PerfectPerspectivePS(
+	float4 pixelPos : SV_Position,
+	float2 sphCoord : TEXCOORD0) : SV_Target
 {
 	// Bypass
 	if (FOV==0u || (K==1f && !UseVignette))
@@ -663,13 +672,11 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 			normalizationPos[0u].y = // Vertical crop
 			normalizationPos[2u].x*BUFFER_RCP_ASPECT_RATIO;
 
-		// Get cropping option scalar
-		float crop = CroppingFactor*2f;
 		// Interpolate between cropping states
 		const float croppingScalar = lerp(
-			UniversalPerspective_inverse(normalizationPos[uint(floor(crop))]),
-			UniversalPerspective_inverse(normalizationPos[uint( ceil(crop))]),
-			frac(crop) // Weight interpolation
+			UniversalPerspective_inverse(normalizationPos[uint(floor(CroppingFactor))]),
+			UniversalPerspective_inverse(normalizationPos[uint( ceil(CroppingFactor))]),
+			frac(CroppingFactor) // Weight interpolation
 		);
 
 		// Apply cropping zoom
@@ -700,7 +707,7 @@ float3 PerfectPerspectivePS(float4 pixelPos : SV_Position, float2 sphCoord : TEX
 		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb : // No perspective change
 		tex2D(BackBuffer, sphCoord).rgb; // Spherical perspective
 
-	if (K!=1f && CroppingFactor!=1f) // Visible borders
+	if (K!=1f && CroppingFactor!=2f) // Visible borders
 	{
 		// Get border
 		float3 border = lerp(
@@ -756,7 +763,7 @@ technique PerfectPerspective
 		"	· Fish-eye\n"
 		"	· Panini\n"
 		"	· Anamorphic\n"
-		"	· Vignetting, natural\n"
+		"	· Vignetting (natural)\n"
 		"\n"
 		"Instruction:\n"
 		"\n"
