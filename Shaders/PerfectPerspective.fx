@@ -1,6 +1,6 @@
-/** Perfect Perspective PS, version 5.0.4
+/** Perfect Perspective PS, version 5.0.5
 
-This code © 2022 Jakub Maksymilian Fober
+This code © 2018-2022 Jakub Maksymilian Fober
 
 This work is licensed under the Creative Commons
 Attribution-NonCommercial-NoDerivs 3.0 Unported License.
@@ -879,7 +879,7 @@ technique PerfectPerspective
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
 #endif
 		"\n"
-		"This effect © 2018 Jakub Maksymilian Fober\n"
+		"This effect © 2018-2022 Jakub Maksymilian Fober\n"
 		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
 >
 {
