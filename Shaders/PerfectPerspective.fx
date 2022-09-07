@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 4.4.2
+/** Perfect Perspective PS, version 5.0.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -16,6 +16,17 @@ shader used and a link to ReShade website https://reshade.me.
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
 
+██████████▀▀▀▀▀      ▄▄▄▄▄▄▄      ▀▀▀▀▀███████████
+██▀▀▀           █████▀▀▀▀▀▀▀█████            ▀▀▀██
+▀               ███           ███                ▀
+                ██             ██
+                ██             ██
+                ██             ██
+▄               ███           ███                ▄
+██▄▄▄           █████▄▄▄▄▄▄▄█████            ▄▄▄██
+██████████▄▄▄▄▄      ▀▀▀▀▀▀▀      ▄▄▄▄▄███████████
+  P   A   N   T   O   M   O   R   P   H   I   C
+
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 
@@ -29,11 +40,19 @@ and
 	with Rasterization Map
 	arXiv:2010.04077 [cs.GR] (2020)
 	https://arxiv.org/abs/2010.04077
+and
+	Pantomorphic Perspective for Immersive Imagery
+	arXiv:2102.12682 [cs.GR] (2021)
+	https://arxiv.org/abs/2102.12682
 by Fober, J. M.
 */
 
 	/* MACROS */
 
+// Alternative to anamorphic
+#ifndef PATNOMORPHIC_MODE
+	#define PATNOMORPHIC_MODE 0
+#endif
 // Stereo 3D mode
 #ifndef SIDE_BY_SIDE_3D
 	#define SIDE_BY_SIDE_3D 0
@@ -50,7 +69,7 @@ by Fober, J. M.
 
 // FIELD OF VIEW
 
-uniform uint FOV <
+uniform uint FovAngle <
 	ui_type = "slider";
 	ui_category = "Game";
 	ui_text = "(Match game settings)";
@@ -91,7 +110,11 @@ uniform uint FovType <
 uniform float K <
 	ui_type = "slider";
 	ui_category = "Distortion";
+#if PATNOMORPHIC_MODE // k indicates horizontal axis projection type
+	ui_label = "Projection type 'k.x'";
+#else // k represents whole picture projection type
 	ui_label = "Projection type 'k'";
+#endif
 	ui_tooltip =
 		"Projection coefficient 'k', represents\n"
 		"various azimuthal projections types:\n"
@@ -109,6 +132,28 @@ uniform float K <
 	ui_min = -1f; ui_max = 1f; ui_step = 0.05;
 > = 0.5;
 
+#if PATNOMORPHIC_MODE // vertical axis projection is driven by separate k parameter
+uniform float Ky <
+	ui_type = "slider";
+	ui_category = "Distortion";
+	ui_label = "Projection type 'k.y'";
+	ui_tooltip =
+		"Projection coefficient 'k', represents\n"
+		"various azimuthal projections types:\n"
+		"\n"
+		"Value  Projection      Perception\n"
+		"\n"
+		" 1     Rectilinear     straight path\n"
+		" 0.5   Stereographic   shape\n"
+		" 0     Equidistant     distance\n"
+		"-0.5   Equisolid       depth\n"
+		"-1     Orthographic    illumination\n"
+		"\n"
+		"\n"
+		"[Ctrl+click] to type value.";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.05;
+> = 0.5;
+#else // vertical axis distortion can be elongated by the anamorphic squeeze factor
 uniform float S <
 	ui_type = "slider";
 	ui_category = "Distortion";
@@ -126,6 +171,7 @@ uniform float S <
 		"2      golden-standard";
 	ui_min = 1f; ui_max = 4f; ui_step = 0.05;
 > = 1f;
+#endif
 
 uniform bool UseVignette <
 	ui_type = "input";
@@ -147,9 +193,14 @@ uniform float CroppingFactor <
 		"Value Cropping\n"
 		"\n"
 		"  0   circular\n"
+#if PATNOMORPHIC_MODE // Range limited to [0,1]
+		"  1   cropped-circle";
+	ui_min = 0f; ui_max = 1f;
+#else // Includes full-frame cropping mode at 2
 		"  1   cropped-circle\n"
 		"  2   full-frame";
 	ui_min = 0f; ui_max = 2f;
+#endif
 > = 1f;
 
 uniform bool MirrorBorder <
@@ -197,8 +248,6 @@ uniform uint BorderGContinuity <
 
 // DEBUG OPTIONS
 
-	// GRID
-
 uniform bool DebugModePreview <
 	ui_type = "input";
 	ui_label = "Display debug mode";
@@ -236,17 +285,15 @@ uniform uint DebugMode <
 	ui_category = "Debugging mode";
 > = 0u;
 
-uniform float DimGridBackground <
+uniform float DimDebugBackground <
 	ui_type = "slider";
 	ui_min = 0.25; ui_max = 1f; ui_step = 0.1;
-	ui_label = "Dim grid background";
+	ui_label = "Dim background";
 	ui_tooltip = "Adjust background visibility.";
-	ui_text =
-		"Use calibration grid in conjunction with Image.fx, to match\n"
-		"lens distortion with a real-world camera profile.";
-	ui_category = "Debugging calibration grid";
-	ui_category_closed = true;
+	ui_category = "Debugging mode";
 > = 1f;
+
+	// GRID
 
 uniform uint GridLook <
 	ui_type = "combo";
@@ -257,7 +304,11 @@ uniform uint GridLook <
 		"red-green grid\0";
 	ui_label = "Grid look";
 	ui_tooltip = "Select look of the grid.";
+	ui_text =
+		"Use calibration grid in conjunction with Image.fx, to match\n"
+		"lens distortion with a real-world camera profile.";
 	ui_category = "Debugging calibration grid";
+	ui_category_closed = true;
 > = 0u;
 
 uniform uint GridSize <
@@ -306,7 +357,6 @@ uniform uint ResScaleVirtual <
 	ui_category = "Debugging pixel scale-map";
 > = 1920u;
 
-
 	/* TEXTURES */
 
 // Define screen texture with mirror tiles
@@ -321,12 +371,20 @@ sampler BackBuffer
 	AddressV = MIRROR;
 };
 
-
 	/* FUNCTIONS */
 
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
 
+/* S curve by JMF
+   Generates smooth half-bell falloff for blur.
+   Input is in [0, 1] range. */
+float s_curve(float gradient)
+{
+	float top = max(gradient, 0.5);
+	float bottom = min(gradient, 0.5);
+	return 2f*((bottom*bottom+top)-(top*top-top))-1.5;
+}
 /* G continuity distance function by Jakub Max Fober.
    Determined empirically. (G from 0, to 3)
    G=0   Sharp corners
@@ -357,97 +415,31 @@ float aastep(float grad)
    These algorithms are part of the following scientific papers:
    · arXiv:2003.10558 [cs.GR] (2020)
    · arXiv:2010.04077 [cs.GR] (2020) */
-float get_radius(float halfOmega, float theta, float k) // Get image radius
+float get_radius(float theta, float rcp_f, float k) // Get image radius
 {
-	if (k>0f) // Stereographic, rectilinear projections
-		return tan(theta*k)/tan(halfOmega*k);
-	else if (k<0f) // Equisolid, orthographic projections
-		return sin(theta*k)/sin(halfOmega*k);
-	else // if (k==0f) // Equidistant projection
-		return theta/halfOmega;
+	if      (k>0f)   return tan(k*theta)/(rcp_f*k); // Stereographic, rectilinear projections
+	else if (k<0f)   return sin(k*theta)/(rcp_f*k); // Equisolid, orthographic projections
+	else /*(k==0f)*/ return       theta / rcp_f;     // Equidistant projection
 }
-float get_theta(float halfOmega, float radius, float k) // Get spherical θ angle
+float get_rcp_focal(float halfOmega, float radiusAtOmega, float k) // Get reciprocal focal length
+{ return get_radius(halfOmega, radiusAtOmega, k); }
+float get_theta(float radius, float rcp_f, float k) // Get spherical θ angle
 {
-	if (k>0f) // Stereographic, rectilinear projections
-		return atan(tan(halfOmega*k)*radius)/k;
-	else if (k<0f) // Equisolid, orthographic projections
-		return asin(sin(halfOmega*k)*radius)/k;
-	else // if (k==0f) // Equidistant projection
-		return radius*halfOmega;
+	if      (k>0f)   return atan(k*radius*rcp_f)/k; // Stereographic, rectilinear projections
+	else if (k<0f)   return asin(k*radius*rcp_f)/k; // Equisolid, orthographic projections
+	else /*(k==0f)*/ return        radius*rcp_f;    // Equidistant projection
 }
 float get_vignette(float theta, float k) // Get vignetting mask in linear color space
 {
-	// Create spherical vignette |cos(max(|k|,½)θ)|^(3k/4)
-	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // Limit FOV span, |k| ∈ [0.5, 1] range
+	// Create spherical vignette |cos(max(|k|,1/2)θ)|^(k/2+3/2)
+	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // Limit FOV span, |k'| ∈ [0.5, 1] range
 	// Mix cosine-law of illumination and inverse-square law
 	return pow(abs(spherical_vignette), k*0.5+1.5);
 }
-
-/* Universal perspective model © 2022 Jakub Maksymilian Fober
-   Gnomonic to custom perspective variant. */
-float UniversalPerspective_vignette(inout float2 viewCoord) // Returns vignette
+float2 get_phi_weights(float2 texCoord)
 {
-	// Get half field of view
-	const float halfOmega = radians(FOV*0.5);
-
-	// Get picture radius
-	float radius = S==1f ?
-		dot(viewCoord, viewCoord):                             // Spherical
-		(viewCoord.x*viewCoord.x)+(viewCoord.y*viewCoord.y)/S; // Anamorphic
-	float rcpRadius = rsqrt(radius);
-	      radius    = sqrt(radius);
-
-	// Get incident angle
-	float theta = get_theta(halfOmega, radius, K);
-
-	// Generate vignette
-	bool vignetteIsVisible = UseVignette && !DebugModePreview;
-	float vignetteMask = vignetteIsVisible ? get_vignette(theta, K) : 1f;
-	// Anamorphic vignette correction
-	if (vignetteIsVisible && S!=1f)
-	{
-		// Get anamorphic-incident 3D vector
-		float3 perspVec = float3((sin(theta)*rcpRadius)*viewCoord, cos(theta));
-		vignetteMask /= dot(perspVec, perspVec); // Inverse square law
-	}
-
-	// Radius for gnomonic projection wrapping
-	const float rcpTanHalfOmega = rcp(tan(halfOmega));
-	// Transform screen coordinates and normalize to FOV
-	viewCoord *= tan(theta)*rcpRadius*rcpTanHalfOmega;
-
-	// Return vignette
-	return vignetteMask;
-}
-
-// Inverse transformation of universal perspective algorithm
-float UniversalPerspective_inverse(float2 viewCoord) // Returns reciprocal radius
-{
-	// Get half field of view
-	const float halfOmega = radians(FOV*0.5);
-	// Get reciprocal radius
-	const float rcpRadius = S==1f ?
-			rsqrt(dot(viewCoord, viewCoord)) :
-			rsqrt((viewCoord.y*viewCoord.y)/S+(viewCoord.x*viewCoord.x))
-		;
-
-	// Get incident vector
-	float3 incident;
-	incident.xy = viewCoord;
-	incident.z = rcp(tan(halfOmega));
-
-	// Get theta angle
-	float theta = (S==1f)?
-		acos(normalize(incident).z) : // Spherical
-		acos(incident.z
-			*rsqrt(
-				 (incident.y*incident.y)/S
-				+dot(incident.xz, incident.xz)
-			)
-		); // Anamorphic
-
-	// Calculate transformed position reciprocal radius
-	return rcpRadius*get_radius(halfOmega, theta, K);
+	texCoord *= texCoord; // Squared vector coordinates
+	return texCoord/(texCoord.x+texCoord.y); // [cosφ² sinφ²] vector
 }
 
 	/* SHADER */
@@ -500,7 +492,7 @@ float3 GridModeViewPass(
 				 tiltCos, tiltSin,
 				-tiltSin, tiltCos
 			),
-			texCoord
+			texCoord // Rotated coordinates
 		);
 	}
 
@@ -523,44 +515,41 @@ float3 GridModeViewPass(
 	// Adjust grid look
 	display = lerp(
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-		TO_LINEAR_GAMMA_HQ(16f/255f),
+		TO_LINEAR_GAMMA_HQ(16f/255f), // Safe bottom-color in linear range
 #else
-		16f/255f,
+		16f/255f, // Safe bottom-color range
 #endif
-		display,
-		DimGridBackground
+		display, // Background
+		DimDebugBackground // Dimming amount
 	);
+	// Apply calibration grid colors
 	switch (GridLook)
 	{
-		default:
 		// Yellow
-			display = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y));
-			break;
-		case 1:
+		default: display  = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y)); break;
 		// Black
-			display *= (1f-texCoord.x)*(1f-texCoord.y);
-			break;
-		case 2:
+		case 1:  display *= (1f-texCoord.x)*(1f-texCoord.y); break;
 		// White
-			display = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display);
-			break;
-		case 3:
+		case 2:  display  = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display); break;
 		// display red-green
+		case 3:
 			display = lerp(display, float3(1f, 0f, 0f), texCoord.y);
 			display = lerp(display, float3(0f, 1f, 0f), texCoord.x);
-			break;
+		break;
 	}
 
-	return display;
+	return display; // Background picture with grid superimposed over it
 }
 
 // Debug view mode shader
-float3 DebugModeViewPass(float2 texCoord, float3 display)
+float3 SamplingScaleModeViewPass(
+	float2 texCoord,
+	float3 display)
 {
 	// Define Mapping color
-	const float3   underSmpl = float3(1f, 0f, 0f); // Red
-	const float3   superSmpl = float3(0f, 1f, 0f); // Green
-	const float3 neutralSmpl = float3(0f, 0f, 1f); // Blue
+	const float3   underSample = float3(235f, 16f, 16f)/255f; // Red
+	const float3   superSample = float3(16f, 235f, 16f)/255f; // Green
+	const float3 neutralSample = float3(16f, 16f, 235f)/255f; // Blue
 
 	// Scale texture coordinates to pixel size
 	texCoord *= BUFFER_SCREEN_SIZE*ResScaleVirtual/float(ResScaleScreen);
@@ -573,141 +562,229 @@ float3 DebugModeViewPass(float2 texCoord, float3 display)
 	// Get pixel area in false-color
 	float3 pixelScaleMap = lerp(
 		lerp(
-			underSmpl,
-			neutralSmpl,
-			saturate(pixelScale) // in [0, 1] area range
+			underSample,
+			neutralSample,
+			s_curve(saturate(pixelScale*2f-1f)) // ↤ [0, 1] area range
 		),
-		superSmpl,
-		saturate(pixelScale-1f) // in [1, 2] area range
+		superSample,
+		s_curve(saturate(pixelScale*2f-2f)) // ↤ [1, 2] area range
 	);
+
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	display = TO_DISPLAY_GAMMA_HQ(display);
 #endif
 	// Get luma channel mapped to save range
-	display.x = lerp(0.8, 1f, dot(LumaMtx, display));
+	display.x = lerp(
+		 16f/255f, // Safe range bottom
+		235f/255f, // Safe range top
+		dot(LumaMtx, display)
+	);
+	// Adjust background look
+	display = lerp(
+		16f/255f, // Safe bottom-color range
+		display, // Background
+		DimDebugBackground // Dimming amount
+	);
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	display.x = TO_LINEAR_GAMMA_HQ(display.x);
 #endif
-	// Mix pixel scale map with the background
-	return display.x*pixelScaleMap;
+	// Adjust background look
+	display = lerp(
+		display.x, // Background
+		pixelScaleMap, // Pixel scale map
+		sqrt(1.25)-0.5 // Golden ratio by JMF
+	);
+	return display;
 }
 
 // Main perspective shader pass
 float3 PerfectPerspectivePS(
 	float4 pixelPos : SV_Position,
-	float2 sphCoord : TEXCOORD0) : SV_Target
+	float2 texCoord : TEXCOORD0) : SV_Target
 {
-	// Bypass
-	if (FOV==0u || (K==1f && !UseVignette))
+	// Bypass perspective mapping
+#if PATNOMORPHIC_MODE // take vertical k factor into account
+	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
+#else // consider only global k
+	if (FovAngle==0u || (K==1f && !UseVignette))
+#endif
 		if (DebugModePreview)
 		{
-			float3 display; // Initialize variable
-			switch (DebugMode) // Choose output type
+			float3 display; switch (DebugMode) // Choose output type
 			{
-				default:
-					// Calibration grid
-					display = GridModeViewPass(uint2(pixelPos.xy), sphCoord, display);
-					break;
-				case 1u:
-					// Pixel scale-map
-					display = DebugModeViewPass(sphCoord, tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
-					break;
+				// Calibration grid
+				default: display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display); break;
+				// Pixel scale-map
+				case 1u: display = SamplingScaleModeViewPass(texCoord, tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb); break;
 			}
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			// Manually correct gamma
-			display = TO_DISPLAY_GAMMA_HQ(display);
-			// Dither final 8-bit result
-			return BlueNoise::dither(uint2(pixelPos.xy), display);
+			display = TO_DISPLAY_GAMMA_HQ(display); // Manually correct gamma
+			return BlueNoise::dither(uint2(pixelPos.xy), display); // Dither final 8-bit result
 #else
 			return display;
 #endif
 		}
-		else return tex2D(ReShade::BackBuffer, sphCoord).rgb;
+		else // bypass all effects
+			return tex2D(ReShade::BackBuffer, texCoord).rgb;
 
 #if SIDE_BY_SIDE_3D // Side-by-side 3D content
-	float SBS3D = sphCoord.x*2f;
-	sphCoord.x = frac(SBS3D);
+	float SBS3D = texCoord.x*2f;
+	texCoord.x = frac(SBS3D);
 	SBS3D = floor(SBS3D);
 #endif
 
+	// Aspect ratio transformation vector
+	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
+	// Half field of view angle in radians
+	const float halfOmega = radians(FovAngle*0.5);
+
 	// Convert UV to centered coordinates
-	sphCoord = sphCoord*2f-1f;
-	// Correct aspect ratio
-	sphCoord.y *= BUFFER_RCP_ASPECT_RATIO;
+	texCoord = texCoord*2f-1f;
+	// Normalize texture coordinates diagonally and correct aspect
+	texCoord *= viewProportions;
 
-	// Get FOV type scalar
-	static float FovScalar;
-	switch(FovType)
+	// Get radius at Omega for a given FOV type
+	static float radiusAtOmega; switch (FovType)
 	{
-		// Horizontal
-		default: FovScalar = 1f; break;
-		// Diagonal
-		case 1: FovScalar = sqrt(BUFFER_RCP_ASPECT_RATIO*BUFFER_RCP_ASPECT_RATIO+1f); break;
-		// Vertical
-		case 2: FovScalar = BUFFER_RCP_ASPECT_RATIO; break;
-		// Horizontal 4:3
-		case 3: FovScalar = (4f/3f)*BUFFER_RCP_ASPECT_RATIO; break;
-		// Horizontal 16:9
-		case 4: FovScalar = (16f/9f)*BUFFER_RCP_ASPECT_RATIO; break;
+		default: radiusAtOmega = viewProportions.x; break; // Horizontal
+		case 1u: radiusAtOmega = 1f; break; // Diagonal
+		case 2u: radiusAtOmega = viewProportions.y; break; // Vertical
+		case 3u: radiusAtOmega = viewProportions.y*4f/3f; break; // 4x3
+		case 4u: radiusAtOmega = viewProportions.y*16f/9f; break; // 16x9
 	}
 
-	// Adjust FOV type
-	sphCoord /= FovScalar; // pass 1 of 2
-
-	// Scale picture to cropping point
+	// Reciprocal focal length
+	const float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
+	// Image radius
+#if PATNOMORPHIC_MODE // Simple length function for radius
+	float radius = length(texCoord);
+#else // derive radius from anamorphic coordinates
+	float radius = S==1f ?
+		dot(texCoord, texCoord) : // Spherical
+		(texCoord.y*texCoord.y)/S+(texCoord.x*texCoord.x); // Anamorphic
+	float rcp_radius = rsqrt(radius); radius = sqrt(radius);
+#endif
 	{
-		// Get cropping positions: vertical, horizontal, diagonal
-		float2 normalizationPos[3u];
-		// Mode 1
-		normalizationPos[0u].x =     // Vertical crop
-			normalizationPos[1u].y = // Horizontal crop
-			0f;
-		// Mode 2
-		normalizationPos[2u].x =     // Diagonal crop
-			normalizationPos[1u].x = // Horizontal crop
-			rcp(FovScalar);
-		// Mode 3
-		normalizationPos[2u].y =     // Diagonal crop
-			normalizationPos[0u].y = // Vertical crop
-			normalizationPos[2u].x*BUFFER_RCP_ASPECT_RATIO;
-
-		// Interpolate between cropping states
+		// Horizontal edge radius
+		const float croppingHorizontal = get_radius(
+				atan(tan(halfOmega)/radiusAtOmega*viewProportions.x),
+			rcp_focal, K)/viewProportions.x;
+#if PATNOMORPHIC_MODE // Does not include diagonal cropping radius for full-frame mode
+		// Vertical edge radius
+		const float croppingVertical = get_radius(
+				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
+			rcp_focal, Ky)/viewProportions.y;
+		// Get radius scaling for bounds alignment
 		const float croppingScalar = lerp(
-			UniversalPerspective_inverse(normalizationPos[uint(floor(CroppingFactor))]),
-			UniversalPerspective_inverse(normalizationPos[uint( ceil(CroppingFactor))]),
-			frac(CroppingFactor) // Weight interpolation
-		);
+				max(croppingHorizontal, croppingVertical), // Circular fish-eye
+				min(croppingHorizontal, croppingVertical), // Cropped circle
+				clamp(CroppingFactor, 0f, 1f)
+			);
+#else // border cropping radius is in anamorphic coordinates
+		// Vertical edge radius
+		const float croppingVertical = get_radius(
+				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y*rsqrt(S)),
+			rcp_focal, K)/viewProportions.y*sqrt(S);
+		// Diagonal point radius
+		const float anamorphicDiagonal = length(float2(
+			viewProportions.x,
+			viewProportions.y*rsqrt(S)
+		));
+		const float croppingDigonal = get_radius(
+				atan(tan(halfOmega)/radiusAtOmega*anamorphicDiagonal),
+			rcp_focal, K)/anamorphicDiagonal;
 
-		// Apply cropping zoom
-		sphCoord *= croppingScalar;
+		// Get radius scaling for bounds alignment
+		const float croppingScalar = CroppingFactor<1f ?
+			lerp(
+				max(croppingHorizontal, croppingVertical), // Circular fish-eye
+				min(croppingHorizontal, croppingVertical), // Cropped circle
+				max(CroppingFactor, 0f) // ↤ [0,1] range
+			) :
+			lerp(
+				min(croppingHorizontal, croppingVertical), // Cropped circle
+				croppingDigonal, // Full-frame
+				min(CroppingFactor-1f, 1f) // ↤ [1,2] range
+			);
+#endif
+		// Scale radius to cropping bounds
+		radius *= croppingScalar;
 	}
 
-	// Perspective transform and create vignette
-	float vignetteMask = UniversalPerspective_vignette(sphCoord);
+#if PATNOMORPHIC_MODE // derive θ angle from two distinct projections
+	// Horizontal and vertical incident angle
+	float2 theta2 = float2(
+		get_theta(radius, rcp_focal, K),
+		get_theta(radius, rcp_focal, Ky)
+	);
+	// Pantomorphic interpolation weights
+	float2 phiMtx = get_phi_weights(texCoord);
+	float vignette = UseVignette?
+		dot(phiMtx, float2(
+			get_vignette(theta2.x, K),
+			get_vignette(theta2.y, Ky)
+		)) : 1f;
+	float theta = dot(phiMtx, theta2); // Pantomorphic incident
+#else // get θ from anamorphic radius
+	float theta = get_theta(radius, rcp_focal, K);
+	float vignette = UseVignette? get_vignette(theta, K) : 1f;
+	// Anamorphic vignette correction
+	if (UseVignette && S!=1f)
+	{
+		// Get anamorphic-incident 3D vector
+		float3 incident = float3(
+			(sin(theta)*rcp_radius)*texCoord,
+			 cos(theta)
+		);
+		vignette /= dot(incident, incident); // Inverse square law
+	}
+#endif
 
-	// Adjust FOV type
-	sphCoord *= FovScalar; // pass 2 of 2
+	// Rectilinear perspective transformation
+#if PATNOMORPHIC_MODE // simple rectilinear transformation
+	texCoord = tan(theta)*normalize(texCoord);
+#else // normalize by anamorphic radius
+	texCoord *= tan(theta)*rcp_radius;
+#endif
 
-	// Aspect Ratio back to square
-	sphCoord.y *= BUFFER_ASPECT_RATIO;
+	// Back to normalized, centered coordinates
+	const float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
+	texCoord *= toUvCoord;
 
 	// Outside border mask with anti-aliasing
-	float borderMask = GetBorderMask(sphCoord);
+	float borderMask = GetBorderMask(texCoord);
 
 	// Back to UV Coordinates
-	sphCoord = sphCoord*0.5+0.5;
+	texCoord = texCoord*0.5+0.5;
 
 #if SIDE_BY_SIDE_3D // Side-by-side 3D content
-	sphCoord.x = (sphCoord.x+SBS3D)*0.5;
+	texCoord.x = (texCoord.x+SBS3D)*0.5;
 #endif
 
 	// Sample display image
-	float3 display = K==1f ?
-		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb : // No perspective change
-		tex2D(BackBuffer, sphCoord).rgb; // Spherical perspective
+#if PATNOMORPHIC_MODE // take vertical k factor into account
+	float3 display = K!=1f || Ky!=1f ?
+#else // consider only global k
+	float3 display = K!=1f ?
+#endif
+		tex2D(BackBuffer, texCoord).rgb : // Perspective projection lookup
+		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // No perspective change
 
+	// Display calibration view
+	if (DebugModePreview) switch (DebugMode) // Choose output type
+	{
+		// Calibration grid
+		default: display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display); break;
+		// Pixel scale-map
+		case 1u: display = SamplingScaleModeViewPass(texCoord, display); break;
+	}
+
+#if PATNOMORPHIC_MODE // take vertical k factor into account
+	if ((K!=1f || Ky!=1f) && CroppingFactor!=2f) // Visible borders
+#else // consider only global k
 	if (K!=1f && CroppingFactor!=2f) // Visible borders
+#endif
 	{
 		// Get border
 		float3 border = lerp(
@@ -724,23 +801,11 @@ float3 PerfectPerspectivePS(
 
 		// Apply vignette with border
 		display = BorderVignette?
-			vignetteMask*lerp(display, border, borderMask) : // Vignette on border
-			lerp(vignetteMask*display, border, borderMask);  // Vignette only inside
+			vignette*lerp(display, border, borderMask) : // Vignette on border
+			lerp(vignette*display, border, borderMask);  // Vignette only inside
 	}
-	else display *= vignetteMask; // Apply vignette
-
-	if (DebugModePreview) // display in debug mode
-		switch (DebugMode) // Choose output type
-		{
-			default:
-				// Calibration grid
-				display = GridModeViewPass(uint2(pixelPos.xy), sphCoord, display);
-				break;
-			case 1u:
-				// Pixel scale-map
-				display = DebugModeViewPass(sphCoord, display);
-				break;
-		}
+	else // apply vignette
+		display *= vignette;
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Manually correct gamma
@@ -762,7 +827,11 @@ technique PerfectPerspective
 		"\n"
 		"	· Fish-eye\n"
 		"	· Panini\n"
+#if PATNOMORPHIC_MODE
+		"	· Pantomorphic\n"
+#else
 		"	· Anamorphic\n"
+#endif
 		"	· Vignetting (natural)\n"
 		"\n"
 		"Instruction:\n"
@@ -770,12 +839,20 @@ technique PerfectPerspective
 		"	1# select proper FOV angle and type. If FOV type is unknown,\n"
 		"	   find a round object within the game and look at it upfront,\n"
 		"	   then rotate the camera so that the object is in the corner.\n"
-		"	   Change squeeze factor to 1x and adjust FOV type such that\n"
+#if PATNOMORPHIC_MODE
+		"	   Make sure all 'k' parameters are equal 0.5 and adjust FOV type such that\n"
+#else
+		"	   Set 'k' to 0.5, change squeeze factor to 1x and adjust FOV type such that\n"
+#endif
 		"	   the object does not have an egg shape, but a perfect round shape.\n"
 		"\n"
 		"	2# adjust perspective type according to game-play style.\n"
-		"	   If you look mostly at the horizon, anamorphic squeeze can be\n"
-		"	   increased. For curved-display correction, set it higher.\n"
+#if PATNOMORPHIC_MODE
+		"	   If you look mostly at the horizon, 'k.y' can be increased.\n"
+#else
+		"	   If you look mostly at the horizon, anamorphic squeeze can be increased.\n"
+#endif
+		"	   For curved-display correction, set it to higher value.\n"
 		"\n"
 		"	3# adjust visible borders. You can change the zoom factor,\n"
 		"	   such that no borders are visible, or that no image area is lost.\n"
