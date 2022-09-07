@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.3.0
+/** Lens Distortion PS, version 1.3.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -308,7 +308,7 @@ uniform uint ParallaxSamples <
 sampler BackBuffer
 {
 	Texture = ReShade::BackBufferTex;
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // Linear workflow
 	SRGBTexture = true;
 #endif
 	// Border style
@@ -450,10 +450,10 @@ void ParallaxPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, out 
 	// Apply parallax offset
 	texCoord -= centerCoord*offset;
 
+	#if BUFFER_COLOR_BIT_DEPTH == 10 // No gamma correction
 	color = tex2D(BackBuffer, texCoord).rgb;
-
-	#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-	color = TO_DISPLAY_GAMMA_HQ(color); // Correct gamma
+	#elif BUFFER_COLOR_SPACE <= 2 // Linear workflow
+	color = to_display_gamma_hq(color); // Correct gamma
 	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 	#endif
 }
@@ -542,6 +542,16 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		// Sample background with multiple color filters at multiple offsets
 		color = 0f; // initialize color
 		for (uint i=0u; i<evenSampleCount; i++)
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+			color += to_linear_gamma_hq(tex2Dlod(
+				BackBuffer, // Image source
+				float4(
+					(T*(i/float(evenSampleCount-1u)-0.5)+1f) // Aberration offset
+					*distortion // Distortion coordinates
+					+orygTexCoord, // Original coordinates
+				0f, 0f)
+			).rgb)
+#else
 			color += tex2Dlod(
 				BackBuffer, // Image source
 				float4(
@@ -550,6 +560,7 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 					+orygTexCoord, // Original coordinates
 				0f, 0f)
 			).rgb
+#endif
 			*Spectrum(i/float(evenSampleCount)); // Blur layer color
 		// Preserve brightness
 		color *= 2f/evenSampleCount;
@@ -557,7 +568,11 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 	else if (ShowGrid) // generate lens-match grid
 	{
 		// Sample background without distortion
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+		color = to_linear_gamma_hq(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
+#else
 		color = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+#endif
 
 		// Tilt view coordinates
 		{
@@ -596,7 +611,7 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		// Adjust grid look
 		color = lerp(
 	#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			TO_LINEAR_GAMMA_HQ(16f/255f),
+			to_linear_gamma_hq(16f/255f),
 	#else
 			16f/255f,
 	#endif
@@ -625,7 +640,11 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		}
 	}
 	else // sample background with distortion
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+		color = to_linear_gamma_hq(tex2D(BackBuffer, texCoord).rgb);
+#else
 		color = tex2D(BackBuffer, texCoord).rgb;
+#endif
 
 
 	if (!ShowGrid) // draw border and vignette
@@ -639,10 +658,14 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		// Get border
 		float3 border = lerp(
 			// Border background
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+			MirrorBorder? color : to_linear_gamma_hq(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
+#else
 			MirrorBorder? color : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
+#endif
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			TO_LINEAR_GAMMA_HQ(BorderColor.rgb), // Border color
-			TO_LINEAR_GAMMA_HQ(BorderColor.a)    // Border alpha
+			to_linear_gamma_hq(BorderColor.rgb), // Border color
+			to_linear_gamma_hq(BorderColor.a)    // Border alpha
 #else
 			BorderColor.rgb, // Border color
 			BorderColor.a    // Border alpha
@@ -657,7 +680,7 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 	}
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-	color = TO_DISPLAY_GAMMA_HQ(color); // Correct gamma
+	color = to_display_gamma_hq(color); // Correct gamma
 	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 #endif
 }

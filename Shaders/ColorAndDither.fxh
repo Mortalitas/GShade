@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.0.6
+/** Color conversion matrix and blue noise dither library, version 1.1.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -74,12 +74,32 @@ dot(  LumaMtx, color.rgb) will give you float luma component of YCbCr from sRGB 
 // Convert display gamma for all vector types (approximate)
 #define TO_DISPLAY_GAMMA(g) pow(abs(g), rcp(2.2))
 #define TO_LINEAR_GAMMA(g) pow(abs(g), 2.2)
+// Function version linear ↦ sRGB (simplified)
+float  to_display_gamma(float  g) { return TO_DISPLAY_GAMMA(g); }
+float2 to_display_gamma(float2 g) { return TO_DISPLAY_GAMMA(g); }
+float3 to_display_gamma(float3 g) { return TO_DISPLAY_GAMMA(g); }
+float4 to_display_gamma(float4 g) { return TO_DISPLAY_GAMMA(g); }
+// Function version sRGB ↦ linear (simplified)
+float  to_linear_gamma(float  g) { return TO_LINEAR_GAMMA(g); }
+float2 to_linear_gamma(float2 g) { return TO_LINEAR_GAMMA(g); }
+float3 to_linear_gamma(float3 g) { return TO_LINEAR_GAMMA(g); }
+float4 to_linear_gamma(float4 g) { return TO_LINEAR_GAMMA(g); }
 /* Convert display gamma for all vector types (sRGB)
 Sourced from International Color Consortium, at:
 https://color.org/chardata/rgb/srgb.xalter
 */
 #define TO_DISPLAY_GAMMA_HQ(g) ((g)<=0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
 #define TO_LINEAR_GAMMA_HQ(g) ((g)<=0.04049936? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
+// Function version linear ↦ sRGB
+float  to_display_gamma_hq(float  g) { return TO_DISPLAY_GAMMA_HQ(g); }
+float2 to_display_gamma_hq(float2 g) { return TO_DISPLAY_GAMMA_HQ(g); }
+float3 to_display_gamma_hq(float3 g) { return TO_DISPLAY_GAMMA_HQ(g); }
+float4 to_display_gamma_hq(float4 g) { return TO_DISPLAY_GAMMA_HQ(g); }
+// Function version sRGB ↦ linear
+float  to_linear_gamma_hq(float  g) { return TO_LINEAR_GAMMA_HQ(g); }
+float2 to_linear_gamma_hq(float2 g) { return TO_LINEAR_GAMMA_HQ(g); }
+float3 to_linear_gamma_hq(float3 g) { return TO_LINEAR_GAMMA_HQ(g); }
+float4 to_linear_gamma_hq(float4 g) { return TO_LINEAR_GAMMA_HQ(g); }
 
 // Dither
 namespace BlueNoise
