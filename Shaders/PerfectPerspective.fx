@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.0.0
+/** Perfect Perspective PS, version 5.0.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -861,8 +861,11 @@ technique PerfectPerspective
 		"	   Super-Resolution. Debug options can help you find the proper value.\n"
 		"\n"
 		"The algorithm is part of a scientific article:\n"
-		"	arXiv: 2003.10558 [cs.GR] (2020)\n"
-		"	arXiv: 2010.04077 [cs.GR] (2020)\n"
+		"	arXiv:2003.10558 [cs.GR] (2020)\n"
+		"	arXiv:2010.04077 [cs.GR] (2020)\n"
+#if PATNOMORPHIC_MODE
+		"	arXiv:2102.12682 [cs.GR] (2021)\n"
+#endif
 		"\n"
 		"This effect © 2018 Jakub Maksymilian Fober\n"
 		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
