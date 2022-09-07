@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.3.1
+/** Lens Distortion PS, version 1.3.2
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -454,8 +454,8 @@ void ParallaxPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, out 
 	color = tex2D(BackBuffer, texCoord).rgb;
 	#elif BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	color = to_display_gamma_hq(color); // Correct gamma
-	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 	#endif
+	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 }
 #endif
 
@@ -681,8 +681,8 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	color = to_display_gamma_hq(color); // Correct gamma
-	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 #endif
+	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 }
 
 	/* OUTPUT */

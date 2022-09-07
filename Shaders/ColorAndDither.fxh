@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.1.0
+/** Color conversion matrix and blue noise dither library, version 1.2.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -17,20 +17,19 @@ http://creativecommons.org/licenses/by/3.0/.
 	/* CONSTANTS */
 
 /* Get color conversion matrix
-Usage:
-First define ITU_REC:
+   Usage:
+   First define ITU_REC:
 
-#ifndef ITU_REC
-	#define ITU_REC 601
-#endif
+   #ifndef ITU_REC
+   	#define ITU_REC 601
+   #endif
 
-Then use following functions in code:
+   Then use following functions in code:
 
-mul( YCbCrMtx, color.rgb) will give you float3 color in YCbCr from sRGB input
-mul(   RgbMtx, color.xyz) will give you float3 color in sRGB from YCbCr input
-mul(ChromaMtx, color.rgb) will give you float2 chroma component of YCbCr from sRGB color input
-dot(  LumaMtx, color.rgb) will give you float luma component of YCbCr from sRGB color input
-*/
+   mul( YCbCrMtx, color.rgb) will give you float3 color in YCbCr from sRGB input.
+   mul(   RgbMtx, color.xyz) will give you float3 color in sRGB from YCbCr input.
+   mul(ChromaMtx, color.rgb) will give you float2 chroma component of YCbCr from sRGB color input.
+   dot(  LumaMtx, color.rgb) will give you float luma component of YCbCr from sRGB color input. */
 #ifdef ITU_REC
 	// YCbCr coefficients
 	#if ITU_REC==601
@@ -85,9 +84,8 @@ float2 to_linear_gamma(float2 g) { return TO_LINEAR_GAMMA(g); }
 float3 to_linear_gamma(float3 g) { return TO_LINEAR_GAMMA(g); }
 float4 to_linear_gamma(float4 g) { return TO_LINEAR_GAMMA(g); }
 /* Convert display gamma for all vector types (sRGB)
-Sourced from International Color Consortium, at:
-https://color.org/chardata/rgb/srgb.xalter
-*/
+   Sourced from International Color Consortium, at:
+   https://color.org/chardata/rgb/srgb.xalter */
 #define TO_DISPLAY_GAMMA_HQ(g) ((g)<=0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
 #define TO_LINEAR_GAMMA_HQ(g) ((g)<=0.04049936? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
 // Function version linear ↦ sRGB
@@ -105,9 +103,8 @@ float4 to_linear_gamma_hq(float4 g) { return TO_LINEAR_GAMMA_HQ(g); }
 namespace BlueNoise
 {
 	/* The blue noise texture
-	Obtained under CC0, from
-	https://momentsingraphics.de/BlueNoise.html
-	*/
+	   Obtained under CC0, from:
+	   https://momentsingraphics.de/BlueNoise.html */
 	texture BlueNoiseTex
 	<
 		source = "bluenoise.png";
@@ -127,25 +124,39 @@ namespace BlueNoise
 	};
 
 	/* Dither functions
-	Usage:
-	Transform final color by this function, at the very end of a pixel shader:
-		return BlueNoise::dither(uint2(pos.xy), color);
-	where "pos.xy" is a variable mapped to
-	SV_Position input from a pixel shader.
-	*/
+	   Usage:
+	   Transform final color by this function, at the very end of a pixel shader:
+	   	return BlueNoise::dither(uint2(pos.xy), color);
+	   where "pos.xy" is a variable mapped to
+	   SV_Position input from a pixel shader. */
 	float dither(int2 pixelPos, float gradient)
 	{
+#if BUFFER_COLOR_SPACE < 2 // 8-bit range
 		// Scale to 8-bit range
 		gradient *= 255f;
+#else // 10-bit range
+		// Scale to 10-bit range
+		gradient *= 1023f;
+#endif
 		// Dither quantization
 		return frac(gradient) >= tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX)[0] ?
+#if BUFFER_COLOR_SPACE < 2 // 8-bit range
 			 ceil(gradient)/255f :
 			floor(gradient)/255f;
+#else // 10-bit range
+			 ceil(gradient)/1023f :
+			floor(gradient)/1023f;
+#endif
 	}
 	float3 dither(int2 pixelPos, float3 color)
 	{
+#if BUFFER_COLOR_SPACE < 2 // 8-bit range
 		// Scale to 8-bit range
 		color *= 255f;
+#else // 10-bit range
+		// Scale to 10-bit range
+		color *= 1023f;
+#endif
 		// Get blue noise repeated texture
 		float3 noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX).rgb;
 		// Get threshold for noise amount
@@ -153,15 +164,23 @@ namespace BlueNoise
 		// Dither quantization
 		[unroll]
 		for (uint i=0u; i<3u; i++)
+#if BUFFER_COLOR_SPACE < 2 // 8-bit range
 			color[i] = slope[i] >= noise[i] ? ceil(color[i])/255f : floor(color[i])/255f;
-
+#else // 10-bit range
+			color[i] = slope[i] >= noise[i] ? ceil(color[i])/1023f : floor(color[i])/1023f;
+#endif
 		// Dithered color
 		return color;
 	}
 	float4 dither(int2 pixelPos, float4 color)
 	{
+#if BUFFER_COLOR_SPACE < 2 // 8-bit range
 		// Scale to 8-bit range
 		color *= 255f;
+#else // 10-bit range
+		// Scale to 8-bit range
+		color *= 1023f;
+#endif
 		// Get blue noise repeated texture
 		float4 noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX);
 		// Get threshold for noise amount
@@ -169,8 +188,11 @@ namespace BlueNoise
 		// Dither quantization
 		[unroll]
 		for (uint i=0u; i<4u; i++)
+#if BUFFER_COLOR_SPACE < 2 // 8-bit range
 			color[i] = slope[i] >= noise[i] ? ceil(color[i])/255f : floor(color[i])/255f;
-
+#else // 10-bit range
+			color[i] = slope[i] >= noise[i] ? ceil(color[i])/1023f : floor(color[i])/1023f;
+#endif
 		// Dithered color
 		return color;
 	}

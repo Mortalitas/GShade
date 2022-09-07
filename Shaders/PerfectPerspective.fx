@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.0.2
+/** Perfect Perspective PS, version 5.0.3
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -629,10 +629,8 @@ float3 PerfectPerspectivePS(
 			}
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 			display = to_display_gamma_hq(display); // Manually correct gamma
-			return BlueNoise::dither(uint2(pixelPos.xy), display); // Dither final 8-bit result
-#else
-			return display;
 #endif
+			return BlueNoise::dither(uint2(pixelPos.xy), display); // Dither final 8/10-bit result
 		}
 		else // bypass all effects
 			return tex2D(ReShade::BackBuffer, texCoord).rgb;
@@ -826,11 +824,9 @@ float3 PerfectPerspectivePS(
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Manually correct gamma
 	display = to_display_gamma_hq(display);
-	// Dither final 8-bit result
-	return BlueNoise::dither(uint2(pixelPos.xy), display);
-#else
-	return display;
 #endif
+	// Dither final 8/10-bit result
+	return BlueNoise::dither(uint2(pixelPos.xy), display);
 }
 
 	/* OUTPUT */

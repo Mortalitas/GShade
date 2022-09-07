@@ -1,4 +1,4 @@
-/** Filmic Sharpen PS, version 1.4.0
+/** Filmic Sharpen PS, version 1.4.1
 
 This code © 2018 Jakub Maximilian Fober
 
@@ -136,10 +136,8 @@ void FilmicSharpenPS(float4 pixelPos : SV_Position, float2 UvCoord : TEXCOORD, o
 			color[i] = Overlay(color[i], HighPass);
 	}
 
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-	// Dither final 8-bit result
+	// Dither final 8/10-bit result
 	color = BlueNoise::dither(uint2(pixelPos.xy), color);
-#endif
 }
 
 	/* OUTPUT */
