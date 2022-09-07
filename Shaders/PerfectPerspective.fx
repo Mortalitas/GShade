@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.0.3
+/** Perfect Perspective PS, version 5.0.4
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -119,13 +119,13 @@ uniform float K <
 		"Projection coefficient 'k', represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"Value  Projection      Perception\n"
+		"Perception     Value  Projection\n"
 		"\n"
-		" 1     Rectilinear     straight path\n"
-		" 0.5   Stereographic   shape\n"
-		" 0     Equidistant     distance\n"
-		"-0.5   Equisolid       depth\n"
-		"-1     Orthographic    illumination\n"
+		"straight path   1     Rectilinear\n"
+		"shape           0.5   Stereographic\n"
+		"distance        0     Equidistant\n"
+		"depth          -0.5   Equisolid\n"
+		"illumination   -1     Orthographic\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -141,13 +141,13 @@ uniform float Ky <
 		"Projection coefficient 'k', represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"Value  Projection      Perception\n"
+		"Perception     Value  Projection\n"
 		"\n"
-		" 1     Rectilinear     straight path\n"
-		" 0.5   Stereographic   shape\n"
-		" 0     Equidistant     distance\n"
-		"-0.5   Equisolid       depth\n"
-		"-1     Orthographic    illumination\n"
+		"straight path   1     Rectilinear\n"
+		"shape           0.5   Stereographic\n"
+		"distance        0     Equidistant\n"
+		"depth          -0.5   Equisolid\n"
+		"illumination   -1     Orthographic\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
