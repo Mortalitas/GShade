@@ -1,4 +1,4 @@
-/** Tilt-Shift PS, version 2.0.0
+/** Tilt-Shift PS, version 2.0.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -169,14 +169,14 @@ void TiltShiftPassHorizontalPS(
 	float blurRadius = getBlurRadius(viewCoord);
 	// Get blur pixel scale
 	uint blurPixelCount = uint(ceil(blurRadius*BUFFER_HEIGHT));
-	// Convert to even number and clamp to maximum sample count
-	blurPixelCount = min(
-		blurPixelCount+blurPixelCount%2u, // Convert to even
-		TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
-	);
 	// Blur the background image
 	if (blurPixelCount!=0u && any(K!=0f))
 	{
+		// Convert to even number and clamp to maximum sample count
+		blurPixelCount = min(
+			blurPixelCount+blurPixelCount%2u, // Convert to even
+			TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
+		);
 		// Map blur horizontal radius to texture coordinates
 		blurRadius *= BUFFER_HEIGHT*BUFFER_RCP_WIDTH; // Divide by aspect ratio
 		float rcpWeightStep = rcp(blurPixelCount*2u);
@@ -218,14 +218,14 @@ void TiltShiftPassVerticalPS(
 	float blurRadius = getBlurRadius(viewCoord);
 	// Get blur pixel scale
 	uint blurPixelCount = uint(ceil(blurRadius*BUFFER_HEIGHT));
-	// Convert to even number and clamp to maximum sample count
-	blurPixelCount = min(
-		blurPixelCount+blurPixelCount%2u, // Convert to even
-		TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
-	);
 	// Blur the background image
 	if (blurPixelCount!=0u && any(K!=0f))
 	{
+		// Convert to even number and clamp to maximum sample count
+		blurPixelCount = min(
+			blurPixelCount+blurPixelCount%2u, // Convert to even
+			TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
+		);
 		float rcpWeightStep = rcp(blurPixelCount*2u);
 		float rcpOffsetStep = rcp(blurPixelCount*2u-1u);
 		color = 0f; // Initialize
