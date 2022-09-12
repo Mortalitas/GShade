@@ -43,10 +43,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 namespace DirectionalDepthBlur
 {
 // Uncomment line below for debug info / code / controls
@@ -291,10 +287,11 @@ namespace DirectionalDepthBlur
 	{
 		const float3 lumaDotWeight = float3(0.3, 0.59, 0.11);
 
+		float newFragmentLuma = dot(fragment, lumaDotWeight);
 		averageGained.rgb = CorrectForWhiteAccentuation(averageGained.rgb);
 		// increase luma to the max luma found on the gained taps. This over-boosts the luma on the averageGained, which we'll use to blend
 		// together with the non-boosted fragment using the normalization factor to smoothly merge the highlights.
-		averageGained.rgb *= 1+saturate(maxLuma - dot(fragment, lumaDotWeight));
+		averageGained.rgb *= 1+saturate(maxLuma-newFragmentLuma);
 		fragment = (1-normalizationFactor) * fragment + normalizationFactor * averageGained.rgb;
 		return fragment;
 	}
@@ -309,17 +306,13 @@ namespace DirectionalDepthBlur
 	{
 		VSPIXELINFO pixelInfo;
 		
-		if (id == 2)
-			pixelInfo.texCoords.x = 2.0;
-		else
-			pixelInfo.texCoords.x = 0.0;
-		if (id == 1)
-			pixelInfo.texCoords.y = 2.0;
-		else
-			pixelInfo.texCoords.y = 0.0;
+		pixelInfo.texCoords.x = (id == 2) ? 2.0 : 0.0;
+		pixelInfo.texCoords.y = (id == 1) ? 2.0 : 0.0;
 		pixelInfo.vpos = float4(pixelInfo.texCoords * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
-		sincos(6.28318530717958 * BlurAngle, pixelInfo.pixelDelta.y, pixelInfo.pixelDelta.x);
-		pixelInfo.pixelDelta *= length(BUFFER_PIXEL_SIZE);
+		float angleToUse = 6.28318530717958 * BlurAngle;
+		sincos(angleToUse, pixelInfo.pixelDelta.y, pixelInfo.pixelDelta.x);
+		float pixelSizeLength = length(BUFFER_PIXEL_SIZE);
+		pixelInfo.pixelDelta *= pixelSizeLength;
 		pixelInfo.blurLengthInPixels = length(BUFFER_SCREEN_SIZE) * BlurLength;
 		pixelInfo.focusPlane = (FocusPlane * FocusPlaneMaxRange) / 1000.0; 
 		pixelInfo.focusRange = (FocusRange * FocusPlaneMaxRange) / 1000.0;
@@ -346,7 +339,8 @@ namespace DirectionalDepthBlur
 
 		float filterCircleValue = tex2Dlod(samplerFilterCircle, float4(pixelInfo.texCoords, 0, 0)).r;
 		// pixelInfo.texCoordsScaled.xy is for scaled down UV, pixelInfo.texCoordsScaled.zw is for scaled up UV
-		float4 average = float4(tex2Dlod(samplerDownsampledBackBuffer, float4(pixelInfo.texCoordsScaled.xy, 0, 0)).rgb, 1.0);
+		float3 color = tex2Dlod(samplerDownsampledBackBuffer, float4(pixelInfo.texCoordsScaled.xy, 0, 0)).rgb;
+		float4 average = float4(color, 1.0);
 		float3 averageGained = AccentuateWhites(average.rgb);
 		float2 pixelDelta = BlurType==0 ? pixelInfo.pixelDelta : CalculatePixelDeltas(pixelInfo.texCoords);
 		float maxLuma = dot(averageGained.rgb, lumaDotWeight);
@@ -372,9 +366,11 @@ namespace DirectionalDepthBlur
 			maxLuma = weight > 0 ? max(maxLuma, lumaSample) : maxLuma;
 			alpha = 1.0f;
 		}
+		float distanceToFocusPoint = distance(pixelInfo.texCoords, FocusPoint);
 		fragment.rgb = average.rgb / (average.a + (average.a==0));
-		if (BlurType==0)
-			fragment.rgb = lerp(fragment.rgb, saturate(lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distanceToFocusPoint))), FocusPointBlendFactor);
+		fragment.rgb = BlurType==0 
+							? fragment.rgb
+							: lerp(fragment.rgb, saturate(lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distanceToFocusPoint))), FocusPointBlendFactor);
 		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), highlightGainToUse), BlendFactor);
 		fragment.a = alpha;
 	}
@@ -382,14 +378,16 @@ namespace DirectionalDepthBlur
 
 	void PS_Combiner(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)
 	{
-		const float colorDepth = ReShade::GetLinearizedDepth(pixelInfo.texCoords);
+		float colorDepth = ReShade::GetLinearizedDepth(pixelInfo.texCoords);
 		float4 realColor = tex2Dlod(ReShade::BackBuffer, float4(pixelInfo.texCoords, 0, 0));
 		float filterCircleValue = tex2Dlod(samplerFilterCircle, float4(pixelInfo.texCoords, 0, 0)).r;
 		if(colorDepth <= pixelInfo.focusPlane || (BlurLength <= 0.0))
+		{
+			fragment = realColor;
 			return;
 		}
-		const float4 color = tex2Dlod(samplerBlurDestination, float4(pixelInfo.texCoords, 0, 0));
-		const float rangeEnd = (pixelInfo.focusPlane+pixelInfo.focusRange);
+		float4 color = tex2Dlod(samplerBlurDestination, float4(pixelInfo.texCoords, 0, 0));
+		float rangeEnd = (pixelInfo.focusPlane+pixelInfo.focusRange);
 		float blendFactor = rangeEnd < colorDepth 
 								? 1.0 
 								: smoothstep(0, 1, 1-((rangeEnd-colorDepth) / pixelInfo.focusRange));
@@ -408,7 +406,7 @@ namespace DirectionalDepthBlur
 	void PS_DownSample(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)
 	{
 		// pixelInfo.texCoordsScaled.xy is for scaled down UV, pixelInfo.texCoordsScaled.zw is for scaled up UV
-		const float2 sourceCoords = pixelInfo.texCoordsScaled.zw;
+		float2 sourceCoords = pixelInfo.texCoordsScaled.zw;
 		if(max(sourceCoords.x, sourceCoords.y) > 1.0001)
 		{
 			// source pixel is outside the frame
