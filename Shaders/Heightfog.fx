@@ -35,7 +35,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
-// 15-apr-2022: 	Removed HDR blending as it results in fog that's too dark.
+// 12-sep-2022:		Added opacity max, max blending based on fog texture and evenly distributed fog.
+// 17-apr-2022: 	Removed HDR blending as it results in fog that's too dark.
 // 29-mar-2022: 	Fixed Fog start, it now works as intended, and added smoothing to the fog so it doesn't create hard edges anymore around geometry. 
 //                  Overall it looks better now.
 // 25-mar-2022: 	Added vertical/horizontal cloud control and wider range so more cloud details are possible
@@ -47,7 +48,7 @@
 
 namespace Heightfog
 {
-	#define HEIGHT_FOG_VERSION  "1.0.3"
+	#define HEIGHT_FOG_VERSION  "1.0.4"
 
 // uncomment the line below to enable debug mode
 //#define HF_DEBUG 1
@@ -67,6 +68,14 @@ namespace Heightfog
 		ui_tooltip = "Controls how thick the fog is at its thickest point";
 	> = 1.0;
 	
+	uniform float OveralFogDensityMax <
+		ui_type = "drag";
+		ui_label = "Overall fog density maximum";
+		ui_min = 0.0; ui_max=1.0;
+		ui_step = 0.01;
+		ui_category = "General";
+	> = 1.0;
+
 	uniform float FogStart <
 		ui_category = "General";
 		ui_label = "Fog start";
@@ -111,6 +120,12 @@ namespace Heightfog
 		ui_min = -2; ui_max=2;
 		ui_step = 0.001;
 	> = -0.001;
+
+	uniform bool EvenlyDistributeFog <
+		ui_category = "General";
+		ui_label = "Fog is evenly distributed";
+		ui_tooltip = "If checked it'll evenly distribute fog so fog close by is as thick as further away.";
+	> = false;
 	
 	uniform bool MovingFog <
 		ui_label = "Moving fog";
@@ -127,6 +142,15 @@ namespace Heightfog
 		ui_category = "Cloud configuration";
 	> = 0.4;
 	
+	uniform float FogCloudScaleMax <
+		ui_type = "drag";
+		ui_label = "Cloud scale (Max)";
+		ui_tooltip = "Configures the cloud size of the fog, used for max values";
+		ui_min = 0.0; ui_max=20;
+		ui_step = 0.01;
+		ui_category = "Cloud configuration";
+	> = 1.0;
+
 	uniform float FogCloudScaleVertical <
 		ui_type = "slider";
 		ui_label = "Cloud scale (vertical)";
@@ -163,6 +187,16 @@ namespace Heightfog
 		ui_category = "Cloud configuration";
 	> = float2(0.0, 0.0);
 
+	uniform float2 FogMaxOffset <
+		ui_type = "drag";
+		ui_label = "Max offsets";
+		ui_tooltip = "Configures the offset in the cloud texture of the fog.\nUse this instead of Moving fog to control the cloud position";
+		ui_min = 0.0; ui_max=1;
+		ui_step = 0.01;
+		ui_category = "Cloud configuration";
+	> = float2(0.0, 0.0);
+
+
 #ifdef HF_DEBUG
 	uniform bool DBVal1 <
 		ui_label = "DBVal1";
@@ -175,7 +209,14 @@ namespace Heightfog
 	uniform float DBVal3f <
 		ui_type = "slider";
 		ui_label = "DBVal3f";
-		ui_min = 0.0; ui_max=10;
+		ui_min = 1.0; ui_max=10;
+		ui_step = 0.01;
+		ui_category = "Debug";
+	> = 1.0;
+	uniform float DBVal4f <
+		ui_type = "drag";
+		ui_label = "DBVal4f";
+		ui_min = 0.0; ui_max=100.0;
 		ui_step = 0.01;
 		ui_category = "Debug";
 	> = 1.0;
@@ -238,12 +279,16 @@ namespace Heightfog
 		float speedFactor = 100000.0 * (1-(MovementSpeed-0.01));
 		float fogTextureValueHorizontally = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScaleHorizontal + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
 		float fogTextureValueVertically = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScaleVertical + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		float fogMaxValue = tex2D(SamplerFogNoise, (texcoord + FogMaxOffset) * FogCloudScaleMax + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		
+		
 		distanceToIntersect *= lerp(1.0, fogTextureValueVertically, FogCloudFactor);
 		distanceToIntersect = distanceToIntersect < 0 ? 10000000 : distanceToIntersect; //if negative, we didn't hit it, so set hit distance to infinity
 		float distanceTraveled = (depth - distanceToIntersect);
 		distanceTraveled = saturate(distanceTraveled-saturate(0.5 * (FogStart - distanceToIntersect)));
-		distanceTraveled *= 1 - (1 - distanceTraveled);
-		float lerpFactor = saturate(distanceTraveled * 10.0 * FogCurve * FogDensity * lerp(1.0, fogTextureValueHorizontally, FogCloudFactor));
+		distanceTraveled = EvenlyDistributeFog ? distanceTraveled / 50.0f : (distanceTraveled * (1-(1-distanceTraveled)));
+		distanceTraveled *= fogMaxValue;
+		float lerpFactor = saturate(distanceTraveled * 10.0 * FogCurve * FogDensity * lerp(1.0, fogTextureValueHorizontally, FogCloudFactor)) * OveralFogDensityMax;
 		fragment.rgb = sceneDistance < distanceToIntersect ? originalFragment.rgb 
 														   : lerp(originalFragment.rgb, FogColor.rgb, lerpFactor);
 		fragment.a = 1.0;
