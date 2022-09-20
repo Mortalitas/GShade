@@ -194,7 +194,7 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     color = tex2D(samplerColor, tc);
     float blending_factor;
     if(render_type)
-        blending_factor = lerp(0, abs(amplitude)* lerp(10, 1, abs(amplitude)), blending_amount);
+        blending_factor = min(lerp(0, abs(amplitude)* lerp(10, 1, abs(amplitude)), blending_amount), 1.0);
     else
         blending_factor = blending_amount;
     

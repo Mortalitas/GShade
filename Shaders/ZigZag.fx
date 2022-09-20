@@ -255,7 +255,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
     float blending_factor;
     if(render_type) 
-        blending_factor = lerp(0, percentSquared, blending_amount);
+        blending_factor = min(lerp(0, percentSquared * 10, blending_amount), 1.0);
     else
         blending_factor = blending_amount;
     if (inDepthBounds)

@@ -244,7 +244,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         float blending_factor;
         
         if(render_type)
-            blending_factor = lerp(0, dist_radius * tension_radius * 10, blending_amount);
+            blending_factor = min(lerp(0, tension_radius / dist_radius, blending_amount), 1.0);
         else
             blending_factor = blending_amount;
         

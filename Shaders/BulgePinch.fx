@@ -197,7 +197,7 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
       
     float blending_factor;
     if(render_type)
-        blending_factor = lerp(0, 1 - percent, blending_amount);
+        blending_factor = lerp(0, max(1 - percent, 0), blending_amount);
     else
         blending_factor = blending_amount;
 
