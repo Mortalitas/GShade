@@ -13,6 +13,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * **Black Desert Online**
 * **Cemu**
 * City of Heroes
+* Craftopia
 * DC Universe Online
 * DiRT Rally 2.0
 * Dragon Nest
@@ -20,9 +21,12 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Fallout 76
 * Farming Simulator 2019
 * **Final Fantasy XIV**
+* FiveM
 * Guild Wars 2
 * Initial Drift Online
-* **Marvel’s Avengers**
+* iRacing
+* Java (For Java-based games such as Minecraft)
+* Marvel’s Avengers
 * NeosVR
 * Neverwinter (MMORPG)
 * **No Man’s Sky**
@@ -33,12 +37,13 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Remnant: From the Ashes
 * **Ryujinx**
 * Sea of Thieves
-* **Second Life** (Official, Alchemy, Black Dragon, Firestorm, Singularity Viewer)
+* **Second Life** (Official, Alchemy, Black Dragon, Catznip, Firestorm, Singularity Viewer)
 * Shin Megami Tensei: IMAGINE Online
 * Shroud of the Avatar
 * Star Wars: The Old Republic
 * TERA Online
 * **The Sims 4**
+* Tree of Savior
 * Vintage Story
 * **VRChat**
 * Warframe
