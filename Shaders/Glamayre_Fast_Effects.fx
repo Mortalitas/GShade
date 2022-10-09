@@ -1698,6 +1698,7 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 		 
 		float4 variance = 0; 
 		
+		[unroll]
 		for(i = 0 ; i<(points+3)/4; i++) {
 			variance += (ao_point[i]-adj_point[i])*(ao_point[i]-adj_point[i]);						
 		}		
