@@ -68,7 +68,8 @@ uniform int Precision <
 
 uniform int Color <
 	ui_label = "Keying color";
-	ui_tooltip = "Ultimatte(tm) Super Blue and Green are industry standard colors for chromakey";
+	ui_tooltip = "Ultimatte(tm) Super Blue and Green are industry standard colors for chromakey.\n"
+				 "Ensure that you have the \"Clear Alpha Channel\" option enabled on GShade\'s \"Settings\" tab if you are using \"Alpha Transparency\".";
 	ui_type = "combo";
 	ui_items = "Pure Green (RGB 0,255,0)\0Pure Red (RGB 255,0,255)\0Pure Blue (RGB 0,255,0)\0Super Blue Ultimatte(tm) (RGB 18,46,184)\0Green Ultimatte(tm) (RGB 74,214,92)\0Custom\0Alpha Transparency\0";
 	ui_category = "Color settings";

@@ -68,7 +68,8 @@ uniform int Precision2 <
 
 uniform int Color2 <
 	ui_label = "Keying color";
-	ui_tooltip = "Ultimatte(tm) Super Blue and Green are industry standard colors for chromakey";
+	ui_tooltip = "Ultimatte(tm) Super Blue and Green are industry standard colors for chromakey.\n"
+				 "Ensure that you have the \"Clear Alpha Channel\" option enabled on GShade\'s \"Settings\" tab if you are using \"Alpha Transparency\".";
 	ui_type = "combo";
 	ui_items = "Pure Green (RGB 0,255,0)\0Pure Red (RGB 255,0,255)\0Pure Blue (RGB 0,255,0)\0Super Blue Ultimatte(tm) (RGB 18,46,184)\0Green Ultimatte(tm) (RGB 74,214,92)\0Custom\0Alpha Transparency\0";
 	ui_category = "Color settings";
@@ -184,7 +185,7 @@ float4 Chromakey2PS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 
 	if(bool(CKPass2)) DepthMask = 1.0-DepthMask;
 
-	return float4(lerp(tex2D(ReShade::BackBuffer, texcoord).rgb, Screen, DepthMask), DepthMask > Threshold && Color == 6 ? 0.0 : 1.0);
+	return float4(lerp(tex2D(ReShade::BackBuffer, texcoord).rgb, Screen, DepthMask), DepthMask > Threshold2 && Color2 == 6 ? 0.0 : 1.0);
 }
 
 
