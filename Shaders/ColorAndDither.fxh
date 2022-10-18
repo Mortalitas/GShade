@@ -107,7 +107,7 @@ namespace BlueNoise
 	   https://momentsingraphics.de/BlueNoise.html */
 	texture BlueNoiseTex
 	<
-		source = "bluenoise.png";
+		source = "fubax_bluenoise.png";
 		pooled = true;
 	>{
 		Width = DITHER_SIZE_TEX;
