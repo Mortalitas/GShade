@@ -28,16 +28,16 @@ float3 lumaLines(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : C
 	{
 		OneBitLuma = ceil(1.0 - step(luma, i));
 
-		OneBitLumaShift = ceil(1.0 - step(dot(tex2D(ReShade::BackBuffer, float2(texcoord.x + BUFFER_RCP_WIDTH, texcoord.y)).rgb, 1.0 / 3.0), i));
+		OneBitLumaShift = ceil(1.0 - step(dot(tex2Dlod(ReShade::BackBuffer, float4(texcoord.x + BUFFER_RCP_WIDTH, texcoord.y, 0.0, 0.0)).rgb, 1.0 / 3.0), i));
 		lines += OneBitLumaShift - OneBitLuma;
 
-		OneBitLumaShift = ceil(1.0 - step(dot(tex2D(ReShade::BackBuffer, float2(texcoord.x - BUFFER_RCP_WIDTH, texcoord.y)).rgb, 1.0 / 3.0), i));
+		OneBitLumaShift = ceil(1.0 - step(dot(tex2Dlod(ReShade::BackBuffer, float4(texcoord.x - BUFFER_RCP_WIDTH, texcoord.y, 0.0, 0.0)).rgb, 1.0 / 3.0), i));
 		lines += OneBitLumaShift - OneBitLuma;
 
-		OneBitLumaShift = ceil(1.0 - step(dot(tex2D(ReShade::BackBuffer, float2(texcoord.x, texcoord.y + BUFFER_RCP_HEIGHT)).rgb, 1.0 / 3.0), i));
+		OneBitLumaShift = ceil(1.0 - step(dot(tex2Dlod(ReShade::BackBuffer, float4(texcoord.x, texcoord.y + BUFFER_RCP_HEIGHT, 0.0, 0.0)).rgb, 1.0 / 3.0), i));
 		lines += OneBitLumaShift - OneBitLuma;
 
-		OneBitLumaShift = ceil(1.0 - step(dot(tex2D(ReShade::BackBuffer, float2(texcoord.x, texcoord.y - BUFFER_RCP_HEIGHT)).rgb, 1.0 / 3.0), i));
+		OneBitLumaShift = ceil(1.0 - step(dot(tex2Dlod(ReShade::BackBuffer, float4(texcoord.x, texcoord.y - BUFFER_RCP_HEIGHT, 0.0, 0.0)).rgb, 1.0 / 3.0), i));
 		lines += OneBitLumaShift - OneBitLuma;
 	}
 

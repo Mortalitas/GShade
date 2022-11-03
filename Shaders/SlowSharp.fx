@@ -74,9 +74,10 @@ float3 H(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	float2 p = pix;
 	int width = size;
 
+	[loop]
 	for (int i = -width; i <= width; i++)
 	{
-		s.rgb = tex2D(sTexColor, texcoord + float2(i*p.x, 0)).rgb;
+		s.rgb = tex2Dlod(sTexColor, float4(texcoord + float2(i*p.x, 0), 0.0, 0.0)).rgb;
 		float3 diff3 = abs(s.rgb - color.rgb);
 		float  diff  = dot(0.333, diff3);
 		if( diff < threshold + 0.0001){s1 += s;}
@@ -94,9 +95,10 @@ float3 V(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	float2 p     = pix;
 	int    width = size;
 
+	[loop]
 	for (int i = -width; i <= width; i++)
 	{
-		s.rgb = tex2D(sSsharp_Tex1, texcoord + float2(0, i*p.y)).rgb;
+		s.rgb = tex2Dlod(sSsharp_Tex1, float4(texcoord + float2(0, i*p.y), 0.0, 0.0)).rgb;
 		float3 diff3 = abs(s.rgb - color.rgb);
 		float  diff  = dot(0.333, diff3);
 		if( diff < threshold + 0.0001){s1 += s;}
