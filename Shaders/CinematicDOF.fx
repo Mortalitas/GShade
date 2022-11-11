@@ -106,10 +106,10 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.4"
+	#define CINEMATIC_DOF_VERSION "v1.2.5"
 
 // Uncomment line below for debug info / code / controls
-	#define CD_DEBUG 1
+//	#define CD_DEBUG 1
 
 	//////////////////////////////////////////////////
 	//
@@ -890,7 +890,7 @@ namespace CinematicDOF
 
 	// From: https://www.shadertoy.com/view/4lfGDs
 	// Adjusted for dof usage. Returns in a the # of taps accepted: a tap is accepted if it has a coc in the same plane as center.
-	float4 SharpeningPass_BlurSample(in sampler2D source, in float2 texcoord, in float2 xoff, in float2 yoff, in float centerCoC)
+	float4 SharpeningPass_BlurSample(in sampler2D source, in float2 texcoord, in float2 xoff, in float2 yoff, in float centerCoC, inout float3 minv, inout float3 maxv)
 	{
 		float3 v11 = tex2D(source, texcoord + xoff).rgb;
 		float3 v12 = tex2D(source, texcoord + yoff).rgb;
@@ -902,15 +902,26 @@ namespace CinematicDOF
 		float v12CoC = tex2D(SamplerCDCoC, texcoord + yoff).r;
 		float v21CoC = tex2D(SamplerCDCoC, texcoord - xoff).r;
 		float v22CoC = tex2D(SamplerCDCoC, texcoord - yoff).r;
-		float accepted = sign(centerCoC)==sign(v11CoC) && (abs(centerCoC - v11CoC)<0.01)? 1.0f: 0.0f;
-		accepted+= sign(centerCoC)==sign(v12CoC) && (abs(centerCoC - v11CoC)<0.01) ? 1.0f: 0.0f;
-		accepted+= sign(centerCoC)==sign(v21CoC) && (abs(centerCoC - v21CoC)<0.01) ? 1.0f: 0.0f;
-		accepted+= sign(centerCoC)==sign(v22CoC) && (abs(centerCoC - v22CoC)<0.01) ? 1.0f: 0.0f;
+		float accepted = sign(centerCoC)==sign(v11CoC)? 1.0f: 0.0f;
+		accepted+= sign(centerCoC)==sign(v12CoC)? 1.0f: 0.0f;
+		accepted+= sign(centerCoC)==sign(v21CoC)? 1.0f: 0.0f;
+		accepted+= sign(centerCoC)==sign(v22CoC)? 1.0f: 0.0f;
 	
+		// keep track of min/max for clamping later on so we don't get dark halos.
+		minv = min(minv, v11);
+		minv = min(minv, v12);
+		minv = min(minv, v21);
+		minv = min(minv, v22);
+	
+		maxv = max(maxv, v11);
+		maxv = max(maxv, v12);
+		maxv = max(maxv, v21);
+		maxv = max(maxv, v22);
 		return float4((v11 + v12 + v21 + v22 + 2.0 * center) * 0.166667, accepted);
 	}
 
 	// From: https://www.shadertoy.com/view/4lfGDs
+	// Adjusted for dof usage. Returns in a the # of taps accepted: a tap is accepted if it has a coc in the same plane as center.
 	float3 SharpeningPass_EdgeStrength(in float3 fragment, in sampler2D source, in float2 texcoord, in float sharpeningFactor)
 	{
 		const float spread = 0.5;
@@ -918,23 +929,25 @@ namespace CinematicDOF
 		float2 up    = float2(0.0, offset.y) * spread;
 		float2 right = float2(offset.x, 0.0) * spread;
 
+		float3 minv = 1000000000;
+		float3 maxv = 0;
+
 		float centerCoC = tex2D(SamplerCDCoC, texcoord).r;
-		float4 v12 = SharpeningPass_BlurSample(source, texcoord + up, 			right, up, centerCoC);
-		float4 v21 = SharpeningPass_BlurSample(source, texcoord - right, 		right, up, centerCoC);
-		float4 v22 = SharpeningPass_BlurSample(source, texcoord, 				right, up, centerCoC);
-		float4 v23 = SharpeningPass_BlurSample(source, texcoord + right, 		right, up, centerCoC);
-		float4 v32 = SharpeningPass_BlurSample(source, texcoord - up, 			right, up, centerCoC);
+		float4 v12 = SharpeningPass_BlurSample(source, texcoord + up, 			right, up, centerCoC, minv, maxv);
+		float4 v21 = SharpeningPass_BlurSample(source, texcoord - right, 		right, up, centerCoC, minv, maxv);
+		float4 v22 = SharpeningPass_BlurSample(source, texcoord, 				right, up, centerCoC, minv, maxv);
+		float4 v23 = SharpeningPass_BlurSample(source, texcoord + right, 		right, up, centerCoC, minv, maxv);
+		float4 v32 = SharpeningPass_BlurSample(source, texcoord - up, 			right, up, centerCoC, minv, maxv);
 		// rest of the pixels aren't used
 		float accepted = v12.a + v21.a + v23.a + v32.a;
 		if(accepted < 15.5)
 		{
 			// contains rejected tap, reject the entire operation. This is ok, as it's not necessary for the final pixel color.
-			return fragment;//float3(1.0, 0.0, 0.0);
+			return fragment;
 		}
-		
 		// all pixels accepted, calculated edge strength.
 		float3 laplacian_of_g = v12.rgb + v21.rgb + v22.rgb * -4.0 + v23.rgb + v32.rgb;
-		return fragment - laplacian_of_g.rgb * sharpeningFactor;
+		return clamp(fragment - laplacian_of_g.rgb * sharpeningFactor, minv, maxv);
 	}
 	
 	
@@ -1083,7 +1096,7 @@ namespace CinematicDOF
 		if(HighlightSharpeningFactor > 0.0f)
 		{
 			// sharpen the fragments pre-combining
-			float sharpeningFactor = abs(pixelCoC) * 30.0 * HighlightSharpeningFactor;
+			float sharpeningFactor = abs(pixelCoC) * 80.0 * HighlightSharpeningFactor;		// 80 is a handpicked number, just to get high sharpening.
 			farFragment.rgb = SharpeningPass_EdgeStrength(farFragment.rgb, SamplerCDBuffer3, texcoord, sharpeningFactor * realCoC);
 			nearFragment.rgb = SharpeningPass_EdgeStrength(nearFragment.rgb, SamplerCDBuffer1, texcoord, sharpeningFactor * (abs(pixelCoC) * clamp(0, 1, NearPlaneMaxBlur)));
 		}
