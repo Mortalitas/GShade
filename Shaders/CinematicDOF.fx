@@ -32,7 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
-// 11-nov-2022:    v1.2.6:  Added bokeh sharpening. Not 100% finished.
+// 11-nov-2022:    v1.2.6:  Added bokeh sharpening. 
 // 28-mar-2022:    v1.2.5:  Made the pre-blur pass optional, as it's not really needed anymore for qualities higher than 4 and reasonable blur values. 
 // 15-mar-2022:    v1.2.4:  Corrected the LDR to HDR and HDR to LDR conversion functions so they now apply proper gamma correct and boost, so hue shifts are limited now as long 
 //                          as the highlight boost is kept <= 1 
