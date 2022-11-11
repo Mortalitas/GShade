@@ -33,15 +33,15 @@
 
 #ifndef KeepUIType
 	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
-#endif
 
-#if (__APPLICATION__ == 0x6f24790f || __APPLICATION__ == 0xf133c441) && KeepUIType == 0 // Final Fantasy XIV & The Sims 4
-	#undef KeepUIType
-	#define KeepUIType 1
-// Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
-//#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
-//	#undef KeepUIType
-//	#define KeepUIType 2
+	#if (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
+		#undef KeepUIType
+		#define KeepUIType 1
+	// Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
+//	#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
+//		#undef KeepUIType
+//		#define KeepUIType 2
+	#endif
 #endif
 
 uniform bool bKeepUIOcclude <
