@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 11-nov-2022:    v1.2.6:  Added bokeh sharpening. Not 100% finished.
 // 28-mar-2022:    v1.2.5:  Made the pre-blur pass optional, as it's not really needed anymore for qualities higher than 4 and reasonable blur values. 
 // 15-mar-2022:    v1.2.4:  Corrected the LDR to HDR and HDR to LDR conversion functions so they now apply proper gamma correct and boost, so hue shifts are limited now as long 
 //                          as the highlight boost is kept <= 1 
@@ -103,16 +104,12 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 namespace CinematicDOF
 {
 	#define CINEMATIC_DOF_VERSION "v1.2.4"
 
 // Uncomment line below for debug info / code / controls
-//	#define CD_DEBUG 1
+	#define CD_DEBUG 1
 
 	//////////////////////////////////////////////////
 	//
@@ -224,10 +221,10 @@ namespace CinematicDOF
 		ui_category = "Blur tweaking";
 		ui_label = "Overall blur quality";
 		ui_type = "slider";
-		ui_min = 2.0; ui_max = 12.0;
+		ui_min = 2.0; ui_max = 20.0;
 		ui_tooltip = "The number of rings to use in the disc-blur algorithm. The more rings the better\nthe blur results, but also the slower it will get.";
 		ui_step = 1;
-	> = 5.0;
+	> = 7.0;
 	uniform float BokehBusyFactor <
 		ui_category = "Blur tweaking";
 		ui_label="Bokeh busy factor";
@@ -272,7 +269,7 @@ namespace CinematicDOF
 	uniform float HighlightBoost <
 		ui_category = "Highlight tweaking";
 		ui_label="Highlight boost factor";
-		ui_type = "drag";
+		ui_type = "slider";
 		ui_min = 0.00; ui_max = 1.00;
 		ui_tooltip = "Will boost/dim the highlights a small amount";
 		ui_step = 0.001;
@@ -280,11 +277,20 @@ namespace CinematicDOF
 	uniform float HighlightGammaFactor <
 		ui_category = "Highlight tweaking";
 		ui_label="Highlight gamma factor";
-		ui_type = "drag";
+		ui_type = "slider";
 		ui_min = 0.001; ui_max = 5.00;
 		ui_tooltip = "Controls the gamma factor to boost/dim highlights\n2.2, the default, gives natural colors and brightness";
 		ui_step = 0.01;
 	> = 2.2;
+	uniform float HighlightSharpeningFactor <
+		ui_category = "Highlight tweaking";
+		ui_label="Highlight sharpening factor";
+		ui_type = "slider";
+		ui_min = 0.000; ui_max = 1.00;
+		ui_tooltip = "Controls the sharpness of the bokeh highlight edges.";
+		ui_step = 0.01;
+	> = 0.0;
+	
 	// ------------- ADVANCED SETTINGS
 	uniform bool MitigateUndersampling <
 		ui_category = "Advanced";
@@ -313,18 +319,18 @@ namespace CinematicDOF
 	uniform float DBVal4f <
 		ui_category = "Debugging";
 		ui_type = "slider";
-		ui_min = 0.00; ui_max = 10.00;
+		ui_min = 0.00; ui_max = 20.00;
 		ui_step = 0.01;
 	> = 1.0;
 	uniform float DBVal5f <
 		ui_category = "Debugging";
-		ui_type = "drag";
-		ui_min = 0.00; ui_max = 1.00;
+		ui_type = "slider";
+		ui_min = -1.00; ui_max = 1.00;
 		ui_step = 0.01;
-	> = 1.0;
+	> = 0.0;
 	uniform int DBVal5i <
 		ui_category = "Debugging";
-		ui_type = "drag";
+		ui_type = "slider";
 		ui_min = 0; ui_max = 255;
 	> = 235;
 	uniform bool ShowNearCoCTilesBlurredR <
@@ -876,12 +882,62 @@ namespace CinematicDOF
 		toFill.pixelSizeLength = length(BUFFER_PIXEL_SIZE);
 		
 		// HyperFocal calculation, see https://photo.stackexchange.com/a/33898. Useful to calculate the edges of the depth of field area
-		const float hyperFocal = (FocalLength * FocalLength) / (FNumber * SENSOR_SIZE);
-		const float hyperFocalFocusDepthFocus = (hyperFocal * toFill.focusDepthInMM);
-		toFill.nearPlaneInMM = hyperFocalFocusDepthFocus / (hyperFocal + (toFill.focusDepthInMM - FocalLength));	// in mm
+		float hyperFocal = (FocalLength * FocalLength) / (FNumber * SENSOR_SIZE);
+		float hyperFocalFocusDepthFocus = (hyperFocal * toFill.focusDepthInMM);
+		toFill.nearPlaneInMM = (hyperFocalFocusDepthFocus / (hyperFocal + (toFill.focusDepthInMM - FocalLength)));	// in mm
 		toFill.farPlaneInMM = hyperFocalFocusDepthFocus / (hyperFocal - (toFill.focusDepthInMM - FocalLength));		// in mm
 	}
 
+	// From: https://www.shadertoy.com/view/4lfGDs
+	// Adjusted for dof usage. Returns in a the # of taps accepted: a tap is accepted if it has a coc in the same plane as center.
+	float4 SharpeningPass_BlurSample(in sampler2D source, in float2 texcoord, in float2 xoff, in float2 yoff, in float centerCoC)
+	{
+		float3 v11 = tex2D(source, texcoord + xoff).rgb;
+		float3 v12 = tex2D(source, texcoord + yoff).rgb;
+		float3 v21 = tex2D(source, texcoord - xoff).rgb;
+		float3 v22 = tex2D(source, texcoord - yoff).rgb;
+		float3 center = tex2D(source, texcoord).rgb;
+		
+		float v11CoC = tex2D(SamplerCDCoC, texcoord + xoff).r;
+		float v12CoC = tex2D(SamplerCDCoC, texcoord + yoff).r;
+		float v21CoC = tex2D(SamplerCDCoC, texcoord - xoff).r;
+		float v22CoC = tex2D(SamplerCDCoC, texcoord - yoff).r;
+		float accepted = sign(centerCoC)==sign(v11CoC) && (abs(centerCoC - v11CoC)<0.01)? 1.0f: 0.0f;
+		accepted+= sign(centerCoC)==sign(v12CoC) && (abs(centerCoC - v11CoC)<0.01) ? 1.0f: 0.0f;
+		accepted+= sign(centerCoC)==sign(v21CoC) && (abs(centerCoC - v21CoC)<0.01) ? 1.0f: 0.0f;
+		accepted+= sign(centerCoC)==sign(v22CoC) && (abs(centerCoC - v22CoC)<0.01) ? 1.0f: 0.0f;
+	
+		return float4((v11 + v12 + v21 + v22 + 2.0 * center) * 0.166667, accepted);
+	}
+
+	// From: https://www.shadertoy.com/view/4lfGDs
+	float3 SharpeningPass_EdgeStrength(in float3 fragment, in sampler2D source, in float2 texcoord, in float sharpeningFactor)
+	{
+		const float spread = 0.5;
+		float2 offset = float2(1.0, 1.0) / BUFFER_SCREEN_SIZE.xy;
+		float2 up    = float2(0.0, offset.y) * spread;
+		float2 right = float2(offset.x, 0.0) * spread;
+
+		float centerCoC = tex2D(SamplerCDCoC, texcoord).r;
+		float4 v12 = SharpeningPass_BlurSample(source, texcoord + up, 			right, up, centerCoC);
+		float4 v21 = SharpeningPass_BlurSample(source, texcoord - right, 		right, up, centerCoC);
+		float4 v22 = SharpeningPass_BlurSample(source, texcoord, 				right, up, centerCoC);
+		float4 v23 = SharpeningPass_BlurSample(source, texcoord + right, 		right, up, centerCoC);
+		float4 v32 = SharpeningPass_BlurSample(source, texcoord - up, 			right, up, centerCoC);
+		// rest of the pixels aren't used
+		float accepted = v12.a + v21.a + v23.a + v32.a;
+		if(accepted < 15.5)
+		{
+			// contains rejected tap, reject the entire operation. This is ok, as it's not necessary for the final pixel color.
+			return fragment;//float3(1.0, 0.0, 0.0);
+		}
+		
+		// all pixels accepted, calculated edge strength.
+		float3 laplacian_of_g = v12.rgb + v21.rgb + v22.rgb * -4.0 + v23.rgb + v32.rgb;
+		return fragment - laplacian_of_g.rgb * sharpeningFactor;
+	}
+	
+	
 	//////////////////////////////////////////////////
 	//
 	// Vertex Shaders
@@ -1021,8 +1077,16 @@ namespace CinematicDOF
 		originalFragment.rgb = AccentuateWhites(originalFragment.rgb);
 		float4 farFragment = tex2D(SamplerCDBuffer3, texcoord);
 		float4 nearFragment = tex2D(SamplerCDBuffer1, texcoord);
+		float pixelCoC = tex2D(SamplerCDCoC, texcoord).r;
 		// multiply with far plane max blur so if we need to have 0 blur we get full res 
-		const float realCoC = tex2D(SamplerCDCoC, texcoord).r * clamp(0, 1, FarPlaneMaxBlur);
+		float realCoC = pixelCoC * clamp(0, 1, FarPlaneMaxBlur);
+		if(HighlightSharpeningFactor > 0.0f)
+		{
+			// sharpen the fragments pre-combining
+			float sharpeningFactor = abs(pixelCoC) * 30.0 * HighlightSharpeningFactor;
+			farFragment.rgb = SharpeningPass_EdgeStrength(farFragment.rgb, SamplerCDBuffer3, texcoord, sharpeningFactor * realCoC);
+			nearFragment.rgb = SharpeningPass_EdgeStrength(nearFragment.rgb, SamplerCDBuffer1, texcoord, sharpeningFactor * (abs(pixelCoC) * clamp(0, 1, NearPlaneMaxBlur)));
+		}
 		// all CoC's > 0.1 are full far fragment, below that, we're going to blend. This avoids shimmering far plane without the need of a 
 		// 'magic' number to boost up the alpha.
 		const float blendFactor = (realCoC > 0.1) ? 1 : smoothstep(0, 1, (realCoC / 0.1));
@@ -1056,7 +1120,8 @@ namespace CinematicDOF
 		average += tex2D(SamplerCDBuffer2, texcoord + coord.xy);
 		fragment = average / 16;
 	}
-	
+
+
 	// Pixel shader which performs the first part of the gaussian post-blur smoothing pass, to iron out undersampling issues with the disc blur
 	void PS_PostSmoothing1(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target0)
 	{
@@ -1135,9 +1200,6 @@ namespace CinematicDOF
 			}
 		}
 
-#if GSHADE_DITHER
-		fragment.rgb = fragment.rgb + TriDither(fragment.rgb, focusInfo.texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 	}
 
 	//////////////////////////////////////////////////
