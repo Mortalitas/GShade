@@ -167,7 +167,7 @@ namespace Droste
 		float aar = saturate(ri - 0.4) + 0.15; //saturate((sqrt(nx_2 * nx_2 + ny_2 * ny_2)) / d_normal_2+0.15); // TODO: remove shitty version and make it usable with a smooth one
 		float r = aar;						   // TODO: smaller r reduces visual look although it should increase it - fix one day
 		float arr = (1 - r) * ar + r;
-		float d_final = sqrt(new_x * new_x + new_y * new_y) / pow(pow(abs(new_x) / arr * 2, 2.0 / r) + pow(abs(new_y) * 2, 2.0 / r), r / 2.0);
+		float d_final = sqrt(new_x * new_x + new_y * new_y) / pow(pow(max(abs(new_x) / arr * 2, 0.0), 2.0 / r) + pow(abs(new_y) * 2, 2.0 / r), r / 2.0);
 		//TODO: See if the projection is correct in projectionspace (it once worked in screenspace, so fix it!!!!)
 		float buffer_len = d_normal_2;
 		//TODO: fix rectangle distortions
