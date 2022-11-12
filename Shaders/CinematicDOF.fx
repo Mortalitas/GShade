@@ -106,7 +106,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.5"
+	#define CINEMATIC_DOF_VERSION "v1.2.6"
 
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
