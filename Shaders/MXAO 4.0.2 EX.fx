@@ -336,6 +336,7 @@ void TesselateNormals(inout float3 N, in float3 P, in MXAO_VSOUT MXAO)
         const float2 searchRadiusScaled = 0.018 / P.z * float2(1.0,BUFFER_ASPECT_RATIO);
         float3 likelyFace[4] = {N,N,N,N};
 
+		[unroll]
         for(int iDirection=0; iDirection < 4; iDirection++)
         {
                 float2 cdir;
@@ -441,7 +442,6 @@ void PS_Culling(in MXAO_VSOUT MXAO, out float4 color : SV_Target0)
 
         Dir *= scaledRadius;       
 
-        [loop]
         for(int iSample=0; iSample < MXAO.samples; iSample++)
         {                
                 sampleUV = MXAO.scaledcoord.xy + Dir.xy * float2(1.0, BUFFER_ASPECT_RATIO) * (iSample + randStep);   

@@ -171,6 +171,7 @@ float4 CalcMotionLayer(VSOUT i, int mip_gcurr, float2 searchStart, sampler sFeat
 
 	i.uv -= texelsize * BLOCK_SIZE_HALF; //since we only use to sample the blocks now, offset by half a block so we can do it easier inline
 
+	[unroll]
 	for(uint k = 0; k < BLOCK_SIZE * BLOCK_SIZE; k++)
 	{
 		float2 tuv = i.uv + float2(k / BLOCK_SIZE, k % BLOCK_SIZE) * texelsize;

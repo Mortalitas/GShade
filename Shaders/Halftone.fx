@@ -157,7 +157,7 @@ void OutputPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float4 
 			[unroll]
 			for(int j = 1; j <= 2; j++)
 			{
-				float2 offset = (float2(i, j) / 3) - 0.5;
+				float2 offset = (float2(i, j) / 3.0) - 0.5;
 				offset *= float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 				output += CMYKSample(texcoord + offset, scale);
 			}

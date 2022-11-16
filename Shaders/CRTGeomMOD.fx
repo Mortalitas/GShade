@@ -1210,8 +1210,8 @@ float3 BloomCommon(sampler source, float4 pos, float2 texcoord, float2 dir)
 	[loop]
 	for(int i = 1; i < 3; ++i)
 	{
-		color += tex2D(source, texcoord + offset[i] * dir * BloomBlurOffset).rgb * weight[i];
-		color += tex2D(source, texcoord - offset[i] * dir * BloomBlurOffset).rgb * weight[i];
+		color += tex2Dlod(source, float4(texcoord + offset[i] * dir * BloomBlurOffset, 0.0, 0.0)).rgb * weight[i];
+		color += tex2Dlod(source, float4(texcoord - offset[i] * dir * BloomBlurOffset, 0.0, 0.0)).rgb * weight[i];
 	}
 
 	return color;

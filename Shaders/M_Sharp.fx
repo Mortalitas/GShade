@@ -167,6 +167,7 @@ float4 MCAS(float2 texcoord)
 	[unroll]
 	for(int i = -1; i <= 1; ++i) 
 	{
+		[unroll]
 		for(int j = -1; j <= 1; ++j)
 		{		
 		  const float2 offset = float2(i, j);

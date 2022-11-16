@@ -26,7 +26,7 @@ uniform int stats
 
 #include "ReShade.fxh"
 #include "DrawText.fxh"
-#define get_pixel(x) tex2D(ReShade::BackBuffer, ((x) + 0.5) * BUFFER_PIXEL_SIZE)
+#define get_pixel(x) tex2Dlod(ReShade::BackBuffer, float4(((x) + 0.5) * BUFFER_PIXEL_SIZE, 0.0, 0.0))
 
 void PixelatePass(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
