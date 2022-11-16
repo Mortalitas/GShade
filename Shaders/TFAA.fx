@@ -175,10 +175,14 @@ float4 sampleBicubic(sampler2D source, float2 texcoord)
 //Sample Wrapper
 float4 sampleHistory(sampler2D historySampler, float2 texcoord)
 {
-	[branch] if (UI_USE_CUBIC_HISTORY)
+	// DirectX 9 doesn't support branching here.
+#if __RENDERER__ != 0x9000
+	[branch]
+#endif
+	if (UI_USE_CUBIC_HISTORY)
 		return sampleBicubic(historySampler, texcoord);
 	else
-		return tex2D(historySampler, texcoord);
+		return tex2Dlod(historySampler, float4(texcoord, 0.0, 0.0));
 }
 
 
@@ -234,7 +238,7 @@ float4 TaaPass(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_
 	//splittinge the cross and corner pixels because we might not need both
 	[unroll] for (int i = 0; i < 4; i++)
 	{
-		float4 nSample = tex2D(smpInCurBackup, texcoord + (nOffsets[i] * sampleDist));
+		float4 nSample = tex2Dlod(smpInCurBackup, float4(texcoord + (nOffsets[i] * sampleDist), 0.0, 0.0));
 		neigborhood[i] = nSample;
 		summedRGB += nSample;
 
@@ -251,13 +255,17 @@ float4 TaaPass(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_
 		nCrossMax = max(cvt, nCrossMax);
 	}
 
-	[branch] if (UI_CLAMP_PATTERN != 0)	
+	// DirectX 9 doesn't support branching here.
+#if __RENDERER__ != 0x9000
+	[branch]
+#endif
+	if (UI_CLAMP_PATTERN != 0)	
 	{
 		float4 nCornersMin = cvtColorCur;
 		float4 nCornersMax = cvtColorCur;
 		[unroll] for (int i = 4; i < 8; i++)
 		{
-			float4 nSample = tex2D(smpInCurBackup, texcoord + (nOffsets[i] * sampleDist));
+			float4 nSample = tex2Dlod(smpInCurBackup, float4(texcoord + (nOffsets[i] * sampleDist), 0.0, 0.0));
 			neigborhood[i] = nSample;
 			summedRGB += nSample;
 
@@ -346,7 +354,11 @@ float4 TaaPass(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_
 	//blending
 	float3 blendedColor = lerp(colorLast, sharpened, weight);
 	// if ui clamp type debug
-	[branch] if (UI_CLAMP_TYPE == 2)
+	// DirectX 9 doesn't support branching here.
+#if __RENDERER__ != 0x9000
+	[branch]
+#endif
+	if (UI_CLAMP_TYPE == 2)
 		return float4(blendedColor, 0);
 
 
@@ -360,7 +372,13 @@ float4 TaaPass(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_
 			break;
 		case 1:	//clamp var/sd
 			float var = cvtColorCur.r - mean.r;
-			[unroll] for (int i = 0; i < (UI_CLAMP_PATTERN == 0 ? 4 : 8); i++)
+			// DirectX 9 doesn't support unrolling here.
+#if __RENDERER__ != 0x9000
+			[unroll]
+#else
+			[loop]
+#endif
+			for (int i = 0; i < (UI_CLAMP_PATTERN == 0 ? 4 : 8); i++)
 				var += cvtRgb2whatever(neigborhood[i].rgb).r - mean.r;
 			float sd = sqrt(var);
 			varMin = mean.r - sd;

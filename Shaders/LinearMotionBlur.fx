@@ -72,9 +72,10 @@ float4 BlurPS(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_T
     float2 sampleDist = blurDist / float(UI_BLUR_SAMPLES_MAX);
     int halfSamples = float(UI_BLUR_SAMPLES_MAX) / 2.0;
 
-    float4 summedSamples = 0.0; 
+    float4 summedSamples = 0.0;
+	[loop]
     for(int s = 0; s < UI_BLUR_SAMPLES_MAX; s++)
-        summedSamples += tex2D(samplerColor, texcoord - sampleDist * (s - halfSamples)) / UI_BLUR_SAMPLES_MAX;
+        summedSamples += tex2Dlod(samplerColor, float4(texcoord - sampleDist * (s - halfSamples), 0.0, 0.0)) / UI_BLUR_SAMPLES_MAX;
 
     return summedSamples;
 }
