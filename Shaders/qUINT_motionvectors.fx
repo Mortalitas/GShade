@@ -132,8 +132,8 @@ sampler sMotionTexCur0              { Texture = MotionTexCur0;};
 
 
 
-texture JitterTex       < source = "mv_bluenoise.png"; > { Width = 32; Height = 32; Format = RGBA8; };
-sampler	sJitterTex      { Texture = JitterTex; AddressU = WRAP; AddressV = WRAP; };
+texture MVJitterTex       < source = "mv_bluenoise.png"; > { Width = 32; Height = 32; Format = RGBA8; };
+sampler	sJitterTex      { Texture = MVJitterTex; AddressU = WRAP; AddressV = WRAP; };
 
 struct VSOUT
 {
