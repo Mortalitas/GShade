@@ -35,6 +35,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 17-nov-2022:		Added filter circle support so you can define an area where the fog should appear
 // 12-sep-2022:		Added opacity max, max blending based on fog texture and evenly distributed fog.
 // 17-apr-2022: 	Removed HDR blending as it results in fog that's too dark.
 // 29-mar-2022: 	Fixed Fog start, it now works as intended, and added smoothing to the fog so it doesn't create hard edges anymore around geometry. 
@@ -48,7 +49,7 @@
 
 namespace Heightfog
 {
-	#define HEIGHT_FOG_VERSION  "1.0.4"
+	#define HEIGHT_FOG_VERSION  "1.0.5"
 
 // uncomment the line below to enable debug mode
 //#define HF_DEBUG 1
@@ -195,7 +196,56 @@ namespace Heightfog
 		ui_step = 0.01;
 		ui_category = "Cloud configuration";
 	> = float2(0.0, 0.0);
-
+	
+	uniform bool UseFilterCircle <
+		ui_category = "Filter circle edge filtering";
+		ui_tooltip = "Controls whether the edge filter is active or not";
+	> = false;
+	uniform bool FocusPointViewFilterCircleOnMouseDown <
+		ui_category = "Filter circle edge filtering";
+		ui_label = "Show filter circle on mouse down";
+		ui_tooltip = "If checked, an overlay is shown with the current filter circle.\Red means no fog will be present,\ntransparent means fog will be present";
+	> = false;
+	uniform float2 FilterCircleCenterPoint <
+		ui_category = "Filter circle edge filtering";
+		ui_label = "Center point";
+		ui_type = "drag";
+		ui_step = 0.001;
+		ui_min = 0.000; ui_max = 1.000;
+		ui_tooltip = "The X and Y coordinates of the filter circle center\n0,0 is the upper left corner, and 0.5, 0.5 is at the center of the screen.";
+	> = float2(0.5, 0.5);
+	uniform float FilterCircleRadius <
+		ui_category = "Filter circle edge filtering";
+		ui_label = "Radius";
+		ui_type = "drag";
+		ui_min = 0.000; ui_max = 2.000;
+		ui_step = 0.001;
+		ui_tooltip = "The radius of the filter circle.\nAll points outside this circle are not or only partially fogged";
+	> = 0.1;
+	uniform float2 FilterCircleDeformFactors <
+		ui_category = "Filter circle edge filtering";
+		ui_label = "Deform factors";
+		ui_type = "drag";
+		ui_min = 0.000; ui_max = 2.000;
+		ui_step = 0.001;
+		ui_tooltip = "The radius factors for width and height of the filter circle.\n1.0 means no deformation, another value means deformation in that direction";
+	> = float2(1.0, 1.0);
+	uniform float FilterCircleRotationFactor <
+		ui_category = "Filter circle edge filtering";
+		ui_label = "Rotation factor";
+		ui_type = "drag";
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The rotation factor of the filter circle";
+	> = 0.0;
+	uniform float FilterCircleFeather <
+		ui_category = "Filter circle edge filtering";
+		ui_label = "Feather";
+		ui_type = "drag";
+		ui_min = 0.000; ui_max = 1.000;
+		ui_step = 0.001;
+		ui_tooltip = "The feather area within the filter circle.\n1.0 means the whole inner area is feathered,\n0.0 means no feather area.";
+	> = 0.1;
 
 #ifdef HF_DEBUG
 	uniform bool DBVal1 <
@@ -223,7 +273,8 @@ namespace Heightfog
 #endif
 
 	uniform float timer < source = "timer"; >; // Time in milliseconds it took for the last frame 
-
+	uniform bool LeftMouseDown < source = "mousebutton"; keycode = 0; toggle = false; >;
+	
 #ifndef M_PI
 	#define M_PI 3.1415927
 #endif
@@ -237,8 +288,26 @@ namespace Heightfog
 	#define BUFFER_ASPECT_RATIO2     float2(1.0, BUFFER_WIDTH * BUFFER_RCP_HEIGHT)
 
 	texture texFogNoise				< source = "fognoise.jpg"; > { Width = 512; Height = 512; Format = RGBA8; };
-	sampler SamplerFogNoise				{ Texture = texFogNoise; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
+	texture texFilterCircle { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16F; };
 
+	sampler SamplerFogNoise				{ Texture = texFogNoise; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
+	sampler samplerFilterCircle { Texture = texFilterCircle; };
+		
+	struct VSPIXELINFO
+	{
+		float4 vpos : SV_Position;
+		float2 texCoords : TEXCOORD0;
+		float2x2 rotationMatrix: TEXCOORD6;
+		float2 centerDisplacementDelta: TEXCOORD8;
+		float featherRadius: TEXCOORD9;
+	};
+	
+	//////////////////////////////////////////////////
+	//
+	// Functions
+	//
+	//////////////////////////////////////////////////
+	
 	float3 uvToProj(float2 uv, float z)
 	{
 		//optimized math to simplify matrix mul
@@ -254,12 +323,40 @@ namespace Heightfog
 	{
 		return -(dot(ro,p.xyz)+p.w)/dot(rd,p.xyz);
 	}
-
-
-	void PS_FogIt(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 fragment : SV_Target0)
+	
+	//////////////////////////////////////////////////
+	//
+	// Vertex Shaders
+	//
+	//////////////////////////////////////////////////
+	
+	VSPIXELINFO VS_PixelInfo(in uint id : SV_VertexID)
 	{
-		float4 originalFragment = tex2D(ReShade::BackBuffer, texcoord);
-		float depth = lerp(1.0, 1000.0, ReShade::GetLinearizedDepth(texcoord))/1000.0;
+		VSPIXELINFO pixelInfo;
+		
+		pixelInfo.texCoords.x = (id == 2) ? 2.0 : 0.0;
+		pixelInfo.texCoords.y = (id == 1) ? 2.0 : 0.0;
+		pixelInfo.vpos = float4(pixelInfo.texCoords * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
+		// rotation matrix for focus point filter circle rotation
+		float2 sincosFactor = float2(0,0);
+		sincos(6.28318530717958 * FilterCircleRotationFactor, sincosFactor.x, sincosFactor.y);
+		pixelInfo.rotationMatrix = float2x2(sincosFactor.y, sincosFactor.x, -sincosFactor.x, sincosFactor.y);
+		// displacement delta for focus point to properly apply deformation
+		pixelInfo.centerDisplacementDelta = FilterCircleCenterPoint - float2(0.5, 0.5);
+		pixelInfo.featherRadius = FilterCircleRadius - (FilterCircleRadius * FilterCircleFeather); 
+		return pixelInfo;
+	}
+	
+	//////////////////////////////////////////////////
+	//
+	// PIXEL Shaders
+	//
+	//////////////////////////////////////////////////
+	
+	void PS_FogIt(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)
+	{
+		float4 originalFragment = tex2D(ReShade::BackBuffer, pixelInfo.texCoords);
+		float depth = lerp(1.0, 1000.0, ReShade::GetLinearizedDepth(pixelInfo.texCoords))/1000.0;
 		float phi = PlaneOrientation.x * M_2PI; //I can never tell longitude and latitude apart... let's use wikipedia definitions
 		float theta = PlaneOrientation.y * M_PI;
 
@@ -270,28 +367,67 @@ namespace Heightfog
 		planeNormal = normalize(planeNormal); //for sanity
 
 		float4 iqplane = float4(planeNormal, PlaneZ);	//anchor point is _apparently_ ray dir * this length in IQ formula
-		float3 scenePosition = uvToProj(texcoord, depth); 
+		float3 scenePosition = uvToProj(pixelInfo.texCoords, depth); 
 		float sceneDistance = length(scenePosition); //actually length(position - camera) but as camera is 0 0 0, it's just length(position)
 		float3 rayDirection = scenePosition / sceneDistance; //normalize(scenePosition)
 
 		//camera at 0 0 0, so we pass 0.0 for ray origin (the first argument)
 		float distanceToIntersect = planeIntersect(0, rayDirection, iqplane); //produces negative numbers if looking away from camera - makes sense as if you look away, you need to go _backwards_ i.e. in negative view direction
 		float speedFactor = 100000.0 * (1-(MovementSpeed-0.01));
-		float fogTextureValueHorizontally = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScaleHorizontal + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
-		float fogTextureValueVertically = tex2D(SamplerFogNoise, (texcoord + FogCloudOffset) * FogCloudScaleVertical + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
-		float fogMaxValue = tex2D(SamplerFogNoise, (texcoord + FogMaxOffset) * FogCloudScaleMax + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		float fogTextureValueHorizontally = tex2D(SamplerFogNoise, (pixelInfo.texCoords + FogCloudOffset) * FogCloudScaleHorizontal + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		float fogTextureValueVertically = tex2D(SamplerFogNoise, (pixelInfo.texCoords + FogCloudOffset) * FogCloudScaleVertical + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
+		float fogMaxValue = tex2D(SamplerFogNoise, (pixelInfo.texCoords + FogMaxOffset) * FogCloudScaleMax + (MovingFog ? frac(timer / speedFactor) : 0.0)).r;
 		
-		
-		distanceToIntersect *= lerp(1.0, fogTextureValueVertically, FogCloudFactor);
 		distanceToIntersect = distanceToIntersect < 0 ? 10000000 : distanceToIntersect; //if negative, we didn't hit it, so set hit distance to infinity
+		distanceToIntersect *= lerp(1.0, fogTextureValueVertically, FogCloudFactor);
 		float distanceTraveled = (depth - distanceToIntersect);
 		distanceTraveled = saturate(distanceTraveled-saturate(0.5 * (FogStart - distanceToIntersect)));
-		distanceTraveled = EvenlyDistributeFog ? distanceTraveled / 50.0f : (distanceTraveled * (1-(1-distanceTraveled)));
+		distanceTraveled = EvenlyDistributeFog ? distanceTraveled / 50.0f : (distanceTraveled * distanceTraveled);
 		distanceTraveled *= fogMaxValue;
-		float lerpFactor = saturate(distanceTraveled * 10.0 * FogCurve * FogDensity * lerp(1.0, fogTextureValueHorizontally, FogCloudFactor)) * OveralFogDensityMax;
+		float filterCircleValue = UseFilterCircle ? tex2Dlod(samplerFilterCircle, float4(pixelInfo.texCoords, 0, 0)).r : 0.0f;
+		float lerpFactor = saturate(distanceTraveled * 10.0 * FogCurve * FogDensity * lerp(1.0, fogTextureValueHorizontally, FogCloudFactor)) * OveralFogDensityMax * saturate(1-filterCircleValue);
 		fragment.rgb = sceneDistance < distanceToIntersect ? originalFragment.rgb 
 														   : lerp(originalFragment.rgb, FogColor.rgb, lerpFactor);
 		fragment.a = 1.0;
+		
+		if(FocusPointViewFilterCircleOnMouseDown && LeftMouseDown)
+		{
+			fragment.rgb = lerp(fragment.rgb, float3(1.0f, 0.0f, 0.0f), filterCircleValue * 0.7f);
+		}
+	}
+	
+		
+	
+	void PS_CreateFilterCircle(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)
+	{
+		fragment = 0.0f;
+		// apply deform factors to the texcoord
+		// rotate the texcoord with the matrix we constructed so a pixel which normally wouldn't end up in the filter circle will potentially do now
+		// so we rotate the frame instead of the circle (as we do cheap deformation with a single vector)
+		float2 texcoordCenterNormalized = mul(((pixelInfo.texCoords-pixelInfo.centerDisplacementDelta) - 0.5), pixelInfo.rotationMatrix) * FilterCircleDeformFactors;
+		float2 focusPointCenterNormalized = (FilterCircleCenterPoint-pixelInfo.centerDisplacementDelta) - 0.5;
+		float texcoordDistance = distance(texcoordCenterNormalized, focusPointCenterNormalized);
+		// if the distance is larger than the filter circle radius, blur is always done. If it's smaller, we have to
+		// take into account the feather width. So radius-feather is the feather band
+		if(texcoordDistance < pixelInfo.featherRadius)
+		{
+			// inside the feather band start, so always transparent
+			fragment = 0.0f;
+		}
+		else
+		{
+			if(texcoordDistance > FilterCircleRadius)
+			{
+				// outside the filter circle
+				fragment = 1.0f;
+			}
+			else
+			{
+				// within the featherband
+				float featherbandWidth = FilterCircleRadius - pixelInfo.featherRadius;
+				fragment = lerp(0.0f, 1.0f, (texcoordDistance - pixelInfo.featherRadius) / (featherbandWidth + (featherbandWidth==0)));
+			}
+		}
 	}
 	
 	technique HeightFog
@@ -303,6 +439,7 @@ namespace Heightfog
 			"Height Fog was written by Marty McFly and Otis_Inf"; >
 #endif
 	{
-		pass ApplyFog { VertexShader = PostProcessVS; PixelShader = PS_FogIt; }
+		pass CreateFilterCircle { VertexShader = VS_PixelInfo; PixelShader = PS_CreateFilterCircle; RenderTarget = texFilterCircle; }
+		pass ApplyFog { VertexShader = VS_PixelInfo; PixelShader = PS_FogIt; }
 	}
 }
