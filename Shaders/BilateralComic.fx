@@ -119,7 +119,7 @@ float3 NormalVector(float2 texcoord)
 		
 		if(c == 0)
 		{
-			return 1;
+			return float3(1.0, 1.0, 1.0);
 		}
 		
 		h.x = ReShade::GetLinearizedDepth(texcoord - offset.xz);
@@ -179,11 +179,12 @@ float3 NormalVector(float2 texcoord)
 		vDeriv = pos1 * v.x - pos2 * v.z;
 	}
 	
-	return (normalize(min(cross(-vDeriv, hDeriv), 0.00001)) * 0.5 + 0.5);
+	return (normalize(min(cross(-vDeriv, hDeriv), float3(0.00001, 0.00001, 0.00001))) * 0.5 + 0.5);
 }
 
 void LumaBicubicPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out float luma : SV_TARGET0)
 {
+	luma = 0.0;
 	if(Anisotropy == 2)
 	{
 		luma = dot(BSplineBicubicFilter(sBackBuffer, texcoord), float3(0.299, 0.587, 0.114));

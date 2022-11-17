@@ -376,10 +376,10 @@ namespace DirectionalDepthBlur
 	}
 
 
-	void PS_Combiner(VSPIXELINFO pixelInfo, out float4 fragment : SV_Target0)
+	void PS_Combiner(VSPIXELINFO pixelInfo, out float3 fragment : SV_Target0)
 	{
 		float colorDepth = ReShade::GetLinearizedDepth(pixelInfo.texCoords);
-		float4 realColor = tex2Dlod(ReShade::BackBuffer, float4(pixelInfo.texCoords, 0, 0));
+		float3 realColor = tex2Dlod(ReShade::BackBuffer, float4(pixelInfo.texCoords, 0, 0)).rgb;
 		float filterCircleValue = tex2Dlod(samplerFilterCircle, float4(pixelInfo.texCoords, 0, 0)).r;
 		if(colorDepth <= pixelInfo.focusPlane || (BlurLength <= 0.0))
 		{

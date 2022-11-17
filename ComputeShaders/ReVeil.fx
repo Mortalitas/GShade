@@ -344,7 +344,8 @@ void WienerFilterPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, out f
 {
 	if(VRS_Map::ShadingRate(texcoord, VarianceCutoff, UseVRS, VRS_RATE_2X2) == VRS_RATE_1X1 && Debug == 0)
 	{
-		transmission = 1;
+		transmission = 1.0;
+		airlight = 0.0;
 	}
 	else
 	{
@@ -475,7 +476,11 @@ void FogReintroductionPS(float4 vpos : SV_POSITION, float2 texcoord : TEXCOORD, 
 {
 	float transmission = max((tex2D(sTransmission, texcoord).r), 0.05);
 
-	if(transmission == 1 && Debug == 0) discard;
+	if(transmission == 1 && Debug == 0)
+	{
+		fogReintroduced = float4(0.0, 0.0, 0.0, 0.0);
+		discard;
+	}
 	else if(Debug == 1)
 	{
 		fogReintroduced = transmission.rrrr;

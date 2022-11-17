@@ -553,7 +553,7 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		raydirG   = reflect(eyedir, normal);
 		raydirR   = lerp(raydirG, noise-0.5, 0.5);
 		raybias   = dot(raydirG, raydirR);
-		raydir    = lerp(raydirG, raydirR, pow(1-(0.5*cos(raybias*PI)+0.5), rsqrt(InvTonemapper((GI)?1:roughness))));
+		raydir    = lerp(raydirG, raydirR, pow(max(1.0-(0.5*cos(raybias*PI)+0.5), 0.0), rsqrt(InvTonemapper((GI)?1:roughness))));
 		
 		DoRayMarch(texcoord, noise, position, normal, raydir, reflection, HitData, a);
 		
@@ -806,7 +806,7 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	
 	float LerpFac = TSIntensity                         //main factor
 					*(1 - outbound.r)                   //0 if the pixel is out of boundary
-					*max(0.5, pow(GI?1:roughness, 0.1)) //decrease if roughness is low
+					*max(0.5, pow(GI?1:max(roughness, 0.0), 0.1)) //decrease if roughness is low
 					*diff                               //decrease if the difference between original and clamped history is high
 					*(1 - 5 * length(MotionVectors));   //decrease if movement is fast
 	LerpFac = min(1, LerpFac);
