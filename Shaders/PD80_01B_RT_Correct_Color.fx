@@ -44,7 +44,7 @@ namespace pd80_correctcolor
         #error "RT_ENABLE_HIGH_PERF_MODE has a range of 0 to 1"
     #endif
 
-    #if( RT_PRECISION_LEVEL_0_TO_4 > 4 || RT_ENABLE_HIGH_PERF_MODE < 0 )
+    #if( RT_PRECISION_LEVEL_0_TO_4 > 4 || RT_PRECISION_LEVEL_0_TO_4 < 0 )
         #error "RT_PRECISION_LEVEL_0_TO_4 has a range of 0 to 4"
     #endif
 
