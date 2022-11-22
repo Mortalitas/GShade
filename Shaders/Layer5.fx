@@ -52,11 +52,8 @@
 #ifndef LAYER5_SIZE_Y
 #define LAYER5_SIZE_Y BUFFER_HEIGHT
 #endif
-
-#if LAYER5_SINGLECHANNEL
-#define TEXFORMAT R8
-#else
-#define TEXFORMAT RGBA8
+#ifndef LAYER5_TEXFORMAT
+#define LAYER5_TEXFORMAT RGBA16
 #endif
 
 BLENDING_COMBO(Layer5_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)
@@ -124,7 +121,7 @@ uniform float Layer5_Rotate <
     ui_step = 0.01;
 > = 0;
 
-texture Layer5_Tex <source = Layer5Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer5_Tex <source = Layer5Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=LAYER5_TEXFORMAT; };
 sampler Layer5_Sampler {
     Texture = Layer5_Tex;
     AddressU = CLAMP;

@@ -41,14 +41,16 @@
 
 #include "ReShade.fxh"
 
-#define TEXFORMAT RGBA8
-
 #ifndef SilhouetteForegroundName
 #define SilhouetteForegroundName "Papyrus2.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
 
 #ifndef SilhouetteBackgroundName
 #define SilhouetteBackgroundName "Papyrus6.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#endif
+
+#ifndef SILHOUETTE_TEXFORMAT
+#define SILHOUETTE_TEXFORMAT RGBA16
 #endif
 
 uniform bool SEnable_Foreground_Color <
@@ -157,13 +159,13 @@ uniform int SBackground_Tex_Select <
 #define _SOURCE_SILHOUETTE_FILE2 "Silhouette2.png"
 #endif
 
-texture Silhouette_Back_Texture { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = TEXFORMAT; };
+texture Silhouette_Back_Texture { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = SILHOUETTE_TEXFORMAT; };
 sampler Silhouette_Back_Sampler { Texture = Silhouette_Back_Texture; };
 
-texture Silhouette_Texture <source = _SOURCE_SILHOUETTE_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Silhouette_Texture <source = _SOURCE_SILHOUETTE_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=SILHOUETTE_TEXFORMAT; };
 sampler Silhouette_Sampler { Texture = Silhouette_Texture; };
 
-texture Silhouette2_Texture < source = _SOURCE_SILHOUETTE_FILE2; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = TEXFORMAT; };
+texture Silhouette2_Texture < source = _SOURCE_SILHOUETTE_FILE2; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = SILHOUETTE_TEXFORMAT; };
 sampler Silhouette2_Sampler { Texture = Silhouette2_Texture; };
 
 void PS_SilhouetteBackbufffer(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)

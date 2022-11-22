@@ -37,8 +37,6 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
-#define TEXFORMAT RGBA8
-
 #ifndef Stage4Tex
 #define Stage4Tex "LayerStage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
@@ -47,6 +45,9 @@
 #endif
 #ifndef STAGE4_SIZE_Y
 #define STAGE4_SIZE_Y BUFFER_HEIGHT
+#endif
+#ifndef STAGEDEPTH4_TEXFORMAT
+#define STAGEDEPTH4_TEXFORMAT RGBA16
 #endif
 
 BLENDING_COMBO(Stage4_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)
@@ -126,7 +127,7 @@ uniform bool Stage4_InvertDepth <
 	ui_tooltip = "Inverts the depth buffer so that the texture is applied to the foreground instead.";
 > = false;
 
-texture Stage4_texture <source=Stage4Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture Stage4_texture <source=Stage4Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=STAGEDEPTH4_TEXFORMAT; };
 
 sampler Stage4_sampler { Texture = Stage4_texture; };
 

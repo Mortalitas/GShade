@@ -46,7 +46,9 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
-#define MULTISTAGEDEPTH_TEX_FORMAT RGBA8
+#ifndef MULTISTAGEDEPTH_TEX_FORMAT
+#define MULTISTAGEDEPTH_TEX_FORMAT RGBA16
+#endif
 
 uniform int Tex_Select <
     ui_label = "Texture";

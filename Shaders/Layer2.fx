@@ -52,11 +52,8 @@
 #ifndef LAYER2_SIZE_Y
 #define LAYER2_SIZE_Y BUFFER_HEIGHT
 #endif
-
-#if LAYER2_SINGLECHANNEL
-#define TEXFORMAT R8
-#else
-#define TEXFORMAT RGBA8
+#ifndef LAYER2_TEXFORMAT
+#define LAYER2_TEXFORMAT RGBA16
 #endif
 
 BLENDING_COMBO(Layer2_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)
@@ -124,7 +121,7 @@ uniform float Layer2_Rotate <
     ui_step = 0.01;
 > = 0;
 
-texture Layer2_Tex <source = Layer2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer2_Tex <source = Layer2Tex;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=LAYER2_TEXFORMAT; };
 sampler Layer2_Sampler {
     Texture = Layer2_Tex;
     AddressU = CLAMP;

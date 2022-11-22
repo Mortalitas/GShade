@@ -95,9 +95,9 @@ sampler2D s4Color {
 float4 PS_4Spotlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 	const float2 res = BUFFER_SCREEN_SIZE;
 	const float2 uCenter = uv - float2(u4XCenter, -u4YCenter);
-	float2 coord = res * uCenter;
+	const float2 coord = res * uCenter;
 
-	float halo = distance(coord, res * 0.5);
+	const float halo = distance(coord, res * 0.5);
 	float spotlight = u4Size - min(halo, u4Size);
 	spotlight /= u4Size;
 	
@@ -120,15 +120,14 @@ float4 PS_4Spotlight(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET {
 
 	if (u4ToggleDepth == 1)
   {
-    float depth = 1.0 - ReShade::GetLinearizedDepth(uv);
-    depth = pow(abs(depth), 1.0 / u4Distance);
+    const float depth = pow(abs(1.0 - ReShade::GetLinearizedDepth(uv)), 1.0 / u4Distance);
     spotlight *= depth;
   }
 
 	float3 colored_spotlight = spotlight * u4Color;
 	colored_spotlight *= colored_spotlight * colored_spotlight;
 
-	float3 result = 1.0 + colored_spotlight * u4Brightness;
+	const float3 result = 1.0 + colored_spotlight * u4Brightness;
 
 	float3 color = tex2D(s4Color, uv).rgb;
 	color *= result;

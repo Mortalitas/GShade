@@ -52,11 +52,8 @@
 #ifndef LAYER_SIZE_Y
 #define LAYER_SIZE_Y BUFFER_HEIGHT
 #endif
-
-#if LAYER_SINGLECHANNEL
-#define TEXFORMAT R8
-#else
-#define TEXFORMAT RGBA8
+#ifndef LAYER_TEXFORMAT
+#define LAYER_TEXFORMAT RGBA16
 #endif
 
 uniform int Layer_Select <
@@ -151,7 +148,7 @@ uniform float Layer_Rotate <
 #define _SOURCE_LAYER_FILE "Dirt3.jpg"
 #endif
 
-texture Layer_Tex <source = _SOURCE_LAYER_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=RGBA8; };
+texture Layer_Tex <source = _SOURCE_LAYER_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=LAYER_TEXFORMAT; };
 sampler Layer_Sampler {
     Texture = Layer_Tex;
     AddressU = CLAMP;
