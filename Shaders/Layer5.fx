@@ -53,7 +53,7 @@
 #define LAYER5_SIZE_Y BUFFER_HEIGHT
 #endif
 #ifndef LAYER5_TEXFORMAT
-#define LAYER5_TEXFORMAT RGBA16
+#define LAYER5_TEXFORMAT RGBA8
 #endif
 
 BLENDING_COMBO(Layer5_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)

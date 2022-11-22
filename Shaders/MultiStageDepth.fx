@@ -47,7 +47,7 @@
 #include "Blending.fxh"
 
 #ifndef MULTISTAGEDEPTH_TEX_FORMAT
-#define MULTISTAGEDEPTH_TEX_FORMAT RGBA16
+#define MULTISTAGEDEPTH_TEX_FORMAT RGBA8
 #endif
 
 uniform int Tex_Select <

@@ -50,7 +50,7 @@
 #endif
 
 #ifndef SILHOUETTE_TEXFORMAT
-#define SILHOUETTE_TEXFORMAT RGBA16
+#define SILHOUETTE_TEXFORMAT RGBA8
 #endif
 
 uniform bool SEnable_Foreground_Color <

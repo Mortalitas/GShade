@@ -47,7 +47,7 @@
 #define STAGE4_SIZE_Y BUFFER_HEIGHT
 #endif
 #ifndef STAGEDEPTH4_TEXFORMAT
-#define STAGEDEPTH4_TEXFORMAT RGBA16
+#define STAGEDEPTH4_TEXFORMAT RGBA8
 #endif
 
 BLENDING_COMBO(Stage4_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)

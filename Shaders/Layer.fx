@@ -53,7 +53,7 @@
 #define LAYER_SIZE_Y BUFFER_HEIGHT
 #endif
 #ifndef LAYER_TEXFORMAT
-#define LAYER_TEXFORMAT RGBA16
+#define LAYER_TEXFORMAT RGBA8
 #endif
 
 uniform int Layer_Select <

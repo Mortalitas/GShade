@@ -47,7 +47,7 @@
 #define STAGE3_SIZE_Y BUFFER_HEIGHT
 #endif
 #ifndef STAGEDEPTH3_TEXFORMAT
-#define STAGEDEPTH3_TEXFORMAT RGBA16
+#define STAGEDEPTH3_TEXFORMAT RGBA8
 #endif
 
 BLENDING_COMBO(Stage3_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)
