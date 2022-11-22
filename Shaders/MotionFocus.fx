@@ -26,10 +26,6 @@ ui_tooltip = "The intensity of camera zoom to objects in motion";
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -161,12 +157,7 @@ const float2 finalFocus = focus*focusPow*pow(focusPowDiff,3)*focusPowFull*mfFocu
 
 const float2 focusCorrection = min(0,float2(1,1)-(float2(1,1)*(1.0f-finalZoom)+finalFocus*min(0.55,0.6*mfZoomStrength)));
 
-#if GSHADE_DITHER
-Ganossa_MF_Quad = tex2D(ReShade::BackBuffer, texcoord*(1.0f-finalZoom)+finalFocus*min(0.55,0.6*mfZoomStrength)+focusCorrection);
-return float4(Ganossa_MF_Quad.xyz + TriDither(Ganossa_MF_Quad.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), Ganossa_MF_Quad.z);
-#else
 return tex2D(ReShade::BackBuffer, texcoord*(1.0f-finalZoom)+finalFocus*min(0.55,0.6*mfZoomStrength)+focusCorrection);
-#endif
 }
 
 technique GanossaMotionFocus

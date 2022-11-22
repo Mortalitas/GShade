@@ -24,10 +24,6 @@ uniform float GaussianBlurStrength <
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 texture GaussianBlurTex < pooled = true; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 sampler GaussianBlurSampler { Texture = GaussianBlurTex;};
 
@@ -114,11 +110,7 @@ if(GaussianBlurRadius == 4)
 	float3 orig = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	orig = saturate(lerp(orig, color, GaussianBlurStrength));
 
-#if GSHADE_DITHER
-	return orig + TriDither(orig, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#else
 	return orig;
-#endif
 }
 
 float3 GaussianBlur1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR

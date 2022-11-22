@@ -17,10 +17,6 @@
 //																
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 //Automatic Blur Adjustment based on Resolutionsup to 8k considered.
 #if (BUFFER_HEIGHT <= 720)
 	#define Multi 0.5
@@ -248,12 +244,7 @@ float3 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD) : SV_Targe
 	if (DEPTH_DEBUG)
 		return DB;
 
-#if GSHADE_DITHER
-	const float3 outcolor = BBN * lerp(DC,1., DB);
-	return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#else
 	return BBN * lerp(DC,1., DB);
-#endif
 }
 
 ///////////////////////////////////////////////////////////ReShade.fxh/////////////////////////////////////////////////////////////

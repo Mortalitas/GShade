@@ -8,10 +8,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 //BrightPass *also affects blur and unsharpmask* *Recommend off for blur*
 //Doesn't seem to be working right but it makes bloom look better. 1 = on, 0 = off.
 #ifndef gUSE_BP
@@ -145,14 +141,8 @@ sampler origframeSampler
 
 float4 BrightPassFilterPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
 {
-#if GSHADE_DITHER
-	float4 color = tex2D(ReShade::BackBuffer, texcoord);
-	color = float4(color.rgb * pow (abs (max (color.r, max (color.g, color.b))), 2.0), 2.0f)*gBloomIntensity;
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
 	const float4 color = tex2D(ReShade::BackBuffer, texcoord);
 	return float4(color.rgb * pow (abs (max (color.r, max (color.g, color.b))), 2.0), 2.0f)*gBloomIntensity;
-#endif
 }
 
 float4 HGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
@@ -170,11 +160,7 @@ float4 HGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(sampleOffsets[i]*gBloomHW * PIXEL_SIZE.x, 0.0), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord - float2(sampleOffsets[i]*gBloomHW * PIXEL_SIZE.x, 0.0), 0.0, 0.0)) * sampleWeights[i];
 	}
-#if GSHADE_DITHER
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
 	return color;
-#endif
 }
 
 float4 VGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
@@ -192,11 +178,7 @@ float4 VGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(0.0, sampleOffsets[i]*gBloomVW * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord - float2(0.0, sampleOffsets[i]*gBloomVW * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 	}
-#if GSHADE_DITHER
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
 	return color;
-#endif
 }
 
 float4 SGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
@@ -216,12 +198,7 @@ float4 SGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(-sampleOffsets[i]*gBloomSW * PIXEL_SIZE.x, sampleOffsets[i] * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(sampleOffsets[i]*gBloomSW * PIXEL_SIZE.x, -sampleOffsets[i] * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 	}
-#if GSHADE_DITHER
-	color *= 0.50;
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
 	return color * 0.50;
-#endif
 }	
 
 float4 CombinePS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR
@@ -295,11 +272,7 @@ float4 CombinePS(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : C
 		//orig = blur2;
 	#endif	
 
-#if GSHADE_DITHER
-	return float4(orig.rgb + TriDither(orig.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), orig.a);
-#else
 	return orig;
-#endif
 }
 
 float4 PassThrough(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR

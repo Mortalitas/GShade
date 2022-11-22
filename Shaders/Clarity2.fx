@@ -110,10 +110,6 @@ uniform int PreprocessorDefinitions
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #define ClarityLuma float3(0.32786885,0.655737705,0.0163934436)
 //#define ClarityLuma float3(0.3333,0.3333,0.3333)
 
@@ -481,20 +477,10 @@ ClarityFloat blur = tex2D(Clarity2Sampler, texcoord/ClarityOffsetTwo).CF;
 
 	#if ClarityRGBMode
 		orig.rgb = lerp(orig.rgb, sharp, ClarityStrengthTwo);
-		#if GSHADE_DITHER
-			orig.rgb += TriDither(orig.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
 			return orig;
-		#else
-			return orig;
-		#endif
 	#else
 		luma = lerp(luma, sharp, ClarityStrengthTwo);
-		#if GSHADE_DITHER
-			orig = float4(luma*chroma,0.0);
-			return float4(orig.rgb += TriDither(orig.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), orig.a);
-		#else
 			return float4(luma*chroma,0.0);
-		#endif
 	#endif
 }
 

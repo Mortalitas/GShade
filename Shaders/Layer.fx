@@ -43,10 +43,6 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #ifndef LayerTex
 #define LayerTex "LayerA.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
 #endif
@@ -215,10 +211,6 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
     passColor = tex2D(Layer_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
     passColor = float4(ComHeaders::Blending::Blend(Layer_BlendMode, backColor.rgb, passColor.rgb, passColor.a * Layer_Blend), backColor.a);
-
-#if GSHADE_DITHER
-	passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 // -------------------------------------

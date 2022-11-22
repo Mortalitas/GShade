@@ -434,10 +434,6 @@ sampler SamplerHDR2 { Texture = texHDR2; };
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 uniform float2 MouseCoords < source = "mousepoint"; >;
 
 float GetCoC(float2 coords)
@@ -567,9 +563,6 @@ void PS_RingDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	blurcolor.xyz /= blurcolor.w;
 	blurcolor.xyz = lerp(noblurcolor, blurcolor.xyz, smoothstep(1.2, 2.0, discRadius)); // smooth transition between full res color and lower res blur
 	blurcolor.w = centerDepth;
-#if GSHADE_DITHER
-	blurcolor.xyz += TriDither(blurcolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 // MAGIC DOF
@@ -641,9 +634,6 @@ void PS_MagicDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 	blurcolor.xyz /= blurcolor.w;
 	blurcolor.xyz = pow(saturate(blurcolor.xyz), 1.0 / fMagicDOFColorCurve);
 	blurcolor.xyz = lerp(noblurcolor, blurcolor.xyz, smoothstep(1.2, 2.0, discRadius));
-#if GSHADE_DITHER
-	blurcolor.xyz += TriDither(blurcolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 // GP65CJ042 DOF
@@ -785,9 +775,6 @@ void PS_GPDOF2(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4
 
 	blurcolor.xyz /= blurcolor.w;
 	blurcolor.xyz = lerp(noblurcolor.xyz, blurcolor.xyz, smoothstep(1.2, 2.0, discRadius));
-#if GSHADE_DITHER
-	blurcolor.xyz += TriDither(blurcolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 // MATSO DOF
@@ -868,9 +855,6 @@ void PS_MatsoDOF4(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 
 	//not 1.2 - 2.0 because matso's has a weird bokeh weighting that is almost like a tonemapping and border between blur and no blur appears to harsh
 	blurcolor.xyz = lerp(tex2D(ReShade::BackBuffer, texcoord).xyz,blurcolor.xyz,smoothstep(0.2,2.0,discRadius));
-#if GSHADE_DITHER
-	blurcolor.xyz += TriDither(blurcolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 // MARTY MCFLY DOF
@@ -1371,10 +1355,6 @@ void PS_McFlyDOF3(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out flo
 #endif
 
 	//focus preview disabled!
-
-#if GSHADE_DITHER
-	blurcolor.xyz += TriDither(blurcolor.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 /////////////////////////TECHNIQUES/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

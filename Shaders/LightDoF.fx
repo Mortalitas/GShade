@@ -36,10 +36,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 //user variables//////////////////////////////////////////////////////////////////////////////////
 
 uniform float fLightDoF_Width <
@@ -206,22 +202,12 @@ float3 poisson(sampler sp, float2 uv, float farOrNear, float CA) {
 
 //far blur shader
 float3 Far(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
-#if GSHADE_DITHER
-	const float3 outcolor = poisson(ReShade::BackBuffer, uv, false, f2LightDoF_CA.x);
-	return outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH);
-#else
 	return poisson(ReShade::BackBuffer, uv, false, f2LightDoF_CA.x);
-#endif
 }
 
 //near blur shader
 float3 Near(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
-#if GSHADE_DITHER
-	const float3 outcolor = poisson(ReShade::BackBuffer, uv, true, f2LightDoF_CA.y);
-	return outcolor + TriDither(outcolor, uv, BUFFER_COLOR_BIT_DEPTH);
-#else
 	return poisson(ReShade::BackBuffer, uv, true, f2LightDoF_CA.y);
-#endif
 }
 
 //shader to get the focus, kinda like center of confusion but less complicated

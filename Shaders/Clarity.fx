@@ -76,10 +76,6 @@ uniform bool ClarityViewMask
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 texture ClarityTex < pooled = true; > { Width = BUFFER_WIDTH * 0.5; Height = BUFFER_HEIGHT * 0.5; Format = R8; };
 texture ClarityTex2 { Width = BUFFER_WIDTH * 0.5; Height = BUFFER_HEIGHT * 0.5; Format = R8; };
 texture ClarityTex3 < pooled = true; > { Width = BUFFER_WIDTH * 0.25; Height = BUFFER_HEIGHT * 0.25; Format = R8; };
@@ -262,13 +258,7 @@ if(ClarityRadius == 4)
 	orig.rgb = lerp(luma, sharp, ClarityStrength);
 	orig.rgb *= chroma;
 		
-
-#if GSHADE_DITHER
-	orig = saturate(orig);
-	return orig + TriDither(orig, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#else
 	return saturate(orig);
-#endif
 }	
 
 float Clarity1(in float4 pos : SV_Position, in float2 texcoord : TEXCOORD) : COLOR

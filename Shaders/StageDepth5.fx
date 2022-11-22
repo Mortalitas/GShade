@@ -37,10 +37,6 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #define TEXFORMAT RGBA8
 
 #ifndef Stage5Tex
@@ -189,10 +185,6 @@ void PS_StageDepth5(in float4 position : SV_Position, in float2 texCoord : TEXCO
         passColor = tex2D(Stage5_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
         passColor.rgb = ComHeaders::Blending::Blend(Stage5_BlendMode, backColor, passColor.rgb, passColor.a * Stage5_Opacity);
-
-#if GSHADE_DITHER
-        passColor.rgb += TriDither(passColor.rgb, texCoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
     }
 }
 

@@ -22,10 +22,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #define SSAO_FOV 		75
 #define InvFocalLen 	float2(tan(0.5f*radians(SSAO_FOV)) / (float)BUFFER_RCP_HEIGHT * (float)BUFFER_RCP_WIDTH, tan(0.5f*radians(SSAO_FOV)))
 #define aspect          (BUFFER_RCP_HEIGHT/BUFFER_RCP_WIDTH)
@@ -954,11 +950,7 @@ float4 PS_AO_AOCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : 
     ao = lerp(ao,1.0,smoothstep(AO_FADE_START,AO_FADE_END,depth));
 
     color.xyz *= ao;
-#if GSHADE_DITHER
-    return float4(color.xyz + TriDither(color.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
     return color;
-#endif
   }
 }
 
@@ -993,11 +985,7 @@ float4 PS_SSAO_AOCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) 
     ao = lerp(ao,1.0,smoothstep(AO_FADE_START,AO_FADE_END,depth));
 
     color.xyz *= ao;
-#if GSHADE_DITHER
-    return float4(color.xyz + TriDither(color.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
     return color;
-#endif
   }
 }
 
@@ -1028,11 +1016,7 @@ float4 PS_RayAO_AOCombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD)
     ao = lerp(ao,1.0,smoothstep(AO_FADE_START,AO_FADE_END,depth));
 
     color.xyz *= ao;
-#if GSHADE_DITHER
-    return float4(color.xyz + TriDither(color.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
     return color;
-#endif
   }
 }
 
@@ -1228,11 +1212,7 @@ float4 PS_AO_GICombine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD) : 
     gi.w = lerp(gi.w,1.0,smoothstep(AO_FADE_START,AO_FADE_END,depth));
 
     color.xyz = (color.xyz+gi.xyz)*gi.w;
-#if GSHADE_DITHER
-    return float4(color.xyz + TriDither(color.xyz, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
     return color;
-#endif
   }
 }
 

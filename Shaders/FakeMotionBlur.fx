@@ -41,10 +41,6 @@ uniform float mbSoftness <
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 texture2D currTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 texture2D prevSingleTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 texture2D prevTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
@@ -78,10 +74,6 @@ void PS_Combine(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float
 	}
 
 	color = lerp(curr, prev, diff + 0.1);
-
-#if GSHADE_DITHER
-	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 void PS_CopyFrame(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)

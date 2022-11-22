@@ -19,10 +19,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 uniform float2 border_width <
 	ui_type = "slider";
 	ui_label = "Size";
@@ -57,20 +53,11 @@ float3 BorderPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 
 	if (all(saturate((-texcoord * texcoord + texcoord) - (-border * border + border)))) // Becomes positive when inside the border and zero when outside
 	{
-#if GSHADE_DITHER
-		return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#else
 		return color;
-#endif
 	}
 	else
 	{
-#if GSHADE_DITHER
-		const float3 outcolor = lerp(color, border_color.rgb, border_color.a);
-		return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#else
 		return lerp(color, border_color.rgb, border_color.a);
-#endif
 	}
 }
 

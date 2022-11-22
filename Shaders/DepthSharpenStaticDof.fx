@@ -88,10 +88,6 @@ uniform float maxDepth = 0.999;
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
    /*-----------------------------------------------------------.
   /                      Developer settings                     /
   '-----------------------------------------------------------*/
@@ -265,12 +261,7 @@ float3 DepthSharpenconstDofPass(float4 position : SV_Position, float2 tex : TEXC
 		return saturate(0.5 + (sharp_luma * 4.0)).rrr;
 
 	// -- Combining the values to get the final sharpened pixel	--
-#if GSHADE_DITHER
-	const float3 outcolor = ori + sharp_luma;
-	return outcolor + TriDither(outcolor, tex, BUFFER_COLOR_BIT_DEPTH);
-#else
 	return ori + sharp_luma;    // Add the sharpening to the the original.
-#endif
 }
 
 technique DepthSharpenconstDof

@@ -9,9 +9,6 @@
 // Updated for compatibility with ReShade 4 and isolated by Marot Satil.
 // ReShade.fxh Preprocessor Definition Support added by JJXB
 #include "ReShade.fxh"
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
 //+++++++++++++++++++++++++++++
 // CUSTOM PARAMETERS
 //+++++++++++++++++++++++++++++
@@ -452,14 +449,7 @@ float4 PS_SetOriginal(VS_OUTPUT_POST IN) : COLOR
 		else if (pSSDODebugMode == 2)
 			return float4(pow(abs(tex2D(SamplerSSDOA,IN.txcoord.xy).xyz),2.2),1.0);
 		else
-#if GSHADE_DITHER
-		{
-			const float3 outcolor = ssdo * tex2D(SamplerColorLOD,IN.txcoord.xy).xyz;
-			return float4(outcolor + TriDither(outcolor, IN.txcoord, BUFFER_COLOR_BIT_DEPTH), 1.0);
-		}
-#else
 			return float4(ssdo * tex2D(SamplerColorLOD, IN.txcoord.xy).xyz, 1.0);
-#endif
 	}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

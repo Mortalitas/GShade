@@ -152,10 +152,6 @@ this CC0 or use of the Work.
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 
 
 uniform float STRENGTH<
@@ -492,10 +488,6 @@ void FogRemovalPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float
 void WriteFogRemovedPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float3 output : SV_Target0)
 {
 	output = tex2D(sFogRemoved, texcoord).rgb;
-
-#if GSHADE_DITHER
-	output += TriDither(output, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 void TruncatedPrecisionPS(float4 pos: SV_Position, float2 texcoord : TexCoord, out float4 output : SV_Target0)

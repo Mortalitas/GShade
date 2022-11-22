@@ -144,10 +144,6 @@ uniform int DepthEndFade <
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 texture2D InterleavedAOTex  { Width = BUFFER_WIDTH / 2;   Height = BUFFER_HEIGHT / 2;   Format = R8; MipLevels = 1;};
 texture2D InterleavedAOTex2 { Width = BUFFER_WIDTH / 2;   Height = BUFFER_HEIGHT / 2;   Format = R8; MipLevels = 1;};
 texture2D InterleavedAOTex3 { Width = BUFFER_WIDTH / 2;   Height = BUFFER_HEIGHT / 2;   Format = R8; MipLevels = 1;};
@@ -420,12 +416,7 @@ float3 BlurAOSecondPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) :
 	}
 	else
 	{
-#if GSHADE_DITHER
-		const float3 outcolor = tex2D(ReShade::BackBuffer, texcoord).rgb * sum / sumCoef;
-		return outcolor + TriDither(outcolor, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#else
 		return tex2D(ReShade::BackBuffer, texcoord).rgb * sum / sumCoef;
-#endif
 	}
 }
 

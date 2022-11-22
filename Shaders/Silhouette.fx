@@ -41,10 +41,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #define TEXFORMAT RGBA8
 
 #ifndef SilhouetteForegroundName
@@ -173,9 +169,6 @@ sampler Silhouette2_Sampler { Texture = Silhouette2_Texture; };
 void PS_SilhouetteBackbufffer(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
 {
     color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-#if GSHADE_DITHER
-		color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
 }
 
 void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoord : TEXCOORD, out float3 color : SV_Target)
@@ -190,9 +183,6 @@ void PS_SilhouetteForeground(in float4 position : SV_Position, in float2 texcoor
     else
     {
         color = lerp(color, Silhouette_Stage.rgb, Silhouette_Stage.a * SForeground_Stage_Opacity);
-#if GSHADE_DITHER
-		color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
     }
 }
 
@@ -209,16 +199,10 @@ void PS_SilhouetteBackground(in float4 position : SV_Position, in float2 texcoor
     else if (SDisable_Background_Processing && depth < SBackground_Stage_depth)
     {
         color = lerp(color, tex2D(Silhouette_Back_Sampler, texcoord).rgb, SBackground_Stage_Opacity);
-#if GSHADE_DITHER
-        color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
     }
     else if (depth < SBackground_Stage_depth)	
     {
         color = lerp(color, Silhouette2_Stage.rgb, Silhouette2_Stage.a * SBackground_Stage_Opacity);
-#if GSHADE_DITHER
-        color += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
     }
 }
 

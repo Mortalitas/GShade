@@ -2,10 +2,6 @@
 
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 #ifndef FOCAL_DOF_USE_TEX2D_IN_VS
 #define FOCAL_DOF_USE_TEX2D_IN_VS 0
 #endif
@@ -168,12 +164,7 @@ float4 MainPS(
 
 	#undef FOCAL_DOF_FETCH
 
-#if GSHADE_DITHER
-	color = log(color);
-	return float4(color.rgb + TriDither(color.rgb, uv, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
 	return log(color);
-#endif
 }
 
 //#endregion
