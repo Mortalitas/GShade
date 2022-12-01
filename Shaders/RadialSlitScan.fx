@@ -140,7 +140,7 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
 
    
     if (dist >= slice_to_fill)
-        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount);
+        color = ComHeaders::Blending::Blend(render_type, base, color, blending_amount);
     else
         discard;
 };
