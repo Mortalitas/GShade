@@ -208,6 +208,11 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         color = tex2D(samplerColor, tc);
     
         color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
+
+        
+        #if GSHADE_DITHER
+            color.rgb += TriDither(color.rgb, tc, BUFFER_COLOR_BIT_DEPTH);
+        #endif
     }
     else
     {

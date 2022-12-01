@@ -219,7 +219,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         
     theta = percent * percent * radians(angle * (animate == 1 ? sin(anim_rate * 0.0005) : 1.0));
     tc = mul(swirlTransform(theta), tc-center);
-
+    
     if(use_offset_coords) 
         tc += (2 * offset_center);
     else 
@@ -251,6 +251,9 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         if(percent)
             color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_factor);
             
+         #if GSHADE_DITHER
+            color.rgb += TriDither(color.rgb, tc, BUFFER_COLOR_BIT_DEPTH);
+         #endif
     }
     else
     {
@@ -259,12 +262,8 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
     if(depth < min_depth) 
         color = tex2D(samplerColor, texcoord);
-
-#if GSHADE_DITHER
-	return float4(color.rgb + TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), color.a);
-#else
-    return color;
-#endif
+   
+    return color;  
 }
 
 // Technique
