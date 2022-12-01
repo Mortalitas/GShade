@@ -140,44 +140,42 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
 
    
     if (dist >= slice_to_fill)
-        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount);
+        color = float4(ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount), 1.0);
     else
         discard;
 };
 
-void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
+void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float3 color : SV_TARGET)
 {
+    color = tex2D(samplerColor, texcoord).rgb;
     const float depth = ReShade::GetLinearizedDepth(texcoord).r;
-    float4 base = tex2D(samplerColor, texcoord);
-    float2 uv = texcoord;
-    float2 center = coordinates/2.0;
-    float2 tc = texcoord - center;
 
-    float4 screen = tex2D(samplerColor, texcoord);
-    const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
+    if (depth > min_depth){
+        float2 center = coordinates/2.0;
+        float2 tc = texcoord - center;
 
-    center.x /= ar_raw;
-    tc.x /= ar_raw;
-    float max_radius = get_longest_distance(coordinates);
-    float dist = distance(tc, center);
+        const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
 
-    float slice_to_fill = (anim_rate.x * max_radius);
-    float4 scanned;
-    tc.x *= ar_raw;
+        center.x /= ar_raw;
+        tc.x /= ar_raw;
+        const float max_radius = get_longest_distance(coordinates);
+        const float dist = distance(tc, center);
 
-    if(dist < slice_to_fill){
-        float4 scanned_color = tex2D(ssTarget, texcoord);
-        color = ComHeaders::Blending::Blend(render_type, base.rgb, scanned_color.rgb, blending_amount);
+        const float slice_to_fill = anim_rate.x * max_radius;
+        tc.x *= ar_raw;
+
+        if (dist < slice_to_fill){
+            const float3 scanned_color = tex2D(ssTarget, texcoord).rgb;
+            color = ComHeaders::Blending::Blend(render_type, color, scanned_color, blending_amount);
+        }
+        else if (dist > slice_to_fill && dist <= slice_to_fill + 0.0025){
+            color = lerp(color, border_color, opacity);
+        }
     }
-    else if (dist > slice_to_fill && dist <= slice_to_fill + 0.0025){
-        color = tex2D(samplerColor, texcoord);
-        color = lerp( screen, float4(border_color, 1.0), opacity);
-    }
-    else
-        color = tex2D(samplerColor, texcoord);
 
-    if(depth < min_depth)
-        color = tex2D(samplerColor, texcoord);
+#if GSHADE_DITHER
+    color.rgb += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+#endif
 
 #if GSHADE_DITHER
 	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
