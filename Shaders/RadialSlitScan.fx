@@ -138,7 +138,8 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
     float4 cols = tex2Dfetch(ssTarget, texcoord);
     float4 col_to_write = tex2Dfetch(ssTarget, texcoord);
 
-    if (dist > slice_to_fill)
+   
+    if (dist >= slice_to_fill)
         color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount);
     else
         discard;
@@ -166,11 +167,11 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
 
     if(dist < slice_to_fill){
         float4 scanned_color = tex2D(ssTarget, texcoord);
-        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, scanned_color.rgb, blending_amount);
+        color = ComHeaders::Blending::Blend(render_type, base.rgb, scanned_color.rgb, blending_amount);
     }
     else if (dist > slice_to_fill && dist <= slice_to_fill + 0.0025){
         color = tex2D(samplerColor, texcoord);
-        color.rgba = lerp( screen.rgba, float4(border_color, 1.0), opacity);
+        color = lerp( screen, float4(border_color, 1.0), opacity);
     }
     else
         color = tex2D(samplerColor, texcoord);
