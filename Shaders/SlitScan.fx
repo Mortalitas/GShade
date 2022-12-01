@@ -238,11 +238,17 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
             mask = step(scan_col, texcoord.y);
             break;
     }
-    if(depth >= min_depth)
+    if(depth >= min_depth) {
         color = lerp(
             screen, 
             float4(ComHeaders::Blending::Blend(render_type, screen.rgb, scanned.rgb, blending_amount), 1.0), 
             mask);
+        
+        #if GSHADE_DITHER
+            color.rgb += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
+        #endif
+    }
+
     else
         color = screen;
 
