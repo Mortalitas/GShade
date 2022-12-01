@@ -296,7 +296,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 }
 
 // Technique
-technique ZigZag<ui_label="Zigzag";>
+technique ZigZag<ui_label="Zigzag"; ui_tooltip="Around Center: Bends the pixels back and forth around a point.\nOut From Center: Creates a pond ripple effect.";>
 {
     pass p0
     {

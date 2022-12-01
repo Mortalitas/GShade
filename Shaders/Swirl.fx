@@ -267,7 +267,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 }
 
 // Technique
-technique Swirl<ui_label="Swirl";>
+technique Swirl<ui_label="Swirl"; ui_tooltip="Twists pixels around a given point.";>
 {
     pass p0
     {

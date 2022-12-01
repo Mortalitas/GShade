@@ -186,6 +186,7 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
 
 technique SlitScan <
 ui_label="Radial Slit Scan";
+ui_tooltip="Scans and freezes pixels in an outward expanding circle. Resets after a few seconds.\nThe border color can be changed or hidden.";
 > {
     pass p0 {
 

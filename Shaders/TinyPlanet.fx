@@ -166,7 +166,10 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
 }
 
 // Technique
-technique TinyPlanet<ui_label="Tiny Planet";>
+technique TinyPlanet<
+    ui_label="Tiny Planet"; 
+    ui_tooltip="Projects the image onto a sphere. Can be used to make planets.";
+>
 {
     pass p0
     {

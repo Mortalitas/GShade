@@ -261,6 +261,7 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
 
 technique SlitScan <
 ui_label="Slit Scan";
+ui_tooltip="Scans a column or row of pixels and creates a sliding image in the direction specified.\n When animated, gradually scans the entire image.";
 > {
     pass p0 {
 

@@ -266,7 +266,10 @@ float4 SplicedRadials(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : S
 }
 
 // Technique
-technique Swirl<ui_label="SplicedRadials";>
+technique Swirl<
+    ui_label="SplicedRadials";
+    ui_tooltip="Splices the image into concentric circles and rotates them according to the angle.";
+>
 {
     pass p0
     {

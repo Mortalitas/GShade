@@ -225,7 +225,10 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     return color;
 }
 
-technique Wave<ui_label="Wave";>
+technique Wave<
+    ui_label="Wave"; 
+    ui_tooltip="Applies a sinesoidal (wavy) distortion to the screen.";
+>
 {
     pass p0
     {

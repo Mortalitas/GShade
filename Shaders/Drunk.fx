@@ -546,7 +546,10 @@ float4 PSDrunkStage1(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV
     return result;
 }
 
-technique Drunk<ui_label="Drunk";>
+technique Drunk<
+    ui_label="Drunk";
+    ui_tooltip="Stretches and squishes parts of the screen.";
+>
 {
 	pass
 	{
