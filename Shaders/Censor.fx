@@ -191,7 +191,7 @@ void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 		
 		passColor *= all(SumUV + pivot == saturate(SumUV + pivot));
 		
-		passColor = lerp(backColor, passColor, passColor.a * Censor_Opacity);
+		passColor.rgb = lerp(backColor, passColor.rgb, passColor.a * Censor_Opacity);
     }
 	else
 	{
