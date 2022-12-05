@@ -1,6 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.7 - UI
+//Version 0.8 - UI
 
 //license
 //CC0 ^_^
@@ -40,6 +40,11 @@ uniform bool UseCatrom <
 	ui_label = "Use Catrom resampling";
 	ui_tooltip = "Uses Catrom resampling for Upscaling and  Reprojection. Slower but sharper.";
 > = 0;
+
+uniform bool SharpenGI <
+	ui_label = "Sharpen the GI";
+	ui_tooltip = "Further improves the edge clarity. Try Catrom resampling first tho.";
+> = 1;
 
 uniform float fov <
 	ui_label = "Field of View";
@@ -95,7 +100,7 @@ uniform uint UI_RAYSTEPS <
 	ui_category_closed = true;
 	ui_min = 1;
 	ui_max = 32;
-> = 12;
+> = 16;
 
 uniform float RAYDEPTH <
 	ui_label = "Surface depth";
@@ -200,8 +205,8 @@ uniform float IT_Intensity <
 	ui_category = "Color Management";
 	ui_tooltip = "intensity of Inverse Tonemapping.";
 	ui_category_closed = true;
-	ui_max = 0.95;
-> = 0.95;
+	ui_max = 0.99;
+> = 0.97;
 
 uniform float2 SatExp <
 	ui_type = "slider";
@@ -215,11 +220,11 @@ uniform float2 SatExp <
 
 uniform uint debug <
 	ui_type = "combo";
-	ui_items = "None\0Lighting\0Depth\0Normal\0Accumulation\0";
+	ui_items = "None\0Lighting\0Depth\0Normal\0Accumulation\0Roughness Map\0";
 	ui_category = "Extra";
 	ui_category_closed = true;
 	ui_min = 0;
-	ui_max = 4;
+	ui_max = 5;
 > = 0;
 
 uniform float SkyDepth <
@@ -269,14 +274,13 @@ uniform int Credits<
 >;
 
 uniform int Preprocessordefinitionstooltip<
-	ui_text = "HQ UPSCALING makes overall reflection quality as sharp as native res but is slower.\n\n"
-			  
-			  "RESOLUTION_SCALE_ : Lower values are much faster but may be a bit blurrier.\n\n"
+	ui_text = "RESOLUTION_SCALE_ : Lower values are much faster but may be a bit blurrier.\n\n"
 			  
 			  "SMOOTH_NORMALS : 0 is disabed, 1 is low quality and fast, 2 is high quality and a bit slow, 3 is Photography mode is really slow.\n\n"
 			  
-			  "UI_DIFFICULTY : 0 is EZ, 1 is for ReShade shamans.";
-			  
+			  "UI_DIFFICULTY : 0 is EZ, 1 is for ReShade shamans.";//\n\n"
+
+			  //"NGL_HYBRID_MODE : 0 means you can use only one effect at a time. Either GI or Reflection. 1 means you have both effects simultaniously but it's a slower (less than 2 times)";
 	ui_category = "Preprocessor definitions tooltip";
 	ui_category_closed = true;
 	ui_label = " ";
@@ -295,7 +299,21 @@ uniform int Hints<
 	ui_type = "radio";
 >;
 
-static const float fov = 65;
+#define fov 65
+#define UseCatrom true
+#define SharpenGI true
+#define TemporalRefine 0
+#define RAYINC 2
+#define UI_RAYSTEPS 16
+#define RAYDEPTH 2
+#define STEPNOISE 0.15
+#define Tthreshold 0.01
+#define MAX_Frames 64
+#define Sthreshold 0.025
+#define AO_Radius_Background 1
+#define AO_Radius_Reflection 0.5
+#define IT_Intensity 0.97
+#define SkyDepth 0.99
 
 #if !NGL_HYBRID_MODE
 uniform int GI <
@@ -304,11 +322,6 @@ uniform int GI <
 	ui_items = "Reflection\0GI\0";
 > = 1;
 #endif
-
-uniform bool UseCatrom <
-	ui_label = "Use Catrom resampling";
-	ui_tooltip = "Uses Catrom resampling for Upscaling and  Reprojection. Slower but sharper.";
-> = 0;
 
 uniform float BUMP <
 	ui_label = "Bump mapping";
@@ -328,16 +341,6 @@ uniform float roughness <
 	ui_max = 0.999;
 > = 0.4;
 
-#define TemporalRefine 0
-#define RAYINC 2
-#define UI_RAYSTEPS 12
-#define RAYDEPTH 2
-#define STEPNOISE 0.15
-#define Tthreshold 0.01
-#define MAX_Frames 64
-#define Sthreshold 0.025
-#define HLFix  1
-
 uniform float EXP <
 	ui_label = "Reflection rim fade";
 	ui_type = "slider";
@@ -345,9 +348,6 @@ uniform float EXP <
 	ui_min = 1;
 	ui_max = 10;
 > = 4;
-
-#define AO_Radius_Background 1
-#define AO_Radius_Reflection 0.5
 
 uniform float AO_Intensity <
 	ui_label = "AO Power";
@@ -374,8 +374,6 @@ uniform bool LinearConvert <
 	ui_category_closed = true;
 > = 1;
 
-#define IT_Intensity 0.95
-
 uniform float2 SatExp <
 	ui_type = "slider";
 	ui_label = "Saturation || Exposure";
@@ -394,8 +392,6 @@ uniform uint debug <
 	ui_min = 0;
 	ui_max = 4;
 > = 0;
-
-#define SkyDepth 0.99
 
 uniform int Credits<
 	ui_text = "Thanks Lord of Lunacy, Leftfarian, and other devs for helping me. <3\n"
@@ -436,13 +432,13 @@ uniform int Credits<
 >;
 
 uniform int Preprocessordefinitionstooltip<
-	ui_text = "HQ UPSCALING makes overall reflection quality as sharp as native res but is slower.\n\n"
-			  
-			  "RESOLUTION_SCALE_ : Lower values are much faster but may be a bit blurrier.\n\n"
+	ui_text = "RESOLUTION_SCALE_ : Lower values are much faster but may be a bit blurrier.\n\n"
 			  
 			  "SMOOTH_NORMALS : 0 is disabed, 1 is low quality and fast, 2 is high quality and a bit slow, 3 is Photography mode is really slow.\n\n"
 			  
-			  "UI_DIFFICULTY : 0 is EZ, 1 is for ReShade shamans.";
+			  "UI_DIFFICULTY : 0 is EZ, 1 is for ReShade shamans.";//\n\n"
+
+			  //"NGL_HYBRID_MODE : 0 means you can use only one effect at a time. Either GI or Reflection. 1 means you have both effects simultaniously but it's a slower (less than 2 times)";
 	ui_category = "Preprocessor definitions tooltip";
 	ui_category_closed = true;
 	ui_label = " ";
