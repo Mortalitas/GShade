@@ -272,7 +272,7 @@ float3 UVtoPos(float2 texcoord)
 {
 	float3 scrncoord = float3(texcoord.xy*2-1, LDepth(texcoord) * FAR_PLANE);
 	scrncoord.xy *= scrncoord.z;
-	scrncoord.xy *= AspectRatio;
+	scrncoord.xy *= NGAspectRatio;
 	scrncoord.xy *= rad(fov);
 	//scrncoord.xy *= ;
 	
@@ -283,7 +283,7 @@ float3 UVtoPos(float2 texcoord, float depth)
 {
 	float3 scrncoord = float3(texcoord.xy*2-1, depth * FAR_PLANE);
 	scrncoord.xy *= scrncoord.z;
-	scrncoord *= AspectRatio;
+	scrncoord *= NGAspectRatio;
 	scrncoord *= rad(fov);
 	//scrncoord.xy *= ;
 	
@@ -294,7 +294,7 @@ float2 PostoUV(float3 position)
 {
 	float2 scrnpos = position.xy;
 	scrnpos /= rad(fov);
-	scrnpos /= AspectRatio;
+	scrnpos /= NGAspectRatio;
 	scrnpos /= position.z;
 	
 	return scrnpos/2 + 0.5;
@@ -337,7 +337,7 @@ float lum(in float3 color)
 	return (color.r+color.g+color.b)/3;
 }
 
-float3 GetRoughTex(float2 texcoord)
+float GetRoughTex(float2 texcoord)
 {
 	float2 p = pix;
 	
@@ -351,12 +351,12 @@ float3 GetRoughTex(float2 texcoord)
 		roughfac = (1 - roughness);
 		fromrough.x = lerp(0, 0.1, saturate(roughness*10));
 		fromrough.y = 0.8;
-		torough = float2(0, pow(roughness, roughfac));
+		torough = float2(0, pow(max(roughness, 0.0), roughfac));
 		
 		float3 center = toYCC(tex2D(sTexColor, texcoord).rgb);
 		float depth = LDepth(texcoord);
 
-		float Roughness;
+		float Roughness = 0.0;
 		//cross (+)
 		float2 offsets[4] = {float2(p.x,0), float2(-p.x,0),float2( 0,-p.y),float2(0,p.y)};
 		[unroll]for(int x; x < 4; x++)
@@ -371,7 +371,7 @@ float3 GetRoughTex(float2 texcoord)
 			}
 		}
 		
-		Roughness = pow( Roughness, roughfac*0.66);
+		Roughness = pow( max(Roughness, 0.0), roughfac*0.66);
 		Roughness = clamp(Roughness, fromrough.x, fromrough.y);
 		Roughness = (Roughness - fromrough.x) / ( 1 - fromrough.x );
 		Roughness = Roughness / fromrough.y;
@@ -411,7 +411,7 @@ static const float sRGBGamma = 2.2;
 
 float3 InvTonemapper(float3 color)
 {//Timothy Lottes fast_reversible
-	if(LinearConvert)color = pow(color, LinearGamma);
+	if(LinearConvert)color = pow(max(color, 0.0), LinearGamma);
 	
 	float L = max(max(color.r, color.g), color.b);
 	return color / ((1.0 + max(1-IT_Intensity,0.001)) - L);
@@ -422,7 +422,7 @@ float3 Tonemapper(float3 color)
 	float L = max(max(color.r, color.g), color.b);
 	color = color / ((1.0 + max(1-IT_Intensity,0.001)) + L);
 	
-	if(LinearConvert)color = pow(color, sRGBGamma);
+	if(LinearConvert)color = pow(max(color, 0.0), sRGBGamma);
 	return color;
 }
 
@@ -523,7 +523,7 @@ void GBuffer1
 #if SMOOTH_NORMALS <= 0
 	normal.rgb = blend_normals( Bump(texcoord, BUMP), normal.rgb);
 #endif
-	roughness.g = GetRoughTex(texcoord).r;
+	roughness = float2(0.0, GetRoughTex(texcoord));
 }
 
 float4 SNH(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
@@ -634,7 +634,7 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		float3 raydir;
 		float4 reflection;
 		float a;
-		if(!GI)raydir = lerp(raydirG, raydirR, pow(1-(0.5*cos(raybias*PI)+0.5), rsqrt(InvTonemapper((GI)?1:Roughness))));
+		if(!GI)raydir = lerp(raydirG, raydirR, pow(max(1-(0.5*cos(raybias*PI)+0.5), 0.0), rsqrt(InvTonemapper((GI)?1:Roughness))));
 		else raydir = raydirR;
 		
 		//Dots and shit
@@ -646,7 +646,7 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		float NdotV = dot(normal, eyedir);
 		float F0    = 0.04; //reflectance at 0deg angle
 		
-		DoRayMarch(IGNoise, position, raydir, reflection, HitDistance, a);
+		DoRayMarch(IGNoise, position, raydir, reflection.rgb, HitDistance.r, a);
 		//reflection *= ggx_smith_brdf(NdotL, NdotV, NdotH, VdotH, F0, Roughness*Roughness, texcoord);
 		
 		FinalColor.rgb = reflection.rgb;
@@ -656,7 +656,7 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		
 		float AORadius = rcp(max(1, max(AO_Radius_Reflection, AO_Radius_Background)));
 
-		if( GI)FinalColor.a = saturate((HitDistance)*20*AORadius/FAR_PLANE);
+		if( GI)FinalColor.a = saturate((HitDistance.r)*20*AORadius/FAR_PLANE);
 		FinalColor.rgb *= a;
 	}//depth check if end
 }//ReflectionTex
@@ -1016,7 +1016,7 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 			float Div = max(1, max(AO_Radius_Reflection, AO_Radius_Background));
 			AO.g = saturate(GI.a * Div / AO_Radius_Reflection);
 			AO.r = saturate(GI.a * Div / AO_Radius_Background);
-			AO   = saturate(pow(AO, AO_Intensity));
+			AO   = saturate(pow(max(AO, 0.0), AO_Intensity));
 			
 			//modify saturation and exposure
 			GI.rgb *= SatExp.g;
@@ -1054,7 +1054,7 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 		//Fixes White Point dimming after Inverse/Re-Tonemapping
 		FinalColor *= FixWhitePoint();
 		//Depth fade curve
-		FinalColor = lerp(FinalColor, Background, pow(Depth, InvTonemapper(depthfade)));
+		FinalColor = lerp(FinalColor, Background, pow(max(Depth, 0.0), InvTonemapper(depthfade)));
 	}
 	
 	//debug views: depth, normal, history length, roughness

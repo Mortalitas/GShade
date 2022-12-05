@@ -2,7 +2,7 @@
  #define UI_DIFFICULTY 0
 #endif
 
-#define AspectRatio float2(1, BUFFER_WIDTH/BUFFER_HEIGHT)          
+#define NGAspectRatio float2(1, BUFFER_WIDTH/BUFFER_HEIGHT)          
 
 #ifndef SMOOTH_NORMALS
  #define SMOOTH_NORMALS 1
