@@ -365,7 +365,7 @@ float GetRoughTex(float2 texcoord)
 			float  SampleDepth = LDepth(SampleCoord);
 			if(abs(SampleDepth - depth) < Threshold)
 			{
-				float3 SampleColor = toYCC(tex2D( sTexColor, SampleCoord).rgb);
+				float3 SampleColor = toYCC(tex2Dlod( sTexColor, float4(SampleCoord, 0.0, 0.0)).rgb);
 				SampleColor = min(abs(center.g - SampleColor.g), 0.25);
 				Roughness += SampleColor.r;
 			}
@@ -378,8 +378,8 @@ float GetRoughTex(float2 texcoord)
 		Roughness = clamp(Roughness, torough.x, torough.y);
 		
 		return saturate(Roughness);
-	} 
-	return 0;//RoughnessTex
+	}
+	return 0.0;//RoughnessTex
 }
 
 float3 Bump(float2 texcoord, float height)
@@ -443,7 +443,7 @@ float dilate(in sampler color, in float2 texcoord, in float2 p, in float mip)
 	int r = 3;
 	[unroll]for(float x = -r; x <= r; x++){
 	[unroll]for(float y = -r; y <= r; y++){
-		result = min(result, tex2D(color, texcoord + float2(x,y)*p).r);
+		result = min(result, tex2Dlod(color, float4(texcoord + float2(x,y)*p, 0.0, 0.0)).r);
 	}}
 	
 	return result;
@@ -928,7 +928,7 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	float4 SCurrent; int x, y;
 	[unroll]for(x = -r; x<=r; x++){
 	[unroll]for(y = -r; y<=r; y++){
-		SCurrent = tex2D(sSSSR_FilterTex1, texcoord + float2(x,y)*p);
+		SCurrent = tex2Dlod(sSSSR_FilterTex1, float4(texcoord + float2(x,y)*p, 0.0, 0.0));
 		SCurrent.rgb = toYCC(SCurrent.rgb);
 		
 		Max = max(SCurrent, Max);
