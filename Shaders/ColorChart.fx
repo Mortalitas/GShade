@@ -237,11 +237,26 @@ void PS_cLayerCC(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out fl
 // Techniques
 // -------------------------------------
 
-technique Color_Chart < ui_label = "Color Chart"; 
+technique Color_Chart < ui_label = "Color Chart (Hidden In Screenshots)"; 
 ui_tooltip = "     Display a color chart like used for\n"
                      "color grading work in video/cinema production.\n"
                      "      Can be useful to see effect that\n"
-                     "   presets and shaders affect on to colors.";>
+                     "   presets and shaders affect on to colors.\n\n"
+					 "     This technique WILL NOT be shown in screenshots.";>
+{
+    pass
+    {
+        VertexShader = PostProcessVS;
+        PixelShader  = PS_cLayerCC;
+    }
+}
+
+technique Color_Chart_S < ui_label = "Color Chart (Visible In Screenshots)"; 
+ui_tooltip = "     Display a color chart like used for\n"
+                     "color grading work in video/cinema production.\n"
+                     "      Can be useful to see effect that\n"
+                     "   presets and shaders affect on to colors.\n\n:
+					 "     This technique WILL be shown in screenshots.";>
 {
     pass
     {
