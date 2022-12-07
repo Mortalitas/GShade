@@ -74,7 +74,7 @@ uniform int Color <
 	ui_items = "Pure Green (RGB 0,255,0)\0Pure Red (RGB 255,0,255)\0Pure Blue (RGB 0,255,0)\0Super Blue Ultimatte(tm) (RGB 18,46,184)\0Green Ultimatte(tm) (RGB 74,214,92)\0Custom\0Alpha Transparency\0";
 	ui_category = "Color settings";
 	ui_category_closed = false;
-> = 0;
+> = 6;
 
 uniform float3 CustomColor <
 	ui_type = "color";
