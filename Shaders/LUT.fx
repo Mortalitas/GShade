@@ -25,7 +25,7 @@
 #define fLUT_A_TextureName "lut.png"
 #define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png"
 #ifndef fLUT_TextureName
-    #define fLUT_TextureName "lut_ReShade.png" // Add your own LUT to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings to change the LUT used!
+    #define fLUT_TextureName "lut_ReShade.png" // Add your own LUT with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the LUT used!
 #endif
 #define fLUT_SL_TextureName "lut_Sleepy.png"
 #define fLUT_FE_TextureName "lut_Feli.png"

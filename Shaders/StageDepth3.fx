@@ -38,7 +38,7 @@
 #include "Blending.fxh"
 
 #ifndef Stage3Tex
-#define Stage3Tex "LayerStage.png" // Add your own image file to \reshade-shaders\Textures\ and provide the new file name in quotes to change the image displayed!
+#define Stage3Tex "LayerStage.png" // Add your own image file with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes in the Preprocessor Definitions under the shader's normal settings on the Home tab to change the image displayed!
 #endif
 #ifndef STAGE3_SIZE_X
 #define STAGE3_SIZE_X BUFFER_WIDTH

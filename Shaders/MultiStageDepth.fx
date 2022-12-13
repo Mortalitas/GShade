@@ -46,9 +46,7 @@
 #include "ReShade.fxh"
 #include "Blending.fxh"
 
-#ifndef MULTISTAGEDEPTH_TEX_FORMAT
 #define MULTISTAGEDEPTH_TEX_FORMAT RGBA8
-#endif
 
 uniform int Tex_Select <
     ui_label = "Texture";
@@ -140,7 +138,7 @@ uniform bool Stage_InvertDepth <
 	ui_tooltip = "Inverts the depth buffer so that the texture is applied to the foreground instead.";
 > = false;
 
-#if   MultiStageDepthTexture_Source == 0 // Fire1.png
+#if   MultiStageDepthTexture_Source == 0 // Fire1.png // Use StageDepth.fx or one of its duplicates if you need to load your own images!
 #define _SOURCE_MULTILUT_FILE "Fire1.png"
 #elif MultiStageDepthTexture_Source == 1 // Fire2.png
 #define _SOURCE_MULTILUT_FILE "Fire2.png"
@@ -158,7 +156,7 @@ uniform bool Stage_InvertDepth <
 #define _SOURCE_MULTILUT_FILE "VignetteSoft.png"
 #elif MultiStageDepthTexture_Source == 8 // Metal1.jpg
 #define _SOURCE_MULTILUT_FILE "Metal1.jpg"
-#elif MultiStageDepthTexture_Source == 9 // Ice1.jpg
+#else // Ice1.jpg
 #define _SOURCE_MULTILUT_FILE "Ice1.jpg"
 #endif
 

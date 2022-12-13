@@ -32,7 +32,7 @@
 
 #define fLUT_GSTextureName "MultiLut_GShade.png"
 #ifndef fLUT_TextureName
-    #define fLUT_TextureName "MultiLut_atlas4.png" // Add your own MultiLUT atlas to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings to change the MultiLUT used!
+    #define fLUT_TextureName "MultiLut_atlas4.png" // Add your own MultiLUT atlas with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the MultiLUT used!
 #endif
 #define fLUT_RESTextureName "MultiLut_atlas4.png"
 #define fLUT_JOHTextureName "MultiLut_Johto.png"
