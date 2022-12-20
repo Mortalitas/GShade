@@ -20,7 +20,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
-#define fLUT_TextureName "lut_GShade.png"
+#define fLUT_G_TextureName "lut_GShade.png"
 #define fLUT_W_TextureName "lut_warm.png"
 #define fLUT_A_TextureName "lut.png"
 #define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png"
@@ -82,7 +82,7 @@ uniform float fLUT_AmountLuma <
 #endif
 
 #if   LUTTexture_Source == 0 // GShade/Angelite LUT
-#define _SOURCE_LUT_FILE fLUT_TextureName
+#define _SOURCE_LUT_FILE fLUT_G_TextureName
 #define _SOURCE_LUT_SIZE 32
 #define _SOURCE_LUT_AMOUNT fLUT_TileAmount
 #elif LUTTexture_Source == 1 // LUT from LUT - Warm.fx
