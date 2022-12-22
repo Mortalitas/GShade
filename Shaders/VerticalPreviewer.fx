@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-    Vertical Previewer and Composition (version 0.1)
+    Vertical Previewer and Composition (version 0.2)
 
     Authors: CeeJay.dk, seri14, Marot Satil, prod80, Uchu Suzume, originalnicodr
                     Composition https://github.com/Daodan317081/reshade-shaders
@@ -16,8 +16,9 @@
     History:
     (*) Feature (+) Improvement (x) Bugfix (-) Information (!) Compatibility
     
-    Veresion 0.1 Uchu Suzume & Marot Satil
+    Version 0.2 Uchu Suzume & Marot Satil
     *Created by Uchu Suzume, with code optimization by Marot Satil.
+	+Added an on/off toggle variable, ensured shader is not visible in screenshots.
 */
 
 #include "ReShade.fxh"
@@ -27,13 +28,19 @@
 #define SILVER_RATIO 1.4142135623
 #define INV_SILVER_RATIO  1.0 / 1.4142135623
 
+uniform bool VPreToggle <
+    ui_text = "*** The preview by this shader is ignored on the screenshot ***";
+    ui_label = "Toggle Preview ON/OFF";
+    ui_tooltip = "You can assign a hotkey by right-clicking.";
+> = false;
+
 uniform int cLayerVPre_Angle <
     ui_type = "combo";
+    ui_spacing = 1;
     ui_label = "Vertical Preview";
     ui_tooltip = "-90 Degrees - Rotate Left.\n"
                          " 90 Degrees - Rotate Right.   \n";
-    ui_items =
-               "-90 Degree\0"
+    ui_items = "-90 Degree\0"
                "  0 Degree\0"
                " 90 Degree\0"
                "180 Degree\0"
@@ -44,7 +51,7 @@ uniform float cLayerVPre_Scale <
     ui_type = "slider";
     ui_label = "Scale";
     ui_tooltip = "0.75 will vertically fit \n"
-                         "in 16:9(FHD) ratio.        ";
+                 "in 16:9(FHD) ratio.        ";
     ui_min = 0.50; ui_max = 1.00;
     ui_step = 0.001;
 > = 0.750;
@@ -68,12 +75,11 @@ uniform int cLayerVPre_Composition <
     ui_spacing = 1;
     ui_label = "Composition Line";
     ui_tooltip = " By positioning subjects/objects\n"
-                         "     in the center of square\n    "
-                         "           or                   \n"
-                         "aligning to lines or cross point,\n"
-                         " your screen may more balanced.";
-    ui_items =
-               "OFF\0"
+                 "     in the center of square\n    "
+                 "           or                   \n"
+                 "aligning to lines or cross point,\n"
+                 " your screen may more balanced.";
+    ui_items = "OFF\0"
                "Center Lines\0"
                "Thirds\0"
                "Fourth\0"
@@ -91,11 +97,35 @@ uniform int cLayerVPre_Composition <
 uniform float4 UIGridColor <
     ui_type = "color";
     ui_label = "Grid Color";
-> = float4(1.0, 1.0, 1.0, 0.5);
+> = float4(1.0, 1.0, 1.0, 0.294);
 
 uniform float UIGridLineWidth <
     ui_type = "slider";
     ui_label = "Grid Line Width";
+    ui_min = 0.0; ui_max = 5.0;
+    ui_steps = 0.01;
+> = 2.0;
+
+uniform int cLayerVPre_CompositionAux <
+    ui_type = "combo";
+    ui_spacing = 1;
+    ui_label = "Composition Line Aux";
+    ui_tooltip = " Display the ratio used in thumbnails\n"
+                 "for Twitter and other platforms.\n";
+    ui_items = "OFF\0"
+               "4:3(One Vertical image on Twitter)\0"
+               "3:4(Two Vertical image on Twitter)\0"
+               "1:1\0";
+> = 0;
+
+uniform float4 UIGridColorAux <
+    ui_type = "color";
+    ui_label = "Grid Color Aux";
+> = float4(0.686, 1.000, 0.196, 0.529);
+
+uniform float UIGridLineWidthAux <
+    ui_type = "slider";
+    ui_label = "Grid Line Width Aux";
     ui_min = 0.0; ui_max = 5.0;
     ui_steps = 0.01;
 > = 2.0;
@@ -124,10 +154,12 @@ texture texVoid <
     Format = RGBA8;
 };
 texture texDraw { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+texture texDrawAux { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 texture texVPreOut { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 
 sampler samplerVoid { Texture = texVoid; };
 sampler samplerDraw { Texture = texDraw; };
+sampler samplerDrawAux { Texture = texDrawAux; };
 sampler samplerVPreOut { Texture = texVPreOut; };
 
 struct sctpoint {
@@ -488,17 +520,79 @@ void PS_DrawLine(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out fl
         }
 }
 
-    float3 bri(float3 backColor, float x)
-    {
-        //screen
-        const float3 c = 1.0f - ( 1.0f - backColor.rgb ) * ( 1.0f - backColor.rgb );
-        if (x < 0.0f) {
-            x = x * 0.5f;
+float3 DrawLineAux(float3 background, float3 gridColorAux, float lineWidthAux, float2 texCoord) {
+    float3 result;
+
+    sctpoint lineV1 = NewPoint(gridColorAux, lineWidthAux, float2(((BUFFER_WIDTH / BUFFER_HEIGHT) * 0.5) * 0.25, texCoord.y));
+    sctpoint lineH1 = NewPoint(gridColorAux, lineWidthAux, float2(((BUFFER_WIDTH / BUFFER_HEIGHT) * 0.5) * 1.75, texCoord.y));
+    
+    result = DrawPoint(background, lineV1, texCoord);
+    result = DrawPoint(result, lineH1, texCoord);
+
+    return result;
+}
+
+float3 DrawLineAux_2(float3 background, float3 gridColorAux, float lineWidthAux, float2 texCoord) {
+    float3 result;
+
+    sctpoint lineV1 = NewPoint(gridColorAux, lineWidthAux, float2(((BUFFER_WIDTH / BUFFER_HEIGHT) * 0.5) * 0.578, texCoord.y));
+    sctpoint lineH1 = NewPoint(gridColorAux, lineWidthAux, float2(((BUFFER_WIDTH / BUFFER_HEIGHT) * 0.5) * 1.422, texCoord.y));
+    
+    result = DrawPoint(background, lineV1, texCoord);
+    result = DrawPoint(result, lineH1, texCoord);
+
+    return result;
+}
+
+float3 DrawLineAux_3(float3 background, float3 gridColorAux, float lineWidthAux, float2 texCoord) {
+    float3 result;
+    
+    sctpoint lineV1 = NewPoint(gridColorAux, lineWidthAux, float2(((BUFFER_WIDTH / BUFFER_HEIGHT) * 0.5) * 0.5, texCoord.y));
+    sctpoint lineH1 = NewPoint(gridColorAux, lineWidthAux, float2(((BUFFER_WIDTH / BUFFER_HEIGHT) * 0.5) * 1.5, texCoord.y));
+
+    result = DrawPoint(background, lineV1, texCoord);
+    result = DrawPoint(result, lineH1, texCoord);
+
+    return result;
+}
+
+void PS_DrawLineAux(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) {
+    const float4 backColor = tex2D(samplerDraw, texCoord);
+        switch(cLayerVPre_CompositionAux)
+        {
+            default:
+                passColor = float4(backColor.rgb, backColor.a);
+                break;
+            case 1:
+                const float3 DrawLineAux = DrawLineAux(backColor.rgb, UIGridColorAux.rgb, UIGridLineWidthAux, texCoord);
+                passColor = float4(lerp(backColor.rgb, DrawLineAux.rgb, UIGridColorAux.w).rgb, backColor.a);
+                break;
+            case 2:
+                const float3 DrawLineAux_2 = DrawLineAux_2(backColor.rgb, UIGridColorAux.rgb, UIGridLineWidthAux, texCoord);
+                passColor = float4(lerp(backColor.rgb, DrawLineAux_2.rgb, UIGridColorAux.w).rgb, backColor.a);
+                break;
+            case 3:
+                const float3 DrawLineAux_3 = DrawLineAux_3(backColor.rgb, UIGridColorAux.rgb, UIGridLineWidthAux, texCoord);
+                passColor = float4(lerp(backColor.rgb, DrawLineAux_3.rgb, UIGridColorAux.w).rgb, backColor.a);
+                break;
         }
-        return saturate( lerp( backColor.rgb, c.rgb, x ));   
+}
+
+float3 bri(float3 backColor, float x)
+{
+    //screen
+    const float3 c = 1.0f - ( 1.0f - backColor.rgb ) * ( 1.0f - backColor.rgb );
+    if (x < 0.0f) {
+        x = x * 0.5f;
     }
+    return saturate( lerp( backColor.rgb, c.rgb, x ));   
+}
 
 void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) {
+    if (VPreToggle) {
+        passColor = tex2D(ReShade::BackBuffer, texCoord);
+    }
+    else {
     const float3 pivot = float3(0.5, 0.5, 0.0);
     const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
     const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * cLayerVPre_Scale / BUFFER_SCREEN_SIZE);
@@ -547,11 +641,11 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
     );
 
     float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
-    float4 backColor = tex2D(samplerDraw, texCoord);
+    float4 backColor = tex2D(samplerDrawAux, texCoord);
         switch (cLayerVPre_Angle) {
             default:
                 const float4 Void = tex2D(samplerVoid, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
-                const float4 VPreOut = tex2D(samplerDraw, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+                const float4 VPreOut = tex2D(samplerDrawAux, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
                 const float FillValue = cLayer_Blend_BGFill + 0.5;
                 if (cLayer_Blend_BGFill != 0.0f) {
                     backColor.rgb = lerp(2 * backColor.rgb * FillValue, 1.0 - 2 * (1.0 - backColor.rgb) * (1.0 - FillValue), step(0.5, FillValue));
@@ -562,13 +656,16 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
                 passColor = backColor;
                 break;
         }
+    }
 }
 
 // -------------------------------------
 // Techniques
 // -------------------------------------
 
-technique Vertical_Previewer < ui_label = "Vertical Previewer and Composition";
+technique Vertical_Previewer <
+ui_label = "Vertical Previewer and Composition (Hidden In Screenshots)";
+enabled_in_screenshot = false;
 ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
                      "***バーチカル プレビュワー アンド コンポジション***\n\n"
                      "By showing preview on the screen to protect\n"
@@ -586,6 +683,44 @@ ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
         RenderTarget = texDraw;
     }
     pass pass1
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_DrawLineAux;
+        RenderTarget = texDrawAux;
+    }
+    pass pass2
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_VPreOut;
+    }
+
+}
+
+technique Vertical_Previewer_S <
+ui_label = "Vertical Previewer and Composition (Visible In Screenshots)";
+ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
+                     "***バーチカル プレビュワー アンド コンポジション***\n\n"
+                     "By showing preview on the screen to protect\n"
+                     "your neck while taking vertical screenshot.\n\n"
+                     "      Can be use as composition guide\n"
+                     "   or a small preview window overlooking\n"
+                     "     whole screen with your preference.\n\n"
+                     "     Recommend adding to your hotkeys\n"
+                     " by right click from here for easy access."; >
+{
+    pass pass0
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_DrawLine;
+        RenderTarget = texDraw;
+    }
+    pass pass1
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = PS_DrawLineAux;
+        RenderTarget = texDrawAux;
+    }
+    pass pass2
     {
         VertexShader = PostProcessVS;
         PixelShader = PS_VPreOut;
