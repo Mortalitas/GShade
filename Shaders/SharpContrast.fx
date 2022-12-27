@@ -53,7 +53,7 @@
 #if (((__RENDERER__ >= 0xb000 && __RENDERER__ < 0x10000) || (__RENDERER__ >= 0x14300)) && __RESHADE__ >=40800)
 
 	#ifndef SHARP_CONTRAST_COMPUTE
-		#define SHARP_CONTRAST_COMPUTE 1
+		#define SHARP_CONTRAST_COMPUTE 0
 	#endif
 #else
 	#define SHARP_CONTRAST_COMPUTE 0
