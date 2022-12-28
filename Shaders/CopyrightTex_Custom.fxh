@@ -49,7 +49,7 @@ uniform int variable \
 /* Set default value(see above) by source code if the preset has not modified yet this variable/definition */
 #ifndef cLayer_Texture_Source
 #define cLayer_Texture_Source 0
-#warning "Non-existing source reference numbers specified. Try selecting the logo texture at the top and then reload."
+//#warning "Non-existing source reference numbers specified. Try selecting the logo texture at the top and then reload."
 #endif
 
 // -------------------------------------
