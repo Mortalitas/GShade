@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.2.0
+/** Color conversion matrix and blue noise dither library, version 1.3.0
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -13,6 +13,13 @@ http://creativecommons.org/licenses/by/3.0/.
 #pragma once
 // Change this, if you load bigger texture
 #define DITHER_SIZE_TEX 64u
+#ifndef QUANTIZATION_LEVELS
+	#if BUFFER_COLOR_SPACE < 2 // 8-bit quantization
+		#define QUANTIZATION_LEVELS 255
+	#else // 10-bit quantization
+		#define QUANTIZATION_LEVELS 1023
+	#endif
+#endif
 
 	/* CONSTANTS */
 
@@ -131,32 +138,19 @@ namespace BlueNoise
 	   SV_Position input from a pixel shader. */
 	float dither(int2 pixelPos, float gradient)
 	{
-#if BUFFER_COLOR_SPACE < 2 // 8-bit range
-		// Scale to 8-bit range
-		gradient *= 255f;
-#else // 10-bit range
-		// Scale to 10-bit range
-		gradient *= 1023f;
-#endif
+		// Scale to quantization range
+		gradient *= QUANTIZATION_LEVELS;
+		// Get blue noise repeated texture
+		float noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX).r;
 		// Dither quantization
-		return frac(gradient) >= tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX)[0] ?
-#if BUFFER_COLOR_SPACE < 2 // 8-bit range
-			 ceil(gradient)/255f :
-			floor(gradient)/255f;
-#else // 10-bit range
-			 ceil(gradient)/1023f :
-			floor(gradient)/1023f;
-#endif
+		gradient = frac(gradient) >= noise? ceil(gradient) : floor(gradient);
+		// Normalize
+		return gradient/QUANTIZATION_LEVELS;
 	}
 	float3 dither(int2 pixelPos, float3 color)
 	{
-#if BUFFER_COLOR_SPACE < 2 // 8-bit range
-		// Scale to 8-bit range
-		color *= 255f;
-#else // 10-bit range
-		// Scale to 10-bit range
-		color *= 1023f;
-#endif
+		// Scale to quantization range
+		color *= QUANTIZATION_LEVELS;
 		// Get blue noise repeated texture
 		float3 noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX).rgb;
 		// Get threshold for noise amount
@@ -164,23 +158,14 @@ namespace BlueNoise
 		// Dither quantization
 		[unroll]
 		for (uint i=0u; i<3u; i++)
-#if BUFFER_COLOR_SPACE < 2 // 8-bit range
-			color[i] = slope[i] >= noise[i] ? ceil(color[i])/255f : floor(color[i])/255f;
-#else // 10-bit range
-			color[i] = slope[i] >= noise[i] ? ceil(color[i])/1023f : floor(color[i])/1023f;
-#endif
-		// Dithered color
-		return color;
+			color[i] = slope[i] >= noise[i]? ceil(color[i]) : floor(color[i]);
+		// Normalize
+		return color/QUANTIZATION_LEVELS;
 	}
 	float4 dither(int2 pixelPos, float4 color)
 	{
-#if BUFFER_COLOR_SPACE < 2 // 8-bit range
-		// Scale to 8-bit range
-		color *= 255f;
-#else // 10-bit range
-		// Scale to 8-bit range
-		color *= 1023f;
-#endif
+		// Scale to quantization range
+		color *= QUANTIZATION_LEVELS;
 		// Get blue noise repeated texture
 		float4 noise = tex2Dfetch(BlueNoiseTexSmp, pixelPos%DITHER_SIZE_TEX);
 		// Get threshold for noise amount
@@ -188,12 +173,8 @@ namespace BlueNoise
 		// Dither quantization
 		[unroll]
 		for (uint i=0u; i<4u; i++)
-#if BUFFER_COLOR_SPACE < 2 // 8-bit range
-			color[i] = slope[i] >= noise[i] ? ceil(color[i])/255f : floor(color[i])/255f;
-#else // 10-bit range
-			color[i] = slope[i] >= noise[i] ? ceil(color[i])/1023f : floor(color[i])/1023f;
-#endif
-		// Dithered color
-		return color;
+			color[i] = slope[i] >= noise[i]? ceil(color[i]) : floor(color[i]);
+		// Normalize
+		return color/QUANTIZATION_LEVELS;
 	}
 }
