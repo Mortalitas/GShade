@@ -27,8 +27,8 @@
 uniform int variable \
 < \
     ui_items = \
-               "Logo 00\0" \/* Name displayed in Dropdown. Logo 00の部分を書き換えることでGShadeのUI上で表示される名前を任意のものに変更できます。 */
-               "Logo 01\0" \/* Leave symbols / and ". スラッシュやダブルクォーテーション等は動作上必要なものなので書き換える際は注意してください。 */
+               "Logo 00\0" \
+               "Logo 01\0" \
                "Logo 02\0" \
                "Logo 03\0" \
                "Logo 04\0" \
@@ -38,8 +38,8 @@ uniform int variable \
                "Logo 08\0" \
                "Logo 09\0" \
                "Logo 10\0" \
-               "-------------------------------------------------\0" \/* Use this partition if you need. よければロゴの種類が増えた時に仕切りとしてお使いください。 */
-               ; \/* This ; marking an end of the list. Do not delete. ここのセミコロン(;)はリストの終わりを表すものなので、間違って消すとエラーになります。*/
+               "-------------------------------------------------\0" \
+               ; \
     ui_bind = "_Copyright_Texture_Source"; \
     ui_label = name_label; \
     ui_tooltip = description; \
