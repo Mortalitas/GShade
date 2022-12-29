@@ -1,4 +1,4 @@
-/** Color conversion matrix and blue noise dither library, version 1.3.0
+/** Color conversion matrix and blue noise dither library, version 1.3.1
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -13,12 +13,10 @@ http://creativecommons.org/licenses/by/3.0/.
 #pragma once
 // Change this, if you load bigger texture
 #define DITHER_SIZE_TEX 64u
-#ifndef QUANTIZATION_LEVELS
-	#if BUFFER_COLOR_SPACE < 2 // 8-bit quantization
-		#define QUANTIZATION_LEVELS 255
-	#else // 10-bit quantization
-		#define QUANTIZATION_LEVELS 1023
-	#endif
+#if BUFFER_COLOR_SPACE < 2 // 8-bit quantization
+	#define QUANTIZATION_LEVELS 255
+#else // 10-bit quantization
+	#define QUANTIZATION_LEVELS 1023
 #endif
 
 	/* CONSTANTS */
