@@ -283,17 +283,17 @@ float4 SMAABlendingWeightCalculationWrapPS(
 	return SMAABlendingWeightCalculationPS(texcoord, pixcoord, offset, edgesSampler, areaSampler, searchSampler, 0.0);
 }
 
-float3 SMAANeighborhoodBlendingWrapPS(
+float4 SMAANeighborhoodBlendingWrapPS(
 	float4 position : SV_Position,
 	float2 texcoord : TEXCOORD0,
 	float4 offset : TEXCOORD1) : SV_Target
 {
 	if (DebugOutput == 1)
-		return tex2D(edgesSampler, texcoord).rgb;
+		return tex2D(edgesSampler, texcoord);
 	if (DebugOutput == 2)
-		return tex2D(blendSampler, texcoord).rgb;
+		return tex2D(blendSampler, texcoord);
 
-	return SMAANeighborhoodBlendingPS(texcoord, offset, colorLinearSampler, blendSampler).rgb;
+	return SMAANeighborhoodBlendingPS(texcoord, offset, colorLinearSampler, blendSampler);
 }
 
 // Rendering passes
