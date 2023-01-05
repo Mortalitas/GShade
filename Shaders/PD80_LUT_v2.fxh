@@ -8,10 +8,11 @@
  */
 
 // Input
-#define _MERGE(a, b) a##b
-#define PD80_TexName        _MERGE( PD80_Technique_Name, Tex )
-#define PD80_Sampler        _MERGE( PD80_Technique_Name, Samp )
-#define PD80_NameSpace      _MERGE( PD80_Technique_Name, Name )
+#define _CONCAT(a, b) a##b
+#define _MERGE(a, b) _CONCAT(a, b)
+#define PD80_TexName _MERGE(PD80_Technique_Name, Tex)
+#define PD80_Sampler _MERGE(PD80_Technique_Name, Samp)
+#define PD80_NameSpace _MERGE(PD80_Technique_Name, Name)
 
 #include "ReShade.fxh"
 #include "PD80_00_Noise_Samplers.fxh"
