@@ -143,9 +143,9 @@ uniform float Layer_Rotate <
 #define _SOURCE_MULTILAYER_FILE "Dirt3.jpg"
 #endif
 
-texture Layer_Tex <source = _SOURCE_MULTILAYER_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=MULTILAYER_TEXFORMAT; };
-sampler Layer_Sampler {
-    Texture = Layer_Tex;
+texture MultiLayer_Tex <source = _SOURCE_MULTILAYER_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=MULTILAYER_TEXFORMAT; };
+sampler MultiLayer_Sampler {
+    Texture = MultiLayer_Tex;
     AddressU = CLAMP;
     AddressV = CLAMP;
 };
@@ -200,7 +200,7 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
 
     const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
     const float4 backColor = tex2D(ReShade::BackBuffer, texCoord);
-    passColor = tex2D(Layer_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+    passColor = tex2D(MultiLayer_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
     passColor = float4(ComHeaders::Blending::Blend(Layer_BlendMode, backColor.rgb, passColor.rgb, passColor.a * Layer_Blend), backColor.a);
 }
