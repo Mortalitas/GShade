@@ -142,9 +142,10 @@ void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
 #elif KeepUIType == 0 // Unsupported game.
     color = tex2D(ReShade::BackBuffer, texcoord);
 #else // Supported game.
+    color = tex2D(ReShade::BackBuffer, texcoord);
     const float4 keep = tex2D(KeepUI_Sampler, texcoord);
 
-    color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a).rgb, keep.a);
+    color.rgb   = lerp(color.rgb, keep.rgb, keep.a).rgb;
 #endif
 }
 
