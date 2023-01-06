@@ -10,7 +10,7 @@
 	See Layer.fx for more information and a changelog.
 */
 
-#define LAYER_SUMMONING(Layer_Texture, LayerTex, Layer_Size_X, Layer_Size_Y, Layer_Texformat, LayerSampler, Layer_Category, LAYER_BLEND_MODE, Layer_Blend, LAYER_SCALE, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, Layer_Sampler, LAYER_NAME) \
+#define LAYER_SUMMONING(Layer_Texture, LayerTex, Layer_Size_X, Layer_Size_Y, Layer_Texformat, Layer_Sampler, Layer_Category, LAYER_BLEND_MODE, Layer_Blend, LAYER_SCALE, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, LAYER_NAME) \
 texture Layer_Texture <source = LayerTex;> { Width = Layer_Size_X; Height = Layer_Size_Y; Format=Layer_Texformat; }; \
 sampler Layer_Sampler { \
 	Texture = Layer_Texture; \
