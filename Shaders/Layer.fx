@@ -48,22 +48,22 @@
 #include "Layer.fxh"
 
 #ifndef LayerTex
-#define LayerTex "LayerStage.png" // Add your own image file with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes in the Preprocessor Definitions under the shader's normal settings on the Home tab to change the image displayed!
+	#define LayerTex "LayerStage.png" // Add your own image file with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes in the Preprocessor Definitions under the shader's normal settings on the Home tab to change the image displayed!
 #endif
 #ifndef LAYER_SIZE_X
-#define LAYER_SIZE_X BUFFER_WIDTH
+	#define LAYER_SIZE_X BUFFER_WIDTH
 #endif
 #ifndef LAYER_SIZE_Y
-#define LAYER_SIZE_Y BUFFER_HEIGHT
+	#define LAYER_SIZE_Y BUFFER_HEIGHT
 #endif
 #ifndef LAYER_TEXFORMAT
-#define LAYER_TEXFORMAT RGBA8
+	#define LAYER_TEXFORMAT RGBA8
 #endif
 
 uniform int Layer_Quantity <
 	ui_type = "combo";
 	ui_label = "Number of Layers";
-	ui_tooltip = "The number of layer techniques to generate. Enabling too many of these in a DirectX 9 game or lower end hardware is a very, very bad idea.";
+	ui_tooltip = "The number of Layer techniques to generate. Enabling too many of these in a DirectX 9 game or lower end hardware is a very, very bad idea.";
 	ui_items =  "1\0"
 				"2\0"
 				"3\0"
@@ -88,7 +88,7 @@ uniform int Layer_Quantity <
 > = 0;
 
 #ifndef LAYER_QUANTITY
-#define LAYER_QUANTITY 0
+	#define LAYER_QUANTITY 0
 #endif
 
 LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFORMAT, Layer_Sampler, "Layer 1", Layer_BlendMode, Layer_Blend, Layer_Scale, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, Layer)
