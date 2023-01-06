@@ -63,7 +63,7 @@
 uniform int Layer_Quantity <
 	ui_type = "combo";
 	ui_label = "Number of Layers";
-	ui_tooltip = "The number of Layer techniques to generate. Enabling too many of these in a DirectX 9 game or lower end hardware is a very, very bad idea.";
+	ui_tooltip = "The number of Layer techniques to generate. Enabling too many of these in a DirectX 9 game or on lower end hardware is a very, very bad idea.";
 	ui_items =  "1\0"
 				"2\0"
 				"3\0"
