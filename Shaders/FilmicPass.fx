@@ -36,19 +36,19 @@ uniform float Saturation <
 
 uniform float RedCurve <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.0;
 uniform float GreenCurve <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.0;
 uniform float BlueCurve <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.0;
 uniform float BaseCurve <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.5;
 
 uniform float BaseGamma <
@@ -58,19 +58,19 @@ uniform float BaseGamma <
 > = 1.0;
 uniform float EffectGamma <
 	ui_type = "slider";
-	ui_min = 0.0001; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 0.65;
 uniform float EffectGammaR <
 	ui_type = "slider";
-	ui_min = 0.0001; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.0;
 uniform float EffectGammaG <
 	ui_type = "slider";
-	ui_min = 0.0001; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.0;
 uniform float EffectGammaB <
 	ui_type = "slider";
-	ui_min = 0.0001; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 2.0;
 > = 1.0;
 
 uniform float3 LumCoeff <
