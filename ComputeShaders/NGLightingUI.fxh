@@ -1,6 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.8 - UI
+//Version 0.9 - UI
 
 //license
 //CC0 ^_^
@@ -9,15 +9,13 @@
 #if UI_DIFFICULTY == 1
 
 uniform int Hints<
-	ui_text = "This shader is in -ALPHA PHASE-, expect bugs.\n\n"
+	ui_text = "This shader is in -BETA PHASE-, expect major changes.\n\n"
 			  "Set UI_DIFFICULTY to 0 to make the UI simpler if you want.\n"
 			  "Advanced categories are unnecessary options that\n"
 			  "can break the look of the shader if modified improperly.\n\n"
-			  "Use with ReShade_MotionVectors. Increasing the quality of\n"
-			  "the motion vector shader obviously increases the precision\n"
-			  "thus making the quality of NiceGuy lighting higher. But if\n"
-			  "you have performance issues, don't hesitate to decrease its\n"
-			  "resolution and pre-block size. That doesn't hurt noticably.";
+			  "Use with ReShade_MotionVectors at Quarter Resolution.\n"
+			  "Using higher resolutions for the motion vector only makes it WORSE "
+			  "when the game is using temporal filters (TAA,DLSS2,FSR2,TAAU,TSR,etc.)";
 			  //"Disabing NGL_HYBRID_MODE can give you better performance\n"
 			  //"But you can use only one effect (either GI or Reflection).\n"
 			  //"Don't forget to give me feedbacks in reshade discord";
@@ -43,8 +41,9 @@ uniform bool UseCatrom <
 
 uniform bool SharpenGI <
 	ui_label = "Sharpen the GI";
-	ui_tooltip = "Further improves the edge clarity. Try Catrom resampling first tho.";
+	ui_tooltip = "(No performance impact) Further improves the edge clarity. Try Catrom resampling first tho.";
 > = 1;
+//#define SharpenGI false
 
 uniform float fov <
 	ui_label = "Field of View";
@@ -88,7 +87,7 @@ uniform float RAYINC <
 	ui_category = "Ray Tracing (Advanced)";
 	ui_tooltip = "Increases ray length at the cost of accuracy.";
 	ui_category_closed = true;
-	ui_min = 0;
+	ui_min = 1;
 	ui_max = 2;
 > = 2;
 
@@ -112,42 +111,37 @@ uniform float RAYDEPTH <
 	ui_max = 10;
 > = 2;
 
-uniform float STEPNOISE <
-	ui_label = "Step Length Jitter";
-	ui_type = "slider";
-	ui_category = "Ray Tracing (Advanced)";
-	ui_tooltip = "Reduces artifacts but produces more noise.\n";
-	ui_category_closed = true;
-	ui_min = 0.0;
-	ui_max = 1;
-> = 0.15;
-
-uniform float Tthreshold <
-	ui_label = "Temporal Denoiser Threshold";
+uniform float MVErrorTolerance <
+	ui_label = "Motion Vector\nError Tolerance";
 	ui_type = "slider";
 	ui_category = "Denoiser (Advanced)";
-	ui_tooltip = "Reduces noise but produces more ghosting.";
+	ui_tooltip = "Lower values are  more sensitive to\n"
+				 "Motion Estimation errors. Thus relying\n"
+				 "more on spatial filtering rather than\n"
+				 "temporal accumulation";
 	ui_category_closed = true;
-> = 0.010;
+	ui_step = 0.01;
+> = 0.95;
 
 uniform int MAX_Frames <
 	ui_label = "History Length";
 	ui_type = "slider";
 	ui_category = "Denoiser (Advanced)";
-	ui_tooltip = "Higher values increase both the blur size\n"
-				 "and the temporal accumulation effectiveness.";
+	ui_tooltip = "Higher values increase smoothness\n"
+				 "while preserves more details. But\n"
+				 "introduces more temporal lag.";
 	ui_category_closed = true;
-	ui_min = 1;
+	ui_min = 8;
 	ui_max = 64;
 > = 64;
 
 uniform float Sthreshold <
-	ui_label = "Spatial Denoiser Threshold";
+	ui_label = "Spatial Denoiser\nThreshold";
 	ui_type = "slider";
 	ui_category = "Denoiser (Advanced)";
 	ui_tooltip = "Reduces noise at the cost of detail.";
 	ui_category_closed = true;
-> = 0.025;
+> = 0.003;
 
 static const bool HLFix = 1;
 
@@ -164,21 +158,21 @@ uniform float AO_Radius_Background <
 	ui_label = "Image AO";
 	ui_type = "slider";
 	ui_category = "Blending Options";
-	ui_tooltip = "Radius of the effective Ray Marched AO.";
+	ui_tooltip = "Radius of AO for the image.";
 > = 1;
 
 uniform float AO_Radius_Reflection <
 	ui_label = "GI AO";
 	ui_type = "slider";
 	ui_category = "Blending Options";
-	ui_tooltip = "Radius of the effective Ray Marched AO.";
+	ui_tooltip = "Radius of AO for the GI.";
 > = 1;
 
 uniform float AO_Intensity <
 	ui_label = "AO Power";
 	ui_type = "slider";
 	ui_category = "Blending Options";
-	ui_tooltip = "Ambient Occlusion falloff curve";
+	ui_tooltip = "AO falloff curve";
 > = 1;
 
 uniform float depthfade <
@@ -186,7 +180,7 @@ uniform float depthfade <
 	ui_type = "slider";
 	ui_category = "Blending Options";
 	ui_tooltip = "Higher values decrease the intesity on distant objects.\n"
-				 "Reduces blending issues with in-game fogs.";
+				 "Reduces blending issues within in-game fogs.";
 	ui_min = 0;
 	ui_max = 1;
 > = 0.8;
@@ -199,18 +193,11 @@ uniform bool LinearConvert <
 	ui_category_closed = true;
 > = 1;
 
-uniform float IT_Intensity <
-	ui_type = "slider";
-	ui_label = "Inverse Tonemapper Intensity";
-	ui_category = "Color Management";
-	ui_tooltip = "intensity of Inverse Tonemapping.";
-	ui_category_closed = true;
-	ui_max = 0.99;
-> = 0.97;
+
 
 uniform float2 SatExp <
 	ui_type = "slider";
-	ui_label = "Saturation || Exposure";
+	ui_label = "Saturation\n& Exposure";
 	ui_category = "Color Management";
 	ui_tooltip = "Left slider is Saturation. Right one is Exposure.";
 	ui_category_closed = true;
@@ -299,22 +286,6 @@ uniform int Hints<
 	ui_type = "radio";
 >;
 
-#define fov 65
-#define UseCatrom true
-#define SharpenGI true
-#define TemporalRefine 0
-#define RAYINC 2
-#define UI_RAYSTEPS 16
-#define RAYDEPTH 2
-#define STEPNOISE 0.15
-#define Tthreshold 0.01
-#define MAX_Frames 64
-#define Sthreshold 0.025
-#define AO_Radius_Background 1
-#define AO_Radius_Reflection 0.5
-#define IT_Intensity 0.97
-#define SkyDepth 0.99
-
 #if !NGL_HYBRID_MODE
 uniform int GI <
 	ui_type = "combo";
@@ -323,6 +294,12 @@ uniform int GI <
 > = 1;
 #endif
 
+uniform int UI_QUALITY_PRESET <
+	ui_type = "combo";
+	ui_label = "Quality Preset";
+	ui_items = "Low (16)\0Medium (64)\0High (160)\0Very High (320)\0Extreme (500)\0";
+> = 1;
+
 uniform float BUMP <
 	ui_label = "Bump mapping";
 	ui_type = "slider";
@@ -330,7 +307,7 @@ uniform float BUMP <
 	ui_tooltip = "Adds tiny details to the lighting.";
 	ui_min = 0.0;
 	ui_max = 1;
-> = 1;
+> = 0.5;
 
 uniform float roughness <
 	ui_label = "Roughness";
@@ -386,7 +363,7 @@ uniform float2 SatExp <
 
 uniform uint debug <
 	ui_type = "combo";
-	ui_items = "None\0Lighting\0Depth\0Normal\0Accumulation\0";
+	ui_items = "None\0Lighting\0Depth\0Normal\0Accumulation\0Roughness Map\0";
 	ui_category = "Extra";
 	ui_category_closed = true;
 	ui_min = 0;
