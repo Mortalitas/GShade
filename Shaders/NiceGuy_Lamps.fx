@@ -1,6 +1,6 @@
 //NiceGuy Lamps
 //Written by MJ_Ehsan with the contribution of LVunter(tnx <3) for Reshade
-//Version 0.1 alpha
+//Version 1.1 beta
 
 //license
 //CC0 ^_^
@@ -62,8 +62,29 @@ sampler sNormTex { Texture = NormTex; };
 texture NormTex1  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
 sampler sNormTex1 { Texture = NormTex1; };
 
-texture2D RoughnessTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
-sampler sRoughnessTex {Texture = RoughnessTex;};
+texture VarianceTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+sampler sVarianceTex {Texture = VarianceTex;};
+
+texture ShadowTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f;};
+sampler sShadowTex {Texture = ShadowTex;};
+
+texture BGColorTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
+sampler sBGColorTex {Texture = BGColorTex;};
+
+texture LightingTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
+sampler sLightingTex {Texture = LightingTex;};
+
+texture BlendedTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
+sampler sBlendedTex {Texture = BlendedTex;};
+
+texture LitHistTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
+sampler sLitHistTex {Texture = LitHistTex;};
+
+texture NGLa_BlueNoise <source="BlueNoise-64frames128x128.png";> { Width = 1024; Height = 1024; Format = RGBA8;};
+sampler sNGLa_BlueNoise { Texture = NGLa_BlueNoise; AddressU = REPEAT; AddressV = REPEAT; MipFilter = Point; MinFilter = Point; MagFilter = Point; };
+
+texture texMotionVectors { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16F; };
+sampler SamplerMotionVectors { Texture = texMotionVectors; AddressU = Clamp; AddressV = Clamp; MipFilter = Point; MinFilter = Point; MagFilter = Point; };
 
 ///////////////Textures-Samplers///////////
 ///////////////UI//////////////////////////
@@ -84,11 +105,6 @@ uniform bool debug <
 	ui_category = "General";
 > = 0;
 
-uniform bool OGLighting <
-	ui_label = "Include original lighting";
-	ui_category = "General";
-> = 1;
-
 uniform bool ShowIcon <
 	ui_label = "Show lamp icons";
 	ui_category = "General";
@@ -100,33 +116,11 @@ uniform bool LimitPos <
 	ui_category = "General";
 > = 0;
 
-uniform int TA <
-	ui_label = "Denoiser";
-	ui_type = "combo";
-	ui_items = "FXAA\0TFAA\0";
-	ui_category = "General";
-> = 0;
-
-uniform float UI_FOG_DENSITY <
+uniform float OGLighting <
+	ui_label = "Original lighting";
 	ui_type = "slider";
-	ui_label = "Fog Density";
-	ui_category = "General";
-	ui_max = 1;
-> = 0.2;
-#define UI_FOG_DENSITY UI_FOG_DENSITY/3000
-
-uniform float3 UI_FOG_COLOR <
-	ui_type = "color";
-	ui_label = "Fog Color";
 	ui_category = "General";
 > = 1;
-
-uniform float specular <
-	ui_type = "slider";
-	ui_category = "General";
-	ui_min = 0;
-	ui_max = 1;
-> = 0.1;
 
 uniform float BUMP <
 	ui_label = "Bump mapping";
@@ -140,44 +134,58 @@ uniform int Shadow_Quality <
 	ui_label = "Shadow quality";
 	ui_type = "combo";
 	ui_items = "Low (16 steps)\0Medium (48 steps)\0High (256 steps)\0";
-	ui_category = "General";
+	ui_category = "Shadows";
 > = 0;
 
-uniform float roughfac1 <
+uniform float Shadow_Depth <
+	ui_label = "Surface Depth";
+	ui_type = "drag";
+	ui_tooltip = "Depth buffer doesn't have information\n"
+				 "about the depth of each object. Thus\n"
+				 "we have to take this number as that.";
+	ui_category = "Shadows";
+	ui_max = 10;
+	ui_min = 0;
+	ui_step = 0.01;
+> = 3;
+
+uniform float UI_FOG_DENSITY <
 	ui_type = "slider";
-	ui_category = "Roughness";
-	ui_label = "Variation Frequency";
-	ui_tooltip = "How wide it should search for variation in roughness?\n"
-				 "Low = Detailed\nHigh = Soft";
-	ui_max = 3;
+	ui_label = "Fog Density";
+	ui_category = "Fog";
+	ui_max = 1;
+> = 0.2;
+#define UI_FOG_DENSITY UI_FOG_DENSITY/3000
+
+uniform float3 UI_FOG_COLOR <
+	ui_type = "color";
+	ui_label = "Fog Color";
+	ui_category = "Fog";
 > = 1;
 
-uniform float roughfac2 <
-	ui_type = "slider";
-	ui_category = "Roughness";
-	ui_label = "Roughness Curve";
-	ui_tooltip = "Overall roughness bias\n"
-				 "Final Roughness is also affected by (Surface Relief Height - Recommended : 1)\n"
-				 "and (Surface Relief Scale - Recommended : 0.35) Values in SSR.";
-	ui_min = 0.1;
-	ui_max = 2;
-> = 0.17;
+uniform bool UI_FOG_DEPTH_MASK <
+	ui_type = "radio";
+	ui_label = "Mask Fog with depth";
+	ui_tooltip = "Uses depth to mask the fog,\n"
+				 "faking volumetric shadows to make to fog appear behind objects";
+	ui_category = "Fog";
+> = 0;
 
-uniform float2 fromrough <
+uniform float roughness <
 	ui_type = "slider";
-	ui_category = "Roughness";
-	ui_label = "Levels - input";
-	ui_tooltip = "1st one: Any color below this will become black.\n"
-				 "2nd one: Any color above this will become white.";
-> = float2( 0, 1);
+	ui_category = "Reflections";
+	ui_label = "Roughness";
+	ui_tooltip = "How wide it should search for variation in roughness?\n"
+				 "Low = Detailed\nHigh = Soft";
+	ui_max = 1;
+> = 1;
 
-uniform float2 torough <
+uniform float specular <
 	ui_type = "slider";
-	ui_category = "Roughness";
-	ui_label = "Levels - output";
-	ui_tooltip = "1st one: Brightens the dark pixels.\n"
-				 "2nd one: Darkens the bright pixels.";
-> = float2( 0.5, 1);
+	ui_category = "Reflections";
+	ui_min = 0;
+	ui_max = 1;
+> = 0.1;
 
 /*_________________________________________
                                            |
@@ -228,10 +236,10 @@ uniform float3 UI_COLOR1 <
 uniform float UI_POWER1 <
 	ui_type = "slider";
 	ui_label= "Power";
-	ui_max  = 1000;
+	ui_max  = 10;
 	ui_category = "Lamp 1";
 	ui_category_closed = true;
-> = 500;
+> = 5;
 
 uniform float UI_SOFT_S1 <
 	ui_type = "slider";
@@ -289,10 +297,10 @@ uniform float3 UI_COLOR2 <
 uniform float UI_POWER2 <
 	ui_type = "slider";
 	ui_label= "Power";
-	ui_max  = 1000;
+	ui_max  = 10;
 	ui_category = "Lamp 2";
 	ui_category_closed = true;
-> = 500;
+> = 5;
 
 uniform float UI_SOFT_S2 <
 	ui_type = "slider";
@@ -350,10 +358,10 @@ uniform float3 UI_COLOR3 <
 uniform float UI_POWER3 <
 	ui_type = "slider";
 	ui_label= "Power";
-	ui_max  = 1000;
+	ui_max  = 10;
 	ui_category = "Lamp 3";
 	ui_category_closed = true;
-> = 500;
+> = 5;
 
 uniform float UI_SOFT_S3 <
 	ui_type = "slider";
@@ -411,10 +419,10 @@ uniform float3 UI_COLOR4 <
 uniform float UI_POWER4 <
 	ui_type = "slider";
 	ui_label= "Power";
-	ui_max  = 1000;
+	ui_max  = 10;
 	ui_category = "Lamp 4";
 	ui_category_closed = true;
-> = 500;
+> = 5;
 
 uniform float UI_SOFT_S4 <
 	ui_type = "slider";
@@ -436,7 +444,7 @@ float noise(float2 co)
   return frac(sin(dot(co.xy ,float2(1.0,73))) * 437580.5453);
 }
 
-float interleavedGradientNoise(float2 n) {
+float IGN(float2 n) {
     float f = 0.06711056 * n.x + 0.00583715 * n.y;
     return frac(52.9829189 * frac(f));
 }
@@ -447,6 +455,23 @@ float3 noise3dts(float2 co, float s, float frame)
 	co += sin(frame/120.347668756453546);
 	co += s/16.3542625435332254;
 	return float3( noise(co), noise(co+0.6432168421), noise(co+0.19216811));
+}
+
+float3 BN3dts(float2 texcoord)
+{
+	texcoord *= BUFFER_SCREEN_SIZE; //convert to pixel index
+	
+	texcoord = texcoord%128; //limit to texture size
+	
+	float frame = Frame%64; //limit frame index to history length
+	int2 F;
+	F.x = frame%8; //Go from left to right each frame. start over after 8th
+	F.y = floor(frame/8)%8; //Go from top to buttom each 8 frame. start over after 8th
+	F *= 128; //Each step jumps to the next texture 
+	texcoord += F;
+	texcoord /= 1024; //divide by atlas size
+	float3 Tex = tex2D(sNGLa_BlueNoise, texcoord).rgb;
+	return Tex;
 }
 
 float3 UVtoPos(float2 texcoord)
@@ -511,12 +536,12 @@ float3 Normal(float2 texcoord)
 
 float3 Tonemapper(float3 color)
 {//Timothy Lottes fast_reversible
-	return color.rgb / (1.001 + color);
+	return color.rgb / (1.0 + color);
 }
 
 float InvTonemapper(float color)
 {//Reinhardt reversible
-	return color / (1.0000001 - color);
+	return color / (1.0 - color);
 }
 
 float3 InvTonemapper(float3 color)
@@ -524,32 +549,37 @@ float3 InvTonemapper(float3 color)
 	return color / (1.001 - color);
 }
 
+float lum(in float3 color)
+{
+	return 0.333333 * (color.r + color.g + color.b);
+}
+
+#define BT 1000
 float3 Bump(float2 texcoord, float height)
 {
-	float2 T = pix;
-
-	float4 s[5];
-	s[0].rgb = tex2D(sTexColor, texcoord + float2(T.x,0)).rgb * height;
-	s[1].rgb = tex2D(sTexColor, texcoord + float2(0,T.y)).rgb * height;
-	s[2].rgb = tex2D(sTexColor, texcoord + float2(-T.x,0)).rgb * height;
-	s[3].rgb = tex2D(sTexColor, texcoord + float2(0,-T.y)).rgb * height;
-	s[4].rgb = tex2D(sTexColor, texcoord).rgb * height;
+	float2 p = pix;
 	
-	s[0].a = LDepth(texcoord + float2(T.x,0));
-	s[1].a = LDepth(texcoord + float2(0,T.y));
-	s[2].a = LDepth(texcoord + float2(-T.x,0));
-	s[3].a = LDepth(texcoord + float2(0,-T.y));
-	s[4].a = LDepth(texcoord);
+	float3 s[3];
+	s[0] = tex2D(sTexColor, texcoord + float2(p.x, 0)).rgb;
+	s[1] = tex2D(sTexColor, texcoord + float2(0, p.y)).rgb;
+	s[2] = tex2D(sTexColor, texcoord).rgb;
+	float LC = rcp(lum(s[0]+s[1]+s[2])) * height;
+	LC = min(LC, 4);
+	s[0] *= LC; s[1] *= LC; s[2] *= LC;
+	float d[3];
+	d[0] = LDepth(texcoord + float2(p.x, 0));
+	d[1] = LDepth(texcoord + float2(0, p.y));
+	d[2] = LDepth(texcoord);
 	
-	float4 XB0 = s[4]-s[0];
-	float4 YB0 = s[4]-s[1];
-	float4 XB1 = s[4]-s[3];
-	float4 YB1 = s[4]-s[2];
+	//s[0] *= saturate(1-abs(d[0] - d[2])*1000);
+	//s[1] *= saturate(1-abs(d[1] - d[2])*1000);
 	
-	XB0 = (abs(XB0.a) < abs(XB1.a)) ? XB0 : XB1;
-	YB0 = (abs(YB0.a) < abs(YB1.a)) ? YB0 : YB1;
+	float3 XB = s[2]-s[0];
+	float3 YB = s[2]-s[1];
 	
-	return float3(XB0.x*2, YB0.y*2, 1);
+	float3 bump = float3(lum(XB)*saturate(1-abs(d[0] - d[2])*BT), lum(YB)*saturate(1-abs(d[1] - d[2])*BT), 1);
+	bump = normalize(bump);
+	return bump;
 }
 
 float3 blend_normals(float3 n1, float3 n2)
@@ -559,86 +589,94 @@ float3 blend_normals(float3 n1, float3 n2)
     return n1*dot(n1, n2)/n1.z - n2;
 }
 
-float lum(in float3 color)
-{
-	return dot(0.333333333, color);
-}
-
 bool is_saturated(float2 uv)
 {
 	return uv.x>1||uv.y>1||uv.x<0||uv.y<0;
 }
 
+//from: https://www.shadertoy.com/view/XsSfzV
+// by Nikos Papadopoulos, 4rknova / 2015
+// Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+float3 toYCC(float3 rgb)
+{
+	float Y  =  .299 * rgb.x + .587 * rgb.y + .114 * rgb.z; // Luminance
+	float Cb = -.169 * rgb.x - .331 * rgb.y + .500 * rgb.z; // Chrominance Blue
+	float Cr =  .500 * rgb.x - .419 * rgb.y - .081 * rgb.z; // Chrominance Red
+    return float3(Y,Cb + 128./255.,Cr + 128./255.);
+}
+
 ///////////////Functions///////////////////
 ///////////////Pixel Shader////////////////
 
-float3 roughness( float4 Position : SV_Position, float2 texcoord : TEXCOORD0) : SV_Target
+struct i
+{
+	float4 vpos : SV_Position;
+	float2 texcoord : TexCoord0;
+};
+
+float3 GetRoughTex(float2 texcoord, float4 normal)
 {
 	float2 p = pix;
-	
-	//roughness estimation based on color variation
-	float3 center = tex2D( sTexColor, texcoord).rgb;
-	float3 r = tex2D( sTexColor, texcoord + float2(  roughfac1*p.x, 0)).rgb;
-	float3 l = tex2D( sTexColor, texcoord + float2( -roughfac1*p.x, 0)).rgb;
-	float3 d = tex2D( sTexColor, texcoord + float2( 0, -roughfac1*p.y)).rgb;
-	float3 u = tex2D( sTexColor, texcoord + float2( 0,  roughfac1*p.y)).rgb;
-	
-	//using depth as bilateral blur's determinator
-	float depth = LDepth(texcoord);
-	float ld = LDepth(texcoord + float2(  roughfac1*p.x, 0));
-	float rd = LDepth(texcoord + float2( -roughfac1*p.x, 0));
-	float dd = LDepth(texcoord + float2( 0, -roughfac1*p.y));
-	float ud = LDepth(texcoord + float2( 0,  roughfac1*p.y));
-	
-	//a formula based on trial and error!
-	l = clamp(abs(center - l), 0, 0.25);
-	r = clamp(abs(center - r), 0, 0.25);
-	u = clamp(abs(center - u), 0, 0.25);
-	d = clamp(abs(center - d), 0, 0.25);
-	
-	float a = 0.02;
-	
-	float3 sharp = 0;
-	if ( abs(ld - depth) <= a ) { sharp += l; }
-	if ( abs(rd - depth) <= a ) { sharp += r; }
-	if ( abs(ud - depth) <= a ) { sharp += u; }
-	if ( abs(dd - depth) <= a ) { sharp += d; }
-	//sharp = sharp + l+r+u+d;
-	
-	sharp = pow( sharp, roughfac2);
-	sharp = clamp(sharp, fromrough.x, fromrough.y);
-	sharp = (sharp - fromrough.x) / ( 1 - fromrough.x );
-	sharp = sharp / fromrough.y;
-	sharp = clamp(sharp, torough.x, torough.y);
-	//sharp = normalize(sharp);
 
+	//depth threshold to validate samples
+	const float Threshold = 0.00003;
+	float facing = dot(normal.rgb, normalize(UVtoPos(texcoord, normal.a)));
+	facing *= facing;
 	
-	return sharp;
+	//calculating curve and levels
+	float roughfac; float2 fromrough, torough;
+	roughfac = (1 - roughness);
+	fromrough.x = lerp(0, 0.1, saturate(roughness*10));
+	fromrough.y = 0.8;
+	torough = float2(0, pow(roughness, roughfac));
+	
+	float3 center = toYCC(tex2D(sTexColor, texcoord).rgb);
+	float depth = LDepth(texcoord);
+
+	float Roughness;
+	//cross (+)
+	float2 offsets[4] = {float2(p.x,0), float2(-p.x,0),float2( 0,-p.y),float2(0,p.y)};
+	[unroll]for(int x; x < 4; x++)
+	{
+		float2 SampleCoord = texcoord + offsets[x];
+		float  SampleDepth = LDepth(SampleCoord);
+		if(abs(SampleDepth - depth)*facing < Threshold)
+		{
+			float3 SampleColor = toYCC(tex2D( sTexColor, SampleCoord).rgb);
+			SampleColor = min(abs(center.g - SampleColor.g), 0.25);
+			Roughness += SampleColor.r;
+		}
+	}
+	
+	Roughness = pow( Roughness, roughfac*0.66);
+	Roughness = clamp(Roughness, fromrough.x, fromrough.y);
+	Roughness = (Roughness - fromrough.x) / ( 1 - fromrough.x );
+	Roughness = Roughness / fromrough.y;
+	Roughness = clamp(Roughness, torough.x, torough.y);
+	
+	return saturate(Roughness);
 }
 
-void GBuffer1
-(
-	float4 vpos : SV_Position,
-	float2 texcoord : TexCoord,
-	out float4 normal : SV_Target) //SSSR_NormTex
+void GBuffer1(i i, out float4 normal : SV_Target) //SSSR_NormTex
 {
-	normal.rgb = Normal(texcoord.xy);
-	normal.a   = LDepth(texcoord.xy);
+	normal.rgb = Normal(i.texcoord.xy);
+	normal.a   = LDepth(i.texcoord.xy);
 #if SMOOTH_NORMALS <= 0
-	normal.rgb = blend_normals( Bump(texcoord, -BUMP), normal.rgb);
+	normal.rgb = blend_normals( Bump(i.texcoord, -BUMP), normal.rgb);
+	normal.a   = GetRoughTex(i.texcoord, normal);
 #endif
 }
 
-float4 SNH(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
+float4 SNH(i i) : SV_Target
 {
-	float4 color = tex2D(sNormTex, texcoord);
+	float4 color = tex2D(sNormTex, i.texcoord);
 	float4 s, s1; float sc;
 	
 	float2 p = pix; p*=SNWidth;
 	float T = SNThreshold * saturate(2*(1-color.a)); T = rcp(max(T, 0.0001));
-	for (int i = -SNSamples; i <= SNSamples; i++)
+	for (int x = -SNSamples; x <= SNSamples; x++)
 	{
-		s = tex2D(sNormTex, float2(texcoord + float2(i*p.x, 0)/*, 0, LODD*/));
+		s = tex2D(sNormTex, float2(i.texcoord.xy + float2(x*p.x, 0)/*, 0, LODD*/));
 		float diff = dot(0.333, abs(s.rgb - color.rgb)) + abs(s.a - color.a)*SNDepthW;
 		diff = 1-saturate(diff*T);
 		s1 += s*diff;
@@ -650,16 +688,16 @@ float4 SNH(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	return s1.rgba/sc;
 }
 
-float3 SNV(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
+float4 SNV(i i) : SV_Target
 {
-	float4 color = tex2Dlod(sNormTex1, float4(texcoord, 0, 0));
+	float4 color = tex2Dlod(sNormTex1, float4(i.texcoord, 0, 0));
 	float4 s, s1; float sc;
 
 	float2 p = pix; p*=SNWidth;
 	float T = SNThreshold * saturate(2*(1-color.a)); T = rcp(max(T, 0.0001));
-	for (int i = -SNSamples; i <= SNSamples; i++)
+	for (int x = -SNSamples; x <= SNSamples; x++)
 	{
-		s = tex2D(sNormTex1, float2(texcoord + float2(0, i*p.y)/*, 0, LODD*/));
+		s = tex2D(sNormTex1, float2(i.texcoord + float2(0, x*p.y)/*, 0, LODD*/));
 		float diff = dot(0.333, abs(s.rgb - color.rgb)) + abs(s.a - color.a)*SNDepthW;
 		diff = 1-saturate(diff*T*2);
 		s1 += s*diff;
@@ -669,48 +707,50 @@ float3 SNV(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	//SNFilter( texcoord, color, s, s1, sc, T, p, 1);
 	
 	s1.rgba = s1.rgba/sc;
-	s1.rgb = blend_normals( Bump(texcoord, BUMP), s1.rgb);
-	return s1.rgb;
+	s1.rgb = blend_normals( Bump(i.texcoord, BUMP), s1.rgb);
+	return 
+	float4
+	(
+		s1.rgb, 
+		GetRoughTex
+		(
+			i.texcoord,
+			float4(Normal(i.texcoord).rgb, s1.a)
+		).r
+	);
 }
 
 // Settings
 #define STEPNOISE 1
 #define MINBIAS 0
 
-float GetShadows(float3 position, float3 lamppos, float3 normal, float2 texcoord, float penumbra, float NdotL)
+float GetShadows(float3 position, float3 lamppos, float2 texcoord, float penumbra)
 {
     // Compute ray position and direction (in view-space)
-    float i; float2 UVraypos; float3 Check; bool hit; float a;
-	
+    float i; float Check; float a;
+
 	int STEPCOUNT_Selector[3] = {16, 48, 256};
 	int STEPCOUNT = STEPCOUNT_Selector[Shadow_Quality];
 	
-	static const float raydepth = -70;
-		
-	float3 noise;
-	noise.r = interleavedGradientNoise((texcoord*BUFFER_SCREEN_SIZE+(Frame%((TA)?16:1))*1.31415));
-	noise.g = interleavedGradientNoise((texcoord*BUFFER_SCREEN_SIZE+(Frame%((TA)?16:1))*1.31415)+4);
-	noise.b = interleavedGradientNoise((texcoord*BUFFER_SCREEN_SIZE+(Frame%((TA)?16:1))*1.31415)+8);
-
-    lamppos += (noise.yz-0.5)*penumbra;
+	float3 BlueNoise  = BN3dts(texcoord);
+	const float penum_mult = 3000/(FAR_PLANE);
+	float3 lamppos_soft;
+    lamppos_soft = lamppos + (BlueNoise-0.5)*penumbra*penum_mult*0.1;
     
-    float3 raydir = normalize(lamppos - position);
-    raydir *= distance(position, lamppos)/STEPCOUNT;
+    if(LDepth(PostoUV(lamppos.xyz))>=lamppos.z)
+    	lamppos_soft.z = min(lamppos_soft.z, LDepth(texcoord));
+    	
+    float3 raydir = normalize(lamppos_soft - position);
+    raydir *= min(1 * FAR_PLANE, distance(position, lamppos_soft))/STEPCOUNT;
     
-	float3 raypos = position + raydir * (1 + noise.x * STEPNOISE);
+	float3 raypos = position + raydir * (1 + BlueNoise.x * STEPNOISE);
     // Ray march towards the light
-    [loop]for( i = 0; i < STEPCOUNT; i++)
+    [loop]for( i; i < STEPCOUNT; i++)
 	{
-		UVraypos = PostoUV(raypos);
-		Check = UVtoPos(UVraypos) - raypos;
-		//if(UVraypos.x>1||UVraypos.x<0||UVraypos.y>1||UVraypos.y<0){ a = 0; break;}
-
-		hit = Check.z < 0;
-		if(hit && Check.z > raydepth)
-		{
-			a = 1;//if(i<=1)a=0;
-			break;
-		}
+		Check = LDepth(PostoUV(raypos)) * FAR_PLANE - raypos.z;
+		if(Check < 0 && Check > -Shadow_Depth)
+		{a = 1; break;}
+		
 		raypos += raydir;
 	}
     return 1-a;
@@ -718,21 +758,26 @@ float GetShadows(float3 position, float3 lamppos, float3 normal, float2 texcoord
 
 float3 GetLampPos(float3 UI_LAMP)
 {
-	float3 sspos = UI_LAMP;
-	float3 wspos = UVtoPos(sspos.xy, sspos.z);
+	float3 sspos = UI_LAMP - float3(0.5, 0.5, 0);
+	sspos.y = -sspos.y;
+	sspos.x *= BUFFER_ASPECT_RATIO;
+	sspos.xy *= 1.047;
+	sspos.y = sspos.y/2;
+	sspos.xy *= sspos.z;
 	
-	return wspos;
+	return sspos * FAR_PLANE;
 }
 	
 
 float3 GetLighting(
-	inout float3 FinalColor, inout float spr, inout float3 Specular, inout float3 fog, 
-	float alpha, float3 position, float3 normal, float3 eyedir, float NdotV, float F0, float2 texcoord, float2 sprite, float3 diffusecolor,
+	inout float3 FinalColor, inout float spr, inout float3 Specular, inout float3 fog, inout float ShadowOnly,
+	float alpha, float3 position, float3 normal, float3 eyedir, float NdotV, float F0, float2 texcoord, float2 sprite,
 	float3 UI_LAMP, float3 UI_LAMP_PRECISE, float3 UI_COLOR, float UI_POWER, float UI_SOFT_S, float UI_S_ENABLE, bool UI_FOG)
 {
 	float3 lamppos, lamp, lampdir, light; float2 icopos; float DepthLimit, AngFalloff, backfacing, sprtex, Shadow;
 
 	//lamp data
+	UI_POWER *= FAR_PLANE;
 	//lamppos    = UI_LAMP+UI_LAMP_PRECISE-float3(CENTER_POINT,CENTER_POINT,0);
 	lamppos = GetLampPos(UI_LAMP + UI_LAMP_PRECISE);
 	if(LimitPos)
@@ -753,19 +798,19 @@ float3 GetLighting(
 	
 	//Compute Screen Space Ray Marched Shadows
 	Shadow = 1;
-	if(UI_S_ENABLE)Shadow = GetShadows(position, lamppos, normal, texcoord, UI_SOFT_S, NdotL);
+	if(UI_S_ENABLE&&backfacing>0)Shadow = GetShadows(position, lamppos, texcoord, UI_SOFT_S);
 	
-	//Diffuse Lighting
+	//Lambertian Diffuse Lighting
 	AngFalloff = dot(lampdir, normal); 
 	float DisFalloff = 1/pow(distance(position, lamppos), 2);
-	light      = lamp*UI_POWER*UI_COLOR*(1-AngFalloff);
+	light = lamp*UI_POWER*UI_COLOR*(1-AngFalloff);
 	
 	//FinalColor += hammon(LdotV, NdotH, NdotL, NdotV, alpha, diffusecolor) * (backfacing >= 0) * UI_COLOR * UI_POWER * DisFalloff * Shadow;
-	FinalColor+= lerp( 0, light, saturate(backfacing)) * Shadow;
+	FinalColor+= lerp( 0, light, backfacing>0) * Shadow;
 	//Specular Lighting
 	float3 ThisSpecular = ggx_smith_brdf(NdotL, NdotV, NdotH, VdotH, F0, alpha, texcoord) * NdotL;
 	ThisSpecular *= DisFalloff;
-	ThisSpecular *= specular*UI_POWER*UI_COLOR*Shadow;
+	ThisSpecular *= UI_POWER*UI_COLOR*Shadow;
 	Specular += ThisSpecular;
 	//View to UV projection of the light. Used for icon and fog sprites
 	icopos = sprite - (PostoUV(lamppos) * 2 - 1)*float2(1.7778, 2);
@@ -777,79 +822,230 @@ float3 GetLighting(
 	spr += sprtex;
 	
 	//Volumetric Lighting
-	if(UI_FOG)fog += UI_POWER2/length(icopos-0.5)*UI_COLOR*UI_FOG_DENSITY;
+	if(UI_FOG)
+	{
+		float3 ThisFog = UI_POWER * UI_COLOR * UI_FOG_DENSITY * FAR_PLANE * 0.1;
+		ThisFog *= (UI_FOG_DEPTH_MASK?saturate((position.z - lamppos.z + 1)/16):1);
+		float d = length(icopos-0.5);
+		ThisFog /= (d*d);
+		fog += ThisFog;
+	}
+	//Accumulate Shadows for Variance estimation
+	ShadowOnly += Shadow;
+	
 	return 0;
 }
 
-struct i
+void Lighting(i i, out float3 FinalColor : SV_Target0, out float4 Fog : SV_Target1, out float ShadowOnly : SV_Target2)
 {
-	float4 vpos : SV_Position;
-	float2 texcoord : TexCoord0;
-};
-
-void A(i i, out float3 FinalColor : SV_Target0)
-{
-	FinalColor = 0;
+	FinalColor = 0; ShadowOnly = 0;
 	float3 raypos, Check; float2 UVraypos; float a; bool hit; //ss shadows ray marcher
 	float3 lamppos, lamp, lampdir, light, fog, Specular,K,R; float2 icopos; float AngFalloff, backfacing, sprtex, spr; //lamps data
 	
 	float3 diffusecolor = tex2D(sTexColor, i.texcoord).rgb;
-	float3 albedo = lerp( diffusecolor, diffusecolor/(lum(diffusecolor)*2), 0);
-	if(debug)diffusecolor = 1;
 	//sprites coords
 	float2 sprite = i.texcoord;
 	sprite = sprite * 2 - 1; //range 0~1 to -1~1
 	sprite.x *= BUFFER_ASPECT_RATIO; //1:1 aspect ratio as of the icon
 	//GBuffer Data
-	float roughness = tex2D(sRoughnessTex, i.texcoord).r;
-	float3 position = UVtoPos(i.texcoord);
-	float3 normal   = tex2D(sNormTex, i.texcoord).rgb;
-	float3 eyedir   = -normalize(position); //should be inverted for GGX
-	float  NdotV    = dot(normal, eyedir);
-	float  F0       = 0.04; //reflectance at 0deg angle
-	float  alpha    = roughness * roughness; //roughness used for GGX
+	float3 position  = UVtoPos(i.texcoord);
+	float4 GBuff     = tex2D(sNormTex, i.texcoord);
+	float3 normal    = GBuff.rgb;
+	float  roughness = GBuff.a;
+	float3 eyedir    = -normalize(position); //should be inverted for GGX
+	float  NdotV     = dot(normal, eyedir);
+	float  F0        = specular*0.08; //reflectance at 0deg angle
+	float  alpha     = roughness * roughness; //roughness used for GGX
 	//Lamp 1
 	if(L1)
 	GetLighting(
-		FinalColor, spr, Specular, fog,
-		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite, albedo,
+		FinalColor, spr, Specular, fog, ShadowOnly,
+		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite,
 		UI_LAMP1, UI_LAMP1_PRECISE, UI_COLOR1, UI_POWER1, UI_SOFT_S1, UI_S_ENABLE1, UI_FOG1);
-
+	//Lamp2
 	if(L2)
 	GetLighting(
-		FinalColor, spr, Specular, fog,
-		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite, albedo,
+		FinalColor, spr, Specular, fog, ShadowOnly,
+		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite,
 		UI_LAMP2, UI_LAMP2_PRECISE, UI_COLOR2, UI_POWER2, UI_SOFT_S2, UI_S_ENABLE2, UI_FOG2);
-		
+	//Lamp3
 	if(L3)
 	GetLighting(
-		FinalColor, spr, Specular, fog,
-		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite, albedo,
-		UI_LAMP3, UI_LAMP3_PRECISE, UI_COLOR3, UI_POWER3, UI_SOFT_S3, UI_S_ENABLE3, UI_FOG2);
-		
+		FinalColor, spr, Specular, fog, ShadowOnly,
+		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite,
+		UI_LAMP3, UI_LAMP3_PRECISE, UI_COLOR3, UI_POWER3, UI_SOFT_S3, UI_S_ENABLE3, UI_FOG3);
+	//Lamp4
 	if(L4)
 	GetLighting(
-		FinalColor, spr, Specular, fog,
-		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite, albedo,
-		UI_LAMP4, UI_LAMP4_PRECISE, UI_COLOR4, UI_POWER4, UI_SOFT_S4, UI_S_ENABLE4, UI_FOG2);
+		FinalColor, spr, Specular, fog, ShadowOnly,
+		alpha, position, normal, eyedir, NdotV, F0, i.texcoord, sprite,
+		UI_LAMP4, UI_LAMP4_PRECISE, UI_COLOR4, UI_POWER4, UI_SOFT_S4, UI_S_ENABLE4, UI_FOG4);
 /*_________________________________________
 
 Here is the rest of the code.
 __________________________________________*/
 	
-	if(!debug)FinalColor = FinalColor*diffusecolor;
-	
-	FinalColor += fog*UI_FOG_COLOR;
-	FinalColor += -min(Specular, 0);
-
-	if(OGLighting&&!debug)FinalColor += InvTonemapper(diffusecolor);
+	FinalColor += -min(Specular*specular, 0);
 	FinalColor = Tonemapper(FinalColor);
-	if(ShowIcon)FinalColor += spr;
 	
-	//Fresnel = saturate(Fresnel);
-	//FinalColor += lerp(0, saturate(1-(K.rgb)), Fresnel)*max(0.25, lum(color));
-	if(LDepth(i.texcoord)==0)FinalColor = diffusecolor;
-	//FinalColor = GetShadows(position, UI_LAMP1, normal, texcoord);
+	Fog.a = spr * ShowIcon;
+	Fog.rgb = fog*UI_FOG_COLOR;
+	ShadowOnly /= (L1+L2+L3+L4);
+}
+
+float add4comp(in float4 input){ return input.x+input.y+input.z+input.w;}
+float add2comp(in float2 input){ return input.x+input.y;}
+
+void GetVariance(i i, out float Var : SV_Target0)
+{
+	float2 p = pix;
+	float PreSqr, PostSqr; int x,y;
+	//To do: Optimize with tex2Dgather
+#if __RENDERER__ < 0xa000 //use 49 taps for DX9- :((
+	float S;
+	for(x = -3; x <= 3; x++){
+	for(y = -3; y <= 3; y++)
+	{
+		S = tex2D(sShadowTex, i.texcoord + float2(x,y) * p).r;
+		PreSqr += S * S;
+		PostSqr += S;
+	}}
+#else //use 16 taps for DX10+
+	float4 sGather;
+	//Row1//////////////////////////////////////////////////////////////////////////
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-3,-3) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-1,-3) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 1,-3) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 3,-3) * p);
+	PostSqr += add2comp(sGather.xw);
+	PreSqr  += add2comp(sGather.xw * sGather.xw);
+	
+	//Row2//////////////////////////////////////////////////////////////////////////
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-3,-1) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-1,-1) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 1,-1) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 3,-1) * p);
+	PostSqr += add2comp(sGather.xw);
+	PreSqr  += add2comp(sGather.xw * sGather.xw);
+	
+	//Row3//////////////////////////////////////////////////////////////////////////
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-3, 1) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-1, 1) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 1, 1) * p);
+	PostSqr += add4comp(sGather);
+	PreSqr  += add4comp(sGather * sGather);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 3, 1) * p);
+	PostSqr += add2comp(sGather.xw);
+	PreSqr  += add2comp(sGather.xw * sGather.xw);
+	
+	//Row4//////////////////////////////////////////////////////////////////////////
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-3, 3) * p);
+	PostSqr += add2comp(sGather.zw);
+	PreSqr  += add2comp(sGather.zw * sGather.zw);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2(-1, 3) * p);
+	PostSqr += add2comp(sGather.zw);
+	PreSqr  += add2comp(sGather.zw * sGather.zw);
+	
+	sGather = tex2DgatherR(sShadowTex, i.texcoord + float2( 1, 3) * p);
+	PostSqr += add2comp(sGather.zw);
+	PreSqr  += add2comp(sGather.zw * sGather.zw);
+	
+	sGather = tex2D(sShadowTex, i.texcoord + float2( 3, 3) * p).x;
+	PostSqr += sGather.x;
+	PreSqr += sGather.x * sGather.x;
+	
+	////////////////////////////////////////////////////////////////////////////
+
+#endif
+	PostSqr /= 49;
+	PreSqr  /= 49;
+	
+	PostSqr *= PostSqr;
+	
+	Var = sqrt(abs(PostSqr - PreSqr));
+}
+
+void Filter(i i, out float3 FinalColor : SV_Target0)
+{
+	float2 p = pix;
+	float Var  = tex2D(sVarianceTex, i.texcoord + float2( 0.5, 0.5) * p).r;
+	float3 Current = tex2D(sLightingTex, i.texcoord).rgb;
+	FinalColor = Current;
+	
+	//Make sure to denoise only where there is noise in the shadows (penumberas)
+	if(Var > 0.01)
+	{
+		float2 MV = tex2D(SamplerMotionVectors, i.texcoord).xy;
+		float3 History = tex2D(sLitHistTex, i.texcoord + MV).rgb;
+		
+		float3 S,
+		PreSqr = Current * Current, PostSqr = Current,
+		Min = 1000000, Max = -1000000;
+		int x,y;
+		//To do: Optimize
+		for(x = -1; x <= 1; x++){
+		for(y = -1; y <= 1; y++)
+		{
+			if(x==0&&y==0)continue;
+			S = tex2Dlod(sLightingTex, float4(i.texcoord + float2(x,y) * p, 0, 0)).rgb;
+			PreSqr += S * S;
+			PostSqr += S;
+			Min = min(S, Min);
+			Max = max(S, Max);
+		}}
+		PostSqr /= 9;
+		PreSqr /= 9;
+		float3 mean = PreSqr;
+		
+		PostSqr *= PostSqr;
+		float3 SD = sqrt(abs(PostSqr - PreSqr));
+		
+		FinalColor = lerp(Current, History, clamp(Var*8, 0, 0.9));
+		FinalColor = lerp(clamp(FinalColor, Current-SD, Current+SD), FinalColor, clamp(Var*8, 0, 1));
+	}
+}
+
+float3 CopyBuffer(i i) : SV_Target0
+{ return tex2D(sBlendedTex, i.texcoord).rgb;}
+
+float3 OutColor(i i) : SV_Target0
+{
+	float3 Lighting      = tex2D(sBlendedTex, i.texcoord).rgb;
+	float4 Fog           = tex2D(sBGColorTex, i.texcoord).rgba;
+	float3 DiffuseAlbedo = tex2D(sTexColor, i.texcoord).rgb;
+
+	Lighting = InvTonemapper(Lighting);
+	Lighting *= debug?1:DiffuseAlbedo;
+	DiffuseAlbedo = InvTonemapper(DiffuseAlbedo);
+	DiffuseAlbedo  = Tonemapper(Lighting + DiffuseAlbedo * OGLighting * !debug + Fog.rgb) + Fog.a;
+
+	return DiffuseAlbedo;
 }
 
 ///////////////Pixel Shader////////////////
@@ -857,16 +1053,10 @@ __________________________________________*/
 
 technique NGLamps<
 	ui_label   = "NiceGuy Lamps";
-	ui_tooltip = "NiceGuy Lamps 1.0 Beta\n"
+	ui_tooltip = "NiceGuy Lamps 1.1 Beta\n"
 				 "    ||By Ehsan2077||  \n";	
 >
 {
-	pass
-    {
-    	VertexShader = PostProcessVS;
-    	PixelShader = roughness;
-    	RenderTarget = RoughnessTex;
-    }
 	pass GBuffer
 	{
 		VertexShader  = PostProcessVS;
@@ -890,7 +1080,33 @@ technique NGLamps<
 	pass
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = A;
+		PixelShader = Lighting;
+		RenderTarget0 = LightingTex;
+		RenderTarget1 = BGColorTex;
+		RenderTarget2 = ShadowTex;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = GetVariance;
+		RenderTarget = VarianceTex;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = Filter;
+		RenderTarget = BlendedTex;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = CopyBuffer;
+		RenderTarget = LitHistTex;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = OutColor;
 	}
 }
 
