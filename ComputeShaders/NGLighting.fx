@@ -6,7 +6,7 @@
 
 technique NGLighting<
 	ui_label = "NiceGuy Lighting (GI/Reflection)";
-	ui_tooltip = "             NiceGuy Lighting 0.8alpha             \n"
+	ui_tooltip = "             NiceGuy Lighting 0.9alpha             \n"
 				 "                  ||By Ehsan2077||                 \n"
 				 "|Optional: Use with qUINT_MotionVectors above this technique in the load order at quarter detail.|\n"
 				 "|And    don't   forget    to   read   the   hints.|";
@@ -34,6 +34,15 @@ technique NGLighting<
 		RenderTarget = SSSR_NormTex;
 	}
 #endif //SMOOTH_NORMALS
+#if __RENDERER__ >= 0xa000 // If DX10 or higher
+	pass LowResGBuffer
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = CopyGBufferLowRes;
+		RenderTarget0 = SSSR_LowResNormTex;
+		RenderTarget1 = SSSR_LowResDepthTex;
+	}
+#endif //RESOLUTION_SCALE
 	pass
 	{
 		VertexShader  = PostProcessVS;
