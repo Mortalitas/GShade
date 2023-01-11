@@ -6,7 +6,7 @@
 
 technique NGLighting<
 	ui_label = "NiceGuy Lighting (GI/Reflection)";
-	ui_tooltip = "             NiceGuy Lighting 0.9alpha             \n"
+	ui_tooltip = "            NiceGuy Lighting 0.9.1alpha            \n"
 				 "                  ||By Ehsan2077||                 \n"
 				 "|Optional: Use with qUINT_MotionVectors above this technique in the load order at quarter detail.|\n"
 				 "|And    don't   forget    to   read   the   hints.|";
