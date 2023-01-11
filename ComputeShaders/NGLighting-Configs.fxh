@@ -13,10 +13,10 @@
 #endif
 
 //Tonemapping mode : 1 = Timothy Lottes || 0 = Reinhardt
-#define TM_Mode 0
-#define IT_Intensity 0.995
+#define TM_Mode 1
+#define IT_Intensity 1
 //clamps the maximum luma of pixels to avoid unsolvable fireflies
-#define LUM_MAX 10
+#define LUM_MAX 100
 
 #define HLDIV 4 //multiply history length by this value before evaluating the radius
 #define TemporalFilterDisocclusionThreshold 0.004
@@ -28,7 +28,7 @@
 //Temporal stabilizer Intensity
 #define TSIntensity 0.99
 //Temporal Stabilizer Clamping kernel shape
-#define shape 8//4 for cross, 8 for square
+#define shape 4//4 for cross, 8 for square
 #define TEMPORAL_STABILIZER_MINMAX_CLAMPING 1
 #define TEMPORAL_STABILIZER_VARIANCE_CLIPPING 0
 //Temporal Refine min blend value. lower is more stable but ghosty and too low values may introduce banding
