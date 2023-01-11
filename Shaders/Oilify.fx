@@ -88,6 +88,8 @@ namespace Oilify
 			dx += tex2D(sBackBuffer, texcoord + offsets.xz).rgb * GAUSSIAN_WEIGHTS[i] * 255;
 			dy += tex2D(sBackBuffer, texcoord + offsets.zy).rgb * GAUSSIAN_WEIGHTS[i] * 255;
 		}
+		dx = ddx(dx);
+		dy = ddy(dy);
 		
 		float e = dot(dx, dx);
 		float f = dot(dx, dy);
@@ -96,6 +98,7 @@ namespace Oilify
 		float2 eigenvalues = float2(e + g + root, e + g - root) / 2;
 		
 		float2 t;
+		[flatten]
 		if(any(abs(float2(eigenvalues.x - e, -f)) > 1e-15))
 		{
 			t = (normalize((float2(eigenvalues.x - e, -f))));
@@ -234,3 +237,4 @@ namespace Oilify
 #endif	
 	}
 }
+
