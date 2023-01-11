@@ -1,10 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.9
-
-//license
-//CC0 ^_^
-
+//Version 0.9.1
 
 //Thanks Lord of Lunacy, Leftfarian, and other devs for helping me. <3
 //Thanks Alea & MassiHancer for testing. <3
@@ -177,12 +173,11 @@ float GetSpecularDominantFactor(float NoV, float roughness)
 
 float GetHLDivion(in float HL){return HL*HLDIV;}
 
-float2 GetPixelSize(in float HL)
+float2 GetPixelSize()
 {
 	float2 DepthSize = tex2Dsize(sTexDepth) / BUFFER_SCREEN_SIZE;
-	
-	HL = GetHLDivion(HL);
 	float2 ColorSize = rcp(RESOLUTION_SCALE_);
+	
 	float2 MinResRcp = max(ColorSize, DepthSize);
 	
 	return MinResRcp;
@@ -211,6 +206,12 @@ float checker(float4 vpos)
 	return (vpos.y+vpos.x%2)%2;
 }
 
+float checker(float2 uv)
+{
+	uv *= BUFFER_SCREEN_SIZE;
+	return checker(uv.xyxy);
+}
+
 float WN(float2 co)
 {
   return frac(sin(dot(co.xy ,float2(1.0,73))) * 437580.5453);
@@ -229,7 +230,7 @@ float IGN(float2 n)
     return frac(52.9829189 * frac(f));
 }
 
-	float3 IGN3dts(float2 texcoord, float HL)
+float3 IGN3dts(float2 texcoord, float HL)
 {
 	float3 OutColor;
 	float2 seed = texcoord*BUFFER_SCREEN_SIZE+(Frame%HL)*5.588238;
@@ -410,7 +411,6 @@ float3 Bump(float2 texcoord, float height)
 	return bump;
 }
 
-//from ssr with Marty's permission
 float3 blend_normals(float3 n1, float3 n2)
 {
     n1 += float3( 0, 0, 1);
@@ -421,7 +421,7 @@ float3 blend_normals(float3 n1, float3 n2)
 static const float LinearGamma = 0.454545;
 static const float sRGBGamma = 2.2;
 
-float3 InvTonemapper(float3 color, bool mode)
+float3 InvTonemapper(float3 color)
 {
 	if(LinearConvert)color = pow(max(color, 0.0), LinearGamma);
 	
@@ -433,13 +433,14 @@ float3 InvTonemapper(float3 color, bool mode)
 	return color;
 }
 
-float3 Tonemapper(float3 color, bool mode)
+float3 Tonemapper(float3 color)
 {
 	float3 L;
 	if(TM_Mode)L = max(max(color.r, color.g), color.b); //Lottes
 	else L = color; //Reinhardt
 	
 	color = color / ((1.0 + max(1-IT_Intensity,0.00001)) + L);
+
 	if(LinearConvert)color = pow(color, sRGBGamma);
 	
 	return (color);
@@ -447,7 +448,7 @@ float3 Tonemapper(float3 color, bool mode)
 
 float3 FixWhitePoint()
 {
-	return rcp(Tonemapper(InvTonemapper(float3(1,1,1),0),0));
+	return rcp(Tonemapper(InvTonemapper(float3(1,1,1))));
 }
 
 float InvTonemapper(float color)
@@ -580,7 +581,6 @@ float4 SNV(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 }
 #endif
 
-float min4(float4 a){return min(min(min(a.x,a.y),a.z),a.w);}
 void CopyGBufferLowRes(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 Normal : SV_Target0, out float Depth : SV_Target1)
 {
 	Normal = tex2D(sSSSR_NormTex, texcoord);
@@ -597,6 +597,7 @@ void DoRayMarch(float3 noise, float3 position, float3 raydir, out float3 Reflect
 	
 	raypos = position + raydir * steplength;
 	float raydepth = -RAYDEPTH;
+	
 #if UI_DIFFICULTY == 1
 	float RayInc = RAYINC;
 	[loop]for(i = 0; i < UI_RAYSTEPS; i++)
@@ -670,28 +671,19 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		
 		DoRayMarch(IGNoise, position, raydir, reflection.rgb, HitDistance, a);
 		
-		FinalColor.rgb = max(ClampLuma(InvTonemapper(reflection.rgb,1), LUM_MAX),0);
+		FinalColor.rgb = max(ClampLuma(InvTonemapper(reflection.rgb), LUM_MAX),0);
 		
-		if(!GI)FinalColor.a = a;
+		float FadeFac = 1-pow(Geometry.w, InvTonemapper(depthfade));
+		if(!GI)FinalColor.a = a*FadeFac;
 		else
 		{
 			float AORadius = rcp(max(1, max(AO_Radius_Reflection, AO_Radius_Background)));
 			FinalColor.a = saturate((HitDistance)*20*AORadius/FAR_PLANE);
 			FinalColor.rgb *= a;
+			//depth fade
+			FinalColor.rgb *= FadeFac;
+			FinalColor.a    = lerp(1, FinalColor.a, FadeFac);
 		}
-	
-	float FadeFac = 1-pow(Geometry.w, InvTonemapper(depthfade));
-	FadeFac *= SkyDepth>Geometry.w;
-	if(GI)
-	{
-		FinalColor.rgb *= FadeFac;
-		FinalColor.a = lerp(1, FinalColor.a, FadeFac);
-	}
-	else
-	{
-		FinalColor.a *= FadeFac;
-	}
-	
 	}//depth check if end
 }//ReflectionTex
 
@@ -711,7 +703,7 @@ float2 GetMotionVectorsDeflickered(float2 texcoord)
 void TemporalFilter0(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float mask : SV_Target0)
 {//Writes the mask to a texture. Then the texture will be dilated in the next pass to avoid masking edges when camera jitters
 	float depth = LDepth(texcoord);
-	if(depth>SkyDepth){mask=1;}else{
+	if(depth>SkyDepth){mask=0;}else{
 	float4 past_normal; float3 normal, ogcolor; float2 MotionVectors; float2 outbound; float past_ogcolor, past_depth, HistoryLength;
 	//Inputs
 	MotionVectors = texcoord + sampleMotion(texcoord);
@@ -728,8 +720,6 @@ void TemporalFilter0(float4 vpos : SV_Position, float2 texcoord : TexCoord, out 
 	mask = abs(depth - past_depth) * dot(normal, normalize(UVtoPos(texcoord)))
 		 + abs(ogcolor.r - past_ogcolor)*saturate(1-MVErrorTolerance)
 		 <= TemporalFilterDisocclusionThreshold;
-		 //mask = 1;
-	//if(past_depth >= SkyDepth) mask = 0;
 	}//sky mask end
 }
 
@@ -749,7 +739,6 @@ void TemporalFilter1(float4 vpos : SV_Position, float2 texcoord : TexCoord, out 
 	
 	mask = tex2D(sSSSR_MaskRoughTex, texcoord).x;
 	mask = min(1-outbound.r, mask);
-	mask = max(mask, (LDepth(texcoord + MotionVectors)>=SkyDepth));
 	
 	HistoryLength = tex2D(sSSSR_HLTex1, texcoord + MotionVectors).r;
 
@@ -762,7 +751,7 @@ void TemporalFilter1(float4 vpos : SV_Position, float2 texcoord : TexCoord, out 
 		    
 	HLOut *= lerp(
 		1-saturate(
-			abs(1.5*
+			abs((GI?1:1.5)*
 				lum(tex2D(sSSSR_FilterTex3, texcoord + MotionVectors).rgb) -
 				lum(History.rgb)
 			)
@@ -821,14 +810,13 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 	float facing = dot(normal, normalize(UVtoPos(texcoord, depth)));
 	facing *= facing;
 	//Makes the threshold adaptive to the amount of expected noise
-	const float STMulList[3] = {20, 10, 5};
+	const float STMulList[3] = {20, 8, 2};
 	float ST = lerp(Sthreshold * STMulList[size], Sthreshold, sqrt(saturate(HL/64)));
 	
 	const float SizeList[3] = {2,8,16};
 	const float SizeListSmall[3] = {1,2,4};
 	
 	p *= round(lerp(SizeList[size], SizeListSmall[size], min(HL/128, 1)));
-	p *= rcp(RESOLUTION_SCALE_);
 	
 	p += checkertex * p; //hides atrous artifacts
 	float2 pr = p * 0.70710678; //turns the square to circle
@@ -910,7 +898,7 @@ void SpatialFilter2(
 void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 FinalColor : SV_Target0)
 {
 	float HL = tex2D(sSSSR_HLTex0, texcoord).r;
-	float2 p = pix; p *= GetPixelSize(HL);
+	float2 p = pix;
 	
 	float Roughness = tex2D(sSSSR_MaskRoughTex, texcoord).y;
 	float2 MotionVectors = GetMotionVectorsDeflickered(texcoord);
@@ -927,9 +915,8 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 #if TEMPORAL_STABILIZER_MINMAX_CLAMPING
 	float4 Max = CurrToYCC, Min = CurrToYCC;
 #endif
-#if TEMPORAL_STABILIZER_VARIANCE_CLIPPING
 	float4 PreSqr = CurrToYCC * CurrToYCC, PostSqr = CurrToYCC;
-#endif
+
 	float4 SCurrent; int x, y;
 	float2 pr = p * 0.707;
 	float2 offsets[8] = 
@@ -951,10 +938,8 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 		Max = max(SCurrent, Max);
 		Min = min(SCurrent, Min);
 #endif
-#if TEMPORAL_STABILIZER_VARIANCE_CLIPPING
 		PreSqr += SCurrent * SCurrent;
 		PostSqr += SCurrent;
-#endif
 	}
 	//Min/Max Clamping
 #if TEMPORAL_STABILIZER_MINMAX_CLAMPING
@@ -963,21 +948,19 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	float4 chistory = history;
 #endif
 	//Variance Clipping
-#if TEMPORAL_STABILIZER_VARIANCE_CLIPPING
 	PostSqr /= shape+1; PreSqr /= shape+1;
 	PostSqr *= PostSqr;
 	float4 Var = sqrt(abs(PostSqr - PreSqr));
 	Var = pow(Var, 0.7);
 	Var.xyz *= CurrToYCC.x;
+#if TEMPORAL_STABILIZER_VARIANCE_CLIPPING
 	chistory = lerp(chistory, clamp(chistory, CurrToYCC - Var, CurrToYCC + Var), 0.15);
 #endif
 
 	float4 diff = saturate((abs(chistory - history)));
 	diff.r = diff.g + diff.b;
-	//diff = 0;
 	
 	chistory.rgb = toRGB(chistory.rgb);
-	//chistory.rgb = InvTonemapper(chistory.rgb);
 	
 	float2 outbound = texcoord + MotionVectors;
 	outbound = float2(max(outbound.r, outbound.g), min(outbound.r, outbound.g));
@@ -996,15 +979,15 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	if(SharpenGI||(RESOLUTION_SCALE_<1&&!UI_DIFFICULTY))
 	{
 		SharpenMean /= shape+1;
-		float4 weight = 0.1;
-#if TEMPORAL_STABILIZER_VARIANCE_CLIPPING
 		//will make the sharpness adapt to the noise (less noise => more sharpening)
-		weight = saturate((1-Var)-1)*0.1;
-#endif
+		float4 weight = 1-saturate(Var * 2 - 1);
 		FinalColor = FinalColor + (FinalColor - SharpenMean) * weight;
 	}
 	FinalColor = clamp(FinalColor, SharpenMin, SharpenMax);
 }
+
+float3 RITM(in float3 color){return color/max(1 - color, 0.001);}
+float3 RTM(in float3 color){return color / (1 + color);}
 
 void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 FinalColor : SV_Target0)
 {
@@ -1025,10 +1008,10 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 		{
 			float4 GI = tex2D(sSSSR_FilterTex3, texcoord).rgba;
 			//Changes the InvTonemapper to reinhardt for blending
-			GI.rgb = Tonemapper(GI.rgb, 1);
-			GI.rgb = InvTonemapper(GI.rgb, 0);
+			GI.rgb = Tonemapper(GI.rgb);
+			GI.rgb = RITM(GI.rgb);
 			//Invtonemaps the background so we can blend it with GI in HDR space. Gives better results.
-			float3 HDR_Background = InvTonemapper(Background,0);
+			float3 HDR_Background = RITM(Background);
 			
 			//calculate AO Intensity
 			float2 AO;
@@ -1047,15 +1030,15 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 			float3  GI_AO = GI.rgb * AO.g;
 			//apply GI
 			float3 Img_GI = Img_AO + GI_AO * Background;
-			Img_GI = Tonemapper(Img_GI.rgb, 0);
+			Img_GI = RTM(Img_GI);
 			//fix highlights by reducing the GI intensity
 			FinalColor = Img_GI;
 		}
 		else 
 		{
 			float4 Reflection = tex2D(sSSSR_FilterTex3, texcoord);
-			Reflection.rgb = Tonemapper(Reflection.rgb, 1);
-			Reflection.rgb = InvTonemapper(Reflection.rgb, 0);
+			Reflection.rgb = Tonemapper(Reflection.rgb);
+			Reflection.rgb = RITM(Reflection.rgb);
 			
 			//calculate Fresnel
 			float3 Normal  = tex2D(sSSSR_NormTex, texcoord).rgb;
@@ -1068,8 +1051,8 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 			Reflection.rgb  = lerp(lum(Reflection.rgb), Reflection.rgb, SatExp.r);
 			
 			//apply Reflection
-			float3 Img_Reflection = lerp(InvTonemapper(Background, 0), Reflection.rgb, Fresnel);
-			Img_Reflection = Tonemapper(Img_Reflection, 0);
+			float3 Img_Reflection = lerp(RITM(Background), Reflection.rgb, Fresnel);
+			Img_Reflection = RTM(Img_Reflection);
 			//fix highlights by reducing the Reflection intensity
 			FinalColor = Img_Reflection;
 		}
@@ -1086,6 +1069,9 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 	//Avoids covering menues in black
 	if(Depth <= 0.0001) FinalColor = Background;
 }
+			
+			
+	
 
 ///////////////Pixel Shader////////////////
 ///////////////Techniques//////////////////
