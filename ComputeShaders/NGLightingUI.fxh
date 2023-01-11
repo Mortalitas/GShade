@@ -1,6 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.9 - UI
+//Version 0.9.1 - UI
 
 //license
 //CC0 ^_^
@@ -9,7 +9,7 @@
 #if UI_DIFFICULTY == 1
 
 uniform int Hints<
-	ui_text = "This shader is in -BETA PHASE-, expect major changes.\n\n"
+	ui_text = "This shader is in -ALPHA PHASE-, expect major changes.\n\n"
 			  "Set UI_DIFFICULTY to 0 to make the UI simpler if you want.\n"
 			  "Advanced categories are unnecessary options that\n"
 			  "can break the look of the shader if modified improperly.\n\n"
@@ -43,7 +43,6 @@ uniform bool SharpenGI <
 	ui_label = "Sharpen the GI";
 	ui_tooltip = "(No performance impact) Further improves the edge clarity. Try Catrom resampling first tho.";
 > = 1;
-//#define SharpenGI false
 
 uniform float fov <
 	ui_label = "Field of View";
@@ -278,9 +277,13 @@ uniform int Preprocessordefinitionstooltip<
 #if UI_DIFFICULTY == 0
 
 uniform int Hints<
-	ui_text = "This shader is in -ALPHA PHASE-, expect bugs.\n\n"
-			  "Set UI_DIFFICULTY to 1 if you want access to more settings.";
-			  
+	ui_text = "This shader is in -ALPHA PHASE-, expect major changes.\n\n"
+			  "Set UI_DIFFICULTY to 1 if you want access to more settings.\n"
+			  "Advanced categories are unnecessary options that\n"
+			  "can break the look of the shader if modified improperly.\n\n"
+			  "Use with ReShade_MotionVectors at Quarter Resolution.\n"
+			  "Using higher resolutions for the motion vector only makes it WORSE "
+			  "when the game is using temporal filters (TAA,DLSS2,FSR2,TAAU,TSR,etc.)";
 	ui_category = "Hints - Please Read!";
 	ui_label = " ";
 	ui_type = "radio";
