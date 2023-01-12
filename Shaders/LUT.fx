@@ -20,24 +20,20 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
-#define fLUT_G_TextureName "lut_GShade.png"
-#define fLUT_W_TextureName "lut_warm.png"
-#define fLUT_A_TextureName "lut.png"
-#define fLUT_NFG_TextureName "lut_ninjafadaGameplay.png"
-#ifndef fLUT_TextureName
-    #define fLUT_TextureName "lut_ReShade.png" // Add your own LUT with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the LUT used!
+#ifndef LUTTexture_Source
+	#define LUTTexture_Source 0
 #endif
-#define fLUT_SL_TextureName "lut_Sleepy.png"
-#define fLUT_FE_TextureName "lut_Feli.png"
-#define fLUT_LE_TextureName "lut_Legacy.png"
-#define fLUT_IP_TextureName "lut_IpsusuGameplay.png"
-#define fLUT_PS_TextureName "seilut.png"
 
-#ifndef fLUT_TileSizeXY
-    #define fLUT_TileSizeXY 32
-#endif
-#ifndef fLUT_TileAmount
-    #define fLUT_TileAmount 32
+#if LUTTexture_Source == 4
+	#ifndef fLUT_TextureName
+		#define fLUT_TextureName "lut_ReShade.png" // Add your own LUT with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the LUT used!
+	#endif
+	#ifndef fLUT_TileSizeXY
+		#define fLUT_TileSizeXY 32
+	#endif
+	#ifndef fLUT_TileAmount
+		#define fLUT_TileAmount 32
+	#endif
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -51,11 +47,6 @@ uniform int fLUT_Selector <
   ui_tooltip = "Select a LUT!\n\nPlease note that the Potatoshade option will require you to obtain a copy of \"seilut.png\" from the Potoshade zip and place it in the \"?:\\Program Files\\GShade\\gshade-shaders\\Textures\" folder before it becomes usable.";
   ui_bind = "LUTTexture_Source";
 > = 0;
-
-// Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef LUTTexture_Source
-#define LUTTexture_Source 0
-#endif
 
 uniform float fLUT_AmountChroma <
     ui_type = "slider";
@@ -82,43 +73,43 @@ uniform float fLUT_AmountLuma <
 #endif
 
 #if   LUTTexture_Source == 0 // GShade/Angelite LUT
-#define _SOURCE_LUT_FILE fLUT_G_TextureName
+#define _SOURCE_LUT_FILE "lut_GShade.png"
 #define _SOURCE_LUT_SIZE 32
-#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#define _SOURCE_LUT_AMOUNT 32
 #elif LUTTexture_Source == 1 // LUT from LUT - Warm.fx
-#define _SOURCE_LUT_FILE fLUT_W_TextureName
+#define _SOURCE_LUT_FILE "lut_warm.png"
 #define _SOURCE_LUT_SIZE 64
 #define _SOURCE_LUT_AMOUNT 64
 #elif LUTTexture_Source == 2 // MS Autumn LUT
-#define _SOURCE_LUT_FILE fLUT_A_TextureName
+#define _SOURCE_LUT_FILE "lut.png"
 #define _SOURCE_LUT_SIZE 32
-#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#define _SOURCE_LUT_AMOUNT 32
 #elif LUTTexture_Source == 3 // ninjafada Gameplay LUT
-#define _SOURCE_LUT_FILE fLUT_NFG_TextureName
+#define _SOURCE_LUT_FILE "lut_ninjafadaGameplay.png"
 #define _SOURCE_LUT_SIZE 32
-#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#define _SOURCE_LUT_AMOUNT 32
 #elif LUTTexture_Source == 4 // Default ReShade 3-4 LUT
 #define _SOURCE_LUT_FILE fLUT_TextureName
 #define _SOURCE_LUT_SIZE fLUT_TileSizeXY
 #define _SOURCE_LUT_AMOUNT fLUT_TileAmount
 #elif LUTTexture_Source == 5 // Sleepy LUT
-#define _SOURCE_LUT_FILE fLUT_SL_TextureName
+#define _SOURCE_LUT_FILE "lut_Sleepy.png"
 #define _SOURCE_LUT_SIZE 64
 #define _SOURCE_LUT_AMOUNT 64
 #elif LUTTexture_Source == 6 // Feli LUT
-#define _SOURCE_LUT_FILE fLUT_FE_TextureName
+#define _SOURCE_LUT_FILE "lut_Feli.png"
 #define _SOURCE_LUT_SIZE 32
-#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#define _SOURCE_LUT_AMOUNT 32
 #elif LUTTexture_Source == 7 // Lufreine Legacy LUT
-#define _SOURCE_LUT_FILE fLUT_LE_TextureName
+#define _SOURCE_LUT_FILE "lut_Legacy.png"
 #define _SOURCE_LUT_SIZE 32
-#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#define _SOURCE_LUT_AMOUNT 32
 #elif LUTTexture_Source == 8 // Ipsusu Gameplay LUT
-#define _SOURCE_LUT_FILE fLUT_IP_TextureName
+#define _SOURCE_LUT_FILE "lut_IpsusuGameplay.png"
 #define _SOURCE_LUT_SIZE 32
 #define _SOURCE_LUT_AMOUNT fLUT_TileAmount
 #elif LUTTexture_Source == 9 // Potatoshade LUT
-#define _SOURCE_LUT_FILE fLUT_PS_TextureName
+#define _SOURCE_LUT_FILE "seilut.png"
 #define _SOURCE_LUT_SIZE 64
 #define _SOURCE_LUT_AMOUNT 64
 #endif

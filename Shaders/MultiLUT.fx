@@ -30,10 +30,52 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
-#define fLUT_GSTextureName "MultiLut_GShade.png"
-#ifndef fLUT_TextureName
-    #define fLUT_TextureName "MultiLut_atlas4.png" // Add your own MultiLUT atlas with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the MultiLUT used!
+#ifndef MultiLUTTexture_Source
+    #undef MultiLutTexture_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
+    #define MultiLUTTexture_Source 0
 #endif
+
+#ifndef MultiLUTTexture2
+    #define MultiLUTTexture2 0
+#endif
+
+#if MultiLUTTexture2
+	#ifndef MultiLUTTexture2_Source
+		#undef MultiLutTexture2_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
+		#define MultiLUTTexture2_Source 1
+	#endif
+#endif
+
+#ifndef MultiLUTTexture3
+    #define MultiLUTTexture3 0
+#endif
+
+#if MultiLUTTexture3
+	#ifndef MultiLUTTexture3_Source
+		#undef MultiLutTexture3_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
+		#define MultiLUTTexture3_Source 1
+	#endif
+#endif
+
+#if MultiLUTTexture_Source == 1 || MultiLUTTexture2_Source == 1 || MultiLUTTexture3_Source == 1
+	#ifndef fLUT_TextureName
+		#define fLUT_TextureName "MultiLut_atlas4.png" // Add your own MultiLUT atlas with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the MultiLUT used!
+	#endif
+	#ifndef fLUT_TileSizeXY
+		#define fLUT_TileSizeXY 32
+	#endif
+	#ifndef fLUT_TileAmount
+		#define fLUT_TileAmount 32
+	#endif
+	#ifndef fLUT_LutAmount
+		#define fLUT_LutAmount 17
+	#endif
+	#ifndef fLUT_Selections
+		#define fLUT_Selections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+	#endif
+#endif
+
+#define fLUT_GSTextureName "MultiLut_GShade.png"
 #define fLUT_RESTextureName "MultiLut_atlas4.png"
 #define fLUT_JOHTextureName "MultiLut_Johto.png"
 #define fLUT_EGTextureName "FFXIVLUTAtlas.png"
@@ -46,22 +88,9 @@
 #define fLUT_IPSTextureName "MultiLut_Ipsusu.png"
 #define fLUT_NGETextureName "MultiLut_Nightingale.png"
 
-#ifndef fLUT_TileSizeXY
-    #define fLUT_TileSizeXY 32
-#endif
-#ifndef fLUT_TileAmount
-    #define fLUT_TileAmount 32
-#endif
-#ifndef fLUT_LutAmount
-    #define fLUT_LutAmount 17
-#endif
-
 #define fLUT_AtlasList "GShade [Angelite-Compatible]\0Custom\0ReShade\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0"
 
 #define fLUT_GSSelections "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
-#ifndef fLUT_Selections
-    #define fLUT_Selections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
-#endif
 #define fLUT_RESSelections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
 #define fLUT_JOHSelections "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0Color17\0"
 #define fLUT_EGSelections "Neutral\0Darklite (Realism, Day, Outdoors)\0Shadownite (Realism, Night, Indoors)\0Ambient Memories (Bright, Warm)\0Faded Memories (Desaturated, Dark)\0Pastel Memories (Cartoony, Colorful, Bright)\0Nostalgic \ Radiance (Bright, Colorful, Studio, Lights)\0"
@@ -87,12 +116,6 @@ uniform int fLUT_MultiLUTSelector <
     ui_tooltip = "Select a MultiLUT Atlas!\n\nThese atlases each include a number of different LUT's.\n\nFor loading your own custom MultiLUT Atlas, select \"Custom\" and be sure to set the respective Preprocessor Definitions beneath these settings.";
     ui_bind = "MultiLUTTexture_Source";
 > = 0;
-
-// Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef MultiLUTTexture_Source
-    #undef MultiLutTexture_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
-    #define MultiLUTTexture_Source 0
-#endif
 
 uniform int fLUT_LutSelector < 
     ui_category = "Pass 1";
@@ -160,10 +183,6 @@ uniform bool fLUT_MultiLUTPass2 <
     ui_bind = "MultiLUTTexture2";
 > = 0;
 
-#ifndef MultiLUTTexture2
-    #define MultiLUTTexture2 0
-#endif
-
 #if MultiLUTTexture2
 uniform int fLUT_MultiLUTSelector2 <
     ui_category = "Pass 2";
@@ -173,12 +192,6 @@ uniform int fLUT_MultiLUTSelector2 <
     ui_tooltip = "The MultiLUT table to use on Pass 2.";
     ui_bind = "MultiLUTTexture2_Source";
 > = 1;
-
-// Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef MultiLUTTexture2_Source
-    #undef MultiLutTexture2_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
-    #define MultiLUTTexture2_Source 1
-#endif
 
 uniform int fLUT_LutSelector2 < 
     ui_category = "Pass 2";
@@ -247,10 +260,6 @@ uniform bool fLUT_MultiLUTPass3 <
     ui_bind = "MultiLUTTexture3";
 > = 0;
 
-#ifndef MultiLUTTexture3
-    #define MultiLUTTexture3 0
-#endif
-
 #if MultiLUTTexture3
 uniform int fLUT_MultiLUTSelector3 <
     ui_category = "Pass 3";
@@ -260,12 +269,6 @@ uniform int fLUT_MultiLUTSelector3 <
     ui_tooltip = "The MultiLUT table to use on Pass 3.";
     ui_bind = "MultiLUTTexture3_Source";
 > = 1;
-
-// Set default value(see above) by source code if the preset has not modified yet this variable/definition
-#ifndef MultiLUTTexture3_Source
-    #undef MultiLutTexture3_Source // No idea why yet but if this isn't here, it causes issues under DirectX 9.
-    #define MultiLUTTexture3_Source 1
-#endif
 
 uniform int fLUT_LutSelector3 < 
     ui_category = "Pass 3";
@@ -500,16 +503,16 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_TILE_AMOUNT3 12
 #endif
 
-texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = _SOURCE_MULTILUT_TILE_SIZE * fLUT_TileAmount; Height = _SOURCE_MULTILUT_TILE_SIZE * _SOURCE_MULTILUT_TILE_AMOUNT; Format = RGBA8; };
+texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = _SOURCE_MULTILUT_TILE_SIZE * _SOURCE_MULTILUT_TILE_AMOUNT; Height = _SOURCE_MULTILUT_TILE_SIZE * _SOURCE_MULTILUT_TILE_AMOUNT; Format = RGBA8; };
 sampler SamplerMultiLUT { Texture = texMultiLUT; };
 
 #if MultiLUTTexture2
-    texture texMultiLUT2 < source = _SOURCE_MULTILUT_FILE2; > { Width = _SOURCE_MULTILUT_TILE_SIZE2 * fLUT_TileAmount; Height = _SOURCE_MULTILUT_TILE_SIZE2 * _SOURCE_MULTILUT_TILE_AMOUNT2; Format = RGBA8; };
+    texture texMultiLUT2 < source = _SOURCE_MULTILUT_FILE2; > { Width = _SOURCE_MULTILUT_TILE_SIZE2 * _SOURCE_MULTILUT_TILE_AMOUNT2; Height = _SOURCE_MULTILUT_TILE_SIZE2 * _SOURCE_MULTILUT_TILE_AMOUNT2; Format = RGBA8; };
     sampler SamplerMultiLUT2{ Texture = texMultiLUT2; };
 #endif
 
 #if MultiLUTTexture3
-    texture texMultiLUT3 < source = _SOURCE_MULTILUT_FILE3; > { Width = _SOURCE_MULTILUT_TILE_SIZE3 * fLUT_TileAmount; Height = _SOURCE_MULTILUT_TILE_SIZE3 * _SOURCE_MULTILUT_TILE_AMOUNT3; Format = RGBA8; };
+    texture texMultiLUT3 < source = _SOURCE_MULTILUT_FILE3; > { Width = _SOURCE_MULTILUT_TILE_SIZE3 * _SOURCE_MULTILUT_TILE_AMOUNT3; Height = _SOURCE_MULTILUT_TILE_SIZE3 * _SOURCE_MULTILUT_TILE_AMOUNT3; Format = RGBA8; };
     sampler SamplerMultiLUT3{ Texture = texMultiLUT3; };
 #endif
 
@@ -519,7 +522,7 @@ sampler SamplerMultiLUT { Texture = texMultiLUT; };
 
 float3 apply(in const float3 color, in const int tex, in const float lut)
 {
-    const float2 texelsize = 1.0 / float2(_SOURCE_MULTILUT_TILE_SIZE * fLUT_TileAmount, _SOURCE_MULTILUT_TILE_SIZE);
+    const float2 texelsize = 1.0 / float2(_SOURCE_MULTILUT_TILE_SIZE * _SOURCE_MULTILUT_TILE_AMOUNT, _SOURCE_MULTILUT_TILE_SIZE);
     float3 lutcoord = float3((color.xy * _SOURCE_MULTILUT_TILE_SIZE - color.xy + 0.5) * texelsize, (color.z  * _SOURCE_MULTILUT_TILE_SIZE - color.z));
 
     const float lerpfact = frac(lutcoord.z);
@@ -532,7 +535,7 @@ float3 apply(in const float3 color, in const int tex, in const float lut)
 #if MultiLUTTexture2
 float3 apply2(in const float3 color, in const int tex, in const float lut)
 {
-    const float2 texelsize = 1.0 / float2(_SOURCE_MULTILUT_TILE_SIZE2 * fLUT_TileAmount, _SOURCE_MULTILUT_TILE_SIZE2);
+    const float2 texelsize = 1.0 / float2(_SOURCE_MULTILUT_TILE_SIZE2 * _SOURCE_MULTILUT_TILE_AMOUNT2, _SOURCE_MULTILUT_TILE_SIZE2);
     float3 lutcoord = float3((color.xy * _SOURCE_MULTILUT_TILE_SIZE2 - color.xy + 0.5) * texelsize, (color.z * _SOURCE_MULTILUT_TILE_SIZE2 - color.z));
 
     const float lerpfact = frac(lutcoord.z);
@@ -546,7 +549,7 @@ float3 apply2(in const float3 color, in const int tex, in const float lut)
 #if MultiLUTTexture3
 float3 apply3(in const float3 color, in const int tex, in const float lut)
 {
-    const float2 texelsize = 1.0 / float2(_SOURCE_MULTILUT_TILE_SIZE3 * fLUT_TileAmount, _SOURCE_MULTILUT_TILE_SIZE3);
+    const float2 texelsize = 1.0 / float2(_SOURCE_MULTILUT_TILE_SIZE3 * _SOURCE_MULTILUT_TILE_AMOUNT3, _SOURCE_MULTILUT_TILE_SIZE3);
     float3 lutcoord = float3((color.xy * _SOURCE_MULTILUT_TILE_SIZE3 - color.xy + 0.5) * texelsize, (color.z * _SOURCE_MULTILUT_TILE_SIZE3 - color.z));
 
     const float lerpfact = frac(lutcoord.z);
