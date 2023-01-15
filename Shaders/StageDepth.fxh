@@ -128,7 +128,7 @@ uniform bool StageDepth_InvertDepth < \
 void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) \
 { \
 	passColor = tex2D(ReShade::BackBuffer, texCoord); \
-	const float depth = Stage_InvertDepth ? ReShade::GetLinearizedDepth(texCoord).r : 1 - ReShade::GetLinearizedDepth(texCoord).r; \
+	const float depth = StageDepth_InvertDepth ? ReShade::GetLinearizedDepth(texCoord).r : 1 - ReShade::GetLinearizedDepth(texCoord).r; \
 \
 	if (depth < StageDepth_Depth) \
 	{ \
