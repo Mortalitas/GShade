@@ -179,7 +179,7 @@ void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix); \
 		passColor = tex2D(StageDepth_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
 \
-		passColor.rgb = ComHeaders::Blending::Blend(Stage_BlendMode, backColor, passColor.rgb, passColor.a * StageDepth_Opacity); \
+		passColor.rgb = ComHeaders::Blending::Blend(StageDepth_BlendMode, backColor, passColor.rgb, passColor.a * StageDepth_Opacity); \
 	} \
 } \
 \

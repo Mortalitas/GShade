@@ -141,7 +141,7 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
 	const float4 backColor = tex2D(ReShade::BackBuffer, texCoord); \
 	passColor = tex2D(Layer_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
 \
-	passColor = float4(ComHeaders::Blending::Blend(Layer_BlendMode, backColor.rgb, passColor.rgb, passColor.a * Layer_Blend), backColor.a); \
+	passColor = float4(ComHeaders::Blending::Blend(LAYER_BLEND_MODE, backColor.rgb, passColor.rgb, passColor.a * Layer_Blend), backColor.a); \
 } \
 \
 \
