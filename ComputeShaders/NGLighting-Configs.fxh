@@ -20,6 +20,7 @@
 
 #define HLDIV 4 //multiply history length by this value before evaluating the radius
 #define TemporalFilterDisocclusionThreshold 0.004
+#define ANTI_LAG_ENABLED 1
 //Motion Based Deghosting Threshold is the minimum value to be multiplied to the history length.
 //Higher value causes more ghosting but less blur. Too low values might result in strong flickering in motion.
 #define MBSDThreshold 0.05 //Default is 0.05
@@ -28,14 +29,14 @@
 //Temporal stabilizer Intensity
 #define TSIntensity 0.99
 //Temporal Stabilizer Clamping kernel shape
-#define shape 4//4 for cross, 8 for square
+#define shape 8//4 for cross, 8 for square
 #define TEMPORAL_STABILIZER_MINMAX_CLAMPING 1
-#define TEMPORAL_STABILIZER_VARIANCE_CLIPPING 0
+#define TEMPORAL_STABILIZER_VARIANCE_CLIPPING 1
 //Temporal Refine min blend value. lower is more stable but ghosty and too low values may introduce banding
 #define TRThreshold 0.001
 
 //Smooth Normals configs. It uses a separable bilateral blur which uses only normals as determinator. 
-#define SNThreshold 1 //Bilateral Blur Threshold for Smooth normals passes. default is 0.5
+#define SNThreshold 2.5 //Bilateral Blur Threshold for Smooth normals passes. default is 0.5
 #define SNDepthW FAR_PLANE*1*SNThreshold //depth weight as a determinator. default is 100/SNThreshold
 #if SMOOTH_NORMALS <= 1 //13*13 8taps
  #define LODD 0.5    //Don't touch this for God's sake
@@ -48,7 +49,7 @@
 #elif SMOOTH_NORMALS > 2 //41*41 84taps
  #warning "SMOOTH_NORMALS 3 is slow and should to be used for photography or old games. Otherwise set to 2 or 1."
  #define LODD 0
- #define SNWidth 1.5
+ #define SNWidth 1
  #define SNSamples 30
 #endif
 
