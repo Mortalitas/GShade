@@ -8,7 +8,7 @@
 //#if HQ_DENOISER
 // #include "NGLighting-Shader - SVGF.fxh"
 //#else
- #include "NGLighting-Shader"
+ #include "NGLighting-Shader.fxh"
 //#endif
 
 technique NGLighting<
