@@ -1,6 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.9.1 - UI
+//Version 0.9.2 - UI
 
 //license
 //CC0 ^_^
