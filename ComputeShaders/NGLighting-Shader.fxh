@@ -47,8 +47,8 @@
 //10-[v]Use pre-calulated blue noise instead of white. From Nvidia's SpatioTemporal Blue Noise sequence
 //11-[v]Add depth awareness to smooth normals. To do so, add depth in the alpha channel of 
 //	  NormTex and NormTex1 for optimization.
-//12-[ ]Make normal based edge awareness of all passes based on angular distance of the 2 normals.
-//13-[ ]Make sample distance of smooth normals exponential.
+//12-[v]Make normal based edge awareness of all passes based on angular distance of the 2 normals.
+//13-[o]Make sample distance of smooth normals exponential.
 //14-[ ]
 
 ///////////////Include/////////////////////
@@ -132,8 +132,27 @@ sampler sSSSR_HLTex0 { Texture = SSSR_HLTex0; };
 texture SSSR_HLTex1 { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; };
 sampler sSSSR_HLTex1 { Texture = SSSR_HLTex1; };
 
-texture SSSR_MaskRoughTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG8; };
-sampler sSSSR_MaskRoughTex { Texture = SSSR_MaskRoughTex; };
+texture SSSR_RoughTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8; };
+sampler sSSSR_RoughTex { Texture = SSSR_RoughTex; };
+
+#if NGL_HYBRID_MODE
+
+texture SSSR_ReflectionTexD  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
+sampler sSSSR_ReflectionTexD { Texture = SSSR_ReflectionTexD; };
+
+texture SSSR_FilterTex0D  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
+sampler sSSSR_FilterTex0D { Texture = SSSR_FilterTex0D; };
+
+texture SSSR_FilterTex1D  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
+sampler sSSSR_FilterTex1D { Texture = SSSR_FilterTex1D; };
+
+texture SSSR_FilterTex2D  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
+sampler sSSSR_FilterTex2D { Texture = SSSR_FilterTex2D; };
+
+texture SSSR_FilterTex3D  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
+sampler sSSSR_FilterTex3D { Texture = SSSR_FilterTex3D; };
+
+#endif //NGL_HYBRID_MODE
 
 ///////////////Textures-Samplers///////////
 ///////////////UI//////////////////////////
@@ -514,7 +533,7 @@ float4 tex2Dcatrom(in sampler tex, in float2 uv, in float2 texsize)
 }
 
 float GetRoughness(float2 texcoord)
-{ return GI?1:tex2Dlod(sSSSR_MaskRoughTex, float4(texcoord,0,0)).y;}
+{ return GI?1:tex2Dlod(sSSSR_RoughTex, float4(texcoord,0,0)).x;}
 
 
 ///////////////Functions///////////////////
@@ -525,15 +544,14 @@ void GBuffer1
 	float4 vpos : SV_Position,
 	float2 texcoord : TexCoord,
 	out float4 normal : SV_Target0,
-	out float2 roughness : SV_Target1) //SSSR_NormTex
+	out float roughness : SV_Target1) //SSSR_NormTex
 {
 	normal.rgb = Normal(texcoord.xy);
 	normal.a   = LDepth(texcoord.xy);
 #if SMOOTH_NORMALS <= 0
 	normal.rgb = blend_normals( Bump(texcoord, BUMP), normal.rgb);
 #endif
-	roughness = 0;
-	roughness.g = GetRoughTex(texcoord, normal).r;
+	roughness = GetRoughTex(texcoord, normal).r;
 }
 
 float4 SNH(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
@@ -638,7 +656,7 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 	if(Geometry.w>SkyDepth)
 	{ 
 		HitDistance = 0;
-		FinalColor.rgba = float4(tex2D(sTexColor, texcoord).rgb, 0);
+		FinalColor.rgba = float4(0,0,0,GI?1:0);
 	}
 	else
 	{
@@ -700,77 +718,68 @@ float2 GetMotionVectorsDeflickered(float2 texcoord)
 	//return MV;
 }
 
-void TemporalFilter0(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float mask : SV_Target0)
-{//Writes the mask to a texture. Then the texture will be dilated in the next pass to avoid masking edges when camera jitters
-	float depth = LDepth(texcoord);
-	if(depth>SkyDepth){mask=0;}else{
-	float4 past_normal; float3 normal, ogcolor; float2 MotionVectors; float2 outbound; float past_ogcolor, past_depth, HistoryLength;
-	//Inputs
-	MotionVectors = texcoord + sampleMotion(texcoord);
-	HistoryLength = tex2D(sSSSR_HLTex1, MotionVectors).r;
-	normal = tex2D(sSSSR_NormTex, texcoord).rgb;
-	past_normal = tex2D(sSSSR_PNormalTex, MotionVectors);
-	past_depth = past_normal.w;
-
-	ogcolor = toYCC(tex2D(sTexColor, texcoord).rgb);
-	past_ogcolor = tex2D(sSSSR_POGColTex, MotionVectors).r;
-	
-	ogcolor.r += ogcolor.g + ogcolor.b;
-		 //multiplying by facing fac estimates the expected depth difference, reducing oversensitivity in steep angles.
-	mask = abs(depth - past_depth) * dot(normal, normalize(UVtoPos(texcoord)))
-		 + abs(ogcolor.r - past_ogcolor)*saturate(1-MVErrorTolerance)
-		 <= TemporalFilterDisocclusionThreshold;
-	}//sky mask end
-}
-
-void TemporalFilter1(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 FinalColor : SV_Target0, out float HLOut : SV_Target1)
+void TemporalFilter(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 FinalColor : SV_Target0, out float HistoryLength : SV_Target1)
 {
+	float2 MotionVectors = sampleMotion(texcoord);
+	float2 PastUV = texcoord + MotionVectors;
+	HistoryLength = tex2D(sSSSR_HLTex1, PastUV).r;
 	float depth = LDepth(texcoord);
-	float4 Current, History; float3 Xvirtual, eyedir; float2 MotionVectors, p; float past_depth, mask, HistoryLength;
-	p = pix;
+	bool mask;
+	if(depth>SkyDepth){mask=0;}else{
+		float4 past_normal; float3 normal, ogcolor; float2 outbound; float past_ogcolor, past_depth;
+		//Inputs
+		normal = tex2D(sSSSR_NormTex, texcoord).rgb;
+		past_normal = tex2D(sSSSR_PNormalTex, PastUV);
+		past_depth = past_normal.w;
+		
+		ogcolor = toYCC(tex2D(sTexColor, texcoord).rgb);
+		past_ogcolor = tex2D(sSSSR_POGColTex, PastUV).r;
+		
+		ogcolor.r += ogcolor.g + ogcolor.b;
+			 //multiplying by facing fac estimates the expected depth difference, reducing oversensitivity in steep angles.
+		mask = abs(depth - past_depth) * dot(normal, normalize(UVtoPos(texcoord)))
+			 + abs(ogcolor.r - past_ogcolor)*saturate(1-MVErrorTolerance)
+			 <= TemporalFilterDisocclusionThreshold;
+	}//sky mask end
+
+	float4 Current, History; float3 Xvirtual, eyedir; float past_depth;
 	
-	MotionVectors = GetMotionVectorsDeflickered(texcoord);
-	HistoryLength = tex2D(sSSSR_HLTex1, texcoord + MotionVectors).r;
 	float Roughness = GI?1:GetRoughness(texcoord);
 
-	float2 outbound = texcoord + MotionVectors;
+	float2 outbound = PastUV;
 	outbound = float2(max(outbound.r, outbound.g), min(outbound.r, outbound.g));
 	outbound.rg = (outbound.r > 1 || outbound.g < 0);
 	
-	mask = tex2D(sSSSR_MaskRoughTex, texcoord).x;
 	mask = min(1-outbound.r, mask);
-	
-	HistoryLength = tex2D(sSSSR_HLTex1, texcoord + MotionVectors).r;
 
 	Current = tex2Dcatrom(sSSSR_ReflectionTex, texcoord, BUFFER_SCREEN_SIZE*RESOLUTION_SCALE_).rgba;
-	History = tex2D(sSSSR_FilterTex1, texcoord + MotionVectors);
+	History = tex2D(sSSSR_FilterTex1, PastUV);
 	
-	HistoryLength *= mask;             //sets the history length to 0 for discarded samples
-	HLOut = HistoryLength + mask;      //+1 for accepted samples
-	HLOut = min(HLOut, MAX_Frames);    //Limits the linear accumulation to MAX_Frames, The rest will be accumulated exponentialy with the speed = (1-1/Max_Frames)
-		    
-	HLOut *= lerp(
+	HistoryLength.r *= mask; //sets the history length to 0 for discarded samples
+	HistoryLength.r = min(HistoryLength.r, MAX_Frames); //Limits the linear accumulation to MAX_Frames, The rest will be accumulated exponentialy with the speed = (1-1/Max_Frames)
+
+#if ANTI_LAG_ENABLED		    
+	HistoryLength.r *= lerp(
 		1-saturate(
 			abs((GI?1:1.5)*
-				lum(tex2D(sSSSR_FilterTex3, texcoord + MotionVectors).rgb) -
+				lum(tex2D(sSSSR_FilterTex3, PastUV).rgb) -
 				lum(History.rgb)
 			)
 		),
 		1, 
-		1-length(MotionVectors * MBSDMultiplier/2)
+		saturate(1 - length(MotionVectors * MBSDMultiplier / 2))
 	);
-	
-	if(!GI)HLOut = HLOut
+#endif
+
+	if(!GI)HistoryLength.r = HistoryLength.r
 				 * max(saturate(1 - length(MotionVectors) //Weaker history for faster movements
 				 * (1 - sqrt(Roughness))                  //More effective on lower roughnesses
 				 * MBSDMultiplier), 					  //Motion Based Deghosting Multiplier
 				   MBSDThreshold);						//Motion Based Deghosting Max Threshold
 	
-	HLOut = max(HLOut, 1);
-	if(!GI&&TemporalRefine)FinalColor = lerp(History, Current, min((Current.a != 0) ? 1/HLOut : TRThreshold, mask));
-	else FinalColor = lerp(History, Current, min(1 / HLOut, mask));
-	//FinalColor = (mask||depth==0)?Current : FinalColor;
-	//if(MAX_Frames>128)FinalColor += (BN3dts(texcoord, HLOut).r-0.5)/511;
+	HistoryLength.r++;
+	FinalColor = lerp(History, Current, 1 / HistoryLength.r);
+	FinalColor = max(1e-6, FinalColor);
 }
 
 float GetHitDistanceAdaptation(float2 texcoord, float Roughness)
@@ -810,13 +819,15 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 	float facing = dot(normal, normalize(UVtoPos(texcoord, depth)));
 	facing *= facing;
 	//Makes the threshold adaptive to the amount of expected noise
-	const float STMulList[3] = {20, 8, 2};
-	float ST = lerp(Sthreshold * STMulList[size], Sthreshold, sqrt(saturate(HL/64)));
+	const float STMulList[3] = {20, 10, 5};
+	float ST = lerp(Sthreshold * STMulList[size], Sthreshold, sqrt(saturate(HL/16)));
+	float STNormal = 1 - saturate(ST * 100);
+	float STDepth = ST/2.5;
 	
-	const float SizeList[3] = {2,8,16};
-	const float SizeListSmall[3] = {1,2,4};
+	const float SizeList[3] = {2,4,8};
+	const float SizeListSmall[3] = {0,1,2};
 	
-	p *= round(lerp(SizeList[size], SizeListSmall[size], min(HL/128, 1)));
+	p *= round(lerp(SizeList[size], SizeListSmall[size], min(HL/64, 1)));
 	
 	p += checkertex * p; //hides atrous artifacts
 	float2 pr = p * 0.70710678; //turns the square to circle
@@ -839,9 +850,8 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 		GetNormalAndDepthFromGeometry(offset[i], snormal, sdepth);
 			
 		determinator =     
-			 (abs(lum(snormal) - lum(normal)) * 0.4
-			+ abs(sdepth       - depth ) * facing
-			< ST);
+			  (dot(snormal, normal)) > STNormal
+			&& abs(sdepth - depth) * facing < STDepth;
 
 			sColor += tex2Dlod(Tex, float4(offset[i],0,0))*determinator;
 			samples +=determinator;
@@ -857,8 +867,8 @@ void SpatialFilter0( in float4 vpos : SV_Position, in float2 texcoord : TexCoord
 
 	float checkertex = checker(vpos);
 	float4 color = AdaptiveBox(0, sSSSR_FilterTex0, texcoord, checkertex, HL);
-	color.a = lerp(color.a, tex2D(sSSSR_FilterTex0, texcoord).a, saturate((HLOut-32)/36));
-	FinalColor = color;
+	color.a = lerp(color.a, tex2D(sSSSR_FilterTex0, texcoord).a, 1);
+	FinalColor = max(color, 1e-6);
 }
 		
 void SpatialFilter1( in float4 vpos : SV_Position, in float2 texcoord : TexCoord, out float4 FinalColor : SV_Target0)
@@ -868,8 +878,8 @@ void SpatialFilter1( in float4 vpos : SV_Position, in float2 texcoord : TexCoord
 
 	float checkertex = checker(vpos);
 	float4 color = AdaptiveBox(1, sSSSR_FilterTex1, texcoord, checkertex, HL);
-	color.a = lerp(color.a, tex2D(sSSSR_FilterTex1, texcoord).a, saturate((HLOut-8)/24));
-	FinalColor = color;
+	color.a = lerp(color.a, tex2D(sSSSR_FilterTex1, texcoord).a, 1);
+	FinalColor = max(color, 1e-6);
 }
 
 void SpatialFilter2(
@@ -886,8 +896,8 @@ void SpatialFilter2(
 
 	float checkertex = checker(vpos);
 	float4 color = AdaptiveBox(2, sSSSR_FilterTex0, texcoord, checkertex, HL);
-	color.a = lerp(color.a, tex2D(sSSSR_FilterTex0, texcoord).a, saturate(HLOut/8));
-	FinalColor = color;
+	color.a = lerp(color.a, tex2D(sSSSR_FilterTex0, texcoord).a, saturate((HLOut-8)/64));
+	FinalColor = max(color, 1e-6);
 	
 	Geometry   = tex2D(sSSSR_NormTex, texcoord);
 	TSHistory  = tex2D(sSSSR_FilterTex3, texcoord).rgba;
@@ -900,7 +910,7 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	float HL = tex2D(sSSSR_HLTex0, texcoord).r;
 	float2 p = pix;
 	
-	float Roughness = tex2D(sSSSR_MaskRoughTex, texcoord).y;
+	float Roughness = tex2D(sSSSR_RoughTex, texcoord).x;
 	float2 MotionVectors = GetMotionVectorsDeflickered(texcoord);
 
 	float4 current = tex2D(sSSSR_FilterTex1, texcoord);
@@ -981,9 +991,9 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 		SharpenMean /= shape+1;
 		//will make the sharpness adapt to the noise (less noise => more sharpening)
 		float4 weight = 1-saturate(Var * 2 - 1);
-		FinalColor = FinalColor + (FinalColor - SharpenMean) * weight;
+		FinalColor = FinalColor + (FinalColor - SharpenMean) * weight * 1;
 	}
-	FinalColor = clamp(FinalColor, SharpenMin, SharpenMax);
+	FinalColor = clamp(FinalColor, max(0.00000001, SharpenMin), SharpenMax);
 }
 
 float3 RITM(in float3 color){return color/max(1 - color, 0.001);}
@@ -995,7 +1005,7 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 	float2 p = pix;
 	float3 Background = tex2D(sTexColor, texcoord).rgb;
 	float  Depth      = LDepth(texcoord);
-	float  Roughness  = tex2D(sSSSR_MaskRoughTex, texcoord).y;
+	float  Roughness  = tex2D(sSSSR_RoughTex, texcoord).x;
 	float HL = tex2D(sSSSR_HLTex0, texcoord).r;
 	
 	//Lighting debug
@@ -1068,6 +1078,7 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 	
 	//Avoids covering menues in black
 	if(Depth <= 0.0001) FinalColor = Background;
+	//	FinalColor = Tonemapper(tex2D(sSSSR_FilterTex3, texcoord).rgb*2);
 }
 			
 			
