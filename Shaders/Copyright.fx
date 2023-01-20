@@ -72,6 +72,9 @@
     + Implemented new recolor method of changing two colors individually.
     + Color pickers are switched for in/out as needed depending on the status of recolor option.
     + Moved inversion option in recolor from a drop-down box to a single check box.
+
+    Version 1.5 by Marot Satil & uchu suzume
+    x Fixed incorrect declaration of arguments in Texture combo.
 */
 
 #include "ReShade.fxh"
@@ -135,7 +138,7 @@ uniform int cLayer_SelectGame <
 TEXTURE_COMBO(
     cLayer_Select,
     "Copyright Logo Selection",
-    "The image/texture you'd like to use.   ",
+    "The image/texture you'd like to use.   "
 );
 
 uniform float cLayer_Scale <
