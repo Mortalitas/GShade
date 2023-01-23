@@ -106,10 +106,10 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.6"
+	#define CINEMATIC_DOF_VERSION "v1.2.7"
 
 // Uncomment line below for debug info / code / controls
-//	#define CD_DEBUG 1
+	#define CD_DEBUG 1
 
 	//////////////////////////////////////////////////
 	//
@@ -290,6 +290,30 @@ namespace CinematicDOF
 		ui_tooltip = "Controls the sharpness of the bokeh highlight edges.";
 		ui_step = 0.01;
 	> = 0.0;
+	uniform int HighlightShape <
+		ui_category = "Highlight shape settings";
+		ui_type = "combo";
+		ui_label = "Highlight custom shape";
+		ui_items = "Circle (No custom shape)\0Heart\0Hexagon\0Circle with fringe\0Hexagon with fringe\0Star\0Square\0";
+		ui_tooltip = "Controls if a custom shape has to be used for the highlights.\nCircle means no custom shape.\nAnamorphic distortion only works with Circle";
+	> = false;
+	uniform float HighlightShapeRotationAngle <
+		ui_category = "Highlight shape settings";
+		ui_label="Shape rotation";
+		ui_type = "slider";
+		ui_min = 0.000; ui_max = 1.00;
+		ui_tooltip = "Controls the rotation of the shape";
+		ui_step = 0.01;
+	> = 0.0;
+	uniform float HighlightShapeGamma <
+		ui_category = "Highlight shape settings";
+		ui_label="Shape gamma correction";
+		ui_type = "slider";
+		ui_min = 0.000; ui_max = 5.00;
+		ui_tooltip = "Controls the gamma of the shape.\nNormally this should be 2.20";
+		ui_step = 0.01;
+	> = 2.20;
+	
 	
 	// ------------- ADVANCED SETTINGS
 	uniform bool MitigateUndersampling <
@@ -325,7 +349,7 @@ namespace CinematicDOF
 	uniform float DBVal5f <
 		ui_category = "Debugging";
 		ui_type = "slider";
-		ui_min = -1.00; ui_max = 1.00;
+		ui_min = 0.00; ui_max = 1.00;
 		ui_step = 0.01;
 	> = 0.0;
 	uniform int DBVal5i <
@@ -390,6 +414,12 @@ namespace CinematicDOF
 	texture texCDBuffer4 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; }; 	// Full res upscale buffer
 	texture texCDBuffer5 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; }; 	// Full res upscale buffer. We need 2 as post smooth needs 2
 	texture texCDNoise				< source = "pd80_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+	texture texBokehShape1			< source = "moyheart.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+	texture texBokehShape2			< source = "hex.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+	texture texBokehShape3			< source = "fringy_soft_chr_rb.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+	texture texBokehShape4			< source = "hex_fringy_soft.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+	texture texBokehShape5			< source = "cutestar.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+	texture texBokehShape6			< source = "square.png"; > { Width = 512; Height = 512; Format = RGBA8; };
 
 	sampler	SamplerCDCurrentFocus		{ Texture = texCDCurrentFocus; };
 	sampler SamplerCDPreviousFocus		{ Texture = texCDPreviousFocus; };
@@ -405,6 +435,12 @@ namespace CinematicDOF
 	sampler SamplerCDCoCTile			{ Texture = texCDCoCTile; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
 	sampler SamplerCDCoCTileNeighbor	{ Texture = texCDCoCTileNeighbor; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
 	sampler SamplerCDNoise				{ Texture = texCDNoise; MipFilter = POINT; MinFilter = POINT; MagFilter = POINT; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
+	sampler SamplerCDBokehShape1		{ Texture = texBokehShape1; };
+	sampler SamplerCDBokehShape2		{ Texture = texBokehShape2; };
+	sampler SamplerCDBokehShape3		{ Texture = texBokehShape3; };
+	sampler SamplerCDBokehShape4		{ Texture = texBokehShape4; };
+	sampler SamplerCDBokehShape5		{ Texture = texBokehShape5; };
+	sampler SamplerCDBokehShape6		{ Texture = texBokehShape6; };
 
 	uniform float2 MouseCoords < source = "mousepoint"; >;
 	uniform bool LeftMouseDown < source = "mousebutton"; keycode = 0; toggle = false; >;
@@ -558,6 +594,22 @@ namespace CinematicDOF
 		}
 		return toReturn;
 	}
+	
+	// Gets the tap from the shape pointed at with the shapeSampler specified, over the angle specified, from the distance of the center in shapeRingDistance
+	// Returns in rgb the shape sample, and in a the luma.
+	float4 GetShapeTap(float angle, float shapeRingDistance, sampler2D shapeSampler)
+	{
+		float2 pointOffsetForShape = float2(0,0);
+		
+		// we have to add 270 degrees to the custom angle, because it's scatter via gather, so a pixel that has to show the top of our shape is *above*
+		// the highlight, and the angle has to be 270 degrees to hit it (as sampling the highlight *below it* is what makes it brighter).
+		sincos(angle + (6.28318530717958 * HighlightShapeRotationAngle) + (6.28318530717958 * 0.75f), pointOffsetForShape.x, pointOffsetForShape.y);
+		pointOffsetForShape.y*=-1.0f;
+		float4 shapeTapCoords = float4((shapeRingDistance * pointOffsetForShape) + 0.5f, 0, 0);	// shapeRingDistance is [0, 0.5] so no need to multiply with 0.5 again
+		float4 shapeTap = tex2Dlod(shapeSampler, shapeTapCoords);
+		shapeTap.a = dot(shapeTap.rgb, float3(0.3, 0.59, 0.11));
+		return shapeTap;
+	}
 
 	// Calculates the blur disc size for the pixel at the texcoord specified. A blur disc is the CoC size at the image plane.
 	// In:	VSFOCUSINFO struct filled by the vertex shader VS_Focus
@@ -594,9 +646,10 @@ namespace CinematicDOF
 	// Based on [Nilsson2012] and a variant of [Jimenez2014] where far/in-focus pixels are receiving a higher weight so they bleed into the near plane, 
 	// In:	blurInfo, the pre-calculated disc blur information from the vertex shader.
 	// 		source, the source to read RGBA fragments from. Luma in alpha
+	//		shape, the shape sampler to use if shapes are used.
 	// Out: RGBA fragment for the pixel at texcoord in source, which is the blurred variant of it if it's in the near plane. A is alpha
 	// to blend with.
-	float4 PerformNearPlaneDiscBlur(VSDISCBLURINFO blurInfo, sampler2D source)
+	float4 PerformNearPlaneDiscBlur(VSDISCBLURINFO blurInfo, sampler2D source, sampler2D shapeSampler)
 	{
 		float4 fragment = tex2Dlod(source, float4(blurInfo.texcoord, 0, 0));
 		// r contains blurred CoC, g contains original CoC. Original is negative.
@@ -624,25 +677,32 @@ namespace CinematicDOF
 		float2 currentRingRadiusCoords = ringRadiusDeltaCoords;
 		float4 anamorphicFactors = CalculateAnamorphicFactor(blurInfo.texcoord - 0.5); // xy are up vector, zw are right vector
 		float2x2 anamorphicRotationMatrix = CalculateAnamorphicRotationMatrix(blurInfo.texcoord);
+		bool useShape = HighlightShape > 0;
+		float4 shapeTap = float4(1.0f, 1.0f, 1.0f, 1.0f);
 		for(float ringIndex = 0; ringIndex < numberOfRings; ringIndex++)
 		{
 			float anglePerPoint = 6.28318530717958 / pointsOnRing;
 			float angle = anglePerPoint;
 			// no further weight needed, bleed all you want. 
 			float weight = lerp(ringIndex/numberOfRings, 1, smoothstep(0, 1, bokehBusyFactorToUse));
+			float shapeRingDistance = ((ringIndex+1)/numberOfRings) * 0.5f;
 			for(float pointNumber = 0; pointNumber < pointsOnRing; pointNumber++)
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
+				// shapeLuma is in Alpha
+				shapeTap = useShape ? GetShapeTap(angle, shapeRingDistance, shapeSampler) : shapeTap;
 				// now transform the offset vector with the anamorphic factors and rotate it accordingly to the rotation matrix, so we get a nice
 				// bending around the center of the screen.
-				pointOffset = MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
+				pointOffset = useShape ? pointOffset : MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
 				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
 				float4 tap = tex2Dlod(source, tapCoords);
+				tap.rgb *= useShape ? (shapeTap.rgb * HighlightShapeGamma) : 1.0f;
 				// r contains blurred CoC, g contains original CoC. Original can be negative
 				float2 sampleRadii = tex2Dlod(SamplerCDCoCBlurred, tapCoords).rg;
 				float blurredSampleRadius = sampleRadii.r;
-				average.rgb += tap.rgb * weight;
-				average.w += weight ;
+				float sampleWeight = weight * (shapeTap.a > 0.01 ? 1.0f : 0.0f);
+				average.rgb += tap.rgb * sampleWeight;
+				average.w += sampleWeight ;
 				angle+=anglePerPoint;
 			}
 			pointsOnRing+=pointsFirstRing;
@@ -673,8 +733,9 @@ namespace CinematicDOF
 	// (Though without using tiles). Blurs far plane.
 	// In:	blurInfo, the pre-calculated disc blur information from the vertex shader.
 	// 		source, the source buffer to read RGBA data from. RGB is in HDR. A not used.
+	//		shape, the shape sampler to use if shapes are used.
 	// Out: RGBA fragment that's the result of the disc-blur on the pixel at texcoord in source. A contains luma of pixel.
-	float4 PerformDiscBlur(VSDISCBLURINFO blurInfo, sampler2D source)
+	float4 PerformDiscBlur(VSDISCBLURINFO blurInfo, sampler2D source, sampler2D shapeSampler)
 	{
 		const float pointsFirstRing = 7; 	// each ring has a multiple of this value of sample points. 
 		float4 fragment = tex2Dlod(source, float4(blurInfo.texcoord, 0, 0));
@@ -694,22 +755,28 @@ namespace CinematicDOF
 		float pointsOnRing = pointsFirstRing;
 		float4 anamorphicFactors = CalculateAnamorphicFactor(blurInfo.texcoord - 0.5); // xy are up vector, zw are right vector
 		float2x2 anamorphicRotationMatrix = CalculateAnamorphicRotationMatrix(blurInfo.texcoord);
+		bool useShape = HighlightShape > 0;
+		float4 shapeTap = float4(1.0f, 1.0f, 1.0f, 1.0f);
 		for(float ringIndex = 0; ringIndex < blurInfo.numberOfRings; ringIndex++)
 		{
 			float anglePerPoint = 6.28318530717958 / pointsOnRing;
 			float angle = anglePerPoint;
 			float ringWeight = lerp(ringIndex/blurInfo.numberOfRings, 1, bokehBusyFactorToUse);
 			float ringDistance = cocPerRing * ringIndex;
+			float shapeRingDistance = ((ringIndex+1)/blurInfo.numberOfRings) * 0.5f;
 			for(float pointNumber = 0; pointNumber < pointsOnRing; pointNumber++)
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
+				// shapeLuma is in Alpha
+				shapeTap = useShape ? GetShapeTap(angle, shapeRingDistance, shapeSampler) : shapeTap;
 				// now transform the offset vector with the anamorphic factors and rotate it accordingly to the rotation matrix, so we get a nice
 				// bending around the center of the screen.
-				pointOffset = MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
+				pointOffset = useShape ? pointOffset : MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
 				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
 				float sampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).r;
-				float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance);
+				float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance) * (shapeTap.a > 0.01 ? 1.0f : 0.0f);
 				float4 tap = tex2Dlod(source, tapCoords);
+				tap.rgb *= useShape ? (shapeTap.rgb * HighlightShapeGamma) : 1.0f;
 				average.rgb += tap.rgb * weight;
 				average.w += weight;
 				angle+=anglePerPoint;
@@ -1037,14 +1104,72 @@ namespace CinematicDOF
 	// Pixel shader which performs the far plane blur pass.
 	void PS_BokehBlur(VSDISCBLURINFO blurInfo, out float4 fragment : SV_Target0)
 	{
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1);
+		// yay for functions... but alas, samplers have to be hardcoded.
+		bool useShape = HighlightShape > 0;
+		if(useShape)
+		{
+			switch(HighlightShape)
+			{
+				case 1:
+					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape1);
+					break;
+				case 2: 
+					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape2);
+					break;
+				case 3: 
+					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape3);
+					break;
+				case 4: 
+					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape4);
+					break;
+				case 5: 
+					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape5);
+					break;
+				case 6: 
+					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape6);
+					break;
+			}
+		}
+		else
+		{
+			fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape1);
+		}
 	}
 
 	// Pixel shader which performs the near plane blur pass. Uses a blurred buffer of blur disc radii, based on a combination of [Jimenez2014] (tiles)
 	// and [Nilsson2012] (blurred CoC).
 	void PS_NearBokehBlur(VSDISCBLURINFO blurInfo, out float4 fragment : SV_Target0)
 	{
-		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2);
+		// yay for functions... but alas, samplers have to be hardcoded.
+		bool useShape = HighlightShape > 0;
+		if(useShape)
+		{
+			switch(HighlightShape)
+			{
+				case 1:
+					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
+					break;
+				case 2: 
+					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape2);
+					break;
+				case 3: 
+					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape3);
+					break;
+				case 4: 
+					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape4);
+					break;
+				case 5: 
+					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape5);
+					break;
+				case 6: 
+					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape6);
+					break;
+			}
+		}
+		else
+		{
+			fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
+		}
 	}
 	
 	// Pixel shader which performs the CoC tile creation (horizontal gather of min CoC)
