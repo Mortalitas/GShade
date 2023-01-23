@@ -2,8 +2,10 @@
 | :: Description :: |
 '-------------------/
 
-Glamarye Fast Effects for ReShade (version 6.4)
+Glamarye Fast Effects for ReShade (version 6.4.1)
 ======================================
+
+**New in 6.4.1** bugfix: divide by zero in contrast calculation.
 
 **New in 6.4:** Fixed unexpected color change for local bounce light, most noticable in without_Fake_GI version. Improved quality of adaptive contrast enhancement and made it interact better with other effects; also increased maximum strength. Increased default and maximum Fake GI saturation, as it was too subtle before.
 
@@ -1427,7 +1429,7 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			bounce=lerp(bounce, unlit_c2*max(0,2*bounce_area.rgb-c), bounce_multiplier);	
 		}
 	
-		float contrast = dot(luma,(c-sharp_diff)/(bounce_area.rgb+gi.rgb));
+		float contrast = dot(luma,max(0,c-sharp_diff)/max(bounce_area.rgb+gi.rgb,0.00001));
 		contrast = (contrast)/(1+contrast)+.66666666667;
 		
 		
