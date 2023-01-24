@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 24-jan-2023:    v1.2.7:  Added custom shape support for bokeh highlights.
 // 11-nov-2022:    v1.2.6:  Added bokeh sharpening. 
 // 28-mar-2022:    v1.2.5:  Made the pre-blur pass optional, as it's not really needed anymore for qualities higher than 4 and reasonable blur values. 
 // 15-mar-2022:    v1.2.4:  Corrected the LDR to HDR and HDR to LDR conversion functions so they now apply proper gamma correct and boost, so hue shifts are limited now as long 
@@ -109,7 +110,7 @@ namespace CinematicDOF
 	#define CINEMATIC_DOF_VERSION "v1.2.7"
 
 // Uncomment line below for debug info / code / controls
-	#define CD_DEBUG 1
+//	#define CD_DEBUG 1
 
 	//////////////////////////////////////////////////
 	//
@@ -482,7 +483,6 @@ namespace CinematicDOF
 		fragment = pow(abs(fragment), HighlightGammaFactor);
 		return fragment / max((1.001 - (HighlightBoost * fragment)), 0.001);
 	}
-	
 	
 	float3 CorrectForWhiteAccentuation(float3 fragment)
 	{
