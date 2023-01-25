@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 25-jan-2023:    v1.2.7+: Reduced textures loaded via GShade's ui_bind annotations and added the ability to use a custom bokeh texture via the preprocessor.
 // 24-jan-2023:    v1.2.7:  Added custom shape support for bokeh highlights. The included shapes were created by Moyevka, Murchalloo, K-putt and others. 
 // 11-nov-2022:    v1.2.6:  Added bokeh sharpening. 
 // 28-mar-2022:    v1.2.5:  Made the pre-blur pass optional, as it's not really needed anymore for qualities higher than 4 and reasonable blur values. 
@@ -109,8 +110,19 @@ namespace CinematicDOF
 {
 	#define CINEMATIC_DOF_VERSION "v1.2.7"
 
-// Uncomment line below for debug info / code / controls
-//	#define CD_DEBUG 1
+#ifndef CD_DEBUG
+	#define CD_DEBUG 0
+#endif
+
+#ifndef CINEMATIC_DOF_SHAPES
+	#define CINEMATIC_DOF_SHAPES 0
+#endif
+
+#if CINEMATIC_DOF_SHAPES == 1
+	#ifndef CINEMATIC_DOF_SHAPE_CUSTOM
+		#define CINEMATIC_DOF_SHAPE_CUSTOM "moyheart.png"
+	#endif
+#endif
 
 	//////////////////////////////////////////////////
 	//
@@ -295,9 +307,10 @@ namespace CinematicDOF
 		ui_category = "Highlight shape settings";
 		ui_type = "combo";
 		ui_label = "Highlight custom shape";
-		ui_items = "Circle (No custom shape)\0Heart\0Hexagon\0Circle with fringe\0Hexagon with fringe\0Star\0Square\0";
+		ui_items = "Circle (No custom shape)\0Heart / Custom (Preprocessor Definitions)\0Hexagon\0Circle with fringe\0Hexagon with fringe\0Star\0Square\0";
 		ui_tooltip = "Controls if a custom shape has to be used for the highlights.\nCircle means no custom shape.\nAnamorphic distortion only works with Circle";
-	> = false;
+		ui_bind = "CINEMATIC_DOF_SHAPES";
+	> = 0;
 	uniform float HighlightShapeRotationAngle <
 		ui_category = "Highlight shape settings";
 		ui_label="Shape rotation";
@@ -415,12 +428,21 @@ namespace CinematicDOF
 	texture texCDBuffer4 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; }; 	// Full res upscale buffer
 	texture texCDBuffer5 			{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; }; 	// Full res upscale buffer. We need 2 as post smooth needs 2
 	texture texCDNoise				< source = "pd80_gaussnoise.png"; > { Width = 512; Height = 512; Format = RGBA8; };
-	texture texBokehShape1			< source = "moyheart.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#if CINEMATIC_DOF_SHAPES == 1
+	texture texBokehShape1			< source = CINEMATIC_DOF_SHAPE_CUSTOM; > { Width = 512; Height = 512; Format = RGBA8; };
+#elif CINEMATIC_DOF_SHAPES == 2
 	texture texBokehShape2			< source = "hex.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#elif CINEMATIC_DOF_SHAPES == 3
 	texture texBokehShape3			< source = "fringy_soft_chr_rb.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#elif CINEMATIC_DOF_SHAPES == 4
 	texture texBokehShape4			< source = "hex_fringy_soft.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#elif CINEMATIC_DOF_SHAPES == 5
 	texture texBokehShape5			< source = "cutestar.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#elif CINEMATIC_DOF_SHAPES == 6
 	texture texBokehShape6			< source = "square.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#else
+	texture texBokehShape1			< source = "moyheart.png"; > { Width = 512; Height = 512; Format = RGBA8; };
+#endif
 
 	sampler	SamplerCDCurrentFocus		{ Texture = texCDCurrentFocus; };
 	sampler SamplerCDPreviousFocus		{ Texture = texCDPreviousFocus; };
@@ -436,12 +458,19 @@ namespace CinematicDOF
 	sampler SamplerCDCoCTile			{ Texture = texCDCoCTile; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
 	sampler SamplerCDCoCTileNeighbor	{ Texture = texCDCoCTileNeighbor; MagFilter = POINT; MinFilter = POINT; MipFilter = POINT; AddressU = MIRROR; AddressV = MIRROR; AddressW = MIRROR;};
 	sampler SamplerCDNoise				{ Texture = texCDNoise; MipFilter = POINT; MinFilter = POINT; MagFilter = POINT; AddressU = WRAP; AddressV = WRAP; AddressW = WRAP;};
-	sampler SamplerCDBokehShape1		{ Texture = texBokehShape1; };
+#if CINEMATIC_DOF_SHAPES == 2
 	sampler SamplerCDBokehShape2		{ Texture = texBokehShape2; };
+#elif CINEMATIC_DOF_SHAPES == 3
 	sampler SamplerCDBokehShape3		{ Texture = texBokehShape3; };
+#elif CINEMATIC_DOF_SHAPES == 4
 	sampler SamplerCDBokehShape4		{ Texture = texBokehShape4; };
+#elif CINEMATIC_DOF_SHAPES == 5
 	sampler SamplerCDBokehShape5		{ Texture = texBokehShape5; };
+#elif CINEMATIC_DOF_SHAPES == 6
 	sampler SamplerCDBokehShape6		{ Texture = texBokehShape6; };
+#else
+	sampler SamplerCDBokehShape1		{ Texture = texBokehShape1; };
+#endif
 
 	uniform float2 MouseCoords < source = "mousepoint"; >;
 	uniform bool LeftMouseDown < source = "mousebutton"; keycode = 0; toggle = false; >;
@@ -677,7 +706,6 @@ namespace CinematicDOF
 		float2 currentRingRadiusCoords = ringRadiusDeltaCoords;
 		float4 anamorphicFactors = CalculateAnamorphicFactor(blurInfo.texcoord - 0.5); // xy are up vector, zw are right vector
 		float2x2 anamorphicRotationMatrix = CalculateAnamorphicRotationMatrix(blurInfo.texcoord);
-		bool useShape = HighlightShape > 0;
 		float4 shapeTap = float4(1.0f, 1.0f, 1.0f, 1.0f);
 		for(float ringIndex = 0; ringIndex < numberOfRings; ringIndex++)
 		{
@@ -690,13 +718,19 @@ namespace CinematicDOF
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
 				// shapeLuma is in Alpha
-				shapeTap = useShape ? GetShapeTap(angle, shapeRingDistance, shapeSampler) : shapeTap;
+#if CINEMATIC_DOF_SHAPES != 0
+				shapeTap = GetShapeTap(angle, shapeRingDistance, shapeSampler);
+#endif
 				// now transform the offset vector with the anamorphic factors and rotate it accordingly to the rotation matrix, so we get a nice
 				// bending around the center of the screen.
-				pointOffset = useShape ? pointOffset : MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
+#if CINEMATIC_DOF_SHAPES == 0
+				pointOffset = MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
+#endif
 				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
 				float4 tap = tex2Dlod(source, tapCoords);
-				tap.rgb *= useShape ? (shapeTap.rgb * HighlightShapeGamma) : 1.0f;
+#if CINEMATIC_DOF_SHAPES != 0
+				tap.rgb *= (shapeTap.rgb * HighlightShapeGamma);
+#endif
 				// r contains blurred CoC, g contains original CoC. Original can be negative
 				float2 sampleRadii = tex2Dlod(SamplerCDCoCBlurred, tapCoords).rg;
 				float blurredSampleRadius = sampleRadii.r;
@@ -755,7 +789,6 @@ namespace CinematicDOF
 		float pointsOnRing = pointsFirstRing;
 		float4 anamorphicFactors = CalculateAnamorphicFactor(blurInfo.texcoord - 0.5); // xy are up vector, zw are right vector
 		float2x2 anamorphicRotationMatrix = CalculateAnamorphicRotationMatrix(blurInfo.texcoord);
-		bool useShape = HighlightShape > 0;
 		float4 shapeTap = float4(1.0f, 1.0f, 1.0f, 1.0f);
 		for(float ringIndex = 0; ringIndex < blurInfo.numberOfRings; ringIndex++)
 		{
@@ -768,15 +801,21 @@ namespace CinematicDOF
 			{
 				sincos(angle, pointOffset.y, pointOffset.x);
 				// shapeLuma is in Alpha
-				shapeTap = useShape ? GetShapeTap(angle, shapeRingDistance, shapeSampler) : shapeTap;
+#if CINEMATIC_DOF_SHAPES != 0
+				shapeTap = GetShapeTap(angle, shapeRingDistance, shapeSampler);
+#endif
 				// now transform the offset vector with the anamorphic factors and rotate it accordingly to the rotation matrix, so we get a nice
 				// bending around the center of the screen.
-				pointOffset = useShape ? pointOffset : MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
+#if CINEMATIC_DOF_SHAPES == 0
+				pointOffset = MorphPointOffsetWithAnamorphicDeltas(pointOffset, anamorphicFactors, anamorphicRotationMatrix);
+#endif
 				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
 				float sampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).r;
 				float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance) * (shapeTap.a > 0.01 ? 1.0f : 0.0f);
 				float4 tap = tex2Dlod(source, tapCoords);
-				tap.rgb *= useShape ? (shapeTap.rgb * HighlightShapeGamma) : 1.0f;
+#if CINEMATIC_DOF_SHAPES != 0
+				tap.rgb *= (shapeTap.rgb * HighlightShapeGamma);
+#endif
 				average.rgb += tap.rgb * weight;
 				average.w += weight;
 				angle+=anglePerPoint;
@@ -1104,72 +1143,38 @@ namespace CinematicDOF
 	// Pixel shader which performs the far plane blur pass.
 	void PS_BokehBlur(VSDISCBLURINFO blurInfo, out float4 fragment : SV_Target0)
 	{
-		// yay for functions... but alas, samplers have to be hardcoded.
-		bool useShape = HighlightShape > 0;
-		if(useShape)
-		{
-			switch(HighlightShape)
-			{
-				case 1:
-					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape1);
-					break;
-				case 2: 
-					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape2);
-					break;
-				case 3: 
-					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape3);
-					break;
-				case 4: 
-					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape4);
-					break;
-				case 5: 
-					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape5);
-					break;
-				case 6: 
-					fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape6);
-					break;
-			}
-		}
-		else
-		{
-			fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape1);
-		}
+#if CINEMATIC_DOF_SHAPES == 2
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape2);
+#elif CINEMATIC_DOF_SHAPES == 3
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape3);
+#elif CINEMATIC_DOF_SHAPES == 4
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape4);
+#elif CINEMATIC_DOF_SHAPES == 5
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape5);
+#elif CINEMATIC_DOF_SHAPES == 6
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape6);
+#else
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer1, SamplerCDBokehShape1);
+#endif
 	}
 
 	// Pixel shader which performs the near plane blur pass. Uses a blurred buffer of blur disc radii, based on a combination of [Jimenez2014] (tiles)
 	// and [Nilsson2012] (blurred CoC).
 	void PS_NearBokehBlur(VSDISCBLURINFO blurInfo, out float4 fragment : SV_Target0)
 	{
-		// yay for functions... but alas, samplers have to be hardcoded.
-		bool useShape = HighlightShape > 0;
-		if(useShape)
-		{
-			switch(HighlightShape)
-			{
-				case 1:
-					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
-					break;
-				case 2: 
-					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape2);
-					break;
-				case 3: 
-					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape3);
-					break;
-				case 4: 
-					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape4);
-					break;
-				case 5: 
-					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape5);
-					break;
-				case 6: 
-					fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape6);
-					break;
-			}
-		}
-		else
-		{
-			fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
-		}
+#if CINEMATIC_DOF_SHAPES == 2
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape2);
+#elif CINEMATIC_DOF_SHAPES == 3
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape3);
+#elif CINEMATIC_DOF_SHAPES == 4
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape4);
+#elif CINEMATIC_DOF_SHAPES == 5
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape5);
+#elif CINEMATIC_DOF_SHAPES == 6
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape6);
+#else
+		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
+#endif
 	}
 	
 	// Pixel shader which performs the CoC tile creation (horizontal gather of min CoC)
