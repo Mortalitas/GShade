@@ -107,7 +107,7 @@ uniform float fLUT_AmountLuma <
 #elif LUTTexture_Source == 8 // Ipsusu Gameplay LUT
 #define _SOURCE_LUT_FILE "lut_IpsusuGameplay.png"
 #define _SOURCE_LUT_SIZE 32
-#define _SOURCE_LUT_AMOUNT fLUT_TileAmount
+#define _SOURCE_LUT_AMOUNT 32
 #elif LUTTexture_Source == 9 // Potatoshade LUT
 #define _SOURCE_LUT_FILE "seilut.png"
 #define _SOURCE_LUT_SIZE 64
