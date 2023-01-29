@@ -1163,17 +1163,17 @@ namespace CinematicDOF
 	void PS_NearBokehBlur(VSDISCBLURINFO blurInfo, out float4 fragment : SV_Target0)
 	{
 #if CINEMATIC_DOF_SHAPES == 2
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape2);
+		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape2);
 #elif CINEMATIC_DOF_SHAPES == 3
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape3);
+		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape3);
 #elif CINEMATIC_DOF_SHAPES == 4
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape4);
+		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape4);
 #elif CINEMATIC_DOF_SHAPES == 5
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape5);
+		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape5);
 #elif CINEMATIC_DOF_SHAPES == 6
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape6);
+		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape6);
 #else
-		fragment = PerformDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
+		fragment = PerformNearPlaneDiscBlur(blurInfo, SamplerCDBuffer2, SamplerCDBokehShape1);
 #endif
 	}
 	
