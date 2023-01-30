@@ -1,17 +1,21 @@
-/** Perfect Perspective PS, version 5.0.5
+/** Perfect Perspective PS, version 5.0.7
 
-This code © 2018-2022 Jakub Maksymilian Fober
+This code © 2018-2023 Jakub Maksymilian Fober
 
-This work is licensed under the Creative Commons
+This work is licensed under the Creative Commons,
 Attribution-NonCommercial-NoDerivs 3.0 Unported License.
 To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc-nd/3.0/.
 
-Copyright owner further grants permission for commercial reuse of
-image recordings derived from the Work (e.g. let's play video,
-gameplay stream with ReShade filters, screenshots with ReShade
-filters) provided that any use is accompanied by the name of the
-shader used and a link to ReShade website https://reshade.me.
+§ The copyright owner further grants permission for commercial reuse
+of image recordings based on the work (e.g. Let's Play videos,
+gameplay streams, and screenshots featuring ReShade filters) provided
+that any use is accompanied by the name of the used shader and a link
+to the ReShade website https://reshade.me.
+§ This is intended to make the effect available free of charge for
+non-corporate, common use.
+§ The desired outcome is for the work to be easily recognizable in any
+derivative images.
 
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
@@ -386,7 +390,7 @@ float s_curve(float gradient)
 	return 2f*((bottom*bottom+top)-(top*top-top))-1.5;
 }
 /* G continuity distance function by Jakub Max Fober.
-   Determined empirically. (G from 0, to 3)
+   Represents derivative level continuity. (G from 0, to 3)
    G=0   Sharp corners
    G=1   Round corners
    G=2   Smooth corners
@@ -408,7 +412,7 @@ float aastep(float grad)
 	// Differential vector
 	float2 Del = float2(ddx(grad), ddy(grad));
 	// Gradient normalization to pixel size, centered at the step edge
-	return saturate(rsqrt(dot(Del, Del))*grad+0.5); // half-pixel offset
+	return saturate(mad(rsqrt(dot(Del, Del)), grad, 0.5)); // half-pixel offset
 }
 
 /* Azimuthal spherical perspective projection equations © 2022 Jakub Maksymilian Fober
@@ -434,7 +438,7 @@ float get_vignette(float theta, float k) // Get vignetting mask in linear color 
 	// Create spherical vignette |cos(max(|k|,1/2)θ)|^(k/2+3/2)
 	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // Limit FOV span, |k'| ∈ [0.5, 1] range
 	// Mix cosine-law of illumination and inverse-square law
-	return pow(abs(spherical_vignette), k*0.5+1.5);
+	return pow(abs(spherical_vignette), mad(k, 0.5, 1.5));
 }
 float2 get_phi_weights(float2 texCoord)
 {
@@ -453,9 +457,9 @@ float GetBorderMask(float2 borderCoord)
 	{
 		// Correct corner aspect ratio
 		if (BUFFER_ASPECT_RATIO>1f) // If in landscape mode
-			borderCoord.x = borderCoord.x*BUFFER_ASPECT_RATIO+(1f-BUFFER_ASPECT_RATIO);
+			borderCoord.x = mad(borderCoord.x, BUFFER_ASPECT_RATIO, 1f-BUFFER_ASPECT_RATIO);
 		else if (BUFFER_ASPECT_RATIO<1f) // If in portrait mode
-			borderCoord.y = borderCoord.y*BUFFER_RCP_ASPECT_RATIO+(1f-BUFFER_RCP_ASPECT_RATIO);
+			borderCoord.y = mad(borderCoord.y, BUFFER_RCP_ASPECT_RATIO, 1f-BUFFER_RCP_ASPECT_RATIO);
 		// Generate scaled coordinates
 		borderCoord = max(borderCoord+(BorderCorner-1f), 0f)/BorderCorner;
 
@@ -513,8 +517,7 @@ float3 GridModeViewPass(
 		rsqrt(dot(delY, delY))
 	)/GridSize; // Pixel density
 	// Set grid with
-	texCoord = GridWidth*0.5-abs(texCoord);
-	texCoord = saturate(texCoord); // Clamp values
+	texCoord = saturate(GridWidth*0.5-abs(texCoord)); // Clamp values
 
 	// Adjust grid look
 	display = lerp(
@@ -529,17 +532,18 @@ float3 GridModeViewPass(
 	// Apply calibration grid colors
 	switch (GridLook)
 	{
-		// Yellow
-		default: display  = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y)); break;
 		// Black
 		case 1:  display *= (1f-texCoord.x)*(1f-texCoord.y); break;
 		// White
 		case 2:  display  = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display); break;
 		// display red-green
 		case 3:
+		{
 			display = lerp(display, float3(1f, 0f, 0f), texCoord.y);
 			display = lerp(display, float3(0f, 1f, 0f), texCoord.x);
-		break;
+		} break;
+		// Yellow
+		default: display  = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y)); break;
 	}
 
 	return display; // Background picture with grid superimposed over it
@@ -879,8 +883,9 @@ technique PerfectPerspective
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
 #endif
 		"\n"
-		"This effect © 2018-2022 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
+		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY-NC-ND 3.0 +\n"
+		"for additional permissions see the source.";
 >
 {
 	pass PerspectiveDistortion
