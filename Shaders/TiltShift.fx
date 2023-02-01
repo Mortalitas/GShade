@@ -1,26 +1,20 @@
-/** Tilt-Shift PS, version 2.0.1
+/** Tilt-Shift PS, version 2.0.2
 
-This code © 2022 Jakub Maksymilian Fober
+This code © 2018-2023 Jakub Maksymilian Fober
 
-This work is licensed under the Creative Commons
-Attribution-NonCommercial-NoDerivs 3.0 Unported License.
+This work is licensed under the Creative Commons,
+Attribution 3.0 Unported License.
 To view a copy of this license, visit
-http://creativecommons.org/licenses/by-nc-nd/3.0/.
-
-Copyright owner further grants permission for commercial reuse of
-image recordings derived from the Work (e.g. let's play video,
-gameplay stream with ReShade filters, screenshots with ReShade
-filters) provided that any use is accompanied by the name of the
-shader used and a link to ReShade website https://reshade.me.
-
-If you need additional licensing for your commercial product, contact
-me at jakub.m.fober@protonmail.com.
+http://creativecommons.org/licenses/by/3.0/.
 */
 
 	/* MACROS */
 
-// Maximum number of samples for chromatic aberration
-#define TILT_SHIFT_MAX_SAMPLES 128u
+// Maximum number of samples for blur
+#ifndef TILT_SHIFT_MAX_SAMPLES
+	#define TILT_SHIFT_MAX_SAMPLES 128u
+#endif
+// ITU REC 601 YCbCr
 #define ITU_REC 601
 
 	/* COMMONS */
@@ -90,17 +84,12 @@ sampler BackBuffer
 
 	/* FUNCTIONS */
 
-/* S curve by JMF
+/* Exponential bell weight falloff.
    Generates smooth bell falloff for blur.
-   Preserves brightness.
    Input is in [0, 1] range. */
-float bell_curve(float gradient)
-{
-	gradient = 1f-abs(gradient*2f-1f);
-	float top = max(gradient, 0.5);
-	float bottom = min(gradient, 0.5);
-	return 4f*((bottom*bottom+top)-(top*top-top))-3f;
-}
+float bellWeight(float2 position)
+{ return exp(-dot(position, position)*5f); }
+
 // Get coordinates rotation matrix
 float2x2 get2dRotationMatrix(int angle)
 {
@@ -179,22 +168,23 @@ void TiltShiftPassHorizontalPS(
 		);
 		// Map blur horizontal radius to texture coordinates
 		blurRadius *= BUFFER_HEIGHT*BUFFER_RCP_WIDTH; // Divide by aspect ratio
-		float rcpWeightStep = rcp(blurPixelCount*2u);
+		float rcpWeightStep = rcp(blurPixelCount);
 		float rcpOffsetStep = rcp(blurPixelCount*2u-1u);
-		color = 0f; // Initialize
+		color = 0f; float cumulativeWeight = 0f; // Initialize
 		for (uint i=1u; i<blurPixelCount*2u; i+=2u)
 		{
 			// Get step weight
-			float weight = bell_curve(i*rcpWeightStep);
+			float weight = bellWeight(mad(i, rcpWeightStep, -1f));
 			// Get step offset
 			float offset = (i-1u)*rcpOffsetStep-0.5;
 			color += tex2Dlod(
 				BackBuffer,
 				float4(blurRadius*offset+texCoord.x, texCoord.y, 0f, 0f) // Offset coordinates
 			).rgb*weight;
+			cumulativeWeight += weight;
 		}
 		// Restore brightness
-		color /= blurPixelCount;
+		color /= cumulativeWeight;
 	}
 	// Bypass blur
 	else color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
@@ -226,22 +216,23 @@ void TiltShiftPassVerticalPS(
 			blurPixelCount+blurPixelCount%2u, // Convert to even
 			TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
 		);
-		float rcpWeightStep = rcp(blurPixelCount*2u);
+		float rcpWeightStep = rcp(blurPixelCount);
 		float rcpOffsetStep = rcp(blurPixelCount*2u-1u);
-		color = 0f; // Initialize
+		color = 0f; float cumulativeWeight = 0f; // Initialize
 		for (uint i=1u; i<blurPixelCount*2u; i+=2u)
 		{
 			// Get step weight
-			float weight = bell_curve(i*rcpWeightStep);
+			float weight = bellWeight(mad(i, rcpWeightStep, -1f));
 			// Get step offset
 			float offset = (i-1u)*rcpOffsetStep-0.5;
 			color += tex2Dlod(
 				BackBuffer,
 				float4(texCoord.x, blurRadius*offset+texCoord.y, 0f, 0f) // Offset coordinates
 			).rgb*weight;
+			cumulativeWeight += weight;
 		}
 		// Restore brightness
-		color /= blurPixelCount;
+		color /= cumulativeWeight;
 	}
 	// Bypass blur
 	else color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
@@ -298,8 +289,8 @@ technique TiltShift
 		"	· dynamic per-pixel sampling.\n"
 		"	· minimal sample count.\n"
 		"\n"
-		"This effect © 2018-2022 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
+		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY 3.0 (see source).";
 >
 {
 	pass GaussianBlurHorizontal
