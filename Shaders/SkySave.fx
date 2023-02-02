@@ -45,18 +45,21 @@ void PS_SkySave(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4
 	}
 	else
 	{
-		color = 2.0;
+		color = float4(0.0, 0.0, 0.0, 2.0);
 	}
 }
 
 void PS_SkyRestore(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
     const float4 keep = tex2D(SkySave_Sampler, texcoord);
-	color = tex2D(ReShade::BackBuffer, texcoord);
-	
-	if (keep.r != 2.0 && keep.g != 2.0 && keep.b != 2.0 && keep.a != 2.0)
+
+	if (keep.a != 2.0)
 	{
 		color = keep;
+	}
+	else
+	{
+		color = tex2D(ReShade::BackBuffer, texcoord);
 	}
 }
 
