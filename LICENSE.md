@@ -1,4 +1,4 @@
-**Permission has been granted for distribution rights to several shaders and textures by the authors, whose licenses or copyrights otherwise do not allow for redistribution, rehosting, or automated downloading. Please contact the creators directly for permission if you are interested in doing so:**
+**Permission has been granted to the GShade project for distribution rights to several shaders and textures by the authors, whose licenses or copyrights otherwise do not allow for redistribution, rehosting, or automated downloading. Please contact the creators directly for permission if you are interested in doing so:**
 
 * Feli (twitter.com/ffxivfeli)
   * lut_Feli.png
