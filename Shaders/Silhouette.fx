@@ -154,9 +154,9 @@ uniform int SBackground_Tex_Select <
 #elif SilhouetteTexture2_Source == 3 // Ice1.jpg
 #define _SOURCE_SILHOUETTE_FILE2 "Ice1.jpg"
 #elif SilhouetteTexture2_Source == 4 // Silhouette1.png
-#define _SOURCE_SILHOUETTE_FILE2 "Silhouette1.png"
+#define _SOURCE_SILHOUETTE_FILE2 "LayerStage.png"
 #elif SilhouetteTexture2_Source == 5 // Silhouette2.png
-#define _SOURCE_SILHOUETTE_FILE2 "Silhouette2.png"
+#define _SOURCE_SILHOUETTE_FILE2 "LayerStage.png"
 #endif
 
 texture Silhouette_Back_Texture { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = SILHOUETTE_TEXFORMAT; };
