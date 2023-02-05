@@ -1,7 +1,28 @@
 **Permission has been granted to the GShade project for distribution rights to several shaders and textures by the authors, whose licenses or copyrights otherwise do not allow for redistribution, rehosting, or automated downloading. Please contact the creators directly for permission if you are interested in doing so:**
 
+* Fairy (instagram.com/fairyqueen.xiv)
+  * FairyArdenvaldGlow.png
+  * FairyDandelion.png
+  * FairyHearts.jpg
+  * FairyNarcoticFog.png
+  * FairyPersephone01.png
+  * FairyPersephone02.png
+  * FairyRain.png
+  * FairyRavenqueenFog.png
+  * FairyThisIsHalloween.png
+  * FairyVampirequeen_Bats.jpg
+  * FairyVampirequeenFog.jpg
+  * FairyWitchesBrew.png
+
 * Feli (twitter.com/ffxivfeli)
   * lut_Feli.png
+
+* Johnni Maestro (twitter.com/Johnnicles)
+  * PopArt.png
+  * Vaporwave.jpg
+
+* Johto (twitter.com/JohtoXIV)
+  * MultiLut_Johto.png
 
 * LordCobra (github.com/LordKobra):
   * Cobra_Mask.fx
@@ -25,12 +46,20 @@
 * Mori (twitter.com/moripudding)
   * lut_GShade.png
   * LayerA.png
+  * MultiLut_GShade.png
 
 * Neneko (twitter.com/Xelyanne)
   * MultiLut_Neneko.png
   * NenBW.png
   * NenPaper1.png
   * NenPaper2.png
+
+* Nightingale Silence (twitter.com/franandneo)
+  * MultiLut_Nightingale.png
+
+* ninjafada (sfx.thelazy.net/users/u/ninjafada)
+  * lut_ninjafadaGameplay.png
+  * MultiLut_ninjafadaGameplay.png
 
 * Talim (twitter.com/Talim_ffxiv)
   * TalimAladdin.png
@@ -56,7 +85,12 @@
   * MShadersMacros.fxh
   * VHSM.fx
 
+* Yae (twitter.com/lapismenangis)
+  * MultiLut_yaes.png
+
 * Yomigami Okami (twitter.com/Yomigammy)
+  * Fire1.png
+  * Fire2.png
   * Ice1.jpg
   * Lightrays1.png
   * Metal1.jpg
