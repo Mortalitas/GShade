@@ -34,6 +34,7 @@
 
 * MartyMcFly/Pascal Glitcher (github.com/martymcmodding):
   * MShadersLUTAtlas.fxh
+  * Posterize.fx
   * qUINT_bloom.fx
   * qUINT_common.fxh
   * qUINT_deband.fx
@@ -42,6 +43,7 @@
   * qUINT_mxao.fx
   * qUINT_sharp.fx
   * qUINT_ssr.fx
+  * Retro_Neon.fx
 
 * Mori (twitter.com/moripudding)
   * lut_GShade.png
