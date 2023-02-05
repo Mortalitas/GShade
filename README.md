@@ -3,7 +3,11 @@
 
 Note that all shaders in this repository are strictly intended for use with the latest GShade release. Not all shaders will work under normal ReShade builds due to the implementation of GShade's additional features. Please refer to the [license](https://github.com/Mortalitas/GShade/blob/master/LICENSE.md) on the repository **and** individual file licenses for questions about distribution and modification.
 
-**The latest release can always be found here, and use of the installer is highly recommended:** https://github.com/Mortalitas/GShade/releases/latest
+**The latest release can always be found here, and on Windows the use of the installer is required:** https://github.com/Mortalitas/GShade/releases/latest
+
+The official **GShade Linux Installation Script** for GShade can be found here: https://github.com/HereInPlainSight/gshade_installer
+
+If you are installing GShade to **Final Fantasy XIV** on **Mac**, the XIV on Mac development team also offers an installer: https://www.xivmac.com
 
 To learn more about how GShade compares to ReShade itself and other forks, [click here](https://gposers.com/gshade/gshade-faq/#comparison).
 
@@ -62,7 +66,5 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 A comprehensive **FAQ** which includes tutorials for GShade can be found here: https://gposers.com/gshade/gshade-faq
 
 For preset creators looking to distribute their work independently, an **easily customizable preset installer** written in C# can be found here: https://github.com/Mortalitas/GShade-Preset-Installer
-
-A **Linux Installation Bash Script** for GShade can be found here: https://github.com/HereInPlainSight/gshade_installer
 
 For troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/gposers
