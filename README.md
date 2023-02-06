@@ -45,7 +45,7 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
   * Français
   * Italiano
   * 中文
-* [Presets created by our community!](https://github.com/Mortalitas/GShade-Presets)
+* Presets created by our community!
 * Control Panel which includes:
   * One-click Updates
   * Individual Installation Management
@@ -66,5 +66,3 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 A comprehensive **FAQ** which includes tutorials for GShade can be found here: https://gposers.com/gshade/gshade-faq
 
 For preset creators looking to distribute their work independently, an **easily customizable preset installer** written in C# can be found here: https://github.com/Mortalitas/GShade-Preset-Installer
-
-For troubleshooting, additional downloads, news, updates, and discussion, join us on Discord! https://discord.gg/gposers
