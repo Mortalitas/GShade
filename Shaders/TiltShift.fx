@@ -1,4 +1,4 @@
-/** Tilt-Shift PS, version 2.0.2
+/** Tilt-Shift PS, version 2.0.3
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -84,11 +84,21 @@ sampler BackBuffer
 
 	/* FUNCTIONS */
 
-/* Exponential bell weight falloff.
-   Generates smooth bell falloff for blur.
-   Input is in [0, 1] range. */
-float bellWeight(float2 position)
-{ return exp(-dot(position, position)*5f); }
+/* Exponential bell weight falloff by JMF
+   Generates smooth bell falloff for blur, with perfect weights
+   distribution for a given number of samples.
+   Input: position ∈ [-1, 1] */
+float bellWeight(float position)
+{
+	// Get deviation for minimum value for a given step size
+#if BUFFER_COLOR_BIT_DEPTH == 10
+	const float deviation = log(rcp(1024u)); // Logarithm of base e
+#else
+	const float deviation = log(rcp(256u)); // Logarithm of base e
+#endif
+	// Get smooth bell falloff without aliasing or zero value at the last sample
+	return exp(position*position*deviation); // Gaussian bell falloff
+}
 
 // Get coordinates rotation matrix
 float2x2 get2dRotationMatrix(int angle)
@@ -164,7 +174,7 @@ void TiltShiftPassHorizontalPS(
 		// Convert to even number and clamp to maximum sample count
 		blurPixelCount = min(
 			blurPixelCount+blurPixelCount%2u, // Convert to even
-			TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
+			abs(TILT_SHIFT_MAX_SAMPLES)-abs(TILT_SHIFT_MAX_SAMPLES)%2u // Convert to even
 		);
 		// Map blur horizontal radius to texture coordinates
 		blurRadius *= BUFFER_HEIGHT*BUFFER_RCP_WIDTH; // Divide by aspect ratio
@@ -214,7 +224,7 @@ void TiltShiftPassVerticalPS(
 		// Convert to even number and clamp to maximum sample count
 		blurPixelCount = min(
 			blurPixelCount+blurPixelCount%2u, // Convert to even
-			TILT_SHIFT_MAX_SAMPLES-TILT_SHIFT_MAX_SAMPLES%2u // Convert to even
+			abs(TILT_SHIFT_MAX_SAMPLES)-abs(TILT_SHIFT_MAX_SAMPLES)%2u // Convert to even
 		);
 		float rcpWeightStep = rcp(blurPixelCount);
 		float rcpOffsetStep = rcp(blurPixelCount*2u-1u);
