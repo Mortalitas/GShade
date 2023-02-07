@@ -1,20 +1,35 @@
-/** Lens Distortion PS, version 1.3.3
+/** Lens Distortion PS, version 1.3.6
 
 This code © 2022 Jakub Maksymilian Fober
 
-This work is licensed under the Creative Commons
+This work is licensed under the Creative Commons,
 Attribution-NonCommercial-NoDerivs 3.0 Unported License.
 To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc-nd/3.0/.
 
-Copyright owner further grants permission for commercial reuse of
-image recordings derived from the Work (e.g. let's play video,
-gameplay stream with ReShade filters, screenshots with ReShade
-filters) provided that any use is accompanied by the name of the
-shader used and a link to ReShade website https://reshade.me.
+§ The copyright owner further grants permission for commercial reuse
+of image recordings based on the work (e.g. Let's Play videos,
+gameplay streams, and screenshots featuring ReShade filters) provided
+that any use is accompanied by the name of the used shader and a link
+to the ReShade website https://reshade.me.
+§ This is intended to make the effect available free of charge for
+non-corporate, common use.
+§ The desired outcome is for the work to be easily recognizable in any
+derivative images.
 
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
+
+██████████▀▀▀▀▀      ▄▄▄▄▄▄▄      ▀▀▀▀▀███████████
+██▀▀▀           █████▀▀▀▀▀▀▀█████            ▀▀▀██
+▀               ███           ███                ▀
+                ██             ██
+                ██             ██
+                ██             ██
+▄               ███           ███                ▄
+██▄▄▄           █████▄▄▄▄▄▄▄█████            ▄▄▄██
+██████████▄▄▄▄▄      ▀▀▀▀▀▀▀      ▄▄▄▄▄███████████
+  P   A   N   T   O   M   O   R   P   H   I   C
 
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
@@ -619,22 +634,23 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 		);
 		switch (GridLook)
 		{
-			default:
-			// Yellow
-				color = lerp(float3(1f, 1f, 0f), color, (1f-viewCoord.x)*(1f-viewCoord.y));
-				break;
-			case 1:
 			// Black
+			case 1:
 				color *= (1f-viewCoord.x)*(1f-viewCoord.y);
 				break;
-			case 2:
 			// White
+			case 2:
 				color = 1f-(1f-viewCoord.x)*(1f-viewCoord.y)*(1f-color);
 				break;
-			case 3:
 			// Color red-green
+			case 3:
+			{
 				color = lerp(color, float3(1f, 0f, 0f), viewCoord.y);
 				color = lerp(color, float3(0f, 1f, 0f), viewCoord.x);
+			}  break;
+			// Yellow
+			default:
+				color = lerp(float3(1f, 1f, 0f), color, (1f-viewCoord.x)*(1f-viewCoord.y));
 				break;
 		}
 	}
