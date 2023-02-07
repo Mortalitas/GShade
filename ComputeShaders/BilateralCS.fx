@@ -21,13 +21,6 @@ BilateralCS
 	#define POOLED false
 #endif
 
-#if __RESHADE__ < 50000 && __RENDERER__ == 0xc000
-	//#error
-#endif
-#if !(((__RENDERER__ >= 0xb000 && __RENDERER__ < 0x10000) || (__RENDERER__ >= 0x14300)) && __RESHADE__ >=40800)
-	#error
-#endif
-
 #if __RENDERER__ < 0xb000
 	#warning "DX9 and DX10 APIs are unsupported by compute"
 	#undef COMPUTE
