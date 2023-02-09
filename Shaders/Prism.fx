@@ -1,17 +1,21 @@
-/** Chromatic Aberration (Prism) PS, version 2.0.0
+/** Chromatic Aberration (Prism) PS, version 2.1.1
 
-This code © 2018-2022 Jakub Maksymilian Fober
+This code © 2018-2023 Jakub Maksymilian Fober
 
-This work is licensed under the Creative Commons
+This work is licensed under the Creative Commons,
 Attribution-NonCommercial-NoDerivs 3.0 Unported License.
 To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc-nd/3.0/.
 
-Copyright owner further grants permission for commercial reuse of
-image recordings derived from the Work (e.g. let's play video,
-gameplay stream with ReShade filters, screenshots with ReShade
-filters) provided that any use is accompanied by the name of the
-shader used and a link to ReShade website https://reshade.me.
+§ The copyright owner further grants permission for commercial reuse
+of image recordings based on the work (e.g. Let's Play videos,
+gameplay streams, and screenshots featuring ReShade filters) provided
+that any use is accompanied by the name of the used shader and a link
+to the ReShade website https://reshade.me.
+§ This is intended to make the effect available free of charge for
+non-corporate, common use.
+§ The desired outcome is for the work to be easily recognizable in any
+derivative images.
 
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
@@ -48,7 +52,7 @@ uniform float4 K <
 uniform uint ChromaticSamplesLimit <
 	ui_type = "slider";
 	ui_min = 6u; ui_max = CHROMATIC_ABERRATION_MAX_SAMPLES; ui_step = 2u;
-	ui_label = "Chromatic aberration samples limit";
+	ui_label = "Samples limit";
 	ui_tooltip =
 		"Sample count is generated automatically per pixel, based on visible distortion amount.\n"
 		"This option limits maximum sample (steps) count allowed for color fringing.\n"
@@ -131,27 +135,29 @@ void ChromaticAberrationPS(float4 pixelPos : SV_Position, float2 viewCoord : TEX
 	// Sample background with multiple color filters at multiple offsets
 	color = 0f; // initialize color
 	for (uint i=0u; i<evenSampleCount; i++)
+	{
+		float progress = i/float(evenSampleCount-1u)-0.5;
+		progress = lerp(progress, 0.5-abs(progress), AchromatAmount);
+		color +=
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-		color += to_linear_gamma_hq(tex2Dlod(
-#else
-		color += tex2Dlod(
+			to_linear_gamma(
 #endif
-			BackBuffer, // Image source
-			float4(
-				(i/float(evenSampleCount-1u)-0.5) // Aberration offset
-				*distortion // Distortion coordinates
-				+viewCoord, // Original coordinates
-			0f, 0f)
+				tex2Dlod(
+					BackBuffer, // Image source
+					float4(
+						progress // Aberration offset
+						*distortion // Distortion coordinates
+						+viewCoord, // Original coordinates
+					0f, 0f)).rgb
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-		).rgb)
-#else
-		).rgb
+			)
 #endif
-		*Spectrum(i/float(evenSampleCount)); // Blur layer color
+			*Spectrum(i/float(evenSampleCount)); // Blur layer color
+	}
 	// Preserve brightness
 	color *= 2f/evenSampleCount;
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-	color = to_display_gamma_hq(color);
+	color = to_display_gamma(color);
 #endif
 	color = BlueNoise::dither(uint2(pixelPos.xy), color); // Dither
 }
@@ -168,9 +174,9 @@ technique ChromaticAberration
 		"	· Accurate color split.\n"
 		"	· Driven by lens distortion Brown-Conrady division model.\n"
 		"\n"
-		"\n"
-		"This effect © 2018-2022 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
+		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY-NC-ND 3.0 +\n"
+		"for additional permissions see the source.";
 >
 {
 	pass ChromaticColorSplit

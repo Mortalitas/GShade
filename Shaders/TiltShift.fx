@@ -1,4 +1,4 @@
-/** Tilt-Shift PS, version 2.0.3
+/** Tilt-Shift PS, version 2.0.5
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -119,7 +119,7 @@ float getBlurRadius(float2 viewCoord)
 	// Get rotation axis matrix
 	const float2x2 rotationMtx = get2dRotationMatrix(BlurAngle);
 	// Get offset vector
-	float2 offsetDir = mul(rotationMtx, float2(0f, BlurOffset)); // Get rotated offset
+	static float2 offsetDir = mul(rotationMtx, float2(0f, BlurOffset)); // Get rotated offset
 	offsetDir.x *= -BUFFER_ASPECT_RATIO; // Scale offset to horizontal bounds
 	// Offset and rotate coordinates
 	viewCoord = mul(rotationMtx, viewCoord+offsetDir);
@@ -201,7 +201,7 @@ void TiltShiftPassHorizontalPS(
 	color = saturate(color); // Clamp values
 
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // Manual gamma
-	color = to_display_gamma_hq(color);
+	color = to_display_gamma(color);
 #endif
 	// Dither output to increase perceivable picture bit-depth
 	color = BlueNoise::dither(uint2(pixCoord.xy), color);
@@ -244,9 +244,11 @@ void TiltShiftPassVerticalPS(
 		// Restore brightness
 		color /= cumulativeWeight;
 	}
-	// Bypass blur
-	else color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
-	color = saturate(color); // Clamp values
+	else // Bypass blur
+		color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
+
+	// Clamp values
+	color = saturate(color);
 
 	// Draw tilt-shift line
 	if (VisibleLine)
@@ -273,7 +275,7 @@ void TiltShiftPassVerticalPS(
 		color = lerp(
 			color,
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // manual gamma
-			to_linear_gamma_hq(lineColor),
+			to_linear_gamma(lineColor),
 #else
 			lineColor,
 #endif
@@ -282,7 +284,7 @@ void TiltShiftPassVerticalPS(
 	}
 
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // Manual gamma
-	color = to_display_gamma_hq(color);
+	color = to_display_gamma(color);
 #endif
 	// Dither output to increase perceivable picture bit-depth
 	color = BlueNoise::dither(uint2(pixCoord.xy), color);

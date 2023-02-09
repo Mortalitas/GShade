@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.0.8
+/** Perfect Perspective PS, version 5.0.9
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -477,7 +477,7 @@ float3 GridModeViewPass(
 {
 	// Sample background without distortion
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-	display = to_linear_gamma_hq(tex2Dfetch(BackBuffer, pixelCoord).rgb);
+	display = to_linear_gamma(tex2Dfetch(BackBuffer, pixelCoord).rgb);
 #else
 	display = tex2Dfetch(BackBuffer, pixelCoord).rgb;
 #endif
@@ -521,7 +521,7 @@ float3 GridModeViewPass(
 	// Adjust grid look
 	display = lerp(
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-		to_linear_gamma_hq(16f/255f), // Safe bottom-color in linear range
+		to_linear_gamma(16f/255f), // Safe bottom-color in linear range
 #else
 		16f/255f, // Safe bottom-color range
 #endif
@@ -579,7 +579,7 @@ float3 SamplingScaleModeViewPass(
 
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-	display = to_display_gamma_hq(display);
+	display = to_display_gamma(display);
 #endif
 	// Get luma channel mapped to save range
 	display.x = lerp(
@@ -596,7 +596,7 @@ float3 SamplingScaleModeViewPass(
 	// Adjust background look
 	display = lerp(
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-		to_linear_gamma_hq(display.x), // Background
+		to_linear_gamma(display.x), // Background
 #else
 		display.x, // Background
 #endif
@@ -625,13 +625,13 @@ float3 PerfectPerspectivePS(
 				default: display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display); break;
 				// Pixel scale-map
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-				case 1u: display = SamplingScaleModeViewPass(texCoord, to_linear_gamma_hq(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb)); break;
+				case 1u: display = SamplingScaleModeViewPass(texCoord, to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb)); break;
 #else
 				case 1u: display = SamplingScaleModeViewPass(texCoord, tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb); break;
 #endif
 			}
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			display = to_display_gamma_hq(display); // Manually correct gamma
+			display = to_display_gamma(display); // Manually correct gamma
 #endif
 			return BlueNoise::dither(uint2(pixelPos.xy), display); // Dither final 8/10-bit result
 		}
@@ -781,7 +781,7 @@ float3 PerfectPerspectivePS(
 		tex2D(BackBuffer, texCoord).rgb : // Perspective projection lookup
 		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // No perspective change
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-	display = to_linear_gamma_hq(display);
+	display = to_linear_gamma(display);
 #endif
 
 	// Display calibration view
@@ -803,13 +803,13 @@ float3 PerfectPerspectivePS(
 		float3 border = lerp(
 			// Border background
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-			MirrorBorder? display : to_linear_gamma_hq(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
+			MirrorBorder? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
 #else
 			MirrorBorder? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
 #endif
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			to_linear_gamma_hq(BorderColor.rgb), // Border color
-			to_linear_gamma_hq(BorderColor.a)    // Border alpha
+			to_linear_gamma(BorderColor.rgb), // Border color
+			to_linear_gamma(BorderColor.a)    // Border alpha
 #else
 			BorderColor.rgb, // Border color
 			BorderColor.a    // Border alpha
@@ -826,7 +826,7 @@ float3 PerfectPerspectivePS(
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	// Manually correct gamma
-	display = to_display_gamma_hq(display);
+	display = to_display_gamma(display);
 #endif
 	// Dither final 8/10-bit result
 	return BlueNoise::dither(uint2(pixelPos.xy), display);

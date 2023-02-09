@@ -1,6 +1,6 @@
-/** Color conversion matrix and blue noise dither library, version 1.3.2
+/** Color conversion matrix and blue noise dither library, version 1.4.0
 
-This code © 2022 Jakub Maksymilian Fober
+This code © 2022-2023 Jakub Maksymilian Fober
 
 This work is licensed under the Creative Commons
 Attribution 3.0 Unported License.
@@ -17,6 +17,16 @@ http://creativecommons.org/licenses/by/3.0/.
 	#define QUANTIZATION_LEVEL 255
 #else // 10-bit quantization
 	#define QUANTIZATION_LEVEL 1023
+#endif
+
+// Gamma presets
+#define sRGB 1
+#define Rec709 2
+#define Rec601 2
+#define Rec2020 2
+// Choose gamma setting
+#ifndef DISPLAY_GAMMA
+	#define DISPLAY_GAMMA sRGB
 #endif
 
 	/* CONSTANTS */
@@ -75,34 +85,28 @@ http://creativecommons.org/licenses/by/3.0/.
 
 	/* FUNCTIONS */
 
-// Convert display gamma for all vector types (approximate)
-#define TO_DISPLAY_GAMMA(g) pow(abs(g), rcp(2.2))
-#define TO_LINEAR_GAMMA(g) pow(abs(g), 2.2)
-// Function version linear ↦ sRGB (simplified)
+// Convert display gamma for all vector types
+#if DISPLAY_GAMMA == 1 // Transform from and to sRGB gamma
+	// Sourced from International Color Consortium, at https://color.org/chardata/rgb/srgb.xalter
+	#define TO_DISPLAY_GAMMA(g) ((g)<=0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
+	#define TO_LINEAR_GAMMA(g) ((g)<=0.04049936? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
+#elif DISPLAY_GAMMA == 2 // Transform from and to Rec 601, 709 and 2020 gamma
+	#define TO_DISPLAY_GAMMA(g) ((g)<0.018? (g)*4.5 : pow(abs(g), 0.45)*1.099-0.099)
+	#define TO_LINEAR_GAMMA(g) ((g)<0.081? (g)/4.5 : pow((abs(g)+0.099)/1.099, rcp(0.45)))
+#else // Transform from and to custom gamma value
+	#define TO_DISPLAY_GAMMA(g) pow(abs(g), rcp(DISPLAY_GAMMA*0.1))
+	#define TO_LINEAR_GAMMA(g) pow(abs(g), DISPLAY_GAMMA*0.1)
+#endif
+// Gamma transform function: linear ↦ gammaRGB
 float  to_display_gamma(float  g) { return TO_DISPLAY_GAMMA(g); }
 float2 to_display_gamma(float2 g) { return TO_DISPLAY_GAMMA(g); }
 float3 to_display_gamma(float3 g) { return TO_DISPLAY_GAMMA(g); }
 float4 to_display_gamma(float4 g) { return TO_DISPLAY_GAMMA(g); }
-// Function version sRGB ↦ linear (simplified)
+// Gamma transform function: gammaRGB ↦ linear
 float  to_linear_gamma(float  g) { return TO_LINEAR_GAMMA(g); }
 float2 to_linear_gamma(float2 g) { return TO_LINEAR_GAMMA(g); }
 float3 to_linear_gamma(float3 g) { return TO_LINEAR_GAMMA(g); }
 float4 to_linear_gamma(float4 g) { return TO_LINEAR_GAMMA(g); }
-/* Convert display gamma for all vector types (sRGB)
-   Sourced from International Color Consortium, at:
-   https://color.org/chardata/rgb/srgb.xalter */
-#define TO_DISPLAY_GAMMA_HQ(g) ((g)<=0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
-#define TO_LINEAR_GAMMA_HQ(g) ((g)<=0.04049936? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
-// Function version linear ↦ sRGB
-float  to_display_gamma_hq(float  g) { return TO_DISPLAY_GAMMA_HQ(g); }
-float2 to_display_gamma_hq(float2 g) { return TO_DISPLAY_GAMMA_HQ(g); }
-float3 to_display_gamma_hq(float3 g) { return TO_DISPLAY_GAMMA_HQ(g); }
-float4 to_display_gamma_hq(float4 g) { return TO_DISPLAY_GAMMA_HQ(g); }
-// Function version sRGB ↦ linear
-float  to_linear_gamma_hq(float  g) { return TO_LINEAR_GAMMA_HQ(g); }
-float2 to_linear_gamma_hq(float2 g) { return TO_LINEAR_GAMMA_HQ(g); }
-float3 to_linear_gamma_hq(float3 g) { return TO_LINEAR_GAMMA_HQ(g); }
-float4 to_linear_gamma_hq(float4 g) { return TO_LINEAR_GAMMA_HQ(g); }
 
 // Dither
 namespace BlueNoise
@@ -154,8 +158,7 @@ namespace BlueNoise
 		// Get threshold for noise amount
 		float3 slope = frac(color);
 		// Dither quantization
-		[unroll]
-		for (uint i=0u; i<3u; i++)
+		[unroll] for (uint i=0u; i<3u; i++)
 			color[i] = slope[i] >= noise[i]? ceil(color[i]) : floor(color[i]);
 		// Normalize
 		return color/QUANTIZATION_LEVEL;
@@ -169,8 +172,7 @@ namespace BlueNoise
 		// Get threshold for noise amount
 		float4 slope = frac(color);
 		// Dither quantization
-		[unroll]
-		for (uint i=0u; i<4u; i++)
+		[unroll] for (uint i=0u; i<4u; i++)
 			color[i] = slope[i] >= noise[i]? ceil(color[i]) : floor(color[i]);
 		// Normalize
 		return color/QUANTIZATION_LEVEL;
