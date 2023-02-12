@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.1.0
+/** Perfect Perspective PS, version 5.1.1
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -494,10 +494,10 @@ float3 GridModeViewPass(
 	if (GridTilt!=0f) // tilt view coordinates
 	{
 		// Convert angle to radians
-		float tiltRad = radians(GridTilt);
+		const float tiltRad = radians(GridTilt);
 		// Get rotation matrix components
-		float tiltSin = sin(tiltRad);
-		float tiltCos = cos(tiltRad);
+		const float tiltSin = sin(tiltRad);
+		const float tiltCos = cos(tiltRad);
 		// Rotate coordinates
 		texCoord = mul(
 			// Get rotation matrix
@@ -525,30 +525,37 @@ float3 GridModeViewPass(
 	texCoord = saturate(GridWidth*0.5-abs(texCoord)); // Clamp values
 
 	// Adjust grid look
-	display = lerp(
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-		to_linear_gamma(16f/255f), // Safe bottom-color in linear range
-#else
-		16f/255f, // Safe bottom-color range
-#endif
-		display, // Background
-		DimDebugBackground // Dimming amount
-	);
+	{
+		static float safeBottomColor =
+	#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+			to_linear_gamma(16f/255f); // Safe bottom-color in linear range
+	#else
+			16f/255f; // Safe bottom-color range
+	#endif
+		safeBottomColor *= 1f-DimDebugBackground;
+		display = mad(
+			display, // Background
+			DimDebugBackground, // Dimming amount
+			safeBottomColor
+		);
+	}
 	// Apply calibration grid colors
 	switch (GridLook)
 	{
-		// Black
-		case 1:  display *= (1f-texCoord.x)*(1f-texCoord.y); break;
-		// White
-		case 2:  display  = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display); break;
-		// display red-green
-		case 3:
+		case 1: // Black
+			display *= (1f-texCoord.x)*(1f-texCoord.y);
+			break;
+		case 2: // White
+			display = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display);
+			break;
+		case 3: // display red-green
 		{
 			display = lerp(display, float3(1f, 0f, 0f), texCoord.y);
 			display = lerp(display, float3(0f, 1f, 0f), texCoord.x);
 		} break;
-		// Yellow
-		default: display  = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y)); break;
+		default: // Yellow
+			display = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y));
+			break;
 	}
 
 	return display; // Background picture with grid superimposed over it
@@ -571,31 +578,32 @@ float3 SamplingScaleModeViewPass(
 		length(float2(ddx(texCoord.y), ddy(texCoord.y)))
 	);
 	// Get pixel area
-	float pixelScale = texCoord.x*texCoord.y;
+	float pixelScale = texCoord.x*texCoord.y*2f;
 	// Get pixel area in false-color
 	float3 pixelScaleMap = lerp(
 		lerp(
 			underSample,
 			neutralSample,
-			s_curve(saturate(pixelScale*2f-1f)) // ↤ [0, 1] area range
+			s_curve(saturate(pixelScale-1f)) // ↤ [0, 1] area range
 		),
 		superSample,
-		s_curve(saturate(pixelScale*2f-2f)) // ↤ [1, 2] area range
+		s_curve(saturate(pixelScale-2f)) // ↤ [1, 2] area range
 	);
 
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 	display = to_display_gamma(display);
 #endif
+	const float safeRange[2] = {16f/255f, 235f/255f};
 	// Get luma channel mapped to save range
 	display.x = lerp(
-		 16f/255f, // Safe range bottom
-		235f/255f, // Safe range top
+		safeRange[0], // Safe range bottom
+		safeRange[1], // Safe range top
 		dot(LumaMtx, display)
 	);
 	// Adjust background look
 	display = lerp(
-		16f/255f, // Safe bottom-color range
+		safeRange[0], // Safe bottom-color range
 		display, // Background
 		DimDebugBackground // Dimming amount
 	);
@@ -625,18 +633,24 @@ float3 PerfectPerspectivePS(
 #else // consider only global k
 	if (FovAngle==0u || (K==1f && !UseVignette))
 #endif
+	{
 		if (DebugModePreview)
 		{
-			float3 display; switch (DebugMode) // Choose output type
+			float3 display;
+			switch (DebugMode) // Choose output type
 			{
-				// Calibration grid
-				default: display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display); break;
-				// Pixel scale-map
+				case 1u: // Pixel scale-map
+					display = SamplingScaleModeViewPass(
+						texCoord,
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
-				case 1u: display = SamplingScaleModeViewPass(texCoord, to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb)); break;
+						to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb)
 #else
-				case 1u: display = SamplingScaleModeViewPass(texCoord, tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb); break;
+						tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb
 #endif
+					); break;
+				default: // Calibration grid
+					display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
+					break;
 			}
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
 			display = to_display_gamma(display); // Manually correct gamma
@@ -645,6 +659,7 @@ float3 PerfectPerspectivePS(
 		}
 		else // bypass all effects
 			return tex2D(ReShade::BackBuffer, texCoord).rgb;
+	}
 
 #if SIDE_BY_SIDE_3D // Side-by-side 3D content
 	float SBS3D = texCoord.x*2f;
@@ -663,13 +678,24 @@ float3 PerfectPerspectivePS(
 	texCoord *= viewProportions;
 
 	// Get radius at Omega for a given FOV type
-	static float radiusAtOmega; switch (FovType)
+	static float radiusAtOmega;
+	switch (FovType)
 	{
-		default: radiusAtOmega = viewProportions.x; break; // Horizontal
-		case 1u: radiusAtOmega = 1f; break; // Diagonal
-		case 2u: radiusAtOmega = viewProportions.y; break; // Vertical
-		case 3u: radiusAtOmega = viewProportions.y*4f/3f; break; // 4x3
-		case 4u: radiusAtOmega = viewProportions.y*16f/9f; break; // 16x9
+		case 1u: // Diagonal
+			radiusAtOmega = 1f;
+			break;
+		case 2u: // Vertical
+			radiusAtOmega = viewProportions.y;
+			break;
+		case 3u: // 4x3
+			radiusAtOmega = viewProportions.y*4f/3f;
+			break;
+		case 4u: // 16x9
+			radiusAtOmega = viewProportions.y*16f/9f;
+			break;
+		default: // Horizontal
+			radiusAtOmega = viewProportions.x;
+			break;
 	}
 
 	// Reciprocal focal length
@@ -680,7 +706,7 @@ float3 PerfectPerspectivePS(
 #else // derive radius from anamorphic coordinates
 	float radius = S==1f ?
 		dot(texCoord, texCoord) : // Spherical
-		(texCoord.y*texCoord.y)/S+(texCoord.x*texCoord.x); // Anamorphic
+		texCoord.y*texCoord.y/S+texCoord.x*texCoord.x; // Anamorphic
 	float rcp_radius = rsqrt(radius); radius = sqrt(radius);
 #endif
 	{
@@ -752,7 +778,7 @@ float3 PerfectPerspectivePS(
 		get_theta(radius, rcp_focal, K),
 	#if PANTOMORPHIC_MODE == 1
 		get_theta(radius, rcp_focal, Ky)
-	#else // PANTOMORPHIC_MODE >= 2
+	#elif PANTOMORPHIC_MODE >= 2
 		get_theta(radius, rcp_focal, texCoord.y>=0f ? Ky.t : Ky.s)
 	#endif
 	);
@@ -763,7 +789,7 @@ float3 PerfectPerspectivePS(
 			get_vignette(theta2.x, K),
 	#if PANTOMORPHIC_MODE == 1
 			get_vignette(theta2.y, Ky)
-	#else // PANTOMORPHIC_MODE >= 2
+	#elif PANTOMORPHIC_MODE >= 2
 			get_vignette(theta2.y, texCoord.y>=0f ? Ky.t : Ky.s)
 	#endif
 		)) : 1f;
@@ -805,35 +831,41 @@ float3 PerfectPerspectivePS(
 #endif
 
 	// Sample display image
+	float3 display =
+		K!=1f
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
-	float3 display = K!=1f || Ky!=1f ?
+		|| Ky!=1f
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
-	float3 display = K!=1f || any(Ky!=1f) ?
-#else // consider only global k
-	float3 display = K!=1f ?
-#endif
-		tex2D(BackBuffer, texCoord).rgb : // Perspective projection lookup
+		|| any(Ky!=1f)
+#endif // consider only global k
+		? tex2D(BackBuffer, texCoord).rgb : // Perspective projection lookup
 		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // No perspective change
+
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
 	display = to_linear_gamma(display);
 #endif
 
 	// Display calibration view
-	if (DebugModePreview) switch (DebugMode) // Choose output type
+	if (DebugModePreview)
+	switch (DebugMode) // Choose output type
 	{
-		// Calibration grid
-		default: display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display); break;
-		// Pixel scale-map
-		case 1u: display = SamplingScaleModeViewPass(texCoord, display); break;
+		case 1u: // Pixel scale-map
+			display = SamplingScaleModeViewPass(texCoord, display);
+			break;
+		default: // Calibration grid
+			display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
+			break;
 	}
 
+	if (
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
-	if ((K!=1f || Ky!=1f) && CroppingFactor!=2f) // Visible borders
+		(K!=1f || Ky!=1f)
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
-	if ((K!=1f || any(Ky!=1f)) && CroppingFactor!=2f) // Visible borders
+		(K!=1f || any(Ky!=1f))
 #else // consider only global k
-	if (K!=1f && CroppingFactor!=2f) // Visible borders
+		K!=1f
 #endif
+		&& CroppingFactor!=2f) // Visible borders
 	{
 		// Get border
 		float3 border = lerp(
@@ -857,7 +889,7 @@ float3 PerfectPerspectivePS(
 			vignette*lerp(display, border, borderMask) : // Vignette on border
 			lerp(vignette*display, border, borderMask);  // Vignette only inside
 	}
-	else // apply vignette
+	else if (UseVignette) // apply vignette
 		display *= vignette;
 
 #if BUFFER_COLOR_SPACE <= 2 // Linear workflow
