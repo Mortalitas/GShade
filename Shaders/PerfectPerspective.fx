@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.1.1
+/** Perfect Perspective PS, version 5.1.2
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -904,7 +904,7 @@ float3 PerfectPerspectivePS(
 
 technique PerfectPerspective
 <
-	ui_label = "Perfect Perspective";
+	ui_label = "Perfect Perspective (fish-eye)";
 	ui_tooltip =
 		"Adjust perspective for distortion-free picture:\n"
 		"\n"

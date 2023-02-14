@@ -1,4 +1,4 @@
-/** Contrast Limited Sharpening PS, version 1.1.1
+/** Contrast Limited Sharpening PS, version 1.1.2
 
 This code © 2023 Jakub Maksymilian Fober
 
@@ -41,7 +41,8 @@ me at jakub.m.fober@protonmail.com.
 	/* MENU */
 
 #if !CONTRAST_SHARPEN_RADIUS
-uniform uint SharpenRadius < __UNIFORM_SLIDER_INT1
+uniform uint SharpenRadius <
+	ui_type = "slider";
 	ui_label = "sharpening radius";
 	ui_tooltip =
 		"Sharpening sampling radius in pixels,\n"
@@ -52,7 +53,8 @@ uniform uint SharpenRadius < __UNIFORM_SLIDER_INT1
 > = 16u;
 #endif
 
-uniform float SharpenAmount < __UNIFORM_SLIDER_FLOAT1
+uniform float SharpenAmount <
+	ui_type = "slider";
 	ui_label = "sharpening amount";
 	ui_tooltip =
 		"High-pass layer multiplier.\n"
@@ -62,7 +64,8 @@ uniform float SharpenAmount < __UNIFORM_SLIDER_FLOAT1
 	ui_category = "sharpening settings";
 > = 1f;
 
-uniform uint BlendingMode < __UNIFORM_RADIO_INT1
+uniform uint BlendingMode <
+	ui_type = "radio";
 	ui_label = "sharpening mode";
 	ui_tooltip = "Blending mode for the high-pass layer.";
 	ui_items =
@@ -71,7 +74,8 @@ uniform uint BlendingMode < __UNIFORM_RADIO_INT1
 	ui_category = "sharpening settings";
 > = 0u;
 
-uniform float ContrastAmount < __UNIFORM_SLIDER_FLOAT1
+uniform float ContrastAmount <
+	ui_type = "slider";
 	ui_label = "contrast amount";
 	ui_tooltip =
 		"Contrast limiting threshold.\n"
@@ -82,7 +86,8 @@ uniform float ContrastAmount < __UNIFORM_SLIDER_FLOAT1
 	ui_category_closed = true;
 > = 0.16;
 
-uniform bool DitheringEnabled < __UNIFORM_INPUT_BOOL1
+uniform bool DitheringEnabled <
+	ui_type = "input";
 	ui_label = "remove banding";
 	ui_tooltip =
 		"Applies invisible dithering effect, to\n"
@@ -187,7 +192,8 @@ void ContrastSharpenPassHorizontalPS(
 				abs(sampleLuminosity-luminosity)/ContrastAmount // Contrast
 			));
 		// Apply weight and add to blurred luminosity
-		cumilativeLuminosity += sampleLuminosity*
+		cumilativeLuminosity +=
+			sampleLuminosity*
 #if CONTRAST_SHARPEN_RADIUS // for fixed contrast sharpen radius
 			sampleWeight[yPos];
 		cumilativeWeight += sampleWeight[yPos];
@@ -242,12 +248,13 @@ void ContrastSharpenPassVerticalPS(
 				abs(sampleLuminosity-color.x)/ContrastAmount // Contrast
 			));
 		// Apply weight and add to blurred luminosity
-		cumilativeLuminosity += sampleLuminosity*
+		cumilativeLuminosity +=
+			sampleLuminosity*
 #if CONTRAST_SHARPEN_RADIUS // for fixed contrast sharpen radius
-		sampleWeight[xPos];
+			sampleWeight[xPos];
 		cumilativeWeight += sampleWeight[xPos];
 #else // for dynamic contrast sharpen radius
-		sampleWeight;
+			sampleWeight;
 		cumilativeWeight += sampleWeight;
 #endif
 	}
