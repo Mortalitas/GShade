@@ -394,7 +394,7 @@ float GetBorderMask(float2 borderCoord)
 		// Round corner
 		return aastep(glength(BorderGContinuity, borderCoord)-1f); // with G1 to G3 continuity
 	}
-	else // Just sharp corner, G0
+	else // just sharp corner, G0
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
@@ -567,15 +567,9 @@ void LensDistortPS(float4 pixelPos : SV_Position, float2 viewCoord : TEXCOORD, o
 					*distortion // Distortion coordinates
 					+orygTexCoord, // Original coordinates
 				0f, 0f)
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
 			).rgb)
 #else
-			color += tex2Dlod(
-				BackBuffer, // Image source
-				float4(
-					(T*(i/float(evenSampleCount-1u)-0.5)+1f) // Aberration offset
-					*distortion // Distortion coordinates
-					+orygTexCoord, // Original coordinates
-				0f, 0f)
 			).rgb
 #endif
 			*Spectrum(i/float(evenSampleCount)); // Blur layer color

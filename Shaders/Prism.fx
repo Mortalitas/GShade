@@ -40,12 +40,19 @@ inspired by Marty McFly YACA shader
 
 uniform float4 K <
 	ui_type = "drag";
-	ui_min = -0.1;
-	ui_max =  0.1;
+	ui_min = -0.1; ui_max =  0.1;
 	ui_label = "Radial 'k' coefficients";
 	ui_tooltip = "Radial distortion coefficients k1, k2, k3, k4.";
 	ui_category = "Chromatic aberration";
 > = float4(0.016, 0f, 0f, 0f);
+
+uniform float AchromatAmount <
+	ui_type = "slider";
+	ui_min = 0f; ui_max =  1f;
+	ui_label = "Achromat amount";
+	ui_tooltip = "Achromat strength factor.";
+	ui_category = "Chromatic aberration";
+> = 0f;
 
 // Performance
 

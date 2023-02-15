@@ -35,7 +35,6 @@ me at jakub.m.fober@protonmail.com.
 	/* COMMONS */
 
 #include "ReShade.fxh"
-#include "ReShadeUI.fxh"
 #include "ColorAndDither.fxh"
 
 	/* MENU */
