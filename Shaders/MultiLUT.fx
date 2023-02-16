@@ -91,7 +91,7 @@
 #define fLUT_AtlasList "GShade [Angelite-Compatible]\0Custom\0ReShade\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0"
 
 #define fLUT_GSSelections "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
-#define fLUT_RESSelections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+#define fLUT_RESSelections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Vogue\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
 #define fLUT_JOHSelections "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0Color17\0"
 #define fLUT_EGSelections "Neutral\0Darklite (Realism, Day, Outdoors)\0Shadownite (Realism, Night, Indoors)\0Ambient Memories (Bright, Warm)\0Faded Memories (Desaturated, Dark)\0Pastel Memories (Cartoony, Colorful, Bright)\0Nostalgic \ Radiance (Bright, Colorful, Studio, Lights)\0"
 #define fLUT_MSSelections "Neutral\0Lela\0Brienne\0Color3\0Light\0Pink\0Angelite\0Cool Light\0Flat & Green\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
@@ -355,7 +355,7 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_FILE fLUT_RESTextureName
     #define _SOURCE_MULTILUT_TILE_SIZE 32
 	#define _SOURCE_MULTILUT_TILE_AMOUNT 32
-    #define _SOURCE_MULTILUT_AMOUNT 17
+    #define _SOURCE_MULTILUT_AMOUNT 18
 #elif MultiLUTTexture_Source == 3 // Johto MultiLut_Johto.png
     #define _SOURCE_MULTILUT_FILE fLUT_JOHTextureName
     #define _SOURCE_MULTILUT_TILE_SIZE 32
