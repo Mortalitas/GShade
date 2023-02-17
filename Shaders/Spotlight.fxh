@@ -13,7 +13,7 @@ sampler2D sColor {
 	MagFilter = POINT;
 };
 
-#define SPOTLIGHT_SUMMONING(Spotlight_Category, Spotlight_Center_X, Spotlight_Center_Y, Spotlight_Brightness, Spotlight_Size, Spotlight_Color, Spotlight_Distance, Spotlight_BlendFix, Spotlight_ToggleTexture, Spotlight_ToggleDepth, Spotlight_PS, Spotlight_Name) \
+#define SPOTLIGHT_SUMMONING(Spotlight_Category, Spotlight_Center_X, Spotlight_Center_Y, Spotlight_Brightness, Spotlight_Size, Spotlight_Color, Spotlight_InvertDepthCutoff, Spotlight_DepthCutoff, Spotlight_Distance, Spotlight_BlendFix, Spotlight_ToggleTexture, Spotlight_ToggleDepth, Spotlight_ToggleDepthCutoff, Spotlight_PS, Spotlight_Name) \
 uniform float Spotlight_Center_X < \
 	ui_category = Spotlight_Category; \
 	ui_category_closed = true; \
@@ -64,6 +64,22 @@ uniform float3 Spotlight_Color < \
 	ui_type = "color"; \
 > = float3(255, 230, 200) / 255.0; \
 \
+uniform bool Spotlight_InvertDepthCutoff < \
+	ui_category = Spotlight_Category; \
+	ui_label = "Invert Depth Cutoff"; \
+> = 0; \
+\
+uniform float Spotlight_DepthCutoff < \
+	ui_category = Spotlight_Category; \
+	ui_label = "Depth Cutoff"; \
+	ui_tooltip = \
+		"The distance at which the spotlight is visible.\n" \
+		"Only works if the game has depth buffer access."; \
+	ui_type = "slider"; \
+	ui_min = 0.0; \
+	ui_max = 1.0; \
+> = 0.97; \
+\
 uniform float Spotlight_Distance < \
 	ui_category = Spotlight_Category; \
 	ui_label = "Distance"; \
@@ -95,49 +111,63 @@ uniform bool Spotlight_ToggleDepth < \
 	ui_tooltip = "Enable or disable depth."; \
 > = 1; \
 \
+uniform bool Spotlight_ToggleDepthCutoff < \
+	ui_category = Spotlight_Category; \
+	ui_label = "Toggle Depth Cutoff"; \
+	ui_tooltip = "Enable or disable depth cutoff."; \
+> = 0; \
+\
 \
 float4 Spotlight_PS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET \
 { \
-	const float2 res = BUFFER_SCREEN_SIZE; \
-	const float2 coord = res * (uv - float2(Spotlight_Center_X, -Spotlight_Center_Y)); \
+	const float depth = Spotlight_InvertDepthCutoff ? ReShade::GetLinearizedDepth(uv).r : 1 - ReShade::GetLinearizedDepth(uv).r; \
 \
-	const float halo = distance(coord, res * 0.5); \
-	float spotlight = Spotlight_Size - min(halo, Spotlight_Size); \
-	spotlight /= Spotlight_Size; \
-\
-	if (Spotlight_ToggleTexture == 0) \
+	if (!Spotlight_ToggleDepthCutoff || depth < Spotlight_DepthCutoff) \
 	{ \
-		float defects = sin(spotlight * 30.0) * 0.5 + 0.5; \
-		defects = lerp(defects, 1.0, spotlight * 2.0); \
+		const float2 res = BUFFER_SCREEN_SIZE; \
+		const float2 coord = res * (uv - float2(Spotlight_Center_X, -Spotlight_Center_Y)); \
+		const float halo = distance(coord, res * 0.5); \
+		float spotlight = Spotlight_Size - min(halo, Spotlight_Size); \
+		spotlight /= Spotlight_Size; \
 \
-		static const float contrast = 0.125; \
+		if (Spotlight_ToggleTexture == 0) \
+		{ \
+			float defects = sin(spotlight * 30.0) * 0.5 + 0.5; \
+			defects = lerp(defects, 1.0, spotlight * 2.0); \
 \
-		defects = 0.5 * (1.0 - contrast) + defects * contrast; \
-		spotlight *= defects * 4.0; \
+			static const float contrast = 0.125; \
+\
+			defects = 0.5 * (1.0 - contrast) + defects * contrast; \
+			spotlight *= defects * 4.0; \
+		} \
+		else \
+		{ \
+			spotlight *= 2.0; \
+		} \
+\
+		if (Spotlight_ToggleDepth == 1) \
+		{ \
+			const float sdepth = pow(max(1.0 - ReShade::GetLinearizedDepth(uv), 0.0), 1.0 / Spotlight_Distance); \
+			spotlight *= sdepth; \
+		} \
+\
+		float3 colored_spotlight = spotlight * Spotlight_Color; \
+		colored_spotlight *= colored_spotlight * colored_spotlight; \
+\
+		const float3 result = 1.0 + colored_spotlight * Spotlight_Brightness; \
+\
+		float3 color = tex2D(sColor, uv).rgb; \
+		color *= result; \
+\
+		if (!Spotlight_BlendFix) \
+			color = max(color, (result - 1.0) * 0.001); \
+\
+		return float4(color, 1.0); \
 	} \
 	else \
 	{ \
-		spotlight *= 2.0; \
+		discard; \
 	} \
-\
-	if (Spotlight_ToggleDepth == 1) \
-	{ \
-		const float depth = pow(abs(1.0 - ReShade::GetLinearizedDepth(uv)), 1.0 / Spotlight_Distance); \
-		spotlight *= depth; \
-	} \
-\
-	float3 colored_spotlight = spotlight * Spotlight_Color; \
-	colored_spotlight *= colored_spotlight * colored_spotlight; \
-\
-	const float3 result = 1.0 + colored_spotlight * Spotlight_Brightness; \
-\
-	float3 color = tex2D(sColor, uv).rgb; \
-	color *= result; \
-\
-	if (!Spotlight_BlendFix) \
-		color = max(color, (result - 1.0) * 0.001); \
-\
-	return float4(color, 1.0); \
 } \
 \
 technique Spotlight_Name { \
