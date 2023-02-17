@@ -1,4 +1,4 @@
-/** Contrast Limited Sharpening PS, version 1.1.2
+/** Contrast Limited Sharpening PS, version 1.1.3
 
 This code © 2023 Jakub Maksymilian Fober
 
@@ -112,13 +112,13 @@ sampler ContrastSharpenSampler
 /* Exponential bell weight falloff by JMF
    Generates smooth bell falloff for blur, with perfect weights
    distribution for a given number of samples.
-   Input: position ∈ [-1, 1]² */
-float bellWeight(float2 position)
+   Input: position ∈ [-1, 1] */
+float bellWeight(float position)
 {
 	// Get deviation for minimum value for a given step size
 	const float deviation = log(rcp(256u)); // Logarithm of base e for an 8-bit final weight
 	// Get smooth bell falloff without aliasing or zero value at the last sample
-	return exp(dot(position, position)*deviation); // Gaussian bell falloff
+	return exp(position*position*deviation); // Gaussian bell falloff
 }
 
 /* Overlay blending function.
@@ -161,8 +161,7 @@ void ContrastSharpenPassHorizontalPS(
 	// Get current pixel luminosity value
 	luminosity = dot(LumaMtx, tex2Dfetch(ReShade::BackBuffer, texelPos).rgb);
 	// Prepare cumulative variables
-	float cumilativeLuminosity = 0f;
-	static float cumilativeWeight = 0f;
+	float cumilativeLuminosity = 0f, cumulativeWeight = 0f;
 #if CONTRAST_SHARPEN_RADIUS // Fixed contrast sharpen radius
 	static float sampleWeight[CONTRAST_SHARPEN_RADIUS*2u+1u];
 	const uint SharpenRadius = CONTRAST_SHARPEN_RADIUS;
@@ -186,23 +185,21 @@ void ContrastSharpenPassHorizontalPS(
 #else // for dynamic contrast sharpen radius
 		float sampleWeight =
 #endif
-			bellWeight(float2(
-				mad(yPos, stepSize, -1f), // Y radius
-				abs(sampleLuminosity-luminosity)/ContrastAmount // Contrast
-			));
+			bellWeight(mad(yPos, stepSize, -1f));// Y radius
+		float sampleContrastWeight = saturate(1f-abs(sampleLuminosity-luminosity)/ContrastAmount); // Contrast
+		sampleContrastWeight *= sampleContrastWeight;
 		// Apply weight and add to blurred luminosity
-		cumilativeLuminosity +=
-			sampleLuminosity*
+		sampleContrastWeight *=
 #if CONTRAST_SHARPEN_RADIUS // for fixed contrast sharpen radius
 			sampleWeight[yPos];
-		cumilativeWeight += sampleWeight[yPos];
 #else // for dynamic contrast sharpen radius
 			sampleWeight;
-		cumilativeWeight += sampleWeight;
 #endif
+		cumilativeLuminosity += sampleLuminosity*sampleContrastWeight;
+		cumulativeWeight += sampleContrastWeight;
 	}
 	// Save output and restore brightness
-	luminosity = cumilativeLuminosity/cumilativeWeight;
+	luminosity = cumilativeLuminosity/cumulativeWeight;
 
 	// Dither output to increase perceivable picture bit-depth
 	if (DitheringEnabled)
@@ -219,8 +216,7 @@ void ContrastSharpenPassVerticalPS(
 	// Get current pixel YCbCr color value
 	color = mul(YCbCrMtx, tex2Dfetch(ReShade::BackBuffer, texelPos).rgb);
 	// Prepare cumulative variables
-	float cumilativeLuminosity = 0f;
-	static float cumilativeWeight = 0f;
+	float cumilativeLuminosity = 0f, cumulativeWeight = 0f;
 #if CONTRAST_SHARPEN_RADIUS // Fixed contrast sharpen radius
 	static float sampleWeight[CONTRAST_SHARPEN_RADIUS*2u+1u];
 	const uint SharpenRadius = CONTRAST_SHARPEN_RADIUS;
@@ -242,23 +238,21 @@ void ContrastSharpenPassVerticalPS(
 #else // for dynamic contrast sharpen radius
 		float sampleWeight =
 #endif
-			bellWeight(float2(
-				mad(xPos, stepSize, -1f), // X position
-				abs(sampleLuminosity-color.x)/ContrastAmount // Contrast
-			));
+			bellWeight(mad(xPos, stepSize, -1f)); // X position
+		float sampleContrastWeight = saturate(1f-abs(sampleLuminosity-color.x)/ContrastAmount); // Contrast
+		sampleContrastWeight *= sampleContrastWeight;
 		// Apply weight and add to blurred luminosity
-		cumilativeLuminosity +=
-			sampleLuminosity*
+		sampleContrastWeight *=
 #if CONTRAST_SHARPEN_RADIUS // for fixed contrast sharpen radius
 			sampleWeight[xPos];
-		cumilativeWeight += sampleWeight[xPos];
 #else // for dynamic contrast sharpen radius
 			sampleWeight;
-		cumilativeWeight += sampleWeight;
 #endif
+		cumilativeLuminosity += sampleLuminosity*sampleContrastWeight;
+		cumulativeWeight += sampleContrastWeight;
 	}
 	// Restore brightness
-	cumilativeLuminosity /= cumilativeWeight;
+	cumilativeLuminosity /= cumulativeWeight;
 	// Generate high-pass filter
 	float highPass = mad(color.x-cumilativeLuminosity, SharpenAmount*0.5, 0.5);
 	// Blend high-pass with the base image luminosity
