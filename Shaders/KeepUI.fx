@@ -38,9 +38,9 @@
 		#undef KeepUIType
 		#define KeepUIType 1
 	// Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
-//	#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
-//		#undef KeepUIType
-//		#define KeepUIType 2
+	#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
+		#undef KeepUIType
+		#define KeepUIType 2
 	#endif
 #endif
 
@@ -90,6 +90,7 @@ uniform int iBlendSource <
 #endif
 
 #include "ReShade.fxh"
+#include "GShade.fxh"
 
 texture KeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 sampler KeepUI_Sampler { Texture = KeepUI_Tex; };
@@ -98,7 +99,7 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
 {
     color = tex2D(ReShade::BackBuffer, texcoord);
 #if KeepUIType == 2
-    color.a = step(1.0, 1.0 - ReShade::GetLinearizedDepth(texcoord));
+    color.a = step(1.0, 1.0 - GShade::GetLinearizedDepthII(texcoord));
 #endif
 }
 
