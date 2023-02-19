@@ -57,7 +57,7 @@
 	#endif
 #endif
 
-#if MultiLUTTexture_Source == 1 || MultiLUTTexture2_Source == 1 || MultiLUTTexture3_Source == 1
+#if MultiLUTTexture_Source == 1
 	#ifndef fLUT_TextureName
 		#define fLUT_TextureName "MultiLut_atlas4.png" // Add your own MultiLUT atlas with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the MultiLUT used!
 	#endif
@@ -68,10 +68,46 @@
 		#define fLUT_TileAmount 32
 	#endif
 	#ifndef fLUT_LutAmount
-		#define fLUT_LutAmount 17
+		#define fLUT_LutAmount 18
 	#endif
 	#ifndef fLUT_Selections
 		#define fLUT_Selections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+	#endif
+#endif
+
+#if MultiLUTTexture2_Source == 1
+	#ifndef fLUT_TextureName2
+		#define fLUT_TextureName2 "MultiLut_atlas4.png" // Add your own MultiLUT atlas with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the MultiLUT used!
+	#endif
+	#ifndef fLUT_TileSizeXY2
+		#define fLUT_TileSizeXY2 32
+	#endif
+	#ifndef fLUT_TileAmount2
+		#define fLUT_TileAmount2 32
+	#endif
+	#ifndef fLUT_LutAmount2
+		#define fLUT_LutAmount2 18
+	#endif
+	#ifndef fLUT_Selections2
+		#define fLUT_Selections2 "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+	#endif
+#endif
+
+#if MultiLUTTexture3_Source == 1
+	#ifndef fLUT_TextureName3
+		#define fLUT_TextureName3 "MultiLut_atlas4.png" // Add your own MultiLUT atlas with a unique file name to ?:\Users\Public\GShade Custom Shaders\Textures\ and provide the new file name in quotes under the Preprocessor Definitions under the shader's normal settings on the Home tab to change the MultiLUT used!
+	#endif
+	#ifndef fLUT_TileSizeXY3
+		#define fLUT_TileSizeXY3 32
+	#endif
+	#ifndef fLUT_TileAmount3
+		#define fLUT_TileAmount3 32
+	#endif
+	#ifndef fLUT_LutAmount3
+		#define fLUT_LutAmount3 18
+	#endif
+	#ifndef fLUT_Selections3
+		#define fLUT_Selections3 "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
 	#endif
 #endif
 
@@ -199,7 +235,7 @@ uniform int fLUT_LutSelector2 <
 #if MultiLUTTexture2_Source == 0 // GShade/Angelite
     ui_items = fLUT_GSSelections;
 #elif MultiLUTTexture2_Source == 1 // Custom
-    ui_items = fLUT_Selections;
+    ui_items = fLUT_Selections2;
 #elif MultiLUTTexture2_Source == 2 // ReShade
     ui_items = fLUT_RESSelections;
 #elif MultiLUTTexture2_Source == 3 // Johto
@@ -276,7 +312,7 @@ uniform int fLUT_LutSelector3 <
 #if MultiLUTTexture3_Source == 0 // GShade/Angelite
     ui_items = fLUT_GSSelections;
 #elif MultiLUTTexture3_Source == 1 // Custom
-    ui_items = fLUT_Selections;
+    ui_items = fLUT_Selections3;
 #elif MultiLUTTexture3_Source == 2 // ReShade
     ui_items = fLUT_RESSelections;
 #elif MultiLUTTexture3_Source == 3 // Johto
@@ -414,10 +450,10 @@ uniform float fLUT_AmountLuma3 <
 	#define _SOURCE_MULTILUT_TILE_AMOUNT2 32
     #define _SOURCE_MULTILUT_AMOUNT2 17
 #elif MultiLUTTexture2_Source == 1 // Custom
-    #define _SOURCE_MULTILUT_FILE2 fLUT_TextureName
-    #define _SOURCE_MULTILUT_TILE_SIZE2 fLUT_TileSizeXY
-	#define _SOURCE_MULTILUT_TILE_AMOUNT2 fLUT_TileAmount
-    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE2 fLUT_TextureName2
+    #define _SOURCE_MULTILUT_TILE_SIZE2 fLUT_TileSizeXY2
+	#define _SOURCE_MULTILUT_TILE_AMOUNT2 fLUT_TileAmount2
+    #define _SOURCE_MULTILUT_AMOUNT2 fLUT_LutAmount2
 #elif MultiLUTTexture2_Source == 2 // ReShade MultiLut_atlas4.png
     #define _SOURCE_MULTILUT_FILE2 fLUT_RESTextureName
     #define _SOURCE_MULTILUT_TILE_SIZE2 32
@@ -481,10 +517,10 @@ uniform float fLUT_AmountLuma3 <
 	#define _SOURCE_MULTILUT_TILE_AMOUNT3 32
     #define _SOURCE_MULTILUT_AMOUNT3 17
 #elif MultiLUTTexture3_Source == 1 // Custom
-    #define _SOURCE_MULTILUT_FILE3 fLUT_TextureName
-    #define _SOURCE_MULTILUT_TILE_SIZE3 fLUT_TileSizeXY
-	#define _SOURCE_MULTILUT_TILE_AMOUNT3 fLUT_TileAmount
-    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount
+    #define _SOURCE_MULTILUT_FILE3 fLUT_TextureName3
+    #define _SOURCE_MULTILUT_TILE_SIZE3 fLUT_TileSizeXY3
+	#define _SOURCE_MULTILUT_TILE_AMOUNT3 fLUT_TileAmount3
+    #define _SOURCE_MULTILUT_AMOUNT3 fLUT_LutAmount3
 #elif MultiLUTTexture3_Source == 2 // ReShade MultiLut_atlas4.png
     #define _SOURCE_MULTILUT_FILE3 fLUT_RESTextureName
     #define _SOURCE_MULTILUT_TILE_SIZE3 32
