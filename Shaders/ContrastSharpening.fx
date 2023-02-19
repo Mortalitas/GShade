@@ -1,4 +1,4 @@
-/** Contrast Limited Sharpening PS, version 1.1.3
+/** Contrast Limited Sharpening PS, version 1.1.4
 
 This code © 2023 Jakub Maksymilian Fober
 
@@ -186,8 +186,8 @@ void ContrastSharpenPassHorizontalPS(
 		float sampleWeight =
 #endif
 			bellWeight(mad(yPos, stepSize, -1f));// Y radius
-		float sampleContrastWeight = saturate(1f-abs(sampleLuminosity-luminosity)/ContrastAmount); // Contrast
-		sampleContrastWeight *= sampleContrastWeight;
+		float sampleContrastWeight = saturate(abs(sampleLuminosity-luminosity)/ContrastAmount); // Contrast
+		sampleContrastWeight = bellWeight(sampleContrastWeight); // Natural falloff
 		// Apply weight and add to blurred luminosity
 		sampleContrastWeight *=
 #if CONTRAST_SHARPEN_RADIUS // for fixed contrast sharpen radius
@@ -239,8 +239,8 @@ void ContrastSharpenPassVerticalPS(
 		float sampleWeight =
 #endif
 			bellWeight(mad(xPos, stepSize, -1f)); // X position
-		float sampleContrastWeight = saturate(1f-abs(sampleLuminosity-color.x)/ContrastAmount); // Contrast
-		sampleContrastWeight *= sampleContrastWeight;
+		float sampleContrastWeight = saturate(abs(sampleLuminosity-color.x)/ContrastAmount); // Contrast
+		sampleContrastWeight = bellWeight(sampleContrastWeight); // Natural falloff
 		// Apply weight and add to blurred luminosity
 		sampleContrastWeight *=
 #if CONTRAST_SHARPEN_RADIUS // for fixed contrast sharpen radius
