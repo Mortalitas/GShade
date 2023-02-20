@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.1.3
+/** Perfect Perspective PS, version 5.1.4
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -130,8 +130,8 @@ uniform float K <
 		"-------------------------------------\n"
 		"straight path |  1    | Rectilinear\n"
 		"shape         |  0.5  | Stereographic\n"
-		"distance      |  0    | Equidistant\n"
-		"depth         | -0.5  | Equisolid\n"
+		"speed         |  0    | Equidistant\n"
+		"distance      | -0.5  | Equisolid\n"
 		"illumination  | -1    | Orthographic\n"
 		"\n"
 		"\n"
@@ -156,8 +156,8 @@ uniform float K <
 		"-------------------------------------\n"
 		"straight path |  1    | Rectilinear\n"
 		"shape         |  0.5  | Stereographic\n"
-		"distance      |  0    | Equidistant\n"
-		"depth         | -0.5  | Equisolid\n"
+		"speed         |  0    | Equidistant\n"
+		"distance      | -0.5  | Equisolid\n"
 		"illumination  | -1    | Orthographic\n"
 		"\n"
 		"\n"
