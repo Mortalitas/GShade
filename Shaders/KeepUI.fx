@@ -74,12 +74,12 @@ uniform float fKeepUIOccludeMinAlpha <
 uniform bool bKeepUIHideInScreenshot <
     ui_category = "Options";
     ui_label = "Hide KeepUI In Screenshots";
-    ui_tooltip = "Enable to hide the effects of KeepUI when taking screenshots.\n\nThis is very helpful in Phantasy Star Online 2 where the camera can be considered part of the UI.";
+    ui_tooltip = "Enable to hide the effects of KeepUI when taking screenshots.\n\nThis is very helpful in games where portions of the screen which are not part of the UI may be detected as such.";
     ui_bind = "KeepUIHideInScreenshots";
-> = 1;
+> = 0;
 
 #ifndef KeepUIHideInScreenshots
-    #define KeepUIHideInScreenshots 1
+    #define KeepUIHideInScreenshots 0
 #endif
 
 #if KeepUIDebug
