@@ -1,7 +1,5 @@
 // Made by Marot Satil for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
 // This shader alters the alpha level of the current frame.
 //

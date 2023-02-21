@@ -1,15 +1,9 @@
 // Made by Marot Satil, seri14, & Uchu Suzume for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
-// This shader was designed in the same vein as GreenScreenDepth.fx, but instead of applying a
-// green screen with adjustable distance, it applies a PNG texture with adjustable opacity.
+// A simple shader for rotating, scaling, and moving the entire frame.
 //
-// PNG transparency is fully supported, so you could for example add another moon to the sky
-// just as readily as create a "green screen" stage like in real life.
-//
-// Copyright (c) 2020, Marot Satil
+// Copyright (c) 2023, Marot Satil
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

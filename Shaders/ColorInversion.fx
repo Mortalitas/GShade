@@ -1,11 +1,9 @@
 // Made by Marot Satil for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
 // This shader does exactly what it says it does.
 //
-// Copyright (c) 2019, Marot Satil
+// Copyright (c) 2023, Marot Satil
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

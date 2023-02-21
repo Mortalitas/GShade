@@ -1,7 +1,5 @@
 // Made by Marot Satil, seri14, & Uchu Suzume for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
 // This shader was designed in the same vein as GreenScreenDepth.fx, but instead of applying a
 // green screen with adjustable distance, it applies a PNG texture with adjustable opacity.

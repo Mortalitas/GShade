@@ -32,6 +32,12 @@
   * LongExposure.fx
   * RealLongExposure.fx
 
+* Lufreine (twitter.com/Lufreine)
+  * Ice1.jpg
+  * Metal1.jpg
+  * Papyrus2.png
+  * Papyrus6.png
+
 * MartyMcFly/Pascal Glitcher (github.com/martymcmodding):
   * MShadersLUTAtlas.fxh
   * Posterize.fx
@@ -93,11 +99,7 @@
 * Yomigami Okami (twitter.com/Yomigammy)
   * Fire1.png
   * Fire2.png
-  * Ice1.jpg
   * Lightrays1.png
-  * Metal1.jpg
-  * Papyrus2.png
-  * Papyrus6.png
   * Shatter1.png
   * Snow1.png
   * Snow2.png

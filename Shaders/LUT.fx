@@ -5,18 +5,23 @@
 // Marty's LUT shader 1.0 for ReShade 3.0
 // Copyright © 2008-2016 Marty McFly
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// lut_GShade.png is a modified version of Mori's Angelite MultiLUT table made for GShade!
+// Follow them on Twitter here: https://twitter.com/moripudding
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // lut_ninjafadaGameplay.png was provided by ninjafada!
 // You can see their ReShade-related work here: http://sfx.thelazy.net/users/u/ninjafada/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // lut_Sleepy.png was provided by Sleeps_Hungry!
-// You can find them here: https://twitter.com/advent1013
+// Follow them on Twitter here: https://twitter.com/advent1013
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // lut_Feli.png was provided by Feli!
-// You can find them here: https://twitter.com/ffxivfeli
+// Follow them on Twitter here: https://twitter.com/ffxivfeli
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// lut_Legacy.png was provided by Lufreine!
+// Follow them on Twitter here: https://twitter.com/Lufreine
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // lut_IpsusuGameplay.png was provided by Ipsusu!
-// You can find them here: https://twitter.com/ipsusu
+// Follow them on Twitter here: https://twitter.com/ipsusu
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 

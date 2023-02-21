@@ -1,7 +1,5 @@
 // Made by Marot Satil, seri14, & Uchu Suzume using code from sYNTHwAVE88's Pixelate.fx 1.0 for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions

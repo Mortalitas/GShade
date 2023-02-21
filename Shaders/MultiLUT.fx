@@ -7,10 +7,8 @@
 // Further improvements including overall intensity, multiple texture support, and increased precision added by seri14 and Marot Satil.
 // Copyright © 2008-2016 Marty McFly
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// MultiLut_GShade.png is a modified version of miiok's Angelite MultiLUT table made for GShade!
-// Follow miiolk on Twitter here: https://twitter.com/miiolk
-// And GPOSERS here: https://twitter.com/GPOSERS_FFXIV
-// For GShade news and updates, join our Discord: https://twitter.com/GPOSERS_FFXIV
+// MultiLut_GShade.png is a modified version of Mori's Angelite MultiLUT table made for GShade!
+// Follow them on Twitter here: https://twitter.com/moripudding
 //
 // MultiLut_Johto.png was created by Johto!
 // Follow them on Twitter here: https://twitter.com/JohtoFFXIV
@@ -25,8 +23,20 @@
 // Follow their work on Github here: https://github.com/seri14
 // And follow them on Twitter here: https://twitter.com/seri_haruna
 //
+// MultiLut_Yomi.png was provided by Yomigami Okami!
+// Follow them on Twitter here: https://twitter.com/Yomigammy
+//
+// MultiLut_Neneko.png was provided by Neneko!
+// Follow them on Twitter here: https://twitter.com/Xelyanne
+//
+// MultiLut_yaes.png was provided by Yae!
+// Follow them on Twitter here: https://twitter.com/lapismenangis
+//
 // MultiLut_Ipsusu.png was provided by Ipsusu!
-// You can find them here: https://twitter.com/ipsusu
+// Follow them on Twitter here: https://twitter.com/ipsusu
+//
+// MultiLut_Nightingale.png was provided by Nightingale Silence!
+// Follow them on Twitter here: https://twitter.com/franandneo
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 

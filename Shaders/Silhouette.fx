@@ -1,7 +1,5 @@
 // Made by Marot Satil for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
 // A bit of an accidental discovery when playing with StageDepth.fx, this
 // shader allows you to do a depth-based silhouette with any two images.
@@ -11,10 +9,10 @@
 // Textures Papyrus2.png through Papyrus6.png were provided by the ever-resouceful Lufreine.
 // You can follow her via @Lufreine on Twitter!
 //
-// Shader & Code Copyright (c) 2019, Marot Satil
+// Shader & Code Copyright (c) 2023, Marot Satil
 // All rights reserved.
 //
-// Textures & Images Copyright (c) 2019, Lufreine
+// Textures & Images Copyright (c) 2023, Lufreine
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

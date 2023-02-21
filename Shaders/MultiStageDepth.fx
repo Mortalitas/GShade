@@ -1,7 +1,5 @@
 // Made by Marot Satil, seri14, & Uchu Suzume for the GShade ReShade package!
 // You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
-// Follow @GPOSERS_FFXIV on Twitter and join us on Discord (https://discord.gg/39WpvU2)
-// for the latest GShade package updates!
 //
 // This shader was designed in the same vein as GreenScreenDepth.fx, but instead of applying a
 // green screen with adjustable distance, it applies a PNG texture with adjustable opacity.
@@ -12,7 +10,7 @@
 // Textures provided by Yomigami Okami & Johnni Maestro.
 // You can follow Yomi via @Yomigammy on Twitter!
 //
-// Copyright (c) 2019, Marot Satil
+// Copyright (c) 2023, Marot Satil
 // All rights reserved.
 //
 // Backglow1.png, Fire1.png, Fire2.png, Lightrays1.png, Shatter1.png, Snow1.png, Snow2.png Copyright (c) 2019, Yomigami Okami
