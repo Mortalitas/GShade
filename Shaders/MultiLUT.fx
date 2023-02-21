@@ -13,7 +13,7 @@
 // MultiLut_Johto.png was created by Johto!
 // Follow them on Twitter here: https://twitter.com/JohtoFFXIV
 //
-// FFXIVLUTAtlas.png was created by Espresso Lalaqo'te from their Espresso Glow Build!
+// FFXIVLUTAtlas.png was created by Espresso Lalafell from their Espresso Glow Build!
 // Follow them on Twitter here: https://twitter.com/espressolala
 //
 // MultiLut_ninjafadaGameplay.png was created by ninjafada!

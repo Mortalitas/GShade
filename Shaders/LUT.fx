@@ -23,6 +23,9 @@
 // lut_IpsusuGameplay.png was provided by Ipsusu!
 // Follow them on Twitter here: https://twitter.com/ipsusu
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// EGGameplayLut.png was created by Espresso Lalafell from their Espresso Glow Build!
+// Follow them on Twitter here: https://twitter.com/espressolala
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
 #ifndef LUTTexture_Source
@@ -47,9 +50,9 @@
 
 uniform int fLUT_Selector <
   ui_type = "combo";
-  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade | Custom\0Sleeps_Hungry\0Feli\0Lufreine Legacy\0Ipsusu Gameplay\0Potatoshade\0";
+  ui_items = "GShade/Angelite\0LUT - Warm.fx\0Autumn\0ninjafada Gameplay\0ReShade | Custom\0Sleeps_Hungry\0Feli\0Lufreine Legacy\0Ipsusu Gameplay\0Potatoshade\0Espresso Glow\0";
   ui_label = "The LUT file to use.";
-  ui_tooltip = "Select a LUT!\n\nPlease note that the Potatoshade option will require you to obtain a copy of \"seilut.png\" from the Potoshade zip and place it in the \"?:\\Program Files\\GShade\\gshade-shaders\\Textures\" folder before it becomes usable.";
+  ui_tooltip = "Select a LUT!\n\nPlease note that the Potatoshade option will require you to obtain a copy of \"seilut.png\" from the Potoshade zip and place it in the \"?:\\Users\\Public\\GShade Custom Shaders\\Textures\" folder before it becomes usable.";
   ui_bind = "LUTTexture_Source";
 > = 0;
 
@@ -117,6 +120,10 @@ uniform float fLUT_AmountLuma <
 #define _SOURCE_LUT_FILE "seilut.png"
 #define _SOURCE_LUT_SIZE 64
 #define _SOURCE_LUT_AMOUNT 64
+#elif LUTTexture_Source == 10 // Espresso Glow LUT
+#define _SOURCE_LUT_FILE "EGGameplayLut.png"
+#define _SOURCE_LUT_SIZE 32
+#define _SOURCE_LUT_AMOUNT 32
 #endif
 
 
