@@ -60,9 +60,6 @@
 
 * Neneko (twitter.com/Xelyanne)
   * MultiLut_Neneko.png
-  * NenBW.png
-  * NenPaper1.png
-  * NenPaper2.png
 
 * Nightingale Silence (twitter.com/franandneo)
   * MultiLut_Nightingale.png
