@@ -47,7 +47,7 @@
 uniform bool bKeepUIOcclude <
     ui_category = "Options";
     ui_label = "Occlusion Assistance";
-    ui_tooltip = "Set to 1 if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.";
+    ui_tooltip = "Enable if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.";
     ui_bind = "KeepUIOccludeAssist";
 > = 0;
 
@@ -69,6 +69,17 @@ uniform float fKeepUIOccludeMinAlpha <
 #if KeepUIType == 0
 	#undef KeepUIOccludeAssist
 	#define KeepUIOccludeAssist 0
+#endif
+
+uniform bool bKeepUIHideInScreenshot <
+    ui_category = "Options";
+    ui_label = "Hide KeepUI In Screenshots";
+    ui_tooltip = "Enable to hide the effects of KeepUI when taking screenshots.\n\nThis is very helpful in Phantasy Star Online 2 where the camera can be considered part of the UI.";
+    ui_bind = "KeepUIHideInScreenshots";
+> = 1;
+
+#ifndef KeepUIHideInScreenshots
+    #define KeepUIHideInScreenshots 1
 #endif
 
 #if KeepUIDebug
@@ -173,6 +184,9 @@ technique FFKeepUI <
 technique FFRestoreUI <
     ui_tooltip = "Place this at the bottom of your Technique list to restore the UI texture saved by FFKeepUI.\n"
                  "To use this Technique, you must also enable \"FFKeepUI\".\n";
+#if KeepUIHideInScreenshots
+    enabled_in_screenshot = false;
+#endif
 >
 {
     pass
