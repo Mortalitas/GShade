@@ -13,10 +13,10 @@
 // Copyright (c) 2023, Marot Satil
 // All rights reserved.
 //
-// Backglow1.png, Fire1.png, Fire2.png, Lightrays1.png, Shatter1.png, Snow1.png, Snow2.png Copyright (c) 2019, Yomigami Okami
+// Backglow1.png, Fire1.png, Fire2.png, Lightrays1.png, Shatter1.png, Snow1.png, Snow2.png Copyright (c) 2023, Yomigami Okami
 // All rights reserved.
 //
-// VignetteSharp.png, VignetteSoft.png (c) 2019, Johnni Maestro
+// VignetteSharp.png, VignetteSoft.png (c) 2023, Johnni Maestro
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

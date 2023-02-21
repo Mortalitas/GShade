@@ -20,6 +20,8 @@
 * Johnni Maestro (twitter.com/Johnnicles)
   * PopArt.png
   * Vaporwave.jpg
+  * VignetteSharp.png
+  * VignetteSoft.png
 
 * Johto (twitter.com/JohtoXIV)
   * MultiLut_Johto.png
