@@ -26,13 +26,13 @@ uniform int Mode
 		"the Multiplier.\n"
 		" ";
 	ui_tooltip =
-		"Mode defining how the chromatic aberration is created.\n"
+		"Mode defining how the chromatic aberration is created.   \n"
 		"\n"
 		"  Translate:\n"
-		"    Move channels horizontally and vertically.\n"
+		"    Move channels horizontally and vertically.   \n"
 		"\n"
 		"  Scale:\n"
-		"    Zoom channels from the center.\n"
+		"    Zoom channels from the center.   \n"
 		"\n"
 		"Default: Scale";
 	ui_items = "Translate\0Scale\0";
@@ -43,7 +43,7 @@ uniform float3 Ratio
 	ui_type = "slider";
 	ui_tooltip =
 		"Ratio of how each channel is distorted.\n"
-		"The values control the red, green and blue channels respectively.\n"
+		"The values control the red, green and blue channels respectively.   \n"
 		"\n"
 		"Default: -1.0 0.0 1.0";
 	ui_min = -1.0;
@@ -54,7 +54,7 @@ uniform float Multiplier
 <
 	ui_type = "slider";
 	ui_tooltip =
-		"Multiplier of the ratio, defining how much distortion there is.\n"
+		"Multiplier of the ratio, defining how much distortion there is.   \n"
 		"\n"
 		"Default: 1.0";
 	ui_min = 0.0;
@@ -62,13 +62,34 @@ uniform float Multiplier
 	ui_step = 0.001;
 > = 1.0;
 
+uniform float Amount
+<
+	ui_type = "slider";
+	ui_tooltip =
+		"Amount applied to CA effect.   \n"
+		"\n"
+		"Default: 1.0";
+	ui_min = 0.0;
+	ui_max = 1.0;
+	ui_step = 0.001;
+> = 1.0;
+
+uniform float2 CenterPos <
+    ui_label = "Center Position";
+    ui_tooltip = "Coordinates for center of chromatic aberration with Scale option selected.   ";
+    ui_type = "slider";
+    ui_min = 0.0;
+	ui_max = 1.0;
+    ui_step = 0.001;
+> = float2(0.5, 0.5);
+
 //#endregion
 
 //#region Functions
 
 float2 scale_uv(float2 uv, float2 scale, float2 center)
 {
-	return (uv - center) * scale + center;
+	return (uv - float2(CenterPos.x, CenterPos.y)) * scale + float2(CenterPos.x, CenterPos.y);
 }
 
 //#endregion
@@ -104,10 +125,13 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 			break;
 	}
 
-	const float3 color = float3(
+	const float3 colorCA = float3(
 		tex2D(ReShade::BackBuffer, uv_r).r,
 		tex2D(ReShade::BackBuffer, uv_g).g,
 		tex2D(ReShade::BackBuffer, uv_b).b);
+
+    float3 backColor = tex2D(ReShade::BackBuffer, uv).rgb;
+	float3 color = lerp(backColor, colorCA, Amount);
 
 #if GSHADE_DITHER
 	return float4(color + TriDither(color, uv, BUFFER_COLOR_BIT_DEPTH), 1.0);
