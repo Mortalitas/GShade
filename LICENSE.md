@@ -1,5 +1,9 @@
 **Permission has been granted to the GShade project for distribution rights to several shaders and textures by the authors, whose licenses or copyrights otherwise do not allow for redistribution, rehosting, or automated downloading. Please contact the creators directly for permission if you are interested in doing so:**
 
+* Espresso Lalafell (twitter.com/espressolala)
+  * EGGameplayLut.png
+  * FFXIVLUTAtlas.png
+
 * Fairy (instagram.com/fairyqueen.xiv)
   * FairyArdenvaldGlow.png
   * FairyDandelion.png
