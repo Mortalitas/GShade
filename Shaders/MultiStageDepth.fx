@@ -137,28 +137,28 @@ uniform bool Stage_InvertDepth <
 > = false;
 
 #if   MultiStageDepthTexture_Source == 0 // Fire1.png // Use StageDepth.fx or one of its duplicates if you need to load your own images!
-#define _SOURCE_MULTILUT_FILE "Fire1.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Fire1.png"
 #elif MultiStageDepthTexture_Source == 1 // Fire2.png
-#define _SOURCE_MULTILUT_FILE "Fire2.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Fire2.png"
 #elif MultiStageDepthTexture_Source == 2 // Snow1.png
-#define _SOURCE_MULTILUT_FILE "Snow1.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Snow1.png"
 #elif MultiStageDepthTexture_Source == 3 // Snow2.png
-#define _SOURCE_MULTILUT_FILE "Snow2.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Snow2.png"
 #elif MultiStageDepthTexture_Source == 4 // Shatter1.png
-#define _SOURCE_MULTILUT_FILE "Shatter1.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Shatter1.png"
 #elif MultiStageDepthTexture_Source == 5 // Lightrays1.png
-#define _SOURCE_MULTILUT_FILE "Lightrays1.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Lightrays1.png"
 #elif MultiStageDepthTexture_Source == 6 // VignetteSharp.png
-#define _SOURCE_MULTILUT_FILE "VignetteSharp.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "VignetteSharp.png"
 #elif MultiStageDepthTexture_Source == 7 // VignetteSoft.png
-#define _SOURCE_MULTILUT_FILE "VignetteSoft.png"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "VignetteSoft.png"
 #elif MultiStageDepthTexture_Source == 8 // Metal1.jpg
-#define _SOURCE_MULTILUT_FILE "Metal1.jpg"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Metal1.jpg"
 #else // Ice1.jpg
-#define _SOURCE_MULTILUT_FILE "Ice1.jpg"
+#define _SOURCE_MULTISTAGEDEPTH_FILE "Ice1.jpg"
 #endif
 
-texture MultiStage_texture <source = _SOURCE_MULTILUT_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format= MULTISTAGEDEPTH_TEX_FORMAT; };
+texture MultiStage_texture <source = _SOURCE_MULTISTAGEDEPTH_FILE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format= MULTISTAGEDEPTH_TEX_FORMAT; };
 sampler MultiStage_sampler { Texture = MultiStage_texture; };
 
 void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, out float4 passColor : SV_Target)
