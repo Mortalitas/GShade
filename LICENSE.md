@@ -4,19 +4,58 @@
   * EGGameplayLut.png
   * FFXIVLUTAtlas.png
 
-* Fairy (instagram.com/fairyqueen.xiv)
+* Fairy (instagram.com/fairyqueen.xiv) & Ravenking (twitter.com/RealRavenking)
+  * Fairy PROJECT.jpg
+  * FairyAbandoned.png
+  * FairyArdenvaldDark.png
   * FairyArdenvaldGlow.png
+  * FairyArdenvaldLight.png
+  * FairyBitchesBrew.png
+  * FairyBlackFog.png
+  * FairyBlackSwan.jpg
+  * FairyBloodyMary.png
+  * FairyBluefire.png
+  * FairyBrokenIce.png
+  * FairyBrokenIceLight.png
+  * FairyButterflyheart.png
+  * FairyCelestialNights.png
+  * FairyCelestialNightsLayer.png
+  * FairyColdOutside.jpg
+  * FairyCrystallized.jpg
   * FairyDandelion.png
+  * FairyDrivingHomeForChristmas.png
+  * FairyFinsOceanHorror.png
+  * FairyFinsOceanHorror02.png
+  * FairyHeartOnAString.png
   * FairyHearts.jpg
+  * FairyHearty.png
+  * FairyHikkidasTimewarp.jpg
+  * FairyKawaii.png
+  * FairyLunasGarden.png
+  * FairyMermaid.png
+  * FairyMermen.png
+  * FairyMerryWhatever.jpg
   * FairyNarcoticFog.png
   * FairyPersephone01.png
   * FairyPersephone02.png
+  * FairyPolaroid.png
+  * FairyPolaroidDark.png
+  * FairyPurgatory.jpg
   * FairyRain.png
   * FairyRavenqueenFog.png
+  * FairyREC.png
+  * FairyREC2.png
+  * FairyShiroxoNeonLights.jpg
+  * FairySnowtastic.png
   * FairyThisIsHalloween.png
+  * FairyValanthyne.png
   * FairyVampirequeen_Bats.jpg
   * FairyVampirequeenFog.jpg
+  * FairyVampiresDance.jpg
+  * FairyWhiteSwan.jpg
+  * FairyWintergreen.jpg
   * FairyWitchesBrew.png
+  * FairyYaleerasEden.png
 
 * Feli (twitter.com/ffxivfeli)
   * lut_Feli.png
