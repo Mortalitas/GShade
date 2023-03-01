@@ -1,15 +1,23 @@
 # GShade
 **GShade is a highly modified ReShade fork & utility package with numerous improvements and settings autodetection for over 300 games.** 
 
-Note that all shaders in this repository are strictly intended for use with the latest GShade release. Not all shaders will work under normal ReShade builds due to the implementation of GShade's additional features. Please refer to the [license](https://github.com/Mortalitas/GShade/blob/master/LICENSE.md) on the repository **and** individual file licenses for questions about distribution and modification.
+Note that all shaders in this repository are intended for use with the latest GShade release. Not all shaders will work under official builds of ReShade due to the implementation of GShade's additional features. Please refer to the [license](https://github.com/Mortalitas/GShade/blob/master/LICENSE.md) on the repository **and** individual file licenses for questions about distribution and modification.
 
-**The latest release can always be found here, and on Windows the use of the installer is required:** https://github.com/Mortalitas/GShade/releases/latest
+**The latest Windows release can always be found below:**
+* Github: https://github.com/Mortalitas/GShade/releases/latest
+* Mirror: https://www.gshade.org/releases/GShade.Latest.Installer.exe
 
-The official **GShade Linux Installation Script** for GShade can be found here: https://github.com/HereInPlainSight/gshade_installer
+The official **GShade Linux/Unix Installation Script** for GShade can be found [here](https://www.gshade.org/releases/gshade_installer.sh). We highly recommend using the script via the following command in your terminal of choice:
+```
+bash -c "$(curl -fsSL https://www.gshade.org/releases/gshade_installer.sh)"
+```
 
-If you are installing GShade to **Final Fantasy XIV** on **Mac**, the XIV on Mac development team also offers an installer: https://www.xivmac.com
+If you are installing GShade to **Final Fantasy XIV** on **Mac**, we highly recommend installing [XIV on Mac](https://www.xivmac.com) first. Afterwards, use the **[Linux/Unix script](https://www.gshade.org/releases/gshade_installer.sh)** via the following command in the **Terminal** app:
+```
+/bin/bash -c "$(curl -fsSL https://www.gshade.org/releases/gshade_installer.sh)"
+```
 
-To learn more about how GShade compares to ReShade itself and other forks, [click here](https://gposers.com/gshade/gshade-faq/#comparison).
+To learn more about GShade's unique features, we highly recommend reading through the **[GShade Quick Reference](https://gshade.org/ref)**.
 
 **While GShade can work with any game that ReShade does, the following are some of the more common games we see people using GShade with:**
 * **Black Desert Online**
@@ -63,6 +71,6 @@ To learn more about how GShade compares to ReShade itself and other forks, [clic
 * Optional Desktop Update Reminder
 * Uninstaller
 
-A comprehensive **FAQ** which includes tutorials for GShade can be found here: https://gposers.com/gshade/gshade-faq
+A comprehensive **Quick Reference** which includes tutorials for GShade can be found [here](https://gshade.org/ref).
 
-For preset creators looking to distribute their work independently, an **easily customizable preset installer** written in C# can be found here: https://github.com/Mortalitas/GShade-Preset-Installer
+For preset creators looking to distribute their work independently, an **easily customizable preset installer** written in C# can be found [here](https://github.com/Mortalitas/GShade-Preset-Installer). 
