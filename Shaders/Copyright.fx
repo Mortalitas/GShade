@@ -232,14 +232,14 @@ uniform int cLayer_Color_Override <
                "Recolor Both in One Color\0"
                ;
     ui_bind = "cLayer_COLOR_OVERRIDE_COMBO";
-> = 0;
+> = 3;
 
 #if cLayer_COLOR_OVERRIDE_COMBO > 0
 uniform float3 ColorOverrideA <
     ui_label = "Color A";
     ui_tooltip = "Color applied to recolor.   ";
     ui_type = "color";
-> = float3(0.0, 1.0, 1.0);
+> = float3(1.0, 1.0, 1.0);
 #endif
 
 #if cLayer_COLOR_OVERRIDE_COMBO == 3
@@ -247,7 +247,7 @@ uniform float3 ColorOverrideB <
     ui_label = "Color B";
     ui_tooltip = "Color applied to recolor.   ";
     ui_type = "color";
-> = float3(0.0, 1.0, 1.0);
+> = float3(0.0, 0.0, 0.0);
 #endif
 
 
