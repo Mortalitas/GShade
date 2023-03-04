@@ -1344,8 +1344,8 @@ float3 Glamarye_Fast_Effects_PS(float4 vpos , float2 texcoord : TexCoord, bool g
 			// simple sharp
 			// sharp_diff = 2*c-.5*(ne+nw+se+sw);
 
-			// avoid sharpening so far the value clips at 0 or 1
-			float3 max_sharp=min(smoothed,c);
+			// avoid sharpennng so far the value doesn't go too dark or above 1
+			float3 max_sharp=min(smoothed,.5*c);
 
 			// limit sharpness near maximum color value.
 			max_sharp = min(max_sharp,getMaxColour()-max(smoothed,c));
