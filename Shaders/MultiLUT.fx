@@ -81,7 +81,7 @@
 		#define fLUT_LutAmount 18
 	#endif
 	#ifndef fLUT_Selections
-		#define fLUT_Selections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+		#define fLUT_Selections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0B&W mid constrast\0B&W high contrast\0"
 	#endif
 #endif
 
@@ -99,7 +99,7 @@
 		#define fLUT_LutAmount2 18
 	#endif
 	#ifndef fLUT_Selections2
-		#define fLUT_Selections2 "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+		#define fLUT_Selections2 "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0B&W mid constrast\0B&W high contrast\0"
 	#endif
 #endif
 
@@ -117,7 +117,7 @@
 		#define fLUT_LutAmount3 18
 	#endif
 	#ifndef fLUT_Selections3
-		#define fLUT_Selections3 "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+		#define fLUT_Selections3 "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Sepia\0B&W mid constrast\0B&W high contrast\0"
 	#endif
 #endif
 
@@ -136,11 +136,11 @@
 
 #define fLUT_AtlasList "GShade [Angelite-Compatible]\0Custom\0ReShade\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0"
 
-#define fLUT_GSSelections "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
-#define fLUT_RESSelections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Vogue\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+#define fLUT_GSSelections "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0B&W mid constrast\0B&W high contrast\0"
+#define fLUT_RESSelections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Vogue\0Sepia\0B&W mid constrast\0B&W high contrast\0"
 #define fLUT_JOHSelections "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0Color12\0Color13\0Color14\0Color15\0Color16\0Color17\0"
 #define fLUT_EGSelections "Neutral\0Darklite (Realism, Day, Outdoors)\0Shadownite (Realism, Night, Indoors)\0Ambient Memories (Bright, Warm)\0Faded Memories (Desaturated, Dark)\0Pastel Memories (Cartoony, Colorful, Bright)\0Nostalgic \ Radiance (Bright, Colorful, Studio, Lights)\0"
-#define fLUT_MSSelections "Neutral\0Lela\0Brienne\0Color3\0Light\0Pink\0Angelite\0Cool Light\0Flat & Green\0Sepia\0\B&W mid constrast\0\B&W high contrast\0"
+#define fLUT_MSSelections "Neutral\0Lela\0Brienne\0Color3\0Light\0Pink\0Angelite\0Cool Light\0Flat & Green\0Sepia\0B&W mid constrast\0B&W high contrast\0"
 #define fLUT_NFSelections "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0Color11\0"
 #define fLUT_S14Selections "Neutral\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10\0"
 #define fLUT_YOMSelections "Neutral\0Nature's Call\0Cherry Blossom\0Bleach\0Golden Hour\0Vibrant Sands\0Azure\0Macaron\0Vintage Film\0Bubble Gum\0Fountain\0Clear Skies\0Action\0Pastel Purity\0Lens Clarity\0Heart\0Teal and Orange\0Haunt\0"
