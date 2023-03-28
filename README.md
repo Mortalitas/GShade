@@ -71,6 +71,6 @@ To learn more about GShade's unique features, we highly recommend reading throug
 * Optional Desktop Update Reminder
 * Uninstaller
 
-A comprehensive **Quick Reference** which includes tutorials for GShade can be found [here](https://gshade.org/ref).
+A comprehensive **Quick Reference** which includes tutorials for GShade can be found [here](https://drive.google.com/file/d/1YKbxcVDPwJkSzkFB9I0ERGsQEHvoh3P9).
 
 For preset creators looking to distribute their work independently, an **easily customizable preset installer** written in C# can be found [here](https://github.com/Mortalitas/GShade-Preset-Installer). 
