@@ -12,7 +12,7 @@ The official **GShade Linux/Unix Installation Script** for GShade can be found [
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortalitas/GShade-Bash-Installer/master/gshade_installer.sh)"
 ```
 
-If you are installing GShade to **Final Fantasy XIV** on **Mac**, we highly recommend installing [XIV on Mac](https://www.xivmac.com) first. Afterwards, use the **[Linux/Unix script](https://www.gshade.org/releases/gshade_installer.sh)** via the following command in the **Terminal** app:
+If you are installing GShade to **Final Fantasy XIV** on **Mac**, we highly recommend installing [XIV on Mac](https://www.xivmac.com) first. Afterwards, use the **[Linux/Unix script](https://github.com/Mortalitas/GShade-Bash-Installer)** via the following command in the **Terminal** app:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortalitas/GShade-Bash-Installer/master/gshade_installer.sh)"
 ```
