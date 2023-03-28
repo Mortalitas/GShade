@@ -17,7 +17,7 @@ If you are installing GShade to **Final Fantasy XIV** on **Mac**, we highly reco
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortalitas/GShade-Bash-Installer/master/gshade_installer.sh)"
 ```
 
-To learn more about GShade's unique features, we highly recommend reading through the **[GShade Quick Reference](https://gshade.org/ref)**.
+To learn more about GShade's unique features, we highly recommend reading through the **[GShade Quick Reference](https://drive.google.com/file/d/1YKbxcVDPwJkSzkFB9I0ERGsQEHvoh3P9)**.
 
 **While GShade can work with any game that ReShade does, the following are some of the more common games we see people using GShade with:**
 * **Black Desert Online**
