@@ -4,7 +4,7 @@
 Note that all shaders in this repository are intended for use with the latest GShade release. Not all shaders will work under official builds of ReShade due to the implementation of GShade's additional features. Please refer to the [license](https://github.com/Mortalitas/GShade/blob/master/LICENSE.md) on the repository **and** individual file licenses for questions about distribution and modification.
 
 **The latest Windows release can always be found below:**
-* Github: https://github.com/Mortalitas/GShade/releases/latest
+* Github: https://github.com/Mortalitas/GShade/releases/latest/download/GShade.Latest.Installer.exe
 * Mirror: https://www.gshade.org/releases/GShade.Latest.Installer.exe
 
 The official **GShade Linux/Unix Installation Script** for GShade can be found [here](https://github.com/Mortalitas/GShade-Bash-Installer). We highly recommend using the script via the following command in your terminal of choice:
