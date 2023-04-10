@@ -5,7 +5,6 @@ Note that all shaders in this repository are intended for use with the latest GS
 
 **The latest Windows release can always be found below:**
 * Github: https://github.com/Mortalitas/GShade/releases/latest/download/GShade.Latest.Installer.exe
-* Mirror: https://www.gshade.org/releases/GShade.Latest.Installer.exe
 
 The official **GShade Linux/Unix Installation Script** for GShade can be found [here](https://github.com/Mortalitas/GShade-Bash-Installer). We highly recommend using the script via the following command in your terminal of choice:
 ```
