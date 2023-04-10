@@ -98,7 +98,7 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
 	const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT)); \
 	const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH)); \
 	const float3 mulUV = float3(texCoord.x, texCoord.y, 1); \
-	const float2 ScaleSize = (float2(LAYER_SIZE_X, LAYER_SIZE_Y) * LAYER_SCALE / BUFFER_SCREEN_SIZE); \
+	const float2 ScaleSize = (float2(Layer_Size_X, Layer_Size_Y) * LAYER_SCALE / BUFFER_SCREEN_SIZE); \
 	const float ScaleX =  ScaleSize.x * AspectX * Layer_ScaleX; \
 	const float ScaleY =  ScaleSize.y * AspectY * Layer_ScaleY; \
 	float Rotate = Layer_Rotate * (3.1415926 / 180.0); \

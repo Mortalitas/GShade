@@ -135,7 +135,7 @@ void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 		const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT)); \
 		const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH)); \
 		const float3 mulUV = float3(texCoord.x, texCoord.y, 1); \
-		const float2 ScaleSize = (float2(STAGE_SIZE_X, STAGE_SIZE_Y) * STAGEDEPTH_SCALE / BUFFER_SCREEN_SIZE); \
+		const float2 ScaleSize = (float2(StageDepth_Size_X, StageDepth_Size_Y) * STAGEDEPTH_SCALE / BUFFER_SCREEN_SIZE); \
 		const float ScaleX =  ScaleSize.x * AspectX * StageDepth_ScaleX; \
 		const float ScaleY =  ScaleSize.y * AspectY * StageDepth_ScaleY; \
 		float Rotate = StageDepth_Rotate * (3.1415926 / 180.0); \
