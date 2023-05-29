@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.1.4
+/** Perfect Perspective PS, version 5.1.5
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -12,10 +12,16 @@ of image recordings based on the work (e.g. Let's Play videos,
 gameplay streams, and screenshots featuring ReShade filters) provided
 that any use is accompanied by the name of the used shader and a link
 to the ReShade website https://reshade.me.
-§ This is intended to make the effect available free of charge for
-non-corporate, common use.
-§ The desired outcome is for the work to be easily recognizable in any
+Intent §: To make the effect available free of charge for non-corporate, common
+use.
+Result §: The desired outcome is for the work to be easily recognizable in any
 derivative images.
+
+§ Furthermore, permission is granted for the translation of the front-end UI
+text within this shader.
+Intent §: For better accessibility and understanding across different languages.
+Result §: The desired outcome is to promote usability across users from diverse
+linguistic backgrounds, and for them to be able to engage with the shader.
 
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
@@ -942,6 +948,8 @@ technique PerfectPerspective
 		"\n"
 		"	4# additionally for sharp image, use sharpening FX or run game at a\n"
 		"	   Super-Resolution. Debug options can help you find the proper value.\n"
+		"\n"
+		"	5# for more available settings set PANTOMORPHIC_MODE value to 1 or 2.\n"
 		"\n"
 		"The algorithm is part of a scientific article:\n"
 		"	arXiv:2003.10558 [cs.GR] (2020)\n"
