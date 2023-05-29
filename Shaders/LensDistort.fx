@@ -1,4 +1,4 @@
-/** Lens Distortion PS, version 1.3.7
+/** Lens Distortion PS, version 1.3.8
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -12,10 +12,16 @@ of image recordings based on the work (e.g. Let's Play videos,
 gameplay streams, and screenshots featuring ReShade filters) provided
 that any use is accompanied by the name of the used shader and a link
 to the ReShade website https://reshade.me.
-§ This is intended to make the effect available free of charge for
-non-corporate, common use.
-§ The desired outcome is for the work to be easily recognizable in any
+Intent §: To make the effect available free of charge for non-corporate, common
+use.
+Result §: The desired outcome is for the work to be easily recognizable in any
 derivative images.
+
+§ Furthermore, permission is granted for the translation of the front-end UI
+text within this shader.
+Intent §: For better accessibility and understanding across different languages.
+Result §: The desired outcome is to promote usability across users from diverse
+linguistic backgrounds, and for them to be able to engage with the shader.
 
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.

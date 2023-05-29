@@ -1,4 +1,4 @@
-/** Motion Blur effect PS, version 1.0.6
+/** Motion Blur effect PS, version 1.0.7
 
 This code © 2022 Jakub Maksymilian Fober
 
@@ -7,11 +7,21 @@ Attribution-NonCommercial-NoDerivs 3.0 Unported License.
 To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc-nd/3.0/.
 
-Copyright owner further grants permission for commercial reuse of
-image recordings derived from the Work (e.g. let's play video,
-gameplay stream with ReShade filters, screenshots with ReShade
-filters) provided that any use is accompanied by the name of the
-shader used and a link to ReShade website https://reshade.me.
+§ The copyright owner further grants permission for commercial reuse
+of image recordings based on the work (e.g. Let's Play videos,
+gameplay streams, and screenshots featuring ReShade filters) provided
+that any use is accompanied by the name of the used shader and a link
+to the ReShade website https://reshade.me.
+Intent §: To make the effect available free of charge for non-corporate, common
+use.
+Result §: The desired outcome is for the work to be easily recognizable in any
+derivative images.
+
+§ Furthermore, permission is granted for the translation of the front-end UI
+text within this shader.
+Intent §: For better accessibility and understanding across different languages.
+Result §: The desired outcome is to promote usability across users from diverse
+linguistic backgrounds, and for them to be able to engage with the shader.
 
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
