@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 13-jun-2023:    v1.2.8:  Added the NearFarDistanceCompensation slider for compensating hard edges on geometry that's out of focus but close to the in-focus plane
 // 25-jan-2023:    v1.2.7+: Reduced textures loaded via GShade's ui_bind annotations and added the ability to use a custom bokeh texture via the preprocessor.
 // 24-jan-2023:    v1.2.7:  Added custom shape support for bokeh highlights. The included shapes were created by Moyevka, Murchalloo, K-putt and others. 
 // 11-nov-2022:    v1.2.6:  Added bokeh sharpening. 
