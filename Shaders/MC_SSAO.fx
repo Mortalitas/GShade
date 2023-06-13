@@ -149,17 +149,17 @@ texture2D InterleavedAOTex2 { Width = BUFFER_WIDTH / 2;   Height = BUFFER_HEIGHT
 texture2D InterleavedAOTex3 { Width = BUFFER_WIDTH / 2;   Height = BUFFER_HEIGHT / 2;   Format = R8; MipLevels = 1;};
 texture2D InterleavedAOTex4 { Width = BUFFER_WIDTH / 2;   Height = BUFFER_HEIGHT / 2;   Format = R8; MipLevels = 1;};
 
-texture2D AOTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R8; MipLevels = 1;};
-texture2D AOTex2	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R8; MipLevels = 1;};
-texture2D NormalTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 1;};
+texture2D MCAOTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R8; MipLevels = 1;};
+texture2D MCAOTex2	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = R8; MipLevels = 1;};
+texture2D MCNormalTex	{ Width = BUFFER_WIDTH;   Height = BUFFER_HEIGHT;   Format = RGBA8; MipLevels = 1;};
 
-sampler2D sAOTex { Texture = AOTex; };
-sampler2D sAOTex2 { Texture = AOTex2; };
+sampler2D sAOTex { Texture = MCAOTex; };
+sampler2D sAOTex2 { Texture = MCAOTex2; };
 sampler2D sInterleavedAOTex { Texture = InterleavedAOTex; };
 sampler2D sInterleavedAOTex2 { Texture = InterleavedAOTex2; };
 sampler2D sInterleavedAOTex3 { Texture = InterleavedAOTex3; };
 sampler2D sInterleavedAOTex4 { Texture = InterleavedAOTex4; };
-sampler2D sNormalTex { Texture = NormalTex; };
+sampler2D sNormalTex { Texture = MCNormalTex; };
 
 float GetTrueDepth(float2 coords)
 {
@@ -554,7 +554,7 @@ technique MC_DAO
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = DepthNormalsPass;
-		RenderTarget0 = NormalTex;
+		RenderTarget0 = MCNormalTex;
 	}
 	pass
 	{
@@ -569,13 +569,13 @@ technique MC_DAO
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = MergeAOPass;
-		RenderTarget0 = AOTex;
+		RenderTarget0 = MCAOTex;
 	}
 	pass
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = BlurAOFirstPass;
-		RenderTarget0 = AOTex2;
+		RenderTarget0 = MCAOTex2;
 	}
 	pass
 	{
