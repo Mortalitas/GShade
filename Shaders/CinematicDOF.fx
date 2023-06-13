@@ -108,7 +108,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.7"
+	#define CINEMATIC_DOF_VERSION "v1.2.8"
 
 #ifndef CD_DEBUG
 	#define CD_DEBUG 0
@@ -218,7 +218,7 @@ namespace CinematicDOF
 		ui_category = "Blur tweaking";
 		ui_label = "Far plane max blur";
 		ui_type = "slider";
-		ui_min = 0.000; ui_max = 4.0;
+		ui_min = 0.000; ui_max = 8.0;
 		ui_step = 0.01;
 		ui_tooltip = "The maximum blur a pixel can have when it has its maximum CoC in the far plane. Use this as a tweak\nto adjust the max far plane blur defined by the lens parameters. Don't use this as your primarily\nblur factor, use the lens parameters Focal Length and Aperture for that instead.";
 	> = 1.0;
@@ -234,7 +234,7 @@ namespace CinematicDOF
 		ui_category = "Blur tweaking";
 		ui_label = "Overall blur quality";
 		ui_type = "slider";
-		ui_min = 2.0; ui_max = 20.0;
+		ui_min = 2.0; ui_max = 30.0;
 		ui_tooltip = "The number of rings to use in the disc-blur algorithm. The more rings the better\nthe blur results, but also the slower it will get.";
 		ui_step = 1;
 	> = 7.0;
@@ -254,6 +254,15 @@ namespace CinematicDOF
 		ui_tooltip = "The amount of post-blur smoothing blur to apply. 0.0 means no smoothing blur is applied.";
 		ui_step = 0.01;
 	> = 0.0;
+	uniform float NearFarDistanceCompensation < 
+		ui_category = "Blur tweaking";
+		ui_label = "Near-Far plane distance compenation";
+		ui_type = "slider";
+		ui_min = 1.0; ui_max = 5.0;
+		ui_tooltip = "The amount of compensation is applied for edges which are far away from the background.\nIncrease to a value > 1.0 to avoid hard edges in areas out of focus which\nare close to the in-focus area.";
+		ui_step = 0.01;
+	> = 1.0f;
+	
 	// ------------- HIGHLIGHT TWEAKING
 	uniform float HighlightAnamorphicFactor <
 		ui_category = "Highlight tweaking, anamorphism";
@@ -394,6 +403,7 @@ namespace CinematicDOF
 		ui_category = "Debugging";
 	> = false;
 #endif
+
 	//////////////////////////////////////////////////
 	//
 	// Defines, constants, samplers, textures, uniforms, structs
@@ -403,7 +413,6 @@ namespace CinematicDOF
 	#define SENSOR_SIZE			0.024		// Height of the 35mm full-frame format (36mm x 24mm)
 	#define PI 					3.1415926535897932
 	#define TILE_SIZE			1			// amount of pixels left/right/up/down of the current pixel. So 4 is 9x9
-	#define TILE_MULTIPLY		1
 	#define GROUND_TRUTH_SCREEN_WIDTH	1920.0f
 	#define GROUND_TRUTH_SCREEN_HEIGHT	1200.0f
 
@@ -417,9 +426,9 @@ namespace CinematicDOF
 	texture texCDCurrentFocus		{ Width = 1; Height = 1; Format = R16F; };		// for storing the current focus depth obtained from the focus point
 	texture texCDPreviousFocus		{ Width = 1; Height = 1; Format = R16F; };		// for storing the previous frame's focus depth from texCDCurrentFocus.
 	texture texCDCoC				{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16F; };
-	texture texCDCoCTileTmp			{ Width = BUFFER_WIDTH/(TILE_SIZE*TILE_MULTIPLY); Height = BUFFER_HEIGHT/(TILE_SIZE*TILE_MULTIPLY); Format = R16F; };	// R is MinCoC
-	texture texCDCoCTile			{ Width = BUFFER_WIDTH/(TILE_SIZE*TILE_MULTIPLY); Height = BUFFER_HEIGHT/(TILE_SIZE*TILE_MULTIPLY); Format = R16F; };	// R is MinCoC
-	texture texCDCoCTileNeighbor	{ Width = BUFFER_WIDTH/(TILE_SIZE*TILE_MULTIPLY); Height = BUFFER_HEIGHT/(TILE_SIZE*TILE_MULTIPLY); Format = R16F; };	// R is MinCoC
+	texture texCDCoCTileTmp			{ Width = BUFFER_WIDTH/TILE_SIZE; Height = BUFFER_HEIGHT/TILE_SIZE; Format = R16F; };	// R is MinCoC
+	texture texCDCoCTile			{ Width = BUFFER_WIDTH/TILE_SIZE; Height = BUFFER_HEIGHT/TILE_SIZE; Format = R16F; };	// R is MinCoC
+	texture texCDCoCTileNeighbor	{ Width = BUFFER_WIDTH/TILE_SIZE; Height = BUFFER_HEIGHT/TILE_SIZE; Format = R16F; };	// R is MinCoC
 	texture texCDCoCTmp1			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = R16F; };	// half res, single value
 	texture texCDCoCBlurred			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RG16F; };	// half res, blurred CoC (r) and real CoC (g)
 	texture texCDBuffer1 			{ Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
@@ -662,11 +671,12 @@ namespace CinematicDOF
 		const float toReturn = clamp(saturate(abs(cocInMM) * SENSOR_SIZE), 0, 1); // divide by sensor size to get coc in % of screen (or better: in sampler units)
 		return (pixelDepth < focusInfo.focusDepth) ? -toReturn : toReturn;
 	}
-	
+
+
 	// calculate the sample weight based on the values specified. 
 	float CalculateSampleWeight(float sampleRadiusInCoC, float ringDistanceInCoC)
 	{
-		return  saturate(sampleRadiusInCoC - ringDistanceInCoC + 0.5);
+		return saturate(sampleRadiusInCoC - (ringDistanceInCoC * NearFarDistanceCompensation) + 0.5);
 	}
 	
 	
@@ -1039,11 +1049,11 @@ namespace CinematicDOF
 		float3 maxv = 0;
 
 		float centerCoC = tex2D(SamplerCDCoC, texcoord).r;
-		float4 v12 = SharpeningPass_BlurSample(source, texcoord + up, 			right, up, centerCoC, minv, maxv);
-		float4 v21 = SharpeningPass_BlurSample(source, texcoord - right, 		right, up, centerCoC, minv, maxv);
-		float4 v22 = SharpeningPass_BlurSample(source, texcoord, 				right, up, centerCoC, minv, maxv);
-		float4 v23 = SharpeningPass_BlurSample(source, texcoord + right, 		right, up, centerCoC, minv, maxv);
-		float4 v32 = SharpeningPass_BlurSample(source, texcoord - up, 			right, up, centerCoC, minv, maxv);
+		float4 v12 = SharpeningPass_BlurSample(source, texcoord + up, 	right, up, centerCoC, minv, maxv);
+		float4 v21 = SharpeningPass_BlurSample(source, texcoord - right,right, up, centerCoC, minv, maxv);
+		float4 v22 = SharpeningPass_BlurSample(source, texcoord, 		right, up, centerCoC, minv, maxv);
+		float4 v23 = SharpeningPass_BlurSample(source, texcoord + right,right, up, centerCoC, minv, maxv);
+		float4 v32 = SharpeningPass_BlurSample(source, texcoord - up, 	right, up, centerCoC, minv, maxv);
 		// rest of the pixels aren't used
 		float accepted = v12.a + v21.a + v23.a + v32.a;
 		if(accepted < 15.5)
