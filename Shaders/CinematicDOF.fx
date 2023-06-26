@@ -32,6 +32,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Version history:
+// 26-jun-2023:	   v1.2.9:  Found a way to compensate for edges on close to in-focus geometry shimmering through which were otherwise only removable with the NearFarDistanceCompensation added
+//                          in the previous version
 // 13-jun-2023:    v1.2.8:  Added the NearFarDistanceCompensation slider for compensating hard edges on geometry that's out of focus but close to the in-focus plane
 // 25-jan-2023:    v1.2.7+: Reduced textures loaded via GShade's ui_bind annotations and added the ability to use a custom bokeh texture via the preprocessor.
 // 24-jan-2023:    v1.2.7:  Added custom shape support for bokeh highlights. The included shapes were created by Moyevka, Murchalloo, K-putt and others. 
@@ -109,7 +111,7 @@
 
 namespace CinematicDOF
 {
-	#define CINEMATIC_DOF_VERSION "v1.2.8"
+	#define CINEMATIC_DOF_VERSION "v1.2.9"
 
 #ifndef CD_DEBUG
 	#define CD_DEBUG 0
@@ -356,6 +358,12 @@ namespace CinematicDOF
 		ui_category = "Debugging";
 	> = false;
 	uniform bool DBVal2 <
+		ui_category = "Debugging";
+	> = false;
+	uniform bool DBVal3 <
+		ui_category = "Debugging";
+	> = false;
+	uniform bool DBVal4 <
 		ui_category = "Debugging";
 	> = false;
 	uniform float DBVal3f <
@@ -823,6 +831,9 @@ namespace CinematicDOF
 				float4 tapCoords = float4(blurInfo.texcoord + (pointOffset * currentRingRadiusCoords), 0, 0);
 				float sampleRadius = tex2Dlod(SamplerCDCoC, tapCoords).r;
 				float weight = (sampleRadius >=0) * ringWeight * CalculateSampleWeight(sampleRadius * FarPlaneMaxBlur, ringDistance) * (shapeTap.a > 0.01 ? 1.0f : 0.0f);
+				// adjust the weight for samples which are in front of the fragment, as they have to get their weight boosted so we don't see edges bleeding through. 
+				// as otherwise they'll get a weight that's too low relatively to the pixels sampled from the plane the fragment is in.The 3.0 value is empirically determined.
+				weight *= (1.0 + min(FarPlaneMaxBlur, 3.0f) * saturate(fragmentRadius - sampleRadius));
 				float4 tap = tex2Dlod(source, tapCoords);
 #if CINEMATIC_DOF_SHAPES != 0
 				tap.rgb *= (shapeTap.rgb * HighlightShapeGamma);
