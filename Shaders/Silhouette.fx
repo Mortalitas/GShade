@@ -1,5 +1,6 @@
-// Made by Marot Satil for the GShade ReShade package!
-// You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
+// Made by Marot Satil for GShade, a fork of ReShade.
+// You can follow me via @MarotSatil on Twitter, but I don't use it all that much and if you message me directly it's very likely to get flagged as spam.
+// If you have questions about this shader or need to contact me for any other reason, reaching out to me via the username Marot on Discord is likely a better bet.
 //
 // A bit of an accidental discovery when playing with StageDepth.fx, this
 // shader allows you to do a depth-based silhouette with any two images.

@@ -1,5 +1,6 @@
-// Made by Marot Satil, seri14, & Uchu Suzume for the GShade ReShade package!
-// You can follow me via @MarotSatil on Twitter, but I don't use it all that much.
+// Made by Marot Satil for GShade, a fork of ReShade.
+// You can follow me via @MarotSatil on Twitter, but I don't use it all that much and if you message me directly it's very likely to get flagged as spam.
+// If you have questions about this shader or need to contact me for any other reason, reaching out to me via the username Marot on Discord is likely a better bet.
 //
 // This shader was designed in the same vein as GreenScreenDepth.fx, but instead of applying a
 // green screen with adjustable distance, it applies a PNG texture with adjustable opacity.
@@ -7,29 +8,24 @@
 // PNG transparency is fully supported, so you could for example add another moon to the sky
 // just as readily as create a "green screen" stage like in real life.
 //
-// Copyright (c) 2023, Marot Satil
-// All rights reserved.
+// Copyright © 2023 Marot Satil
+// This work is free. You can redistribute it and/or modify it under the
+// terms of the Do What The Fuck You Want To Public License, Version 2,
+// as published by Sam Hocevar.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, the header above it, this list of conditions, and the following disclaimer
-//    in this position and unchanged.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, the header above it, this list of conditions, and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
+//            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+//                    Version 2, December 2004
 //
-// THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-// OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-// NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-// THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+//
+// Everyone is permitted to copy and distribute verbatim or modified
+// copies of this license document, and changing it is allowed as long
+// as the name is changed.
+//
+//            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+//   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+//
+//  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 #define STAGEDEPTH_SUMMONING(StageDepth_Texture, StageDepthTex, StageDepth_Size_X, StageDepth_Size_Y, StageDepth_Texformat, StageDepth_Sampler, StageDepth_BlendMode, StageDepth_Category, StageDepth_Opacity, StageDepth_Depth, STAGEDEPTH_SCALE, StageDepth_ScaleX, StageDepth_ScaleY, StageDepth_PosX, StageDepth_PosY, StageDepth_SnapRotate, StageDepth_Rotate, StageDepth_InvertDepth, PS_StageDepth, STAGEDEPTH_NAME) \
 texture StageDepth_Texture <source=StageDepthTex;> { Width = StageDepth_Size_X; Height = StageDepth_Size_Y; Format=StageDepth_Texformat; }; \
