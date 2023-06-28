@@ -32,6 +32,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // Version History
+// 28-jun-2023:		v1.4: Added a setting to flip the feather band to feather the outside of the blur area
+//					      Added a setting to flip the direction of the blur in Focus Point Targeting Strokes.
 // 30-aug-2022: 	v1.3: Added filter circle with feather support for focus point strokes mode, and tweaked some defaults.
 // 18-apr-2020:		v1.2: Added blend factor for blur
 // 13-apr-2020:		v1.1: Added highlight control (I know it flips the hue in focus point mode, it's a bug that actually looks great), 
@@ -48,7 +50,7 @@ namespace DirectionalDepthBlur
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
 	
-	#define DIRECTIONAL_DEPTH_BLUR_VERSION "v1.3"
+	#define DIRECTIONAL_DEPTH_BLUR_VERSION "v1.4"
 
 	//////////////////////////////////////////////////
 	//
@@ -151,6 +153,16 @@ namespace DirectionalDepthBlur
 		ui_category = "Blur tweaking, Focus Point";
 		ui_label = "Fade blur in feather band";
 		ui_tooltip = "For Focus Point Targeting Strokes blur type:\nIf checked, it'll fade out the blur in the feather area in the filter circle";
+	> = false;
+	uniform bool FlipFadeBlurInFeatherBand <
+		ui_category = "Blur tweaking, Focus Point";
+		ui_label = "Flip feather band";
+		ui_tooltip = "For Focus Point Targeting Strokes blur type:\nIf checked, it'll flip the feather band from being towards the center to towards the edges";
+	> = false;
+	uniform bool FlipFocusPointTargetingBlurDirection <
+		ui_category = "Blur tweaking, Focus Point";
+		ui_label = "Flip Focus Point Targeting strokes blur direction";
+		ui_tooltip = "For Focus Point Targeting Strokes blur type:\nIf checked, it'll flip the direction of the blur from inside-to-outside to outside-to-inside";
 	> = false;
 	uniform float FilterCircleRadius <
 		ui_category = "Blur tweaking, Focus Point";
@@ -268,9 +280,9 @@ namespace DirectionalDepthBlur
 	
 	float2 CalculatePixelDeltas(float2 texCoords)
 	{
-		float2 mouseCoords = MouseCoords * BUFFER_PIXEL_SIZE;
-		
-		return (float2(FocusPoint.x - texCoords.x, FocusPoint.y - texCoords.y)) * length(BUFFER_PIXEL_SIZE);
+		float2 newCoords = FlipFocusPointTargetingBlurDirection ? float2(texCoords.x - FocusPoint.x, texCoords.y - FocusPoint.y) 
+																: float2(FocusPoint.x - texCoords.x, FocusPoint.y - texCoords.y);
+		return newCoords * length(BUFFER_PIXEL_SIZE);
 	}
 	
 	float3 AccentuateWhites(float3 fragment)
@@ -354,8 +366,9 @@ namespace DirectionalDepthBlur
 		}
 		for(float tapIndex=0.0;tapIndex<blurLengthInPixels;tapIndex+=(1/BlurQuality))
 		{
-			float2 tapCoords = (pixelInfo.texCoords + (pixelDelta * tapIndex));
-			float3 tapColor = tex2Dlod(samplerDownsampledBackBuffer, float4(tapCoords * ScaleFactor, 0, 0)).rgb;
+			float2 tapCoords = saturate(pixelInfo.texCoords + (pixelDelta * tapIndex));
+			// we have to use a slightly smaller scalefactor here otherwise it might be we're reading just 1 pixel outside the downsized texture and that will lead to dark edges. 
+			float3 tapColor = tex2Dlod(samplerDownsampledBackBuffer, float4(tapCoords * (ScaleFactor-0.001), 0, 0)).rgb;
 			float tapDepth = ReShade::GetLinearizedDepth(tapCoords);
 			float weight = tapDepth <= pixelInfo.focusPlane ? 0.0 : 1-(tapIndex / (blurLengthInPixels + (blurLengthInPixels==0)));
 			average.rgb+=(tapColor * weight);
@@ -449,6 +462,10 @@ namespace DirectionalDepthBlur
 				float featherbandWidth = FilterCircleRadius - pixelInfo.featherRadius;
 				fragment = lerp(0.0f, 1.0f, (texcoordDistance - pixelInfo.featherRadius) / (featherbandWidth + (featherbandWidth==0)));
 			}
+		}
+		if(FlipFadeBlurInFeatherBand)
+		{
+			fragment = 1.0 - fragment;
 		}
 	}
 	
