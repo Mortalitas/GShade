@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.2.0
+/** Perfect Perspective PS, version 5.2.1
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -68,6 +68,10 @@ by Fober, J. M.
 // Stereo 3D mode
 #ifndef SIDE_BY_SIDE_3D
 	#define SIDE_BY_SIDE_3D 0
+#endif
+// Precise cropping to the corners
+#ifndef PRECISE_CROPPING
+	#define PRECISE_CROPPING 0
 #endif
 // ITU REC 601 YCbCr
 #define ITU_REC 601
@@ -455,6 +459,77 @@ float2 get_phi_weights(float2 texCoord)
 	return texCoord/(texCoord.x+texCoord.y); // [cosφ² sinφ²] vector
 }
 
+#if PANTOMORPHIC_MODE>=2
+float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
+{
+	float2 croppingDigonal = 0.5;
+	// Diagonal pint φ weight
+	const float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
+	// Diagonal half-Ω angle
+	const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+	// Search resolution
+	const uint searchResolution = ceil(length(BUFFER_SCREEN_SIZE)*2u); // sub-pixel
+	// Find diagonal point top radius with pixel resolution
+	for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
+	{
+		// Get θ angle at current homing radius value
+		float diagonalTheta = dot(
+			diagonalPhi,
+			float2(
+				get_theta(croppingDigonal.s, rcp_focal, K),
+				get_theta(croppingDigonal.s, rcp_focal, Ky.s)
+			)
+		);
+		// Perform value homing, if the cropping point is before the corner point,
+		// add half-step, if behind, subtract half-step
+		croppingDigonal.s += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+	}
+	// Find diagonal point bottom radius with pixel resolution
+	for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
+	{
+		// Get θ angle at current homing radius value
+		float diagonalTheta = dot(
+			diagonalPhi,
+			float2(
+				get_theta(croppingDigonal.t, rcp_focal, K),
+				get_theta(croppingDigonal.t, rcp_focal, Ky.t)
+			)
+		);
+		// Perform value homing, if the cropping point is before the corner point,
+		// add half-step, if behind, subtract half-step
+		croppingDigonal.t += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+	}
+
+	return croppingDigonal;
+}
+#elif PANTOMORPHIC_MODE==1
+float binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
+{
+	float croppingDigonal = 0.5;
+	// Diagonal pint φ weight
+	const float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
+	// Diagonal half-Ω angle
+	const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+	// Find diagonal point radius with pixel resolution
+	for (uint d=4u; d<=ceil(length(BUFFER_SCREEN_SIZE)*2u); d*=2u) // log2 complexity
+	{
+		// Get θ angle at current homing radius value
+		float diagonalTheta = dot(
+			diagonalPhi,
+			float2(
+				get_theta(croppingDigonal, rcp_focal, K),
+				get_theta(croppingDigonal, rcp_focal, Ky)
+			)
+		);
+		// Perform value homing, if the cropping point is before the corner point,
+		// add half-step, if behind, subtract half-step
+		croppingDigonal += diagonalTheta>diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+	}
+
+	return croppingDigonal;
+}
+#endif
+
 	/* SHADER */
 
 // Border mask shader with rounded corners
@@ -737,28 +812,13 @@ float3 PerfectPerspectivePS(
 		const float croppingVertical = get_radius(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 			rcp_focal, Ky)/viewProportions.y;
-		// Diagonal pint φ weight
-		const float2 diagonalPhi = get_phi_weights(viewProportions);
-		// Diagonal half-Ω angle
-		const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+
 		// Diagonal point radius
-		static float croppingDigonal = 0.5;
-		// Find diagonal point radius with pixel resolution
-		for (uint d=4u; d<=ceil(length(BUFFER_SCREEN_SIZE)*2u); d*=2u) // log2 complexity
-		{
-			// Get θ angle at current homing radius value
-			float diagonalTheta = dot(
-				diagonalPhi,
-				float2(
-					get_theta(croppingDigonal, rcp_focal, K),
-					get_theta(croppingDigonal, rcp_focal, Ky)
-				)
-			);
-			// Perform value homing
-			if (diagonalTheta == diagonalHalfOmega) break; // stop loop if already at the point
-			// If the cropping point is before the corner point, add half-step, if behind, subtract half-step
-			else croppingDigonal += diagonalTheta>diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
-		}
+#if PRECISE_CROPPING // High impact on performance, due to compiler quality
+		const float croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
+#else // Bypass for the compiler poor work
+		const float croppingDigonal = 0.75;
+#endif
 
 		// Circular fish-eye
 		const float circularFishEye = max(croppingHorizontal, croppingVertical);
@@ -776,46 +836,13 @@ float3 PerfectPerspectivePS(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 				rcp_focal, Ky.t)
 		)/viewProportions.y;
-		// Diagonal pint φ weight
-		float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE*0.5);
-		// Diagonal half-Ω angle
-		const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+
 		// Diagonal point radius
-		static float2 croppingDigonal = 0.5;
-		// Search resolution
-		const uint searchResolution = ceil(length(BUFFER_SCREEN_SIZE)*2u); // sub-pixel
-		// Find diagonal point top radius with pixel resolution
-		for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
-		{
-			// Get θ angle at current homing radius value
-			float diagonalTheta = dot(
-				diagonalPhi,
-				float2(
-					get_theta(croppingDigonal.s, rcp_focal, K),
-					get_theta(croppingDigonal.s, rcp_focal, Ky.s)
-				)
-			);
-			// Perform value homing
-			if (diagonalTheta == diagonalHalfOmega) break; // stop loop if already at the point
-			// If the cropping point is before the corner point, add half-step, if behind, subtract half-step
-			else croppingDigonal.s += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
-		}
-		// Find diagonal point bottom radius with pixel resolution
-		for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
-		{
-			// Get θ angle at current homing radius value
-			float diagonalTheta = dot(
-				diagonalPhi,
-				float2(
-					get_theta(croppingDigonal.t, rcp_focal, K),
-					get_theta(croppingDigonal.t, rcp_focal, Ky.t)
-				)
-			);
-			// Perform value homing
-			if (diagonalTheta == diagonalHalfOmega) break; // stop loop if already at the point
-			// If the cropping point is before the corner point, add half-step, if behind, subtract half-step
-			else croppingDigonal.t += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
-		}
+#if PRECISE_CROPPING // High impact on performance, due to compiler quality
+		const float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
+#else // Bypass for the compiler poor work
+		const float2 croppingDigonal = 0.75;
+#endif
 
 		// Circular fish-eye
 		const float circularFishEye = max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t);
