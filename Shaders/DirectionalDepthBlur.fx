@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
 // Version History
+// 28-jun-2023: 	v1.5: Fixed issue with parallel strokes not working due to change introduced in 1.4
 // 28-jun-2023:		v1.4: Added a setting to flip the feather band to feather the outside of the blur area
 //					      Added a setting to flip the direction of the blur in Focus Point Targeting Strokes.
 //     					  Fixed highlight gain not properly feathered.
@@ -51,7 +52,7 @@ namespace DirectionalDepthBlur
 // Uncomment line below for debug info / code / controls
 //	#define CD_DEBUG 1
 	
-	#define DIRECTIONAL_DEPTH_BLUR_VERSION "v1.4"
+	#define DIRECTIONAL_DEPTH_BLUR_VERSION "v1.5"
 
 	//////////////////////////////////////////////////
 	//
@@ -281,7 +282,7 @@ namespace DirectionalDepthBlur
 	
 	float2 CalculatePixelDeltas(float2 texCoords)
 	{
-		float2 newCoords = FlipFocusPointTargetingBlurDirection ? float2(texCoords.x - FocusPoint.x, texCoords.y - FocusPoint.y) 
+		float2 newCoords = (FlipFocusPointTargetingBlurDirection && BlurType==1) ? float2(texCoords.x - FocusPoint.x, texCoords.y - FocusPoint.y) 
 																: float2(FocusPoint.x - texCoords.x, FocusPoint.y - texCoords.y);
 		return newCoords * length(BUFFER_PIXEL_SIZE);
 	}
@@ -385,7 +386,9 @@ namespace DirectionalDepthBlur
 		fragment.rgb = BlurType==0 
 							? fragment.rgb
 							: lerp(fragment.rgb, saturate(lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distanceToFocusPoint))), FocusPointBlendFactor);
-		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), highlightGainToUse), (BlendFactor * filterCircleValue));
+							
+		float blendFactorToUse = BlendFactor * (BlurType==0 ? 1.0 : filterCircleValue);
+		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), highlightGainToUse), blendFactorToUse);
 		fragment.a = alpha;
 	}
 
