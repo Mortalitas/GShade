@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.1.5
+/** Perfect Perspective PS, version 5.2.0
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -85,8 +85,8 @@ uniform uint FovAngle <
 	ui_type = "slider";
 	ui_category = "In game";
 	ui_text = "(Match game settings)";
-	ui_label = "Field of view (FOV)";
-	ui_tooltip = "This should match your in-game FOV value.";
+	ui_label = "Field of view (FoV)";
+	ui_tooltip = "This should match your in-game FoV value.";
 	#if __RESHADE__ < 40000
 		ui_step = 0.2;
 	#endif
@@ -98,7 +98,7 @@ uniform uint FovType <
 	ui_category = "In game";
 	ui_label = "Field of view type";
 	ui_tooltip =
-		"This should match game-specific FOV type.\n"
+		"This should match game-specific FoV type.\n"
 		"\n"
 		"Adjust so that round objects are still round when at the corner, and not oblong.\n"
 		"Tilt head to see better.\n"
@@ -119,12 +119,13 @@ uniform uint FovType <
 
 // PERSPECTIVE
 
+// k indicates horizontal axis or whole picture projection type
 uniform float K <
 	ui_type = "slider";
 	ui_category = "Distortion";
 	ui_text = "(Adjust distortion strength)";
 #if PANTOMORPHIC_MODE // k indicates horizontal axis projection type
-	ui_label = "Projection type 'k.x'";
+	ui_label = "Projection type 'k' horizontal";
 #else // k represents whole picture projection type
 	ui_label = "Projection type 'k'";
 #endif
@@ -148,12 +149,13 @@ uniform float K <
 #if PANTOMORPHIC_MODE // vertical axis projection is driven by separate k parameter
 	#if PANTOMORPHIC_MODE == 1 // vertical axis projection is driven by separate k parameter
 	uniform float Ky <
+	ui_label = "Projection type 'k' vertical";
 	#elif PANTOMORPHIC_MODE >= 2 // vertical axis projection is driven by separate ky top and ky bottom parameter
 	uniform float2 Ky <
+	ui_label = "Projection type 'k' vertical (asymmetrical)";
 	#endif
 	ui_type = "slider";
 	ui_category = "Distortion";
-	ui_label = "Projection type 'k.y'";
 	ui_tooltip =
 		"Projection coefficient 'k', represents\n"
 		"various azimuthal projections types:\n"
@@ -192,26 +194,6 @@ uniform float S <
 > = 1f;
 #endif
 
-uniform float CroppingFactor <
-	ui_type = "slider";
-	ui_category = "Distortion";
-	ui_label = "Cropping";
-	ui_tooltip =
-		"Adjusts image scale and cropped area size:\n"
-		"\n"
-		"Value | Cropping\n"
-		"----------------------\n"
-		"0     | circular\n"
-#if PANTOMORPHIC_MODE // Range limited to [0,1]
-		"1     | cropped-circle";
-	ui_min = 0f; ui_max = 1f;
-#else // Includes full-frame cropping mode at 2
-		"1     | cropped-circle\n"
-		"2     | full-frame";
-	ui_min = 0f; ui_max = 2f;
-#endif
-> = 1f;
-
 uniform bool UseVignette <
 	ui_type = "input";
 	ui_category = "Distortion";
@@ -221,10 +203,26 @@ uniform bool UseVignette <
 
 // BORDER
 
+uniform float CroppingFactor <
+	ui_type = "input";
+	ui_text = "Zoom   [ circular | cropped circle | full frame ]:";
+	ui_category = "Border appearance";
+	ui_category_closed = true;
+	ui_label = "Cropping";
+	ui_tooltip =
+		"Adjusts image scale and cropped area size:\n"
+		"\n"
+		"Value | Cropping\n"
+		"----------------------\n"
+		"0     | circular\n"
+		"1     | cropped-circle\n"
+		"2     | full-frame";
+	ui_min = 0f; ui_max = 2f;
+> = 1f;
+
 uniform bool MirrorBorder <
 	ui_type = "input";
 	ui_category = "Border appearance";
-	ui_category_closed = true;
 	ui_label = "Mirror on border";
 	ui_tooltip = "Choose mirrored or original image on the border.";
 > = false;
@@ -378,7 +376,7 @@ uniform uint ResScaleVirtual <
 sampler BackBuffer
 {
 	Texture = ReShade::BackBufferTex;
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // Linear workflow
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // linear workflow
 	SRGBTexture = true;
 #endif
 	// Border style
@@ -409,10 +407,10 @@ float s_curve(float gradient)
 float glength(uint G, float2 pos)
 {
 	// Sharp corner
-	if (G==0u) return max(abs(pos.x), abs(pos.y)); // G0
+	if (G==0u) return max(abs(pos.x), abs(pos.y)); // g0
 	// Higher-power length function
-	pos = pow(abs(pos), ++G); // Power of G+1
-	return pow(pos.x+pos.y, rcp(G)); // Power G+1 root
+	pos = pow(abs(pos), ++G); // power of G+1
+	return pow(pos.x+pos.y, rcp(G)); // power G+1 root
 }
 
 /* Linear pixel step function for anti-aliasing by Jakub Max Fober.
@@ -430,30 +428,30 @@ float aastep(float grad)
    These algorithms are part of the following scientific papers:
    · arXiv:2003.10558 [cs.GR] (2020)
    · arXiv:2010.04077 [cs.GR] (2020) */
-float get_radius(float theta, float rcp_f, float k) // Get image radius
+float get_radius(float theta, float rcp_f, float k) // get image radius
 {
-	if      (k>0f)   return tan(k*theta)/(rcp_f*k); // Stereographic, rectilinear projections
-	else if (k<0f)   return sin(k*theta)/(rcp_f*k); // Equisolid, orthographic projections
-	else /*(k==0f)*/ return       theta / rcp_f;     // Equidistant projection
+	if      (k>0f)   return tan(k*theta)/(rcp_f*k); // stereographic, rectilinear projections
+	else if (k<0f)   return sin(k*theta)/(rcp_f*k); // equisolid, orthographic projections
+	else /*(k==0f)*/ return       theta / rcp_f;     // equidistant projection
 }
-float get_rcp_focal(float halfOmega, float radiusAtOmega, float k) // Get reciprocal focal length
+float get_rcp_focal(float halfOmega, float radiusAtOmega, float k) // get reciprocal focal length
 { return get_radius(halfOmega, radiusAtOmega, k); }
-float get_theta(float radius, float rcp_f, float k) // Get spherical θ angle
+float get_theta(float radius, float rcp_f, float k) // get spherical θ angle
 {
-	if      (k>0f)   return atan(k*radius*rcp_f)/k; // Stereographic, rectilinear projections
-	else if (k<0f)   return asin(k*radius*rcp_f)/k; // Equisolid, orthographic projections
-	else /*(k==0f)*/ return        radius*rcp_f;    // Equidistant projection
+	if      (k>0f)   return atan(k*radius*rcp_f)/k; // stereographic, rectilinear projections
+	else if (k<0f)   return asin(k*radius*rcp_f)/k; // equisolid, orthographic projections
+	else /*(k==0f)*/ return        radius*rcp_f;    // equidistant projection
 }
-float get_vignette(float theta, float k) // Get vignetting mask in linear color space
+float get_vignette(float theta, float k) // get vignetting mask in linear color space
 {
 	// Create spherical vignette |cos(max(|k|,1/2)θ)|^(k/2+3/2)
-	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // Limit FOV span, |k'| ∈ [0.5, 1] range
+	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // limit FoV span, |k'| ∈ [0.5, 1] range
 	// Mix cosine-law of illumination and inverse-square law
 	return pow(abs(spherical_vignette), mad(k, 0.5, 1.5));
 }
 float2 get_phi_weights(float2 texCoord)
 {
-	texCoord *= texCoord; // Squared vector coordinates
+	texCoord *= texCoord; // squared vector coordinates
 	return texCoord/(texCoord.x+texCoord.y); // [cosφ² sinφ²] vector
 }
 
@@ -464,12 +462,12 @@ float GetBorderMask(float2 borderCoord)
 {
 	// Get coordinates for each corner
 	borderCoord = abs(borderCoord);
-	if (BorderGContinuity!=0u && BorderCorner!=0f) // If round corners
+	if (BorderGContinuity!=0u && BorderCorner!=0f) // if round corners
 	{
 		// Correct corner aspect ratio
-		if (BUFFER_ASPECT_RATIO>1f) // If in landscape mode
+		if (BUFFER_ASPECT_RATIO>1f) // if in landscape mode
 			borderCoord.x = mad(borderCoord.x, BUFFER_ASPECT_RATIO, 1f-BUFFER_ASPECT_RATIO);
-		else if (BUFFER_ASPECT_RATIO<1f) // If in portrait mode
+		else if (BUFFER_ASPECT_RATIO<1f) // if in portrait mode
 			borderCoord.y = mad(borderCoord.y, BUFFER_RCP_ASPECT_RATIO, 1f-BUFFER_RCP_ASPECT_RATIO);
 		// Generate scaled coordinates
 		borderCoord = max(borderCoord+(BorderCorner-1f), 0f)/BorderCorner;
@@ -488,7 +486,7 @@ float3 GridModeViewPass(
 	float3 display)
 {
 	// Sample background without distortion
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
 	display = to_linear_gamma(tex2Dfetch(BackBuffer, pixelCoord).rgb);
 #else
 	display = tex2Dfetch(BackBuffer, pixelCoord).rgb;
@@ -511,7 +509,7 @@ float3 GridModeViewPass(
 				 tiltCos, tiltSin,
 				-tiltSin, tiltCos
 			),
-			texCoord // Rotated coordinates
+			texCoord // rotated coordinates
 		);
 	}
 
@@ -526,32 +524,32 @@ float3 GridModeViewPass(
 	texCoord *= float2(
 		rsqrt(dot(delX, delX)),
 		rsqrt(dot(delY, delY))
-	)/GridSize; // Pixel density
+	)/GridSize; // pixel density
 	// Set grid with
-	texCoord = saturate(GridWidth*0.5-abs(texCoord)); // Clamp values
+	texCoord = saturate(GridWidth*0.5-abs(texCoord)); // clamp values
 
 	// Adjust grid look
 	{
 		static float safeBottomColor =
-	#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			to_linear_gamma(16f/255f); // Safe bottom-color in linear range
+	#if BUFFER_COLOR_SPACE <= 2 // linear workflow
+			to_linear_gamma(16f/255f); // safe bottom-color in linear range
 	#else
-			16f/255f; // Safe bottom-color range
+			16f/255f; // safe bottom-color range
 	#endif
 		safeBottomColor *= 1f-DimDebugBackground;
 		display = mad(
-			display, // Background
-			DimDebugBackground, // Dimming amount
+			display, // background
+			DimDebugBackground, // dimming amount
 			safeBottomColor
 		);
 	}
 	// Apply calibration grid colors
 	switch (GridLook)
 	{
-		case 1: // Black
+		case 1: // black
 			display *= (1f-texCoord.x)*(1f-texCoord.y);
 			break;
-		case 2: // White
+		case 2: // white
 			display = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display);
 			break;
 		case 3: // display red-green
@@ -559,12 +557,12 @@ float3 GridModeViewPass(
 			display = lerp(display, float3(1f, 0f, 0f), texCoord.y);
 			display = lerp(display, float3(0f, 1f, 0f), texCoord.x);
 		} break;
-		default: // Yellow
+		default: // yellow
 			display = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y));
 			break;
 	}
 
-	return display; // Background picture with grid superimposed over it
+	return display; // background picture with grid superimposed over it
 }
 
 // Debug view mode shader
@@ -573,9 +571,9 @@ float3 SamplingScaleModeViewPass(
 	float3 display)
 {
 	// Define Mapping color
-	const float3   underSample = float3(235f, 16f, 16f)/255f; // Red
-	const float3   superSample = float3(16f, 235f, 16f)/255f; // Green
-	const float3 neutralSample = float3(16f, 16f, 235f)/255f; // Blue
+	const float3   underSample = float3(235f, 16f, 16f)/255f; // red
+	const float3   superSample = float3(16f, 235f, 16f)/255f; // green
+	const float3 neutralSample = float3(16f, 16f, 235f)/255f; // blue
 
 	// Scale texture coordinates to pixel size
 	texCoord *= BUFFER_SCREEN_SIZE*ResScaleVirtual/float(ResScaleScreen);
@@ -597,31 +595,31 @@ float3 SamplingScaleModeViewPass(
 	);
 
 
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+#if BUFFER_COLOR_SPACE <= 2 // linear workflow
 	display = to_display_gamma(display);
 #endif
 	const float safeRange[2] = {16f/255f, 235f/255f};
 	// Get luma channel mapped to save range
 	display.x = lerp(
-		safeRange[0], // Safe range bottom
-		safeRange[1], // Safe range top
+		safeRange[0], // safe range bottom
+		safeRange[1], // safe range top
 		dot(LumaMtx, display)
 	);
 	// Adjust background look
 	display = lerp(
-		safeRange[0], // Safe bottom-color range
-		display, // Background
-		DimDebugBackground // Dimming amount
+		safeRange[0], // safe bottom-color range
+		display, // background
+		DimDebugBackground // dimming amount
 	);
 	// Adjust background look
 	display = lerp(
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-		to_linear_gamma(display.x), // Background
+#if BUFFER_COLOR_SPACE <= 2 // linear workflow
+		to_linear_gamma(display.x), // background
 #else
-		display.x, // Background
+		display.x, // background
 #endif
-		pixelScaleMap, // Pixel scale map
-		sqrt(1.25)-0.5 // Golden ratio by JMF
+		pixelScaleMap, // pixel scale map
+		sqrt(1.25)-0.5 // golden ratio by JMF
 	);
 	return display;
 }
@@ -631,7 +629,8 @@ float3 PerfectPerspectivePS(
 	float4 pixelPos : SV_Position,
 	float2 texCoord : TEXCOORD0) : SV_Target
 {
-	// Bypass perspective mapping
+	//////////////////////////////////
+	///  DISTORTION MAPPING BYPASS ///
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
@@ -639,40 +638,49 @@ float3 PerfectPerspectivePS(
 #else // consider only global k
 	if (FovAngle==0u || (K==1f && !UseVignette))
 #endif
+	// Bypass perspective mapping
 	{
 		if (DebugModePreview)
 		{
 			float3 display;
-			switch (DebugMode) // Choose output type
+			switch (DebugMode) // choose output type
 			{
-				case 1u: // Pixel scale-map
+				case 1u: // pixel scale-map
 					display = SamplingScaleModeViewPass(
 						texCoord,
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
 						to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb)
 #else
 						tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb
 #endif
 					); break;
-				default: // Calibration grid
+				default: // calibration grid
 					display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
 					break;
 			}
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			display = to_display_gamma(display); // Manually correct gamma
+#if BUFFER_COLOR_SPACE <= 2 // linear workflow
+			display = to_display_gamma(display); // manually correct gamma
 #endif
-			return BlueNoise::dither(uint2(pixelPos.xy), display); // Dither final 8/10-bit result
+			return BlueNoise::dither(uint2(pixelPos.xy), display); // dither final 8/10-bit result
 		}
 		else // bypass all effects
 			return tex2D(ReShade::BackBuffer, texCoord).rgb;
 	}
+	/// END OF BYPASS ///
+	/////////////////////
 
-#if SIDE_BY_SIDE_3D // Side-by-side 3D content
+	////////////////////////////
+	/// SIDE-BY-SIDE 3D MODE ///
+#if SIDE_BY_SIDE_3D // side-by-side 3D content
 	float SBS3D = texCoord.x*2f;
 	texCoord.x = frac(SBS3D);
 	SBS3D = floor(SBS3D);
 #endif
+	/// END OF PART1 3D MODE ///
+	////////////////////////////
 
+	////////////////////////////////////
+	/// BEGIN OF PERSPECTIVE MAPPING ///
 	// Aspect ratio transformation vector
 	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Half field of view angle in radians
@@ -683,14 +691,14 @@ float3 PerfectPerspectivePS(
 	// Normalize texture coordinates diagonally and correct aspect
 	texCoord *= viewProportions;
 
-	// Get radius at Omega for a given FOV type
+	// Get radius at Ω for a given FoV type
 	static float radiusAtOmega;
 	switch (FovType)
 	{
-		case 1u: // Diagonal
+		case 1u: // diagonal
 			radiusAtOmega = 1f;
 			break;
-		case 2u: // Vertical
+		case 2u: // vertical
 			radiusAtOmega = viewProportions.y;
 			break;
 		case 3u: // 4x3
@@ -699,7 +707,7 @@ float3 PerfectPerspectivePS(
 		case 4u: // 16x9
 			radiusAtOmega = viewProportions.y*16f/9f;
 			break;
-		default: // Horizontal
+		default: // horizontal
 			radiusAtOmega = viewProportions.x;
 			break;
 	}
@@ -707,32 +715,59 @@ float3 PerfectPerspectivePS(
 	// Reciprocal focal length
 	const float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
 	// Image radius
-#if PANTOMORPHIC_MODE // Simple length function for radius
+#if PANTOMORPHIC_MODE // simple length function for radius
 	float radius = length(texCoord);
 #else // derive radius from anamorphic coordinates
 	float radius = S==1f ?
-		dot(texCoord, texCoord) : // Spherical
-		texCoord.y*texCoord.y/S+texCoord.x*texCoord.x; // Anamorphic
+		dot(texCoord, texCoord) : // spherical
+		texCoord.y*texCoord.y/S+texCoord.x*texCoord.x; // anamorphic
 	float rcp_radius = rsqrt(radius); radius = sqrt(radius);
 #endif
+
+	///////////////////////////////
+	/// BEGIN OF IMAGE CROPPING ///
+	// Scale radius by cropping scalar, and keep created variables in the scope of curly brackets
 	{
-		// Horizontal edge radius
+		// Horizontal point radius
 		const float croppingHorizontal = get_radius(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.x),
 			rcp_focal, K)/viewProportions.x;
-#if PANTOMORPHIC_MODE == 1 // Does not include diagonal cropping radius for full-frame mode
-		// Vertical edge radius
+#if PANTOMORPHIC_MODE == 1
+		// Vertical point radius
 		const float croppingVertical = get_radius(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 			rcp_focal, Ky)/viewProportions.y;
-		// Get radius scaling for bounds alignment
-		const float croppingScalar = lerp(
-				max(croppingHorizontal, croppingVertical), // Circular fish-eye
-				min(croppingHorizontal, croppingVertical), // Cropped circle
-				clamp(CroppingFactor, 0f, 1f)
+		// Diagonal pint φ weight
+		const float2 diagonalPhi = get_phi_weights(viewProportions);
+		// Diagonal half-Ω angle
+		const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+		// Diagonal point radius
+		static float croppingDigonal = 0.5;
+		// Find diagonal point radius with pixel resolution
+		for (uint d=4u; d<=ceil(length(BUFFER_SCREEN_SIZE)*2u); d*=2u) // log2 complexity
+		{
+			// Get θ angle at current homing radius value
+			float diagonalTheta = dot(
+				diagonalPhi,
+				float2(
+					get_theta(croppingDigonal, rcp_focal, K),
+					get_theta(croppingDigonal, rcp_focal, Ky)
+				)
 			);
+			// Perform value homing
+			if (diagonalTheta == diagonalHalfOmega) break; // stop loop if already at the point
+			// If the cropping point is before the corner point, add half-step, if behind, subtract half-step
+			else croppingDigonal += diagonalTheta>diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+		}
+
+		// Circular fish-eye
+		const float circularFishEye = max(croppingHorizontal, croppingVertical);
+		// Cropped circle
+		const float croppedCircle = min(croppingHorizontal, croppingVertical);
+		// Full-frame
+		const float fullFrame = croppingDigonal;
 #elif PANTOMORPHIC_MODE >= 2
-		// Vertical edge radius
+		// Vertical point radius
 		const float2 croppingVertical = float2(
 			get_radius(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
@@ -741,14 +776,55 @@ float3 PerfectPerspectivePS(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 				rcp_focal, Ky.t)
 		)/viewProportions.y;
-		// Get radius scaling for bounds alignment
-		const float croppingScalar = lerp(
-				max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t), // Circular fish-eye
-				min(min(croppingHorizontal, croppingVertical.s), croppingVertical.t), // Cropped circle
-				clamp(CroppingFactor, 0f, 1f)
+		// Diagonal pint φ weight
+		float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE*0.5);
+		// Diagonal half-Ω angle
+		const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+		// Diagonal point radius
+		static float2 croppingDigonal = 0.5;
+		// Search resolution
+		const uint searchResolution = ceil(length(BUFFER_SCREEN_SIZE)*2u); // sub-pixel
+		// Find diagonal point top radius with pixel resolution
+		for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
+		{
+			// Get θ angle at current homing radius value
+			float diagonalTheta = dot(
+				diagonalPhi,
+				float2(
+					get_theta(croppingDigonal.s, rcp_focal, K),
+					get_theta(croppingDigonal.s, rcp_focal, Ky.s)
+				)
 			);
+			// Perform value homing
+			if (diagonalTheta == diagonalHalfOmega) break; // stop loop if already at the point
+			// If the cropping point is before the corner point, add half-step, if behind, subtract half-step
+			else croppingDigonal.s += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+		}
+		// Find diagonal point bottom radius with pixel resolution
+		for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
+		{
+			// Get θ angle at current homing radius value
+			float diagonalTheta = dot(
+				diagonalPhi,
+				float2(
+					get_theta(croppingDigonal.t, rcp_focal, K),
+					get_theta(croppingDigonal.t, rcp_focal, Ky.t)
+				)
+			);
+			// Perform value homing
+			if (diagonalTheta == diagonalHalfOmega) break; // stop loop if already at the point
+			// If the cropping point is before the corner point, add half-step, if behind, subtract half-step
+			else croppingDigonal.t += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+		}
+
+		// Circular fish-eye
+		const float circularFishEye = max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t);
+		// Cropped circle
+		const float croppedCircle = min(min(croppingHorizontal, croppingVertical.s), croppingVertical.t);
+		// Full-frame
+		const float fullFrame = min(croppingDigonal.s, croppingDigonal.t);
 #else // border cropping radius is in anamorphic coordinates
-		// Vertical edge radius
+		// Vertical point radius
 		const float croppingVertical = get_radius(
 				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y*rsqrt(S)),
 			rcp_focal, K)/viewProportions.y*sqrt(S);
@@ -761,24 +837,35 @@ float3 PerfectPerspectivePS(
 				atan(tan(halfOmega)/radiusAtOmega*anamorphicDiagonal),
 			rcp_focal, K)/anamorphicDiagonal;
 
+		// Circular fish-eye
+		const float circularFishEye = max(croppingHorizontal, croppingVertical);
+		// Cropped circle
+		const float croppedCircle = min(croppingHorizontal, croppingVertical);
+		// Full-frame
+		const float fullFrame = croppingDigonal;
+#endif
 		// Get radius scaling for bounds alignment
 		const float croppingScalar = CroppingFactor<1f ?
 			lerp(
-				max(croppingHorizontal, croppingVertical), // Circular fish-eye
-				min(croppingHorizontal, croppingVertical), // Cropped circle
+				circularFishEye, // circular fish-eye
+				croppedCircle,   // cropped circle
 				max(CroppingFactor, 0f) // ↤ [0,1] range
-			) :
+			):
 			lerp(
-				min(croppingHorizontal, croppingVertical), // Cropped circle
-				croppingDigonal, // Full-frame
+				croppedCircle, // cropped circle
+				fullFrame, // full-frame
 				min(CroppingFactor-1f, 1f) // ↤ [1,2] range
 			);
-#endif
+
 		// Scale radius to cropping bounds
 		radius *= croppingScalar;
 	}
+	/// END OF IMAGE CROPPING ///
+	/////////////////////////////
 
 #if PANTOMORPHIC_MODE // derive θ angle from two distinct projections
+	// Pantomorphic interpolation weights
+	float2 phiMtx = get_phi_weights(texCoord);
 	// Horizontal and vertical incident angle
 	float2 theta2 = float2(
 		get_theta(radius, rcp_focal, K),
@@ -788,8 +875,6 @@ float3 PerfectPerspectivePS(
 		get_theta(radius, rcp_focal, texCoord.y>=0f ? Ky.t : Ky.s)
 	#endif
 	);
-	// Pantomorphic interpolation weights
-	float2 phiMtx = get_phi_weights(texCoord);
 	float vignette = UseVignette?
 		dot(phiMtx, float2(
 			get_vignette(theta2.x, K),
@@ -799,7 +884,7 @@ float3 PerfectPerspectivePS(
 			get_vignette(theta2.y, texCoord.y>=0f ? Ky.t : Ky.s)
 	#endif
 		)) : 1f;
-	float theta = dot(phiMtx, theta2); // Pantomorphic incident
+	float theta = dot(phiMtx, theta2); // pantomorphic incident
 #else // get θ from anamorphic radius
 	float theta = get_theta(radius, rcp_focal, K);
 	float vignette = UseVignette? get_vignette(theta, K) : 1f;
@@ -811,7 +896,7 @@ float3 PerfectPerspectivePS(
 			(sin(theta)*rcp_radius)*texCoord,
 			 cos(theta)
 		);
-		vignette /= dot(incident, incident); // Inverse square law
+		vignette /= dot(incident, incident); // inverse square law
 	}
 #endif
 
@@ -832,7 +917,7 @@ float3 PerfectPerspectivePS(
 	// Back to UV Coordinates
 	texCoord = texCoord*0.5+0.5;
 
-#if SIDE_BY_SIDE_3D // Side-by-side 3D content
+#if SIDE_BY_SIDE_3D // side-by-side 3D content
 	texCoord.x = (texCoord.x+SBS3D)*0.5;
 #endif
 
@@ -844,21 +929,21 @@ float3 PerfectPerspectivePS(
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
 		|| any(Ky!=1f)
 #endif // consider only global k
-		? tex2D(BackBuffer, texCoord).rgb : // Perspective projection lookup
-		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // No perspective change
+		? tex2D(BackBuffer, texCoord).rgb : // perspective projection lookup
+		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
 
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
 	display = to_linear_gamma(display);
 #endif
 
 	// Display calibration view
 	if (DebugModePreview)
-	switch (DebugMode) // Choose output type
+	switch (DebugMode) // choose output type
 	{
-		case 1u: // Pixel scale-map
+		case 1u: // pixel scale-map
 			display = SamplingScaleModeViewPass(texCoord, display);
 			break;
-		default: // Calibration grid
+		default: // calibration grid
 			display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
 			break;
 	}
@@ -871,40 +956,42 @@ float3 PerfectPerspectivePS(
 #else // consider only global k
 		K!=1f
 #endif
-		&& CroppingFactor!=2f) // Visible borders
+		&& CroppingFactor!=2f) // visible borders
 	{
 		// Get border
 		float3 border = lerp(
 			// Border background
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // Manual gamma correction
+#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
 			MirrorBorder? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
 #else
 			MirrorBorder? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
 #endif
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
-			to_linear_gamma(BorderColor.rgb), // Border color
-			to_linear_gamma(BorderColor.a)    // Border alpha
+#if BUFFER_COLOR_SPACE <= 2 // linear workflow
+			to_linear_gamma(BorderColor.rgb), // border color
+			to_linear_gamma(BorderColor.a)    // border alpha
 #else
-			BorderColor.rgb, // Border color
-			BorderColor.a    // Border alpha
+			BorderColor.rgb, // border color
+			BorderColor.a    // border alpha
 #endif
 		);
 
 		// Apply vignette with border
 		display = BorderVignette?
-			vignette*lerp(display, border, borderMask) : // Vignette on border
-			lerp(vignette*display, border, borderMask);  // Vignette only inside
+			vignette*lerp(display, border, borderMask) : // vignette on border
+			lerp(vignette*display, border, borderMask);  // vignette only inside
 	}
 	else if (UseVignette) // apply vignette
 		display *= vignette;
 
-#if BUFFER_COLOR_SPACE <= 2 // Linear workflow
+#if BUFFER_COLOR_SPACE <= 2 // linear workflow
 	// Manually correct gamma
 	display = to_display_gamma(display);
 #endif
 	// Dither final 8/10-bit result
 	return BlueNoise::dither(uint2(pixelPos.xy), display);
 }
+/// END OF PERSPECTIVE MAPPING ///
+//////////////////////////////////
 
 	/* OUTPUT */
 
@@ -916,22 +1003,20 @@ technique PerfectPerspective
 		"\n"
 		"	· Fish-eye\n"
 		"	· Panini\n"
-#if PANTOMORPHIC_MODE
-		"	· Pantomorphic\n"
-#else
+		"	· Pantomorphic (*)\n"
+		"	· Pantomorphic asymmetrical (**)\n"
 		"	· Anamorphic\n"
-#endif
 		"	· Vignetting (natural)\n"
 		"\n"
 		"Instruction:\n"
 		"\n"
-		"	1# select proper FOV angle and type. If FOV type is unknown,\n"
+		"	1# select proper FoV angle and type. If FoV type is unknown,\n"
 		"	   find a round object within the game and look at it upfront,\n"
 		"	   then rotate the camera so that the object is in the corner.\n"
 #if PANTOMORPHIC_MODE
-		"	   Make sure all 'k' parameters are equal 0.5 and adjust FOV type such that\n"
+		"	   Make sure all 'k' parameters are equal 0.5 and adjust FoV type such that\n"
 #else
-		"	   Set 'k' to 0.5, change squeeze factor to 1x and adjust FOV type such that\n"
+		"	   Set 'k' to 0.5, change squeeze factor to 1x and adjust FoV type such that\n"
 #endif
 		"	   the object does not have an egg shape, but a perfect round shape.\n"
 		"\n"
@@ -949,14 +1034,13 @@ technique PerfectPerspective
 		"	4# additionally for sharp image, use sharpening FX or run game at a\n"
 		"	   Super-Resolution. Debug options can help you find the proper value.\n"
 		"\n"
-		"	5# for more available settings set PANTOMORPHIC_MODE value to 1 or 2.\n"
+		"	(*) for more available settings set PANTOMORPHIC_MODE value to 1 or 2.\n"
+		"\n"
 		"\n"
 		"The algorithm is part of a scientific article:\n"
 		"	arXiv:2003.10558 [cs.GR] (2020)\n"
 		"	arXiv:2010.04077 [cs.GR] (2020)\n"
-#if PANTOMORPHIC_MODE
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
-#endif
 		"\n"
 		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
 		"Licensed under CC BY-NC-ND 3.0 +\n"
