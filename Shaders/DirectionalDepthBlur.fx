@@ -34,6 +34,7 @@
 // Version History
 // 28-jun-2023:		v1.4: Added a setting to flip the feather band to feather the outside of the blur area
 //					      Added a setting to flip the direction of the blur in Focus Point Targeting Strokes.
+//     					  Fixed highlight gain not properly feathered.
 // 30-aug-2022: 	v1.3: Added filter circle with feather support for focus point strokes mode, and tweaked some defaults.
 // 18-apr-2020:		v1.2: Added blend factor for blur
 // 13-apr-2020:		v1.1: Added highlight control (I know it flips the hue in focus point mode, it's a bug that actually looks great), 
@@ -384,7 +385,7 @@ namespace DirectionalDepthBlur
 		fragment.rgb = BlurType==0 
 							? fragment.rgb
 							: lerp(fragment.rgb, saturate(lerp(FocusPointBlendColor, fragment.rgb, smoothstep(0, 1, distanceToFocusPoint))), FocusPointBlendFactor);
-		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), highlightGainToUse), BlendFactor);
+		fragment.rgb = lerp(color, PostProcessBlurredFragment(fragment.rgb, saturate(maxLuma), (averageGained / (average.a + (average.a==0))), highlightGainToUse), (BlendFactor * filterCircleValue));
 		fragment.a = alpha;
 	}
 
