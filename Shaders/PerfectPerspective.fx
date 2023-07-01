@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.3.0
+/** Perfect Perspective PS, version 5.3.1
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -721,6 +721,8 @@ void PerfectPerspectiveVS(
 		float2(-1f,-3f), // Bottom left
 		float2( 3f, 1f)  // Top right
 	};
+	// Export vertex position
+	position = float4(vertexPos[id], 0f, 1f);
 	// Export screen centered texture coordinates
 	texCoord.x = viewCoord.x =  vertexPos[id].x;
 	texCoord.y = viewCoord.y = -vertexPos[id].y;
@@ -730,11 +732,9 @@ void PerfectPerspectiveVS(
 	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Correct aspect ratio, normalized to the corner
 	viewCoord *= viewProportions;
-	// Export vertex position
-	position = float4(vertexPos[id], 0f, 1f);
 
-	//////////////////////////////////////
-	/// BEGIN CROPPING OF IMAGE BOUNDS ///
+//////////////////////////////////////
+/// BEGIN CROPPING OF IMAGE BOUNDS ///
 
 	// Half field of view angle in radians
 	const float halfOmega = radians(FovAngle*0.5);
@@ -752,7 +752,6 @@ void PerfectPerspectiveVS(
 	const float croppingVertical = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 		rcp_focal, Ky)/viewProportions.y;
-
 	// Diagonal point radius
 	const float croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
 
@@ -772,7 +771,6 @@ void PerfectPerspectiveVS(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 			rcp_focal, Ky.t)
 	)/viewProportions.y;
-
 	// Diagonal point radius
 	const float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
 
@@ -826,8 +824,10 @@ float3 PerfectPerspectivePS(
 	float2 texCoord  : TEXCOORD0,
 	float2 viewCoord : TEXCOORD1) : SV_Target
 {
-	//////////////////////////////////
-	///  DISTORTION MAPPING BYPASS ///
+
+///////////////////////////////////////
+/// BEGIN DISTORTION MAPPING BYPASS ///
+
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
@@ -863,11 +863,13 @@ float3 PerfectPerspectivePS(
 		else // bypass all effects
 			return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
 	}
-	/// END OF BYPASS ///
-	/////////////////////
 
-	////////////////////////////////////
-	/// BEGIN OF PERSPECTIVE MAPPING ///
+/// END OF BYPASS ///
+/////////////////////
+
+////////////////////////////////////
+/// BEGIN OF PERSPECTIVE MAPPING ///
+
 	// Aspect ratio transformation vector
 	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Half field of view angle in radians
