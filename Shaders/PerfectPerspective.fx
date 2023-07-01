@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.2.1
+/** Perfect Perspective PS, version 5.3.0
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -65,14 +65,6 @@ by Fober, J. M.
 #ifndef PANTOMORPHIC_MODE
 	#define PANTOMORPHIC_MODE 0
 #endif
-// Stereo 3D mode
-#ifndef SIDE_BY_SIDE_3D
-	#define SIDE_BY_SIDE_3D 0
-#endif
-// Precise cropping to the corners
-#ifndef PRECISE_CROPPING
-	#define PRECISE_CROPPING 0
-#endif
 // ITU REC 601 YCbCr
 #define ITU_REC 601
 
@@ -91,10 +83,7 @@ uniform uint FovAngle <
 	ui_text = "(Match game settings)";
 	ui_label = "Field of view (FoV)";
 	ui_tooltip = "This should match your in-game FoV value.";
-	#if __RESHADE__ < 40000
-		ui_step = 0.2;
-	#endif
-	ui_max = 170u;
+	ui_max = 140u;
 > = 90u;
 
 uniform uint FovType <
@@ -365,7 +354,6 @@ uniform uint ResScaleScreen <
 
 uniform uint ResScaleVirtual <
 	ui_type = "drag";
-	ui_step = 0.2;
 	ui_min = 16u; ui_max = 16384u;
 	ui_label = "Virtual resolution";
 	ui_tooltip =
@@ -459,7 +447,26 @@ float2 get_phi_weights(float2 texCoord)
 	return texCoord/(texCoord.x+texCoord.y); // [cosφ² sinφ²] vector
 }
 
+// Get radius at Ω for a given FoV type
+float getRadiusAtOmega(float2 viewProportions)
+{
+	switch (FovType) // uniform input
+	{
+		// diagonal
+		case 1u: return 1f;
+		// vertical
+		case 2u: return viewProportions.y;
+		// 4x3
+		case 3u: return viewProportions.y*4f/3f;
+		// 16x9
+		case 4u: return viewProportions.y*16f/9f;
+		// horizontal
+		default: return viewProportions.x;
+	}
+}
+
 #if PANTOMORPHIC_MODE>=2
+// Search for corner point radius at diagonal Ω in Pantomorphic asymmetrical perspective
 float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 {
 	float2 croppingDigonal = 0.5;
@@ -503,6 +510,7 @@ float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 	return croppingDigonal;
 }
 #elif PANTOMORPHIC_MODE==1
+// Search for corner point radius at diagonal Ω in Pantomorphic perspective
 float binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 {
 	float croppingDigonal = 0.5;
@@ -699,10 +707,124 @@ float3 SamplingScaleModeViewPass(
 	return display;
 }
 
+// Vertex shader generating a triangle covering the entire screen
+void PerfectPerspectiveVS(
+	in  uint   id        : SV_VertexID,
+	out float4 position  : SV_Position,
+	out float2 texCoord  : TEXCOORD0,
+	out float2 viewCoord : TEXCOORD1)
+{
+	// Define vertex position
+	const float2 vertexPos[3] =
+	{
+		float2(-1f, 1f), // Top left
+		float2(-1f,-3f), // Bottom left
+		float2( 3f, 1f)  // Top right
+	};
+	// Export screen centered texture coordinates
+	texCoord.x = viewCoord.x =  vertexPos[id].x;
+	texCoord.y = viewCoord.y = -vertexPos[id].y;
+	// Map to corner and normalize texture coordinates
+	texCoord = texCoord*0.5+0.5;
+	// Get aspect ratio transformation vector
+	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
+	// Correct aspect ratio, normalized to the corner
+	viewCoord *= viewProportions;
+	// Export vertex position
+	position = float4(vertexPos[id], 0f, 1f);
+
+	//////////////////////////////////////
+	/// BEGIN CROPPING OF IMAGE BOUNDS ///
+
+	// Half field of view angle in radians
+	const float halfOmega = radians(FovAngle*0.5);
+	// Get radius at Ω for a given FoV type
+	const float radiusAtOmega = getRadiusAtOmega(viewProportions);
+	// Reciprocal focal length
+	const float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
+
+	// Horizontal point radius
+	const float croppingHorizontal = get_radius(
+			atan(tan(halfOmega)/radiusAtOmega*viewProportions.x),
+		rcp_focal, K)/viewProportions.x;
+#if PANTOMORPHIC_MODE == 1
+	// Vertical point radius
+	const float croppingVertical = get_radius(
+			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
+		rcp_focal, Ky)/viewProportions.y;
+
+	// Diagonal point radius
+	const float croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
+
+	// Circular fish-eye
+	const float circularFishEye = max(croppingHorizontal, croppingVertical);
+	// Cropped circle
+	const float croppedCircle = min(croppingHorizontal, croppingVertical);
+	// Full-frame
+	const float fullFrame = croppingDigonal;
+#elif PANTOMORPHIC_MODE >= 2
+	// Vertical point radius
+	const float2 croppingVertical = float2(
+		get_radius(
+			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
+			rcp_focal, Ky.s),
+		get_radius(
+			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
+			rcp_focal, Ky.t)
+	)/viewProportions.y;
+
+	// Diagonal point radius
+	const float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
+
+	// Circular fish-eye
+	const float circularFishEye = max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t);
+	// Cropped circle
+	const float croppedCircle = min(min(croppingHorizontal, croppingVertical.s), croppingVertical.t);
+	// Full-frame
+	const float fullFrame = min(croppingDigonal.s, croppingDigonal.t);
+#else // border cropping radius is in anamorphic coordinates
+	// Vertical point radius
+	const float croppingVertical = get_radius(
+			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y*rsqrt(S)),
+		rcp_focal, K)/viewProportions.y*sqrt(S);
+	// Diagonal point radius
+	const float anamorphicDiagonal = length(float2(
+		viewProportions.x,
+		viewProportions.y*rsqrt(S)
+	));
+	const float croppingDigonal = get_radius(
+			atan(tan(halfOmega)/radiusAtOmega*anamorphicDiagonal),
+		rcp_focal, K)/anamorphicDiagonal;
+
+	// Circular fish-eye
+	const float circularFishEye = max(croppingHorizontal, croppingVertical);
+	// Cropped circle
+	const float croppedCircle = min(croppingHorizontal, croppingVertical);
+	// Full-frame
+	const float fullFrame = croppingDigonal;
+#endif
+	// Get radius scaling for bounds alignment
+	const float croppingScalar = CroppingFactor<1f ?
+		lerp(
+			circularFishEye, // circular fish-eye
+			croppedCircle,   // cropped circle
+			max(CroppingFactor, 0f) // ↤ [0,1] range
+		):
+		lerp(
+			croppedCircle, // cropped circle
+			fullFrame, // full-frame
+			min(CroppingFactor-1f, 1f) // ↤ [1,2] range
+		);
+
+	// Scale view coordinates to cropping bounds
+	viewCoord *= croppingScalar;
+}
+
 // Main perspective shader pass
 float3 PerfectPerspectivePS(
-	float4 pixelPos : SV_Position,
-	float2 texCoord : TEXCOORD0) : SV_Target
+	float4 pixelPos  : SV_Position,
+	float2 texCoord  : TEXCOORD0,
+	float2 viewCoord : TEXCOORD1) : SV_Target
 {
 	//////////////////////////////////
 	///  DISTORTION MAPPING BYPASS ///
@@ -739,20 +861,10 @@ float3 PerfectPerspectivePS(
 			return BlueNoise::dither(uint2(pixelPos.xy), display); // dither final 8/10-bit result
 		}
 		else // bypass all effects
-			return tex2D(ReShade::BackBuffer, texCoord).rgb;
+			return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
 	}
 	/// END OF BYPASS ///
 	/////////////////////
-
-	////////////////////////////
-	/// SIDE-BY-SIDE 3D MODE ///
-#if SIDE_BY_SIDE_3D // side-by-side 3D content
-	float SBS3D = texCoord.x*2f;
-	texCoord.x = frac(SBS3D);
-	SBS3D = floor(SBS3D);
-#endif
-	/// END OF PART1 3D MODE ///
-	////////////////////////////
 
 	////////////////////////////////////
 	/// BEGIN OF PERSPECTIVE MAPPING ///
@@ -760,146 +872,31 @@ float3 PerfectPerspectivePS(
 	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Half field of view angle in radians
 	const float halfOmega = radians(FovAngle*0.5);
-
-	// Convert UV to centered coordinates
-	texCoord = texCoord*2f-1f;
-	// Normalize texture coordinates diagonally and correct aspect
-	texCoord *= viewProportions;
-
 	// Get radius at Ω for a given FoV type
-	static float radiusAtOmega;
-	switch (FovType)
-	{
-		case 1u: // diagonal
-			radiusAtOmega = 1f;
-			break;
-		case 2u: // vertical
-			radiusAtOmega = viewProportions.y;
-			break;
-		case 3u: // 4x3
-			radiusAtOmega = viewProportions.y*4f/3f;
-			break;
-		case 4u: // 16x9
-			radiusAtOmega = viewProportions.y*16f/9f;
-			break;
-		default: // horizontal
-			radiusAtOmega = viewProportions.x;
-			break;
-	}
-
+	const float radiusAtOmega = getRadiusAtOmega(viewProportions);
 	// Reciprocal focal length
 	const float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
+
 	// Image radius
 #if PANTOMORPHIC_MODE // simple length function for radius
-	float radius = length(texCoord);
+	float radius = length(viewCoord);
 #else // derive radius from anamorphic coordinates
 	float radius = S==1f ?
-		dot(texCoord, texCoord) : // spherical
-		texCoord.y*texCoord.y/S+texCoord.x*texCoord.x; // anamorphic
+		dot(viewCoord, viewCoord) : // spherical
+		viewCoord.y*viewCoord.y/S+viewCoord.x*viewCoord.x; // anamorphic
 	float rcp_radius = rsqrt(radius); radius = sqrt(radius);
 #endif
 
-	///////////////////////////////
-	/// BEGIN OF IMAGE CROPPING ///
-	// Scale radius by cropping scalar, and keep created variables in the scope of curly brackets
-	{
-		// Horizontal point radius
-		const float croppingHorizontal = get_radius(
-				atan(tan(halfOmega)/radiusAtOmega*viewProportions.x),
-			rcp_focal, K)/viewProportions.x;
-#if PANTOMORPHIC_MODE == 1
-		// Vertical point radius
-		const float croppingVertical = get_radius(
-				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
-			rcp_focal, Ky)/viewProportions.y;
-
-		// Diagonal point radius
-#if PRECISE_CROPPING // High impact on performance, due to compiler quality
-		const float croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
-#else // Bypass for the compiler poor work
-		const float croppingDigonal = 0.75;
-#endif
-
-		// Circular fish-eye
-		const float circularFishEye = max(croppingHorizontal, croppingVertical);
-		// Cropped circle
-		const float croppedCircle = min(croppingHorizontal, croppingVertical);
-		// Full-frame
-		const float fullFrame = croppingDigonal;
-#elif PANTOMORPHIC_MODE >= 2
-		// Vertical point radius
-		const float2 croppingVertical = float2(
-			get_radius(
-				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
-				rcp_focal, Ky.s),
-			get_radius(
-				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
-				rcp_focal, Ky.t)
-		)/viewProportions.y;
-
-		// Diagonal point radius
-#if PRECISE_CROPPING // High impact on performance, due to compiler quality
-		const float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
-#else // Bypass for the compiler poor work
-		const float2 croppingDigonal = 0.75;
-#endif
-
-		// Circular fish-eye
-		const float circularFishEye = max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t);
-		// Cropped circle
-		const float croppedCircle = min(min(croppingHorizontal, croppingVertical.s), croppingVertical.t);
-		// Full-frame
-		const float fullFrame = min(croppingDigonal.s, croppingDigonal.t);
-#else // border cropping radius is in anamorphic coordinates
-		// Vertical point radius
-		const float croppingVertical = get_radius(
-				atan(tan(halfOmega)/radiusAtOmega*viewProportions.y*rsqrt(S)),
-			rcp_focal, K)/viewProportions.y*sqrt(S);
-		// Diagonal point radius
-		const float anamorphicDiagonal = length(float2(
-			viewProportions.x,
-			viewProportions.y*rsqrt(S)
-		));
-		const float croppingDigonal = get_radius(
-				atan(tan(halfOmega)/radiusAtOmega*anamorphicDiagonal),
-			rcp_focal, K)/anamorphicDiagonal;
-
-		// Circular fish-eye
-		const float circularFishEye = max(croppingHorizontal, croppingVertical);
-		// Cropped circle
-		const float croppedCircle = min(croppingHorizontal, croppingVertical);
-		// Full-frame
-		const float fullFrame = croppingDigonal;
-#endif
-		// Get radius scaling for bounds alignment
-		const float croppingScalar = CroppingFactor<1f ?
-			lerp(
-				circularFishEye, // circular fish-eye
-				croppedCircle,   // cropped circle
-				max(CroppingFactor, 0f) // ↤ [0,1] range
-			):
-			lerp(
-				croppedCircle, // cropped circle
-				fullFrame, // full-frame
-				min(CroppingFactor-1f, 1f) // ↤ [1,2] range
-			);
-
-		// Scale radius to cropping bounds
-		radius *= croppingScalar;
-	}
-	/// END OF IMAGE CROPPING ///
-	/////////////////////////////
-
 #if PANTOMORPHIC_MODE // derive θ angle from two distinct projections
 	// Pantomorphic interpolation weights
-	float2 phiMtx = get_phi_weights(texCoord);
+	float2 phiMtx = get_phi_weights(viewCoord);
 	// Horizontal and vertical incident angle
 	float2 theta2 = float2(
 		get_theta(radius, rcp_focal, K),
 	#if PANTOMORPHIC_MODE == 1
 		get_theta(radius, rcp_focal, Ky)
 	#elif PANTOMORPHIC_MODE >= 2
-		get_theta(radius, rcp_focal, texCoord.y>=0f ? Ky.t : Ky.s)
+		get_theta(radius, rcp_focal, viewCoord.y>=0f ? Ky.t : Ky.s)
 	#endif
 	);
 	float vignette = UseVignette?
@@ -908,7 +905,7 @@ float3 PerfectPerspectivePS(
 	#if PANTOMORPHIC_MODE == 1
 			get_vignette(theta2.y, Ky)
 	#elif PANTOMORPHIC_MODE >= 2
-			get_vignette(theta2.y, texCoord.y>=0f ? Ky.t : Ky.s)
+			get_vignette(theta2.y, viewCoord.y>=0f ? Ky.t : Ky.s)
 	#endif
 		)) : 1f;
 	float theta = dot(phiMtx, theta2); // pantomorphic incident
@@ -920,7 +917,7 @@ float3 PerfectPerspectivePS(
 	{
 		// Get anamorphic-incident 3D vector
 		float3 incident = float3(
-			(sin(theta)*rcp_radius)*texCoord,
+			(sin(theta)*rcp_radius)*viewCoord,
 			 cos(theta)
 		);
 		vignette /= dot(incident, incident); // inverse square law
@@ -929,24 +926,23 @@ float3 PerfectPerspectivePS(
 
 	// Rectilinear perspective transformation
 #if PANTOMORPHIC_MODE // simple rectilinear transformation
-	texCoord = tan(theta)*normalize(texCoord);
+	viewCoord = tan(theta)*normalize(viewCoord);
 #else // normalize by anamorphic radius
-	texCoord *= tan(theta)*rcp_radius;
+	viewCoord *= tan(theta)*rcp_radius;
 #endif
 
 	// Back to normalized, centered coordinates
 	const float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
-	texCoord *= toUvCoord;
+	viewCoord *= toUvCoord;
+
+/// END OF PERSPECTIVE MAPPING ///
+//////////////////////////////////
 
 	// Outside border mask with anti-aliasing
-	float borderMask = GetBorderMask(texCoord);
+	float borderMask = GetBorderMask(viewCoord);
 
 	// Back to UV Coordinates
-	texCoord = texCoord*0.5+0.5;
-
-#if SIDE_BY_SIDE_3D // side-by-side 3D content
-	texCoord.x = (texCoord.x+SBS3D)*0.5;
-#endif
+	texCoord = viewCoord*0.5+0.5;
 
 	// Sample display image
 	float3 display =
@@ -1017,8 +1013,6 @@ float3 PerfectPerspectivePS(
 	// Dither final 8/10-bit result
 	return BlueNoise::dither(uint2(pixelPos.xy), display);
 }
-/// END OF PERSPECTIVE MAPPING ///
-//////////////////////////////////
 
 	/* OUTPUT */
 
@@ -1076,7 +1070,7 @@ technique PerfectPerspective
 {
 	pass PerspectiveDistortion
 	{
-		VertexShader = PostProcessVS;
+		VertexShader = PerfectPerspectiveVS;
 		PixelShader = PerfectPerspectivePS;
 	}
 }
