@@ -1,9 +1,15 @@
-/** Perfect Perspective PS, version 5.4.0
+/*------------------.
+| :: Description :: |
+'-------------------/
 
+Perfect Perspective PS (version 5.4.1)
+
+Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
 
+License:
 This work is licensed under the Creative Commons,
-Attribution-NonCommercial-NoDerivs 3.0 Unported License.
+Attribution-NonCommercial-NoDerivs 3.0 Unported License +.
 To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc-nd/3.0/.
 
@@ -23,6 +29,7 @@ Intent §: For better accessibility and understanding across different languages
 Result §: The desired outcome is to promote usability across users from diverse
 linguistic backgrounds, and for them to be able to engage with the shader.
 
+Contact:
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
 
@@ -40,6 +47,7 @@ me at jakub.m.fober@protonmail.com.
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 
+About:
 This shader version is based upon following research article:
 	Perspective picture from Visual Sphere:
 	a new approach to image rasterization
@@ -57,25 +65,31 @@ and
 by Fober, J. M.
 */
 
-	/* MACROS */
+/*-------------.
+| :: Macros :: |
+'-------------*/
 
-// Alternative to anamorphic.
-// 1 gives separate distortion option for vertical axis.
-// 2 gives separate option for top and bottom half.
+/* Alternative to anamorphic.
+   1 gives separate distortion option for vertical axis.
+   2 gives separate option for top and bottom half. */
 #ifndef PANTOMORPHIC_MODE
 	#define PANTOMORPHIC_MODE 0
 #endif
 // ITU REC 601 YCbCr
 #define ITU_REC 601
 
-	/* COMMONS */
+/*--------------.
+| :: Commons :: |
+'--------------*/
 
 #include "ReShade.fxh"
 #include "ColorAndDither.fxh"
 
-	/* MENU */
+/*-----------.
+| :: Menu :: |
+'-----------*/
 
-// FIELD OF VIEW
+// :: Field of View :: //
 
 uniform uint FovAngle <
 	ui_type = "slider";
@@ -110,7 +124,7 @@ uniform uint FovType <
 		"horizontal 16:9\0";
 > = 0u;
 
-// PERSPECTIVE
+// :: Perspective :: //
 
 // k indicates horizontal axis or whole picture projection type
 uniform float K <
@@ -231,7 +245,7 @@ uniform bool UseVignette <
 	ui_tooltip = "Apply lens-correct natural vignetting effect.";
 > = true;
 
-// BORDER
+// :: Border :: //
 
 uniform float CroppingFactor <
 	ui_type = "input";
@@ -293,7 +307,7 @@ uniform uint BorderGContinuity <
 	ui_min = 1u; ui_max = 3u;
 > = 3u;
 
-// DEBUG OPTIONS
+// :: Debug Options :: //
 
 uniform bool DebugModePreview <
 	ui_type = "input";
@@ -338,7 +352,7 @@ uniform float DimDebugBackground <
 	ui_category = "Debugging mode";
 > = 1f;
 
-	// GRID
+// :: Grid :: //
 
 uniform uint GridLook <
 	ui_type = "combo";
@@ -378,7 +392,7 @@ uniform float GridTilt <
 	ui_category = "Debugging mode";
 > = 0f;
 
-	// Pixel scale map
+// :: Pixel Scale Map :: //
 
 uniform uint ResScaleScreen <
 	ui_type = "input";
@@ -399,7 +413,9 @@ uniform uint ResScaleVirtual <
 	ui_category = "Debugging mode";
 > = 1920u;
 
-	/* TEXTURES */
+/*---------------.
+| :: Textures :: |
+'---------------*/
 
 // Define screen texture with mirror tiles
 sampler BackBuffer
@@ -413,7 +429,9 @@ sampler BackBuffer
 	AddressV = MIRROR;
 };
 
-	/* FUNCTIONS */
+/*----------------.
+| :: Functions :: |
+'----------------*/
 
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
@@ -508,9 +526,9 @@ float binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 {
 	float croppingDigonal = 0.5;
 	// Diagonal pint φ weight
-	const float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
+	const static float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
 	// Diagonal half-Ω angle
-	const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+	const static float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
 	// Find diagonal point radius with pixel resolution
 	for (uint d=4u; d<=ceil(length(BUFFER_SCREEN_SIZE)*2u); d*=2u) // log2 complexity
 	{
@@ -535,9 +553,9 @@ float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 {
 	float2 croppingDigonal = 0.5;
 	// Diagonal pint φ weight
-	const float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
+	const static float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
 	// Diagonal half-Ω angle
-	const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+	const static float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
 	// Search resolution
 	const uint searchResolution = ceil(length(BUFFER_SCREEN_SIZE)*2u); // sub-pixel
 	// Find diagonal point top radius with pixel resolution
@@ -575,7 +593,9 @@ float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 }
 #endif
 
-	/* SHADER */
+/*-------------.
+| :: Shader :: |
+'-------------*/
 
 // Border mask shader with rounded corners
 float GetBorderMask(float2 borderCoord)
@@ -603,8 +623,8 @@ float GetBorderMask(float2 borderCoord)
 float3 GridModeViewPass(
 	uint2  pixelCoord,
 	float2 texCoord,
-	float3 display)
-{
+	float3 display
+){
 	// Sample background without distortion
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
 	display = to_linear_gamma(tex2Dfetch(BackBuffer, pixelCoord).rgb);
@@ -618,10 +638,10 @@ float3 GridModeViewPass(
 	if (GridTilt!=0f) // tilt view coordinates
 	{
 		// Convert angle to radians
-		const float tiltRad = radians(GridTilt);
+		const static float tiltRad = radians(GridTilt);
 		// Get rotation matrix components
-		const float tiltSin = sin(tiltRad);
-		const float tiltCos = cos(tiltRad);
+		const static float tiltSin = sin(tiltRad);
+		const static float tiltCos = cos(tiltRad);
 		// Rotate coordinates
 		texCoord = mul(
 			// Get rotation matrix
@@ -688,12 +708,12 @@ float3 GridModeViewPass(
 // Debug view mode shader
 float3 SamplingScaleModeViewPass(
 	float2 texCoord,
-	float3 display)
-{
+	float3 display
+){
 	// Define Mapping color
-	const float3   underSample = float3(235f, 16f, 16f)/255f; // red
-	const float3   superSample = float3(16f, 235f, 16f)/255f; // green
-	const float3 neutralSample = float3(16f, 16f, 235f)/255f; // blue
+	const static float3   underSample = float3(235f, 16f, 16f)/255f; // red
+	const static float3   superSample = float3(16f, 235f, 16f)/255f; // green
+	const static float3 neutralSample = float3(16f, 16f, 235f)/255f; // blue
 
 	// Scale texture coordinates to pixel size
 	texCoord *= BUFFER_SCREEN_SIZE*ResScaleVirtual/float(ResScaleScreen);
@@ -718,7 +738,7 @@ float3 SamplingScaleModeViewPass(
 #if BUFFER_COLOR_SPACE <= 2 // linear workflow
 	display = to_display_gamma(display);
 #endif
-	const float safeRange[2] = {16f/255f, 235f/255f};
+	const static float safeRange[2] = {16f/255f, 235f/255f};
 	// Get luma channel mapped to save range
 	display.x = lerp(
 		safeRange[0], // safe range bottom
@@ -749,14 +769,14 @@ void PerfectPerspectiveVS(
 	in  uint   id        : SV_VertexID,
 	out float4 position  : SV_Position,
 	out float2 texCoord  : TEXCOORD0,
-	out float2 viewCoord : TEXCOORD1)
-{
+	out float2 viewCoord : TEXCOORD1
+){
 	// Define vertex position
-	const float2 vertexPos[3] =
+	const static float2 vertexPos[3] =
 	{
-		float2(-1f, 1f), // Top left
-		float2(-1f,-3f), // Bottom left
-		float2( 3f, 1f)  // Top right
+		float2(-1f, 1f), // top left
+		float2(-1f,-3f), // bottom left
+		float2( 3f, 1f)  // top right
 	};
 	// Export vertex position
 	position = float4(vertexPos[id], 0f, 1f);
@@ -766,41 +786,41 @@ void PerfectPerspectiveVS(
 	// Map to corner and normalize texture coordinates
 	texCoord = texCoord*0.5+0.5;
 	// Get aspect ratio transformation vector
-	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
+	const static float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Correct aspect ratio, normalized to the corner
 	viewCoord *= viewProportions;
 
-//////////////////////////////////////
-/// BEGIN CROPPING OF IMAGE BOUNDS ///
+ //--------------------------------------//
+// :: begin cropping of image bounds :: //
 
 	// Half field of view angle in radians
-	const float halfOmega = radians(FovAngle*0.5);
+	const static float halfOmega = radians(FovAngle*0.5);
 	// Get radius at Ω for a given FoV type
-	const float radiusAtOmega = getRadiusAtOmega(viewProportions);
+	const static float radiusAtOmega = getRadiusAtOmega(viewProportions);
 	// Reciprocal focal length
-	const float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
+	const static float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
 
 	// Horizontal point radius
-	const float croppingHorizontal = get_radius(
+	const static float croppingHorizontal = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.x),
 		rcp_focal, K)/viewProportions.x;
 #if PANTOMORPHIC_MODE == 1
 	// Vertical point radius
-	const float croppingVertical = get_radius(
+	const static float croppingVertical = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 		rcp_focal, Ky)/viewProportions.y;
 	// Diagonal point radius
-	const float croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
+	const static float croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
 
 	// Circular fish-eye
-	const float circularFishEye = max(croppingHorizontal, croppingVertical);
+	const static float circularFishEye = max(croppingHorizontal, croppingVertical);
 	// Cropped circle
-	const float croppedCircle = min(croppingHorizontal, croppingVertical);
+	const static float croppedCircle = min(croppingHorizontal, croppingVertical);
 	// Full-frame
-	const float fullFrame = croppingDigonal;
+	const static float fullFrame = croppingDigonal;
 #elif PANTOMORPHIC_MODE >= 2
 	// Vertical point radius
-	const float2 croppingVertical = float2(
+	const static float2 croppingVertical = float2(
 		get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
 			rcp_focal, Ky),
@@ -809,37 +829,37 @@ void PerfectPerspectiveVS(
 			rcp_focal, KyA)
 	)/viewProportions.y;
 	// Diagonal point radius
-	const float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
+	const static float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
 
 	// Circular fish-eye
-	const float circularFishEye = max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t);
+	const static float circularFishEye = max(max(croppingHorizontal, croppingVertical.s), croppingVertical.t);
 	// Cropped circle
-	const float croppedCircle = min(min(croppingHorizontal, croppingVertical.s), croppingVertical.t);
+	const static float croppedCircle = min(min(croppingHorizontal, croppingVertical.s), croppingVertical.t);
 	// Full-frame
-	const float fullFrame = min(croppingDigonal.s, croppingDigonal.t);
+	const static float fullFrame = min(croppingDigonal.s, croppingDigonal.t);
 #else // border cropping radius is in anamorphic coordinates
 	// Vertical point radius
-	const float croppingVertical = get_radius(
+	const static float croppingVertical = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y*rsqrt(S)),
 		rcp_focal, K)/viewProportions.y*sqrt(S);
 	// Diagonal point radius
-	const float anamorphicDiagonal = length(float2(
+	const static float anamorphicDiagonal = length(float2(
 		viewProportions.x,
 		viewProportions.y*rsqrt(S)
 	));
-	const float croppingDigonal = get_radius(
+	const static float croppingDigonal = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*anamorphicDiagonal),
 		rcp_focal, K)/anamorphicDiagonal;
 
 	// Circular fish-eye
-	const float circularFishEye = max(croppingHorizontal, croppingVertical);
+	const static float circularFishEye = max(croppingHorizontal, croppingVertical);
 	// Cropped circle
-	const float croppedCircle = min(croppingHorizontal, croppingVertical);
+	const static float croppedCircle = min(croppingHorizontal, croppingVertical);
 	// Full-frame
-	const float fullFrame = croppingDigonal;
+	const static float fullFrame = croppingDigonal;
 #endif
 	// Get radius scaling for bounds alignment
-	const float croppingScalar = CroppingFactor<1f ?
+	const static float croppingScalar = CroppingFactor<1f ?
 		lerp(
 			circularFishEye, // circular fish-eye
 			croppedCircle,   // cropped circle
@@ -859,11 +879,12 @@ void PerfectPerspectiveVS(
 float3 PerfectPerspectivePS(
 	float4 pixelPos  : SV_Position,
 	float2 texCoord  : TEXCOORD0,
-	float2 viewCoord : TEXCOORD1) : SV_Target
+	float2 viewCoord : TEXCOORD1
+) : SV_Target
 {
 
-///////////////////////////////////////
-/// BEGIN DISTORTION MAPPING BYPASS ///
+ //---------------------------------------//
+// :: begin distortion mapping bypass :: //
 
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
@@ -901,20 +922,20 @@ float3 PerfectPerspectivePS(
 			return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
 	}
 
-/// END OF BYPASS ///
-/////////////////////
+ // :: end of distortion mapping bypass :: //
+//----------------------------------------//
 
-////////////////////////////////////
-/// BEGIN OF PERSPECTIVE MAPPING ///
+ //------------------------------------//
+// :: begin of perspective mapping :: //
 
 	// Aspect ratio transformation vector
-	const float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
+	const static float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Half field of view angle in radians
-	const float halfOmega = radians(FovAngle*0.5);
+	const static float halfOmega = radians(FovAngle*0.5);
 	// Get radius at Ω for a given FoV type
-	const float radiusAtOmega = getRadiusAtOmega(viewProportions);
+	const static float radiusAtOmega = getRadiusAtOmega(viewProportions);
 	// Reciprocal focal length
-	const float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
+	const static float rcp_focal = get_rcp_focal(halfOmega, radiusAtOmega, K);
 
 	// Image radius
 #if PANTOMORPHIC_MODE // simple length function for radius
@@ -971,11 +992,11 @@ float3 PerfectPerspectivePS(
 #endif
 
 	// Back to normalized, centered coordinates
-	const float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
+	const static float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
 	texCoord = viewCoord*toUvCoord;
 
-/// END OF PERSPECTIVE MAPPING ///
-//////////////////////////////////
+ // :: end of perspective mapping :: //
+//----------------------------------//
 
 	// Outside border mask with anti-aliasing
 	float borderMask = GetBorderMask(texCoord);
@@ -1053,7 +1074,9 @@ float3 PerfectPerspectivePS(
 	return BlueNoise::dither(uint2(pixelPos.xy), display);
 }
 
-	/* OUTPUT */
+/*-------------.
+| :: Output :: |
+'-------------*/
 
 technique PerfectPerspective
 <
