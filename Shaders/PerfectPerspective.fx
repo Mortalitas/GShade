@@ -1,4 +1,4 @@
-/** Perfect Perspective PS, version 5.3.1
+/** Perfect Perspective PS, version 5.4.0
 
 This code © 2018-2023 Jakub Maksymilian Fober
 
@@ -139,15 +139,52 @@ uniform float K <
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0.5;
 
-#if PANTOMORPHIC_MODE // vertical axis projection is driven by separate k parameter
-	#if PANTOMORPHIC_MODE == 1 // vertical axis projection is driven by separate k parameter
-	uniform float Ky <
-	ui_label = "Projection type 'k' vertical";
-	#elif PANTOMORPHIC_MODE >= 2 // vertical axis projection is driven by separate ky top and ky bottom parameter
-	uniform float2 Ky <
-	ui_label = "Projection type 'k' vertical (asymmetrical)";
-	#endif
+#if PANTOMORPHIC_MODE == 1 // vertical axis projection is driven by separate k parameter
+uniform float Ky <
 	ui_type = "slider";
+	ui_label = "Projection type 'k' vertical";
+	ui_category = "Distortion";
+	ui_tooltip =
+		"Projection coefficient 'k', represents\n"
+		"various azimuthal projections types:\n"
+		"\n"
+		"Perception    | Value | Projection\n"
+		"-------------------------------------\n"
+		"straight path |  1    | Rectilinear\n"
+		"shape         |  0.5  | Stereographic\n"
+		"speed         |  0    | Equidistant\n"
+		"distance      | -0.5  | Equisolid\n"
+		"illumination  | -1    | Orthographic\n"
+		"\n"
+		"\n"
+		"[Ctrl+click] to type value.";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+> = 0.5;
+#elif PANTOMORPHIC_MODE >= 2 // vertical axis projection is driven by separate ky top and ky bottom parameter
+uniform float Ky <
+	ui_type = "slider";
+	ui_label = "Projection type 'k' top (asymmetrical)";
+	ui_category = "Distortion";
+	ui_tooltip =
+		"Projection coefficient 'k', represents\n"
+		"various azimuthal projections types:\n"
+		"\n"
+		"Perception    | Value | Projection\n"
+		"-------------------------------------\n"
+		"straight path |  1    | Rectilinear\n"
+		"shape         |  0.5  | Stereographic\n"
+		"speed         |  0    | Equidistant\n"
+		"distance      | -0.5  | Equisolid\n"
+		"illumination  | -1    | Orthographic\n"
+		"\n"
+		"\n"
+		"[Ctrl+click] to type value.";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+> = 0.5;
+
+uniform float KyA <
+	ui_type = "slider";
+	ui_label = "Projection type 'k' bottom (asymmetrical)";
 	ui_category = "Distortion";
 	ui_tooltip =
 		"Projection coefficient 'k', represents\n"
@@ -452,64 +489,20 @@ float getRadiusAtOmega(float2 viewProportions)
 {
 	switch (FovType) // uniform input
 	{
-		// diagonal
-		case 1u: return 1f;
-		// vertical
-		case 2u: return viewProportions.y;
-		// 4x3
-		case 3u: return viewProportions.y*4f/3f;
-		// 16x9
-		case 4u: return viewProportions.y*16f/9f;
-		// horizontal
-		default: return viewProportions.x;
+		case 1u: // diagonal
+			return 1f;
+		case 2u: // vertical
+			return viewProportions.y;
+		case 3u: // 4x3
+			return viewProportions.y*4f/3f;
+		case 4u: // 16x9
+			return viewProportions.y*16f/9f;
+		default: // horizontal
+			return viewProportions.x;
 	}
 }
 
-#if PANTOMORPHIC_MODE>=2
-// Search for corner point radius at diagonal Ω in Pantomorphic asymmetrical perspective
-float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
-{
-	float2 croppingDigonal = 0.5;
-	// Diagonal pint φ weight
-	const float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
-	// Diagonal half-Ω angle
-	const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
-	// Search resolution
-	const uint searchResolution = ceil(length(BUFFER_SCREEN_SIZE)*2u); // sub-pixel
-	// Find diagonal point top radius with pixel resolution
-	for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
-	{
-		// Get θ angle at current homing radius value
-		float diagonalTheta = dot(
-			diagonalPhi,
-			float2(
-				get_theta(croppingDigonal.s, rcp_focal, K),
-				get_theta(croppingDigonal.s, rcp_focal, Ky.s)
-			)
-		);
-		// Perform value homing, if the cropping point is before the corner point,
-		// add half-step, if behind, subtract half-step
-		croppingDigonal.s += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
-	}
-	// Find diagonal point bottom radius with pixel resolution
-	for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
-	{
-		// Get θ angle at current homing radius value
-		float diagonalTheta = dot(
-			diagonalPhi,
-			float2(
-				get_theta(croppingDigonal.t, rcp_focal, K),
-				get_theta(croppingDigonal.t, rcp_focal, Ky.t)
-			)
-		);
-		// Perform value homing, if the cropping point is before the corner point,
-		// add half-step, if behind, subtract half-step
-		croppingDigonal.t += diagonalTheta > diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
-	}
-
-	return croppingDigonal;
-}
-#elif PANTOMORPHIC_MODE==1
+#if PANTOMORPHIC_MODE==1
 // Search for corner point radius at diagonal Ω in Pantomorphic perspective
 float binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 {
@@ -532,6 +525,50 @@ float binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 		// Perform value homing, if the cropping point is before the corner point,
 		// add half-step, if behind, subtract half-step
 		croppingDigonal += diagonalTheta>diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+	}
+
+	return croppingDigonal;
+}
+#elif PANTOMORPHIC_MODE>=2
+// Search for corner point radius at diagonal Ω in Pantomorphic asymmetrical perspective
+float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
+{
+	float2 croppingDigonal = 0.5;
+	// Diagonal pint φ weight
+	const float2 diagonalPhi = get_phi_weights(BUFFER_SCREEN_SIZE);
+	// Diagonal half-Ω angle
+	const float diagonalHalfOmega = atan(tan(halfOmega)/radiusAtOmega);
+	// Search resolution
+	const uint searchResolution = ceil(length(BUFFER_SCREEN_SIZE)*2u); // sub-pixel
+	// Find diagonal point top radius with pixel resolution
+	for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
+	{
+		// Get θ angle at current homing radius value
+		float diagonalTheta = dot(
+			diagonalPhi,
+			float2(
+				get_theta(croppingDigonal.s, rcp_focal, K),
+				get_theta(croppingDigonal.s, rcp_focal, Ky)
+			)
+		);
+		// Perform value homing, if the cropping point is before the corner point,
+		// add half-step, if behind, subtract half-step
+		croppingDigonal.s += diagonalTheta>diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
+	}
+	// Find diagonal point bottom radius with pixel resolution
+	for (uint d=2u; d<=searchResolution; d*=2u) // log2 complexity
+	{
+		// Get θ angle at current homing radius value
+		float diagonalTheta = dot(
+			diagonalPhi,
+			float2(
+				get_theta(croppingDigonal.t, rcp_focal, K),
+				get_theta(croppingDigonal.t, rcp_focal, KyA)
+			)
+		);
+		// Perform value homing, if the cropping point is before the corner point,
+		// add half-step, if behind, subtract half-step
+		croppingDigonal.t += diagonalTheta>diagonalHalfOmega ? -rcp(d) : rcp(d); // move forward or backward
 	}
 
 	return croppingDigonal;
@@ -766,10 +803,10 @@ void PerfectPerspectiveVS(
 	const float2 croppingVertical = float2(
 		get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
-			rcp_focal, Ky.s),
+			rcp_focal, Ky),
 		get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
-			rcp_focal, Ky.t)
+			rcp_focal, KyA)
 	)/viewProportions.y;
 	// Diagonal point radius
 	const float2 croppingDigonal = binarySearchCorner(halfOmega, radiusAtOmega, rcp_focal);
@@ -831,7 +868,7 @@ float3 PerfectPerspectivePS(
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
-	if (FovAngle==0u || (K==1f && all(Ky==1f) && !UseVignette))
+	if (FovAngle==0u || (K==1f && Ky==1f && KyA==1f && !UseVignette))
 #else // consider only global k
 	if (FovAngle==0u || (K==1f && !UseVignette))
 #endif
@@ -898,7 +935,7 @@ float3 PerfectPerspectivePS(
 	#if PANTOMORPHIC_MODE == 1
 		get_theta(radius, rcp_focal, Ky)
 	#elif PANTOMORPHIC_MODE >= 2
-		get_theta(radius, rcp_focal, viewCoord.y>=0f ? Ky.t : Ky.s)
+		get_theta(radius, rcp_focal, viewCoord.y>=0f ? KyA : Ky)
 	#endif
 	);
 	float vignette = UseVignette?
@@ -907,7 +944,7 @@ float3 PerfectPerspectivePS(
 	#if PANTOMORPHIC_MODE == 1
 			get_vignette(theta2.y, Ky)
 	#elif PANTOMORPHIC_MODE >= 2
-			get_vignette(theta2.y, viewCoord.y>=0f ? Ky.t : Ky.s)
+			get_vignette(theta2.y, viewCoord.y>=0f ? KyA : Ky)
 	#endif
 		)) : 1f;
 	float theta = dot(phiMtx, theta2); // pantomorphic incident
@@ -935,16 +972,16 @@ float3 PerfectPerspectivePS(
 
 	// Back to normalized, centered coordinates
 	const float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
-	viewCoord *= toUvCoord;
+	texCoord = viewCoord*toUvCoord;
 
 /// END OF PERSPECTIVE MAPPING ///
 //////////////////////////////////
 
 	// Outside border mask with anti-aliasing
-	float borderMask = GetBorderMask(viewCoord);
+	float borderMask = GetBorderMask(texCoord);
 
 	// Back to UV Coordinates
-	texCoord = viewCoord*0.5+0.5;
+	texCoord = texCoord*0.5+0.5;
 
 	// Sample display image
 	float3 display =
@@ -952,7 +989,7 @@ float3 PerfectPerspectivePS(
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 		|| Ky!=1f
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
-		|| any(Ky!=1f)
+		|| Ky!=1f || KyA!=1f
 #endif // consider only global k
 		? tex2D(BackBuffer, texCoord).rgb : // perspective projection lookup
 		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
@@ -977,7 +1014,7 @@ float3 PerfectPerspectivePS(
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 		(K!=1f || Ky!=1f)
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
-		(K!=1f || any(Ky!=1f))
+		(K!=1f || Ky!=1f || KyA!=1f)
 #else // consider only global k
 		K!=1f
 #endif
