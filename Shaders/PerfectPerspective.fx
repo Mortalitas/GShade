@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.4.1)
+Perfect Perspective PS (version 5.4.2)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -859,13 +859,13 @@ void PerfectPerspectiveVS(
 	const static float fullFrame = croppingDigonal;
 #endif
 	// Get radius scaling for bounds alignment
-	const static float croppingScalar = CroppingFactor<1f ?
-		lerp(
+	const static float croppingScalar = CroppingFactor<1f
+		? lerp(
 			circularFishEye, // circular fish-eye
 			croppedCircle,   // cropped circle
 			max(CroppingFactor, 0f) // ↤ [0,1] range
-		):
-		lerp(
+		)
+		: lerp(
 			croppedCircle, // cropped circle
 			fullFrame, // full-frame
 			min(CroppingFactor-1f, 1f) // ↤ [1,2] range
@@ -941,9 +941,9 @@ float3 PerfectPerspectivePS(
 #if PANTOMORPHIC_MODE // simple length function for radius
 	float radius = length(viewCoord);
 #else // derive radius from anamorphic coordinates
-	float radius = S==1f ?
-		dot(viewCoord, viewCoord) : // spherical
-		viewCoord.y*viewCoord.y/S+viewCoord.x*viewCoord.x; // anamorphic
+	float radius = S==1f
+		? dot(viewCoord, viewCoord) // spherical
+		: viewCoord.y*viewCoord.y/S+viewCoord.x*viewCoord.x; // anamorphic
 	float rcp_radius = rsqrt(radius); radius = sqrt(radius);
 #endif
 
@@ -959,19 +959,19 @@ float3 PerfectPerspectivePS(
 		get_theta(radius, rcp_focal, viewCoord.y>=0f ? KyA : Ky)
 	#endif
 	);
-	float vignette = UseVignette?
-		dot(phiMtx, float2(
+	float vignette = UseVignette
+		? dot(phiMtx, float2(
 			get_vignette(theta2.x, K),
 	#if PANTOMORPHIC_MODE == 1
-			get_vignette(theta2.y, Ky)
+			get_vignette(theta2.y, Ky)))
 	#elif PANTOMORPHIC_MODE >= 2
-			get_vignette(theta2.y, viewCoord.y>=0f ? KyA : Ky)
+			get_vignette(theta2.y, viewCoord.y>=0f ? KyA : Ky)))
 	#endif
-		)) : 1f;
+		: 1f;
 	float theta = dot(phiMtx, theta2); // pantomorphic incident
 #else // get θ from anamorphic radius
 	float theta = get_theta(radius, rcp_focal, K);
-	float vignette = UseVignette? get_vignette(theta, K) : 1f;
+	float vignette = UseVignette ? get_vignette(theta, K) : 1f;
 	// Anamorphic vignette correction
 	if (UseVignette && S!=1f)
 	{
@@ -1012,8 +1012,8 @@ float3 PerfectPerspectivePS(
 #elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
 		|| Ky!=1f || KyA!=1f
 #endif // consider only global k
-		? tex2D(BackBuffer, texCoord).rgb : // perspective projection lookup
-		tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
+		? tex2D(BackBuffer, texCoord).rgb // perspective projection lookup
+		: tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
 
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
 	display = to_linear_gamma(display);
@@ -1045,9 +1045,9 @@ float3 PerfectPerspectivePS(
 		float3 border = lerp(
 			// Border background
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
-			MirrorBorder? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
+			MirrorBorder ? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
 #else
-			MirrorBorder? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
+			MirrorBorder ? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
 #endif
 #if BUFFER_COLOR_SPACE <= 2 // linear workflow
 			to_linear_gamma(BorderColor.rgb), // border color
@@ -1059,9 +1059,9 @@ float3 PerfectPerspectivePS(
 		);
 
 		// Apply vignette with border
-		display = BorderVignette?
-			vignette*lerp(display, border, borderMask) : // vignette on border
-			lerp(vignette*display, border, borderMask);  // vignette only inside
+		display = BorderVignette
+			? vignette*lerp(display, border, borderMask)  // vignette on border
+			: lerp(vignette*display, border, borderMask); // vignette only inside
 	}
 	else if (UseVignette) // apply vignette
 		display *= vignette;
