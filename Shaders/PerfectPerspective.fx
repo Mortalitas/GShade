@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.4.3)
+Perfect Perspective PS (version 5.4.4)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -996,16 +996,13 @@ float3 PerfectPerspectivePS(
 
 	// Back to normalized, centered coordinates
 	const static float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
-	texCoord = viewCoord*toUvCoord;
+	viewCoord *= toUvCoord;
 
  // :: end of perspective mapping :: //
 //----------------------------------//
 
-	// Outside border mask with anti-aliasing
-	float borderMask = GetBorderMask(texCoord);
-
 	// Back to UV Coordinates
-	texCoord = texCoord*0.5+0.5;
+	texCoord = viewCoord*0.5+0.5;
 
 	// Sample display image
 	float3 display =
@@ -1034,6 +1031,7 @@ float3 PerfectPerspectivePS(
 			break;
 	}
 
+	// Display border
 	if (
 #if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
 		(K!=1f || Ky!=1f)
@@ -1042,15 +1040,14 @@ float3 PerfectPerspectivePS(
 #else // consider only global k
 		K!=1f
 #endif
-		&& CroppingFactor!=2f) // visible borders
+		&& CroppingFactor<2f) // visible borders
 	{
-		// Get border
+		// Get border image
 		float3 border = lerp(
-			// Border background
 #if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH == 10 // manual gamma correction
-			MirrorBorder ? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb),
+			MirrorBorder ? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb), // border background
 #else
-			MirrorBorder ? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb,
+			MirrorBorder ? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb, // border background
 #endif
 #if BUFFER_COLOR_SPACE <= 2 // linear workflow
 			to_linear_gamma(BorderColor.rgb), // border color
@@ -1061,6 +1058,8 @@ float3 PerfectPerspectivePS(
 #endif
 		);
 
+		// Outside border mask with anti-aliasing
+		float borderMask = GetBorderMask(viewCoord);
 		// Apply vignette with border
 		display = BorderVignette
 			? vignette*lerp(display, border, borderMask)  // vignette on border
