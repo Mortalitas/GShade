@@ -154,16 +154,18 @@ namespace Spatial_IIR_Clarity
 			float prev;
 			float weight;
 			prev = tex2Dfetch(sLuma, float2(coord.x, coord.y - FILTER_WIDTH)).x;
-
-			for(int i = -FILTER_WIDTH + 1; i < PIXELS_PER_THREAD; i++)
+			if(coord.x < BUFFER_WIDTH)
 			{
-				curr = tex2Dfetch(sLuma, float2(coord.x, coord.y + i)).x;
-				weight = 1 - abs(curr - prev);
-				weight = pow(abs(weight), WeightExponent);
-				prev = lerp(curr, prev, weight);
-				if(i >= 0 && (coord.x) < BUFFER_WIDTH)
+				for(int i = -FILTER_WIDTH + 1; i < PIXELS_PER_THREAD; i++)
 				{
-					tex2Dstore(wBlur0, int2(coord.x, coord.y + i), prev.xxxx);
+					curr = tex2Dfetch(sLuma, float2(coord.x, coord.y + i)).x;
+					weight = 1 - abs(curr - prev);
+					weight = pow(abs(weight), WeightExponent);
+					prev = lerp(curr, prev, weight);
+					if(i >= 0 && (coord.x) < BUFFER_WIDTH)
+					{
+						tex2Dstore(wBlur0, int2(coord.x, coord.y + i), prev.xxxx);
+					}
 				}
 			}
 		}

@@ -88,7 +88,7 @@ namespace Spatial_IIR_Bilateral
 	{
 		if(id.x < (H_GROUPS.x / 2))
 		{
-			float2 coord = float2(id.x * PIXELS_PER_THREAD, id.y) + 0.5;
+			float2 coord = float2(id.x * PIXELS_PER_THREAD, id.y);
 			float3 curr;
 			float3 prev;
 			float3 weight;
@@ -107,7 +107,7 @@ namespace Spatial_IIR_Bilateral
 		}
 		else
 		{
-			float2 coord = float2((id.x - (H_GROUPS.x / 2)) * PIXELS_PER_THREAD + PIXELS_PER_THREAD, id.y) + 0.5;
+			float2 coord = float2((id.x - (H_GROUPS.x / 2)) * PIXELS_PER_THREAD + PIXELS_PER_THREAD, id.y);
 			float3 curr;
 			float3 prev;
 			float3 weight;
@@ -128,28 +128,31 @@ namespace Spatial_IIR_Bilateral
 	
 	void VerticalFilterCS0(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 	{
-		if(id.y < V_GROUPS.y / 2)
+		if(id.y < (V_GROUPS.y / 2))
 		{
-			float2 coord = float2(id.x, id.y * PIXELS_PER_THREAD) + 0.5;
+			float2 coord = float2(id.x, id.y * PIXELS_PER_THREAD);
 			float3 curr;
 			float3 prev;
 			float3 weight;
 			prev = tex2Dfetch(sTemp0, float2(coord.x, coord.y - FILTER_WIDTH)).xyz;
-			for(int i = -FILTER_WIDTH + 1; i < PIXELS_PER_THREAD; i++)
+			if(coord.x < BUFFER_WIDTH)
 			{
-				curr = tex2Dfetch(sTemp0, float2(coord.x, coord.y + i)).xyz;
-				weight = 1 - abs(curr - prev);
-				weight = pow(abs(weight), WeightExponent);
-				prev = lerp(curr, prev, weight);
-				if(i >= 0)
+				for(int i = -FILTER_WIDTH + 1; i < PIXELS_PER_THREAD; i++)
 				{
-					tex2Dstore(wTemp1, int2(coord.x, coord.y + i), prev.xyzx);
+					curr = tex2Dfetch(sTemp0, float2(coord.x, coord.y + i)).xyz;
+					weight = 1 - abs(curr - prev);
+					weight = pow(abs(weight), WeightExponent);
+					prev = lerp(curr, prev, weight);
+					if(i >= 0)
+					{
+						tex2Dstore(wTemp1, int2(coord.x, coord.y + i), float4(prev.xyz, 1));
+					}
 				}
 			}
 		}
 		else
 		{
-			float2 coord = float2(id.x, (id.y - (V_GROUPS.y / 2)) * PIXELS_PER_THREAD + PIXELS_PER_THREAD) + 0.5;
+			float2 coord = float2(id.x, (id.y - (V_GROUPS.y / 2)) * PIXELS_PER_THREAD + PIXELS_PER_THREAD);
 			float3 curr;
 			float3 prev;
 			float3 weight;
@@ -162,7 +165,7 @@ namespace Spatial_IIR_Bilateral
 				prev = lerp(curr, prev, weight);
 				if(i <= 0)
 				{
-					tex2Dstore(wTemp1, int2(BUFFER_WIDTH + coord.x, coord.y + i), prev.xyzx);
+					tex2Dstore(wTemp1, int2(BUFFER_WIDTH + coord.x, coord.y + i), float4(prev.xyz, 1));
 				}
 			}
 		}
