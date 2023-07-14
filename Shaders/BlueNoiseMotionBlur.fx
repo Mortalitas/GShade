@@ -1,7 +1,13 @@
-/** Motion Blur effect PS, version 1.0.7
+/*------------------.
+| :: Description :: |
+'-------------------/
 
-This code © 2022 Jakub Maksymilian Fober
+Motion Blur effect PS (version 1.0.8)
 
+Copyright:
+This code © 2022-2023 Jakub Maksymilian Fober
+
+License:
 This work is licensed under the Creative Commons
 Attribution-NonCommercial-NoDerivs 3.0 Unported License.
 To view a copy of this license, visit
@@ -23,6 +29,7 @@ Intent §: For better accessibility and understanding across different languages
 Result §: The desired outcome is to promote usability across users from diverse
 linguistic backgrounds, and for them to be able to engage with the shader.
 
+Contact:
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
 
@@ -30,16 +37,22 @@ For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 */
 
-	/* MACROS */
+/*-------------.
+| :: Macros :: |
+'-------------*/
 
 #include "ReShade.fxh"
-#include "ColorAndDither.fxh"
+#include "BlueNoiseDither.fxh"
 
-	/* UNIFORMS */
+/*---------------.
+| :: Uniforms :: |
+'---------------*/
 
 uniform uint framecount < source = "framecount"; >;
 
-	/* TEXTURES */
+/*---------------.
+| :: Textures :: |
+'---------------*/
 
 // Previous frame render target buffer
 texture InterlacedTargetBuffer
@@ -57,7 +70,9 @@ sampler InterlacedBufferSampler
 	SRGBTexture = true;
 };
 
-	/* SHADERS */
+/*--------------.
+| :: Shaders :: |
+'--------------*/
 
 // Generate a triangle covering the entire screen
 float4 InterlacedVS(in uint id : SV_VertexID) : SV_Position
@@ -72,7 +87,10 @@ float4 InterlacedVS(in uint id : SV_VertexID) : SV_Position
 }
 
 // Preserve previous frame
-void InterlacedTargetPass(float4 pixelPos : SV_Position, out float4 Target : SV_Target)
+void InterlacedTargetPass(
+	float4 pixelPos   : SV_Position,
+	out float4 Target : SV_Target
+)
 {
 	// Get pixel coordinates
 	uint2 pixelCoord = uint2(pixelPos.xy);
@@ -89,8 +107,9 @@ void InterlacedTargetPass(float4 pixelPos : SV_Position, out float4 Target : SV_
 float4 InterlacedPS(float4 pixelPos : SV_Position) : SV_Target
 { return tex2Dfetch(InterlacedBufferSampler, uint2(pixelPos.xy)); }
 
-
-	/* OUTPUT */
+/*-------------.
+| :: Output :: |
+'-------------*/
 
 technique BlueNoiseMotion
 <
@@ -101,9 +120,10 @@ technique BlueNoiseMotion
 		"\n"
 		"To get higher quality results, the game should be running at higher FPS.\n"
 		"\n"
-		"This effect © 2022 Jakub Maksymilian Fober\n"
+		"This effect © 2022-2023 Jakub Maksymilian Fober\n"
 		"Licensed under CC BY-NC-ND 3.0 + additional permissions (see source).";
->{
+>
+{
 	pass GatherFrames
 	{
 		VertexShader = InterlacedVS;

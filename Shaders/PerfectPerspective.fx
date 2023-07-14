@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.4.5)
+Perfect Perspective PS (version 5.4.6)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -73,17 +73,17 @@ by Fober, J. M.
    1 gives separate distortion option for vertical axis.
    2 gives separate option for top and bottom half. */
 #ifndef PANTOMORPHIC_MODE
-	#define PANTOMORPHIC_MODE 0
+	#define PANTOMORPHIC_MODE 1
 #endif
-// ITU REC 601 YCbCr
-#define ITU_REC 601
 
 /*--------------.
 | :: Commons :: |
 '--------------*/
 
 #include "ReShade.fxh"
-#include "ColorAndDither.fxh"
+#include "ColorConversion.fxh"
+#include "LinearGammaWorkflow.fxh"
+#include "BlueNoiseDither.fxh"
 
 /*-----------.
 | :: Menu :: |
@@ -91,7 +91,8 @@ by Fober, J. M.
 
 // :: Field of View :: //
 
-uniform uint FovAngle <
+uniform uint FovAngle
+<
 	ui_type = "slider";
 	ui_category = "In game";
 	ui_category_closed = true;
@@ -101,7 +102,8 @@ uniform uint FovAngle <
 	ui_max = 140u;
 > = 90u;
 
-uniform uint FovType <
+uniform uint FovType
+<
 	ui_type = "combo";
 	ui_category = "In game";
 	ui_label = "Field of view type";
@@ -128,7 +130,8 @@ uniform uint FovType <
 // :: Perspective :: //
 
 // k indicates horizontal axis or whole picture projection type
-uniform float K <
+uniform float K
+<
 	ui_type = "slider";
 	ui_category = "Distortion";
 	ui_category_closed = true;
@@ -155,8 +158,9 @@ uniform float K <
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0.5;
 
-#if PANTOMORPHIC_MODE == 1 // vertical axis projection is driven by separate k parameter
-uniform float Ky <
+#if PANTOMORPHIC_MODE==1 // vertical axis projection is driven by separate k parameter
+uniform float Ky
+<
 	ui_type = "slider";
 	ui_label = "Projection type 'k' vertical";
 	ui_category = "Distortion";
@@ -176,8 +180,9 @@ uniform float Ky <
 		"[Ctrl+click] to type value.";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0.5;
-#elif PANTOMORPHIC_MODE >= 2 // vertical axis projection is driven by separate ky top and ky bottom parameter
-uniform float Ky <
+#elif PANTOMORPHIC_MODE>=2 // vertical axis projection is driven by separate ky top and ky bottom parameter
+uniform float Ky
+<
 	ui_type = "slider";
 	ui_label = "Projection type 'k' top (asymmetrical)";
 	ui_category = "Distortion";
@@ -198,7 +203,8 @@ uniform float Ky <
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0.5;
 
-uniform float KyA <
+uniform float KyA
+<
 	ui_type = "slider";
 	ui_label = "Projection type 'k' bottom (asymmetrical)";
 	ui_category = "Distortion";
@@ -219,7 +225,8 @@ uniform float KyA <
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0.5;
 #else // vertical axis distortion can be elongated by the anamorphic squeeze factor
-uniform float S <
+uniform float S
+<
 	ui_type = "slider";
 	ui_category = "Distortion";
 	ui_label = "Anamorphic squeeze 's'";
@@ -240,7 +247,8 @@ uniform float S <
 > = 1f;
 #endif
 
-uniform bool UseVignette <
+uniform bool UseVignette
+<
 	ui_type = "input";
 	ui_category = "Distortion";
 	ui_label = "Apply vignetting";
@@ -249,8 +257,9 @@ uniform bool UseVignette <
 
 // :: Border :: //
 
-uniform float CroppingFactor <
-	ui_type = "input";
+uniform float CroppingFactor
+<
+	ui_type = "slider";
 	ui_text = "Zoom   [ circular | cropped circle | full frame ]:";
 	ui_category = "Border appearance";
 	ui_category_closed = true;
@@ -266,14 +275,16 @@ uniform float CroppingFactor <
 	ui_min = 0f; ui_max = 2f;
 > = 1f;
 
-uniform bool MirrorBorder <
+uniform bool MirrorBorder
+<
 	ui_type = "input";
 	ui_category = "Border appearance";
 	ui_label = "Mirror on border";
 	ui_tooltip = "Choose mirrored or original image on the border.";
 > = false;
 
-uniform bool BorderVignette <
+uniform bool BorderVignette
+<
 	ui_type = "input";
 	ui_category = "Border cosmetics";
 	ui_category_closed = true;
@@ -281,14 +292,16 @@ uniform bool BorderVignette <
 	ui_tooltip = "Apply vignetting effect to border.";
 > = false;
 
-uniform float4 BorderColor <
+uniform float4 BorderColor
+<
 	ui_type = "color";
 	ui_category = "Border cosmetics";
 	ui_label = "Border color";
 	ui_tooltip = "Use alpha to change border transparency.";
 > = float4(0.027, 0.027, 0.027, 0.96);
 
-uniform float BorderCorner <
+uniform float BorderCorner
+<
 	ui_type = "slider";
 	ui_category = "Border cosmetics";
 	ui_label = "Corner radius";
@@ -296,7 +309,8 @@ uniform float BorderCorner <
 	ui_min = 0f; ui_max = 1f;
 > = 0.062;
 
-uniform uint BorderGContinuity <
+uniform uint BorderGContinuity
+<
 	ui_type = "slider";
 	ui_category = "Border cosmetics";
 	ui_label = "Corner roundness";
@@ -312,7 +326,8 @@ uniform uint BorderGContinuity <
 
 // :: Debug Options :: //
 
-uniform bool DebugModePreview <
+uniform bool DebugModePreview
+<
 	ui_type = "input";
 	ui_label = "Display debug mode";
 	ui_tooltip =
@@ -322,7 +337,8 @@ uniform bool DebugModePreview <
 	ui_category_closed = true;
 > = false;
 
-uniform uint DebugMode <
+uniform uint DebugMode
+<
 	ui_type = "combo";
 	ui_items =
 		"Calibration grid\0"
@@ -347,7 +363,8 @@ uniform uint DebugMode <
 	ui_category = "Debugging mode";
 > = 0u;
 
-uniform float DimDebugBackground <
+uniform float DimDebugBackground
+<
 	ui_type = "slider";
 	ui_min = 0.25; ui_max = 1f; ui_step = 0.1;
 	ui_label = "Dim background";
@@ -357,7 +374,8 @@ uniform float DimDebugBackground <
 
 // :: Grid :: //
 
-uniform uint GridLook <
+uniform uint GridLook
+<
 	ui_type = "combo";
 	ui_items =
 		"yellow grid\0"
@@ -371,7 +389,8 @@ uniform uint GridLook <
 	ui_category_closed = true;
 > = 0u;
 
-uniform uint GridSize <
+uniform uint GridSize
+<
 	ui_type = "slider";
 	ui_min = 1u; ui_max = 32u;
 	ui_label = "Grid size";
@@ -379,7 +398,8 @@ uniform uint GridSize <
 	ui_category = "Debugging mode";
 > = 16u;
 
-uniform uint GridWidth <
+uniform uint GridWidth
+<
 	ui_type = "slider";
 	ui_min = 2u; ui_max = 16u;
 	ui_label = "Grid bar width";
@@ -387,7 +407,8 @@ uniform uint GridWidth <
 	ui_category = "Debugging mode";
 > = 2u;
 
-uniform float GridTilt <
+uniform float GridTilt
+<
 	ui_type = "slider";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 	ui_label = "Tilt grid";
@@ -397,7 +418,8 @@ uniform float GridTilt <
 
 // :: Pixel Scale Map :: //
 
-uniform uint ResScaleScreen <
+uniform uint ResScaleScreen
+<
 	ui_type = "input";
 	ui_label = "Screen (native) resolution";
 	ui_tooltip = "Set it to default screen resolution.";
@@ -406,7 +428,8 @@ uniform uint ResScaleScreen <
 	ui_category_closed = true;
 > = 1920u;
 
-uniform uint ResScaleVirtual <
+uniform uint ResScaleVirtual
+<
 	ui_type = "drag";
 	ui_min = 16u; ui_max = 16384u;
 	ui_label = "Virtual resolution";
@@ -593,9 +616,9 @@ float2 binarySearchCorner(float halfOmega, float radiusAtOmega, float rcp_focal)
 }
 #endif
 
-/*-------------.
-| :: Shader :: |
-'-------------*/
+/*--------------.
+| :: Shaders :: |
+'--------------*/
 
 // Border mask shader with rounded corners
 float GetBorderMask(float2 borderCoord)
@@ -624,13 +647,10 @@ float3 GridModeViewPass(
 	uint2  pixelCoord,
 	float2 texCoord,
 	float3 display
-){
+)
+{
 	// Sample background without distortion
-#if BUFFER_COLOR_SPACE <= 2 // manual gamma correction
-	display = to_linear_gamma(tex2Dfetch(BackBuffer, pixelCoord).rgb);
-#else
-	display = tex2Dfetch(BackBuffer, pixelCoord).rgb;
-#endif
+	display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, pixelCoord).rgb); // manual gamma correction
 
 	// Get view coordinates, normalized at the corner
 	texCoord = (texCoord*2f-1f)*normalize(BUFFER_SCREEN_SIZE);
@@ -670,12 +690,8 @@ float3 GridModeViewPass(
 
 	// Adjust grid look
 	{
-		static float safeBottomColor =
-	#if BUFFER_COLOR_SPACE <= 2 // linear workflow
-			to_linear_gamma(16f/255f); // safe bottom-color in linear range
-	#else
-			16f/255f; // safe bottom-color range
-	#endif
+		// Safe bottom-color in linear range
+		static float safeBottomColor = GammaConvert::to_linear(16f/255f); // linear workflow
 		safeBottomColor *= 1f-DimDebugBackground;
 		display = mad(
 			display, // background
@@ -709,7 +725,8 @@ float3 GridModeViewPass(
 float3 SamplingScaleModeViewPass(
 	float2 texCoord,
 	float3 display
-){
+)
+{
 	// Define Mapping color
 	const static float3   underSample = float3(235f, 16f, 16f)/255f; // red
 	const static float3   superSample = float3(16f, 235f, 16f)/255f; // green
@@ -734,16 +751,15 @@ float3 SamplingScaleModeViewPass(
 		s_curve(saturate(pixelScale-2f)) // ↤ [1, 2] area range
 	);
 
+	// Linear workflow
+	display = GammaConvert::to_display(display);
 
-#if BUFFER_COLOR_SPACE <= 2 // linear workflow
-	display = to_display_gamma(display);
-#endif
 	const static float safeRange[2] = {16f/255f, 235f/255f};
 	// Get luma channel mapped to save range
 	display.x = lerp(
 		safeRange[0], // safe range bottom
 		safeRange[1], // safe range top
-		dot(LumaMtx, display)
+		ColorConvert::RGB_to_Luma(display)
 	);
 	// Adjust background look
 	display = lerp(
@@ -753,11 +769,8 @@ float3 SamplingScaleModeViewPass(
 	);
 	// Adjust background look
 	display = lerp(
-#if BUFFER_COLOR_SPACE <= 2 // linear workflow
-		to_linear_gamma(display.x), // background
-#else
-		display.x, // background
-#endif
+		// Linear workflow
+		GammaConvert::to_linear(display.x), // background
 		pixelScaleMap, // pixel scale map
 		sqrt(1.25)-0.5 // golden ratio by JMF
 	);
@@ -770,7 +783,8 @@ void PerfectPerspectiveVS(
 	out float4 position  : SV_Position,
 	out float2 texCoord  : TEXCOORD0,
 	out float2 viewCoord : TEXCOORD1
-){
+)
+{
 	// Define vertex position
 	const static float2 vertexPos[3] =
 	{
@@ -790,7 +804,7 @@ void PerfectPerspectiveVS(
 	// Correct aspect ratio, normalized to the corner
 	viewCoord *= viewProportions;
 
- //--------------------------------------//
+//--------------------------------------//
 // :: begin cropping of image bounds :: //
 
 	// Half field of view angle in radians
@@ -804,7 +818,7 @@ void PerfectPerspectiveVS(
 	const static float croppingHorizontal = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.x),
 		rcp_focal, K)/viewProportions.x;
-#if PANTOMORPHIC_MODE == 1
+#if PANTOMORPHIC_MODE==1
 	// Vertical point radius
 	const static float croppingVertical = get_radius(
 			atan(tan(halfOmega)/radiusAtOmega*viewProportions.y),
@@ -818,7 +832,7 @@ void PerfectPerspectiveVS(
 	const static float croppedCircle = min(croppingHorizontal, croppingVertical);
 	// Full-frame
 	const static float fullFrame = croppingDigonal;
-#elif PANTOMORPHIC_MODE >= 2
+#elif PANTOMORPHIC_MODE>=2
 	// Vertical point radius
 	const static float2 croppingVertical = float2(
 		get_radius(
@@ -886,9 +900,9 @@ float3 PerfectPerspectivePS(
  //---------------------------------------//
 // :: begin distortion mapping bypass :: //
 
-#if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
+#if PANTOMORPHIC_MODE==1 // take vertical k factor into account
 	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
-#elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
+#elif PANTOMORPHIC_MODE>=2 // take both vertical k factors into account
 	if (FovAngle==0u || (K==1f && Ky==1f && KyA==1f && !UseVignette))
 #else // consider only global k
 	if (FovAngle==0u || (K==1f && !UseVignette))
@@ -903,29 +917,25 @@ float3 PerfectPerspectivePS(
 				case 1u: // pixel scale-map
 					display = SamplingScaleModeViewPass(
 						texCoord,
-#if BUFFER_COLOR_SPACE <= 2 // manual gamma correction
-						to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb)
-#else
-						tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb
-#endif
+						GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb) // manual gamma correction
 					); break;
 				default: // calibration grid
 					display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
 					break;
 			}
-#if BUFFER_COLOR_SPACE <= 2 // linear workflow
-			display = to_display_gamma(display); // manually correct gamma
-#endif
+			// Linear workflow
+			display = GammaConvert::to_display(display); // manually correct gamma
+
 			return BlueNoise::dither(uint2(pixelPos.xy), display); // dither final 8/10-bit result
 		}
 		else // bypass all effects
 			return tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
 	}
 
- // :: end of distortion mapping bypass :: //
+// :: end of distortion mapping bypass :: //
 //----------------------------------------//
 
- //------------------------------------//
+//------------------------------------//
 // :: begin of perspective mapping :: //
 
 	// Aspect ratio transformation vector
@@ -953,18 +963,18 @@ float3 PerfectPerspectivePS(
 	// Horizontal and vertical incident angle
 	float2 theta2 = float2(
 		get_theta(radius, rcp_focal, K),
-	#if PANTOMORPHIC_MODE == 1
+	#if PANTOMORPHIC_MODE==1
 		get_theta(radius, rcp_focal, Ky)
-	#elif PANTOMORPHIC_MODE >= 2
+	#elif PANTOMORPHIC_MODE>=2
 		get_theta(radius, rcp_focal, viewCoord.y>=0f ? KyA : Ky)
 	#endif
 	);
 	float vignette = UseVignette
 		? dot(phiMtx, float2(
 			get_vignette(theta2.x, K),
-	#if PANTOMORPHIC_MODE == 1
+	#if PANTOMORPHIC_MODE==1
 			get_vignette(theta2.y, Ky)))
-	#elif PANTOMORPHIC_MODE >= 2
+	#elif PANTOMORPHIC_MODE>=2
 			get_vignette(theta2.y, viewCoord.y>=0f ? KyA : Ky)))
 	#endif
 		: 1f;
@@ -995,7 +1005,7 @@ float3 PerfectPerspectivePS(
 	const static float2 toUvCoord = radiusAtOmega/(tan(halfOmega)*viewProportions);
 	viewCoord *= toUvCoord;
 
- // :: end of perspective mapping :: //
+// :: end of perspective mapping :: //
 //----------------------------------//
 
 	// Back to UV Coordinates
@@ -1004,17 +1014,16 @@ float3 PerfectPerspectivePS(
 	// Sample display image
 	float3 display =
 		K!=1f
-#if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
+#if PANTOMORPHIC_MODE==1 // take vertical k factor into account
 		|| Ky!=1f
-#elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
+#elif PANTOMORPHIC_MODE>=2 // take both vertical k factors into account
 		|| Ky!=1f || KyA!=1f
 #endif // consider only global k
 		? tex2D(BackBuffer, texCoord).rgb // perspective projection lookup
 		: tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
 
-#if BUFFER_COLOR_SPACE <= 2 // manual gamma correction
-	display = to_linear_gamma(display);
-#endif
+	// manual gamma correction
+	display = GammaConvert::to_linear(display);
 
 	// Display calibration view
 	if (DebugModePreview)
@@ -1030,9 +1039,9 @@ float3 PerfectPerspectivePS(
 
 	// Display border
 	if (
-#if PANTOMORPHIC_MODE == 1 // take vertical k factor into account
+#if PANTOMORPHIC_MODE==1 // take vertical k factor into account
 		(K!=1f || Ky!=1f)
-#elif PANTOMORPHIC_MODE >= 2 // take both vertical k factors into account
+#elif PANTOMORPHIC_MODE>=2 // take both vertical k factors into account
 		(K!=1f || Ky!=1f || KyA!=1f)
 #else // consider only global k
 		K!=1f
@@ -1041,18 +1050,11 @@ float3 PerfectPerspectivePS(
 	{
 		// Get border image
 		float3 border = lerp(
-#if BUFFER_COLOR_SPACE <= 2 // manual gamma correction
-			MirrorBorder ? display : to_linear_gamma(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb), // border background
-#else
-			MirrorBorder ? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb, // border background
-#endif
-#if BUFFER_COLOR_SPACE <= 2 // linear workflow
-			to_linear_gamma(BorderColor.rgb), // border color
-			to_linear_gamma(BorderColor.a)    // border alpha
-#else
-			BorderColor.rgb, // border color
-			BorderColor.a    // border alpha
-#endif
+			// manual gamma correction
+			MirrorBorder ? display : GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb), // border background
+			// Linear workflow
+			GammaConvert::to_linear(BorderColor.rgb), // border color
+			GammaConvert::to_linear(BorderColor.a)    // border alpha
 		);
 
 		// Outside border mask with anti-aliasing
@@ -1065,10 +1067,9 @@ float3 PerfectPerspectivePS(
 	else if (UseVignette) // apply vignette
 		display *= vignette;
 
-#if BUFFER_COLOR_SPACE <= 2 // linear workflow
 	// Manually correct gamma
-	display = to_display_gamma(display);
-#endif
+	display = GammaConvert::to_display(display);
+
 	// Dither final 8/10-bit result
 	return BlueNoise::dither(uint2(pixelPos.xy), display);
 }

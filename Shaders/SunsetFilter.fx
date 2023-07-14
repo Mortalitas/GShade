@@ -1,103 +1,142 @@
-/* 
-SunsetFilter PS v1.0.0 (c) 2018 Jacob Maximilian Fober, 
+/*------------------.
+| :: Description :: |
+'-------------------/
 
-This work is licensed under the Creative Commons 
-Attribution-ShareAlike 4.0 International License. 
-To view a copy of this license, visit 
+SunsetFilter PS (version 1.0.2)
+
+Copyright:
+This code © 2018-2023 Jakub Maksymilian Fober
+
+License:
+This work is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License.
+To view a copy of this license, visit
 http://creativecommons.org/licenses/by-sa/4.0/.
 */
-// Lightly optimized by Marot Satil for the GShade project.
 
-uniform float3 ColorA <
-	ui_label = "Colour (A)";
+/*--------------.
+| :: Commons :: |
+'--------------*/
+
+#include "ReShade.fxh"
+#include "LinearGammaWorkflow.fxh"
+
+/*-----------.
+| :: Menu :: |
+'-----------*/
+
+uniform float3 ColorA
+<
 	ui_type = "color";
+	ui_label = "Colour (A)";
 	ui_category = "Colors";
-> = float3(1.0, 0.0, 0.0);
+> = float3(1f, 0f, 0f);
 
-uniform float3 ColorB <
+uniform float3 ColorB
+<
+	ui_type = "color";
 	ui_label = "Colour (B)";
 	ui_type = "color";
 	ui_category = "Colors";
-> = float3(0.0, 0.0, 0.0);
+> = float3(0f, 0f, 0f);
 
-uniform bool Flip <
+uniform bool Flip
+<
 	ui_label = "Color flip";
 	ui_category = "Colors";
 > = false;
 
-uniform int Axis <
-	ui_label = "Angle";
+uniform int Axis
+<
 	ui_type = "slider";
-	ui_step = 1;
+	ui_label = "Angle";
 	ui_min = -180; ui_max = 180;
 	ui_category = "Controls";
 > = -7;
 
-uniform float Scale <
+uniform float Scale
+<
+	ui_type = "slider";
 	ui_label = "Gradient sharpness";
-	ui_type = "slider";
-	ui_min = 0.5; ui_max = 1.0; ui_step = 0.005;
+	ui_min = 0.5; ui_max = 1f; ui_step = 0.005;
 	ui_category = "Controls";
-> = 1.0;
+> = 1f;
 
-uniform float Offset <
+uniform float Offset
+<
+	ui_type = "slider";
 	ui_label = "Position";
-	ui_type = "slider";
-  ui_step = 0.002;
-	ui_min = 0.0; ui_max = 0.5;
+	ui_min = 0f; ui_max = 0.5;
 	ui_category = "Controls";
-> = 0.0;
+> = 0f;
 
-#include "ReShade.fxh"
-
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
+/*----------------.
+| :: Functions :: |
+'----------------*/
 
 // Overlay blending mode
 float Overlay(float Layer)
 {
-	const float Min = min(Layer, 0.5);
-	const float Max = max(Layer, 0.5);
-	return 2 * (Min * Min + 2 * Max - Max * Max) - 1.5;
+	float Min = min(Layer, 0.5);
+	float Max = max(Layer, 0.5);
+	return 2f*(Min*Min+2f*Max-Max*Max)-1.5;
 }
 
 // Screen blending mode
 float3 Screen(float3 LayerA, float3 LayerB)
-{ return 1.0 - (1.0 - LayerA) * (1.0 - LayerB); }
+{ return 1f-(1f-LayerA)*(1f-LayerB); }
 
-void SunsetFilterPS(float4 vpos : SV_Position, float2 UvCoord : TEXCOORD, out float3 Image : SV_Target)
+/*--------------.
+| :: Shaders :: |
+'--------------*/
+
+void SunsetFilterPS(
+	float4 vpos      : SV_Position,
+	float2 UvCoord   : TEXCOORD,
+	out float3 Image : SV_Target
+)
 {
 	// Grab screen texture
-	Image.rgb = tex2D(ReShade::BackBuffer, UvCoord).rgb;
+	Image = GammaConvert::to_linear(tex2D(ReShade::BackBuffer, UvCoord).rgb);
 	// Correct Aspect Ratio
 	float2 UvCoordAspect = UvCoord;
-	UvCoordAspect.y += BUFFER_ASPECT_RATIO * 0.5 - 0.5;
+	UvCoordAspect.y += BUFFER_ASPECT_RATIO*0.5-0.5;
 	UvCoordAspect.y /= BUFFER_ASPECT_RATIO;
 	// Center coordinates
-	UvCoordAspect = UvCoordAspect * 2 - 1;
+	UvCoordAspect = UvCoordAspect*2f-1f;
 	UvCoordAspect *= Scale;
 
 	// Tilt vector
-	const float Angle = radians(-Axis);
-	const float2 TiltVector = float2(sin(Angle), cos(Angle));
+	float Angle = radians(-Axis);
+	float2 TiltVector = float2(sin(Angle), cos(Angle));
 
 	// Blend Mask
-	float BlendMask = dot(TiltVector, UvCoordAspect) + Offset;
-	BlendMask = Overlay(BlendMask * 0.5 + 0.5); // Linear coordinates
+	float BlendMask = dot(TiltVector, UvCoordAspect)+Offset;
+	BlendMask = Overlay(BlendMask*0.5+0.5); // Linear coordinates
 
 	// Color image
-	if (Flip)
-		Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, 1 - BlendMask));
-	else
-		Image = Screen(Image.rgb, lerp(ColorA.rgb, ColorB.rgb, BlendMask));
+	Image = Screen(
+		Image.rgb,
+		lerp(
+			GammaConvert::to_linear(ColorA),
+			GammaConvert::to_linear(ColorB),
+			Flip ? 1f-BlendMask : BlendMask
+		));
 
-#if GSHADE_DITHER
-	Image += TriDither(Image, UvCoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
+	Image = GammaConvert::to_display(Image);
 }
 
+/*-------------.
+| :: Output :: |
+'-------------*/
+
 technique SunsetFilter
+<
+	ui_label = "Sunset Filter";
+	ui_tooltip =
+		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY-SA 4.0";
+>
 {
 	pass
 	{

@@ -1,32 +1,45 @@
-/** Tilt-Shift PS, version 2.0.5
+/*------------------.
+| :: Description :: |
+'-------------------/
 
+Tilt-Shift PS (version 2.0.6)
+
+Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
 
+License:
 This work is licensed under the Creative Commons,
 Attribution 3.0 Unported License.
 To view a copy of this license, visit
 http://creativecommons.org/licenses/by/3.0/.
 */
 
-	/* MACROS */
+/*-------------.
+| :: Macros :: |
+'-------------*/
 
 // Maximum number of samples for blur
 #ifndef TILT_SHIFT_MAX_SAMPLES
 	#define TILT_SHIFT_MAX_SAMPLES 128u
 #endif
-// ITU REC 601 YCbCr
-#define ITU_REC 601
 
-	/* COMMONS */
+/*--------------.
+| :: Commons :: |
+'--------------*/
 
 #include "ReShade.fxh"
-#include "ColorAndDither.fxh"
+#include "ColorConversion.fxh"
+#include "LinearGammaWorkflow.fxh"
+#include "BlueNoiseDither.fxh"
 
-	/* MENU */
+/*-----------.
+| :: Menu :: |
+'-----------*/
 
-// Blur amount
+// :: Blur amount :: //
 
-uniform float4 K <
+uniform float4 K
+<
 	ui_type = "drag";
 	ui_min = -0.2; ui_max = 0.2;
 	ui_label = "Distortion profile 'k'";
@@ -34,7 +47,8 @@ uniform float4 K <
 	ui_category = "Tilt-shift blur";
 > = float4(0.025, 0f, 0f, 0f);
 
-uniform int BlurAngle <
+uniform int BlurAngle
+<
 	ui_type = "slider";
 	ui_min = -90; ui_max = 90;
 	ui_label = "Tilt angle";
@@ -42,7 +56,8 @@ uniform int BlurAngle <
 	ui_category = "Tilt-shift blur";
 > = 0;
 
-uniform float BlurOffset <
+uniform float BlurOffset
+<
 	ui_type = "slider";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 	ui_label = "Line offset";
@@ -50,9 +65,10 @@ uniform float BlurOffset <
 	ui_category = "Tilt-shift blur";
 > = 0f;
 
-// Blur line
+// :: Blur line :: //
 
-uniform bool VisibleLine <
+uniform bool VisibleLine
+<
 	ui_type = "input";
 	ui_label = "Visualize center line";
 	ui_tooltip = "Visualize blur center line.";
@@ -60,7 +76,8 @@ uniform bool VisibleLine <
 	ui_category_closed = true;
 > = false;
 
-uniform uint BlurLineWidth <
+uniform uint BlurLineWidth
+<
 	ui_type = "slider";
 	ui_min = 2u; ui_max = 64u;
 	ui_label = "Visualized line width";
@@ -68,13 +85,15 @@ uniform uint BlurLineWidth <
 	ui_category = "Blur line";
 > = 32u;
 
-	/* TEXTURES */
+/*---------------.
+| :: Textures :: |
+'---------------*/
 
 // Define screen texture with mirror tiles
 sampler BackBuffer
 {
 	Texture = ReShade::BackBufferTex;
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // linear workflow
+#if BUFFER_COLOR_SPACE==1 || BUFFER_COLOR_SPACE==2
 	SRGBTexture = true;
 #endif
 	// Border style
@@ -82,7 +101,9 @@ sampler BackBuffer
 	AddressV = MIRROR;
 };
 
-	/* FUNCTIONS */
+/*----------------.
+| :: Functions :: |
+'----------------*/
 
 /* Exponential bell weight falloff by JMF
    Generates smooth bell falloff for blur, with perfect weights
@@ -91,7 +112,7 @@ sampler BackBuffer
 float bellWeight(float position)
 {
 	// Get deviation for minimum value for a given step size
-#if BUFFER_COLOR_BIT_DEPTH == 10
+#if BUFFER_COLOR_BIT_DEPTH==10
 	const float deviation = log(rcp(1024u)); // Logarithm of base e
 #else
 	const float deviation = log(rcp(256u)); // Logarithm of base e
@@ -133,7 +154,9 @@ float getBlurRadius(float2 viewCoord)
 	return abs(1f-rcp(dot(radius, K)+1f));
 }
 
-	/* SHADERS */
+/*--------------.
+| :: Shaders :: |
+'--------------*/
 
 // Vertex shader generating a triangle covering the entire screen
 void TiltShiftVS(
@@ -200,9 +223,7 @@ void TiltShiftPassHorizontalPS(
 	else color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
 	color = saturate(color); // Clamp values
 
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // Manual gamma
-	color = to_display_gamma(color);
-#endif
+	color = GammaConvert::to_display(color); // manual gamma
 	// Dither output to increase perceivable picture bit-depth
 	color = BlueNoise::dither(uint2(pixCoord.xy), color);
 }
@@ -271,26 +292,23 @@ void TiltShiftPassVerticalPS(
 		);
 
 		// Add center line to the image with offset color by 180°
-		float lineColor = abs(dot(LumaMtx, color)*2f-1f);
+		float lineColor = abs(ColorConvert::RGB_to_Luma(color)*2f-1f);
 		color = lerp(
 			color,
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // manual gamma
-			to_linear_gamma(lineColor),
-#else
-			lineColor,
-#endif
+			GammaConvert::to_linear(lineColor), // manual gamma
 			lineHorizontal
 		);
 	}
 
-#if BUFFER_COLOR_SPACE <= 2 && BUFFER_COLOR_BIT_DEPTH != 10 // Manual gamma
-	color = to_display_gamma(color);
-#endif
+	// Manual gamma
+	color = GammaConvert::to_display(color);
 	// Dither output to increase perceivable picture bit-depth
 	color = BlueNoise::dither(uint2(pixCoord.xy), color);
 }
 
-	/* OUTPUT */
+/*--------------.
+| :: Output :: |
+'--------------*/
 
 technique TiltShift
 <

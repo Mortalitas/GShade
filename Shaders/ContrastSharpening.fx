@@ -1,7 +1,13 @@
-/** Contrast Limited Sharpening PS, version 1.1.5
+/*------------------.
+| :: Description :: |
+'-------------------/
 
+Contrast Limited Sharpening PS (version 1.1.6)
+
+Copyright:
 This code © 2023 Jakub Maksymilian Fober
 
+License:
 This work is licensed under the Creative Commons,
 Attribution-NonCommercial-NoDerivs 3.0 Unported License.
 To view a copy of this license, visit
@@ -23,30 +29,35 @@ Intent §: For better accessibility and understanding across different languages
 Result §: The desired outcome is to promote usability across users from diverse
 linguistic backgrounds, and for them to be able to engage with the shader.
 
+Contact:
 If you need additional licensing for your commercial product, contact
 me at jakub.m.fober@protonmail.com.
 */
 
-	/* MACROS */
+/*-------------.
+| :: Macros :: |
+'-------------*/
 
-// Luminosity transformation
-#ifndef ITU_REC
-	#define ITU_REC 601
-#endif
 // Fixed sharpen radius for performance
 #ifndef CONTRAST_SHARPEN_RADIUS
 	#define CONTRAST_SHARPEN_RADIUS 0
 #endif
 
-	/* COMMONS */
+/*--------------.
+| :: Commons :: |
+'--------------*/
 
 #include "ReShade.fxh"
-#include "ColorAndDither.fxh"
+#include "ColorConversion.fxh"
+#include "BlueNoiseDither.fxh"
 
-	/* MENU */
+/*-----------.
+| :: Menu :: |
+'-----------*/
 
 #if !CONTRAST_SHARPEN_RADIUS
-uniform uint SharpenRadius <
+uniform uint SharpenRadius
+<
 	ui_type = "slider";
 	ui_label = "sharpening radius";
 	ui_tooltip =
@@ -58,7 +69,8 @@ uniform uint SharpenRadius <
 > = 16u;
 #endif
 
-uniform float SharpenAmount <
+uniform float SharpenAmount
+<
 	ui_type = "slider";
 	ui_label = "sharpening amount";
 	ui_tooltip =
@@ -69,7 +81,8 @@ uniform float SharpenAmount <
 	ui_category = "sharpening settings";
 > = 1f;
 
-uniform uint BlendingMode <
+uniform uint BlendingMode
+<
 	ui_type = "radio";
 	ui_label = "sharpening mode";
 	ui_tooltip = "Blending mode for the high-pass layer.";
@@ -79,7 +92,8 @@ uniform uint BlendingMode <
 	ui_category = "sharpening settings";
 > = 0u;
 
-uniform float ContrastAmount <
+uniform float ContrastAmount
+<
 	ui_type = "slider";
 	ui_label = "contrast amount";
 	ui_tooltip =
@@ -91,7 +105,8 @@ uniform float ContrastAmount <
 	ui_category_closed = true;
 > = 0.16;
 
-uniform bool DitheringEnabled <
+uniform bool DitheringEnabled
+<
 	ui_type = "input";
 	ui_label = "remove banding";
 	ui_tooltip =
@@ -100,7 +115,9 @@ uniform bool DitheringEnabled <
 	ui_category = "additional settings";
 > = true;
 
-	/* TEXTURES */
+/*---------------.
+| :: Textures :: |
+'---------------*/
 
 // Render target for two-pass blur
 texture ContrastSharpenTarget
@@ -113,7 +130,9 @@ texture ContrastSharpenTarget
 sampler ContrastSharpenSampler
 { Texture = ContrastSharpenTarget; };
 
-	/* FUNCTIONS */
+/*----------------.
+| :: Functions :: |
+'----------------*/
 
 /* Exponential bell weight falloff by JMF
    Generates smooth bell falloff for blur, with perfect weights
@@ -138,12 +157,15 @@ float overlay(float baseLayer, float blendLayer)
 		1f);
 }
 
-	/* SHADERS */
+/*--------------.
+| :: Shaders :: |
+'--------------*/
 
 // Vertex shader generating a triangle covering the entire screen
 void ContrastSharpenVS(
 	in  uint   vertexId  : SV_VertexID,
-	out float4 vertexPos : SV_Position)
+	out float4 vertexPos : SV_Position
+)
 {
 	// Define vertex position
 	const float2 vertexPosList[3] =
@@ -160,12 +182,13 @@ void ContrastSharpenVS(
 // Horizontal luminosity blur pass
 void ContrastSharpenPassHorizontalPS(
 	in  float4  pixCoord : SV_Position,
-	out float luminosity : SV_Target)
+	out float luminosity : SV_Target
+)
 {
 	// Get current pixel coordinates
 	uint2 texelPos = uint2(pixCoord.xy);
 	// Get current pixel luminosity value
-	luminosity = dot(LumaMtx, tex2Dfetch(ReShade::BackBuffer, texelPos).rgb);
+	luminosity = ColorConvert::RGB_to_Luma(tex2Dfetch(ReShade::BackBuffer, texelPos).rgb);
 	// Prepare cumulative variables
 	float cumilativeLuminosity = 0f, cumulativeWeight = 0f;
 #if CONTRAST_SHARPEN_RADIUS // Fixed contrast sharpen radius
@@ -176,7 +199,7 @@ void ContrastSharpenPassHorizontalPS(
 	for (uint yPos=0u; yPos<=SharpenRadius*2u; yPos++)
 	{
 		// Sample back-buffer luminosity
-		float sampleLuminosity = dot(LumaMtx,
+		float sampleLuminosity = ColorConvert::RGB_to_Luma(
 			tex2Dfetch(ReShade::BackBuffer, uint2(
 				texelPos.x,
 				// Offset coordinates
@@ -215,12 +238,13 @@ void ContrastSharpenPassHorizontalPS(
 // Horizontal luminance blur and contrast sharpening pass
 void ContrastSharpenPassVerticalPS(
 	in  float4 pixCoord : SV_Position,
-	out float3    color : SV_Target)
+	out float3    color : SV_Target
+)
 {
 	// Get current pixel coordinates
 	uint2 texelPos = uint2(pixCoord.xy);
 	// Get current pixel YCbCr color value
-	color = mul(YCbCrMtx, tex2Dfetch(ReShade::BackBuffer, texelPos).rgb);
+	color = ColorConvert::RGB_to_YCbCr(tex2Dfetch(ReShade::BackBuffer, texelPos).rgb);
 	// Prepare cumulative variables
 	float cumilativeLuminosity = 0f, cumulativeWeight = 0f;
 #if CONTRAST_SHARPEN_RADIUS // Fixed contrast sharpen radius
@@ -272,14 +296,16 @@ void ContrastSharpenPassVerticalPS(
 			break;
 	}
 	// Convert to RGB color space
-	color = saturate(mul(RgbMtx, color)); // and clamp result
+	color = saturate(ColorConvert::YCbCr_to_RGB(color)); // and clamp result
 
 	// Dither output to increase perceivable picture bit-depth
 	if (DitheringEnabled)
 		color = BlueNoise::dither(uint2(pixCoord.xy), color);
 }
 
-	/* OUTPUT */
+/*-------------.
+| :: Output :: |
+'-------------*/
 
 technique ContrastSharpen
 <
