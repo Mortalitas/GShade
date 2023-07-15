@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.4.6)
+Perfect Perspective PS (version 5.4.7)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -113,12 +113,18 @@ uniform uint FovType
 		"Adjust so that round objects are still round when at the corner, and not oblong.\n"
 		"Tilt head to see better.\n"
 		"\n"
-		"Tip:\n"
-		"	If image bulges in movement, change it to 'diagonal'.\n"
-		"	When proportions are distorted at the periphery, choose 'vertical' or '4:3'.\n"
-		"	For ultra-wide display you may want '16:9' instead.\n"
+		"Instruction:\n"
 		"\n"
+		"	If image bulges in movement, change it to 'diagonal'.\n"
+		"	When proportions are distorted at the periphery,\n"
+		"	choose 'vertical' or '4:3'. For ultra-wide display\n"
+		"	you may want '16:9' instead.\n"
+		"\n"
+#if PANTOMORPHIC_MODE
+		"	This method only works with all k = 0.5.";
+#else
 		"	This method only works with k = 0.5 and s = 1.0.";
+#endif
 	ui_items =
 		"horizontal\0"
 		"diagonal\0"
@@ -138,20 +144,20 @@ uniform float K
 	ui_text = "(Adjust distortion strength)";
 #if PANTOMORPHIC_MODE // k indicates horizontal axis projection type
 	ui_label = "Projection type 'k' horizontal";
+	ui_tooltip = "Projection coefficient 'k' horizontal, represents\n"
 #else // k represents whole picture projection type
 	ui_label = "Projection type 'k'";
+	ui_tooltip = "Projection coefficient 'k', represents\n"
 #endif
-	ui_tooltip =
-		"Projection coefficient 'k', represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"Perception    | Value | Projection\n"
-		"-------------------------------------\n"
-		"straight path |  1    | Rectilinear\n"
-		"shape         |  0.5  | Stereographic\n"
-		"speed         |  0    | Equidistant\n"
-		"distance      | -0.5  | Equisolid\n"
-		"illumination  | -1    | Orthographic\n"
+		"	Perception of | Value |  Projection  	\n"
+		"	--------------+-------+--------------	\n"
+		"	illumination  |  -1   | Orthographic 	\n"
+		"	  distance    | -0.5  |   Equisolid  	\n"
+		"	    speed     |   0   |  Equidistant 	\n"
+		"	    shape     |  0.5  | Stereographic	\n"
+		"	straight path |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -165,16 +171,16 @@ uniform float Ky
 	ui_label = "Projection type 'k' vertical";
 	ui_category = "Distortion";
 	ui_tooltip =
-		"Projection coefficient 'k', represents\n"
+		"Projection coefficient 'k' vertical, represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"Perception    | Value | Projection\n"
-		"-------------------------------------\n"
-		"straight path |  1    | Rectilinear\n"
-		"shape         |  0.5  | Stereographic\n"
-		"speed         |  0    | Equidistant\n"
-		"distance      | -0.5  | Equisolid\n"
-		"illumination  | -1    | Orthographic\n"
+		"	Perception of | Value |  Projection  	\n"
+		"	--------------+-------+--------------	\n"
+		"	illumination  |  -1   | Orthographic 	\n"
+		"	  distance    | -0.5  |   Equisolid  	\n"
+		"	    speed     |   0   |  Equidistant 	\n"
+		"	    shape     |  0.5  | Stereographic	\n"
+		"	straight path |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -187,16 +193,16 @@ uniform float Ky
 	ui_label = "Projection type 'k' top (asymmetrical)";
 	ui_category = "Distortion";
 	ui_tooltip =
-		"Projection coefficient 'k', represents\n"
+		"Projection coefficient 'k' top, represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"Perception    | Value | Projection\n"
-		"-------------------------------------\n"
-		"straight path |  1    | Rectilinear\n"
-		"shape         |  0.5  | Stereographic\n"
-		"speed         |  0    | Equidistant\n"
-		"distance      | -0.5  | Equisolid\n"
-		"illumination  | -1    | Orthographic\n"
+		"	Perception of | Value |  Projection  	\n"
+		"	--------------+-------+--------------	\n"
+		"	illumination  |  -1   | Orthographic 	\n"
+		"	  distance    | -0.5  |   Equisolid  	\n"
+		"	    speed     |   0   |  Equidistant 	\n"
+		"	    shape     |  0.5  | Stereographic	\n"
+		"	straight path |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -209,16 +215,16 @@ uniform float KyA
 	ui_label = "Projection type 'k' bottom (asymmetrical)";
 	ui_category = "Distortion";
 	ui_tooltip =
-		"Projection coefficient 'k', represents\n"
+		"Projection coefficient 'k' bottom, represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"Perception    | Value | Projection\n"
-		"-------------------------------------\n"
-		"straight path |  1    | Rectilinear\n"
-		"shape         |  0.5  | Stereographic\n"
-		"speed         |  0    | Equidistant\n"
-		"distance      | -0.5  | Equisolid\n"
-		"illumination  | -1    | Orthographic\n"
+		"	Perception of | Value |  Projection  	\n"
+		"	--------------+-------+--------------	\n"
+		"	illumination  |  -1   | Orthographic 	\n"
+		"	  distance    | -0.5  |   Equisolid  	\n"
+		"	    speed     |   0   |  Equidistant 	\n"
+		"	    shape     |  0.5  | Stereographic	\n"
+		"	straight path |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -234,15 +240,18 @@ uniform float S
 		"Anamorphic squeeze factor 's', affects\n"
 		"vertical axis:\n"
 		"\n"
-		"Value | Lens\n"
-		"---------------------------\n"
-		"1     | spherical lens\n"
-		"1.25  | Ultra Panavision 70\n"
-		"1.33  | 16x9 TV\n"
-		"1.5   | Technirama\n"
-		"1.6   | digital anamorphic\n"
-		"1.8   | 4x3 full-frame\n"
-		"2     | golden-standard";
+		"	Value | Lens Type          	\n"
+		"	------+--------------------	\n"
+		"	  1   | spherical lens     	\n"
+		"	 1.25 | Ultra Panavision 70	\n"
+		"	 1.33 | 16x9 TV            	\n"
+		"	 1.5  | Technirama         	\n"
+		"	 1.6  | digital anamorphic 	\n"
+		"	 1.8  | 4x3 full-frame     	\n"
+		"	  2   | golden-standard    	\n"
+		"\n"
+		"\n"
+		"These are typical values used in film.\n";
 	ui_min = 1f; ui_max = 4f; ui_step = 0.01;
 > = 1f;
 #endif
@@ -267,11 +276,15 @@ uniform float CroppingFactor
 	ui_tooltip =
 		"Adjusts image scale and cropped area size:\n"
 		"\n"
-		"Value | Cropping\n"
-		"----------------------\n"
-		"0     | circular\n"
-		"1     | cropped-circle\n"
-		"2     | full-frame";
+		"	Value | Cropping      	\n"
+		"	------+---------------	\n"
+		"	    0 | circular      	\n"
+		"	    1 | cropped-circle	\n"
+		"	    2 | full-frame    	\n"
+		"\n"
+		"\n"
+		"For horizontal display, circular will snap to vertical bounds,\n"
+		"cropped-circle to horizontal bounds, and full-frame to corners.";
 	ui_min = 0f; ui_max = 2f;
 > = 1f;
 
@@ -317,33 +330,40 @@ uniform uint BorderGContinuity
 	ui_tooltip =
 		"G-surfacing continuity level for the corners:\n"
 		"\n"
-		"G0   sharp\n"
-		"G1   circular\n"
-		"G2   smooth\n"
-		"G3   very smooth";
+		"	Continuity | Result     	\n"
+		"	-----------+------------	\n"
+		"	        G0 | sharp      	\n"
+		"	        G1 | circular   	\n"
+		"	        G2 | smooth     	\n"
+		"	        G3 | very smooth	\n"
+		"\n"
+		"\n"
+		"G is a commonly used indicator for industrial design,\n"
+		"where G1 is reserved for heavy-duty, G2 for common items,\n"
+		"and G3 for luxurious items.";
 	ui_min = 1u; ui_max = 3u;
 > = 3u;
 
-// :: Debug Options :: //
+// :: Calibration Options :: //
 
-uniform bool DebugModePreview
+uniform bool CalibrationModeView
 <
 	ui_type = "input";
-	ui_label = "Display debug mode";
+	ui_label = "Display calibration mode";
 	ui_tooltip =
 		"Display calibration grid for lens-matching or\n"
 		"pixel scale-map for resolution matching.";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 	ui_category_closed = true;
 > = false;
 
-uniform uint DebugMode
+uniform uint CalibrationMode
 <
 	ui_type = "combo";
 	ui_items =
 		"Calibration grid\0"
 		"Pixel scale-map\0";
-	ui_label = "Select debug mode";
+	ui_label = "Select test mode";
 	ui_tooltip =
 		"Calibration grid:\n"
 		"\n"
@@ -354,22 +374,26 @@ uniform uint DebugMode
 		"\n"
 		"	Use pixel scale-map to get optimal resolution for super-sampling.\n"
 		"\n"
-		"	Color   Definition\n"
+		"	Value | Definition    	\n"
+		"	------+---------------	\n"
+		"	  red | under-sampling	\n"
+		"	green | 1:1           	\n"
+		"	 blue | oversampling  	\n"
 		"\n"
-		"	red     under-sampling\n"
-		"	green   oversampling\n"
-		"	blue    1:1";
-	ui_text = "Debugging settings:";
-	ui_category = "Debugging mode";
+		"\n"
+		"This color scheme makes it easy to spot regions with magnified pixels,\n"
+		"and pixels which are squeezed together.";
+	ui_text = "Testing mode:";
+	ui_category = "Calibration mode";
 > = 0u;
 
-uniform float DimDebugBackground
+uniform float DimCalibrationBackground
 <
 	ui_type = "slider";
 	ui_min = 0.25; ui_max = 1f; ui_step = 0.1;
 	ui_label = "Dim background";
 	ui_tooltip = "Adjust background visibility.";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 > = 1f;
 
 // :: Grid :: //
@@ -385,7 +409,7 @@ uniform uint GridLook
 	ui_label = "Grid look";
 	ui_tooltip = "Select look of the grid.";
 	ui_text = "Calibration grid settings:";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 	ui_category_closed = true;
 > = 0u;
 
@@ -395,7 +419,7 @@ uniform uint GridSize
 	ui_min = 1u; ui_max = 32u;
 	ui_label = "Grid size";
 	ui_tooltip = "Adjust calibration grid size.";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 > = 16u;
 
 uniform uint GridWidth
@@ -404,7 +428,7 @@ uniform uint GridWidth
 	ui_min = 2u; ui_max = 16u;
 	ui_label = "Grid bar width";
 	ui_tooltip = "Adjust calibration grid bar width in pixels.";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 > = 2u;
 
 uniform float GridTilt
@@ -413,7 +437,7 @@ uniform float GridTilt
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 	ui_label = "Tilt grid";
 	ui_tooltip = "Adjust calibration grid tilt in degrees.";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 > = 0f;
 
 // :: Pixel Scale Map :: //
@@ -424,7 +448,7 @@ uniform uint ResScaleScreen
 	ui_label = "Screen (native) resolution";
 	ui_tooltip = "Set it to default screen resolution.";
 	ui_text = "Pixel scale-map settings:";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 	ui_category_closed = true;
 > = 1920u;
 
@@ -436,7 +460,7 @@ uniform uint ResScaleVirtual
 	ui_tooltip =
 		"Simulates application running beyond native\n"
 		"screen resolution (using VSR or DSR).";
-	ui_category = "Debugging mode";
+	ui_category = "Calibration mode";
 > = 1920u;
 
 /*---------------.
@@ -692,10 +716,10 @@ float3 GridModeViewPass(
 	{
 		// Safe bottom-color in linear range
 		static float safeBottomColor = GammaConvert::to_linear(16f/255f); // linear workflow
-		safeBottomColor *= 1f-DimDebugBackground;
+		safeBottomColor *= 1f-DimCalibrationBackground;
 		display = mad(
 			display, // background
-			DimDebugBackground, // dimming amount
+			DimCalibrationBackground, // dimming amount
 			safeBottomColor
 		);
 	}
@@ -729,8 +753,8 @@ float3 SamplingScaleModeViewPass(
 {
 	// Define Mapping color
 	const static float3   underSample = float3(235f, 16f, 16f)/255f; // red
-	const static float3   superSample = float3(16f, 235f, 16f)/255f; // green
-	const static float3 neutralSample = float3(16f, 16f, 235f)/255f; // blue
+	const static float3 neutralSample = float3(16f, 235f, 16f)/255f; // green
+	const static float3   superSample = float3(16f, 16f, 235f)/255f; // blue
 
 	// Scale texture coordinates to pixel size
 	texCoord *= BUFFER_SCREEN_SIZE*ResScaleVirtual/float(ResScaleScreen);
@@ -765,7 +789,7 @@ float3 SamplingScaleModeViewPass(
 	display = lerp(
 		safeRange[0], // safe bottom-color range
 		display, // background
-		DimDebugBackground // dimming amount
+		DimCalibrationBackground // dimming amount
 	);
 	// Adjust background look
 	display = lerp(
@@ -909,10 +933,10 @@ float3 PerfectPerspectivePS(
 #endif
 	// Bypass perspective mapping
 	{
-		if (DebugModePreview)
+		if (CalibrationModeView)
 		{
 			float3 display;
-			switch (DebugMode) // choose output type
+			switch (CalibrationMode) // choose output type
 			{
 				case 1u: // pixel scale-map
 					display = SamplingScaleModeViewPass(
@@ -1026,8 +1050,8 @@ float3 PerfectPerspectivePS(
 	display = GammaConvert::to_linear(display);
 
 	// Display calibration view
-	if (DebugModePreview)
-	switch (DebugMode) // choose output type
+	if (CalibrationModeView)
+	switch (CalibrationMode) // choose output type
 	{
 		case 1u: // pixel scale-map
 			display = SamplingScaleModeViewPass(texCoord, display);
