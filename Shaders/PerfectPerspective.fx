@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.4.7)
+Perfect Perspective PS (version 5.5.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -135,17 +135,43 @@ uniform uint FovType
 
 // :: Perspective :: //
 
-// k indicates horizontal axis or whole picture projection type
-uniform float K
+#if PANTOMORPHIC_MODE>=2 // vertical axis projection is driven by separate ky top and ky bottom parameter
+uniform float Ky
 <
 	ui_type = "slider";
 	ui_category = "Distortion";
 	ui_category_closed = true;
 	ui_text = "(Adjust distortion strength)";
+	ui_label = "Projection type 'k' top (asymmetrical)";
+	ui_tooltip =
+		"Projection coefficient 'k' top, represents\n"
+		"various azimuthal projections types:\n"
+		"\n"
+		"	Perception of | Value |  Projection  	\n"
+		"	--------------+-------+--------------	\n"
+		"	illumination  |  -1   | Orthographic 	\n"
+		"	  distance    | -0.5  |   Equisolid  	\n"
+		"	    speed     |   0   |  Equidistant 	\n"
+		"	    shape     |  0.5  | Stereographic	\n"
+		"	straight path |   1   |  Rectilinear 	\n"
+		"\n"
+		"\n"
+		"[Ctrl+click] to type value.";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+> = 0.5;
+#endif
+
+// k indicates horizontal axis or whole picture projection type
+uniform float K
+<
+	ui_type = "slider";
+	ui_category = "Distortion";
 #if PANTOMORPHIC_MODE // k indicates horizontal axis projection type
 	ui_label = "Projection type 'k' horizontal";
 	ui_tooltip = "Projection coefficient 'k' horizontal, represents\n"
 #else // k represents whole picture projection type
+	ui_category_closed = true;
+	ui_text = "(Adjust distortion strength)";
 	ui_label = "Projection type 'k'";
 	ui_tooltip = "Projection coefficient 'k', represents\n"
 #endif
@@ -168,8 +194,8 @@ uniform float K
 uniform float Ky
 <
 	ui_type = "slider";
-	ui_label = "Projection type 'k' vertical";
 	ui_category = "Distortion";
+	ui_label = "Projection type 'k' vertical";
 	ui_tooltip =
 		"Projection coefficient 'k' vertical, represents\n"
 		"various azimuthal projections types:\n"
@@ -186,34 +212,13 @@ uniform float Ky
 		"[Ctrl+click] to type value.";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0.5;
-#elif PANTOMORPHIC_MODE>=2 // vertical axis projection is driven by separate ky top and ky bottom parameter
-uniform float Ky
-<
-	ui_type = "slider";
-	ui_label = "Projection type 'k' top (asymmetrical)";
-	ui_category = "Distortion";
-	ui_tooltip =
-		"Projection coefficient 'k' top, represents\n"
-		"various azimuthal projections types:\n"
-		"\n"
-		"	Perception of | Value |  Projection  	\n"
-		"	--------------+-------+--------------	\n"
-		"	illumination  |  -1   | Orthographic 	\n"
-		"	  distance    | -0.5  |   Equisolid  	\n"
-		"	    speed     |   0   |  Equidistant 	\n"
-		"	    shape     |  0.5  | Stereographic	\n"
-		"	straight path |   1   |  Rectilinear 	\n"
-		"\n"
-		"\n"
-		"[Ctrl+click] to type value.";
-	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
-> = 0.5;
 
+#elif PANTOMORPHIC_MODE>=2 // vertical axis projection is driven by separate ky top and ky bottom parameter
 uniform float KyA
 <
 	ui_type = "slider";
-	ui_label = "Projection type 'k' bottom (asymmetrical)";
 	ui_category = "Distortion";
+	ui_label = "Projection type 'k' bottom (asymmetrical)";
 	ui_tooltip =
 		"Projection coefficient 'k' bottom, represents\n"
 		"various azimuthal projections types:\n"
