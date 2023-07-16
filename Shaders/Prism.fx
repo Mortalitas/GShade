@@ -2,36 +2,35 @@
 | :: Description :: |
 '-------------------/
 
-Chromatic Aberration (Prism) PS (version 2.1.3)
+Chromatic Aberration (Prism) PS (version 2.1.4)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
 
 License:
-This work is licensed under the Creative Commons,
-Attribution-NonCommercial-NoDerivs 3.0 Unported License.
-To view a copy of this license, visit
-http://creativecommons.org/licenses/by-nc-nd/3.0/.
+This work is licensed under the Creative Commons Attribution-NonCommercial-
+NoDerivs 3.0 Unported License. To view a copy of this license, visit
+http://creativecommons.org/licenses/by-nc-nd/3.0/
 
-§ The copyright owner further grants permission for commercial reuse
-of image recordings based on the work (e.g. Let's Play videos,
-gameplay streams, and screenshots featuring ReShade filters) provided
-that any use is accompanied by the name of the used shader and a link
-to the ReShade website https://reshade.me.
-Intent §: To make the effect available free of charge for non-corporate, common
-use.
-Result §: The desired outcome is for the work to be easily recognizable in any
-derivative images.
+Additional permissions under Creative Commons Plus (CC+):
 
-§ Furthermore, permission is granted for the translation of the front-end UI
+§ 1. The copyright owner further grants permission for commercial reuse of image
+recordings based on the work (e.g., Let's Play videos, gameplay streams, and
+screenshots featuring ReShade filters). Any such use must include credit to the
+creator and the name of the used shader.
+ Intent §: To facilitate non-corporate, common use of the shader at no cost.
+Outcome §: That recognition of the work in any derivative images is ensured.
+
+§ 2. Additionally, permission is granted for the translation of the front-end UI
 text within this shader.
-Intent §: For better accessibility and understanding across different languages.
-Result §: The desired outcome is to promote usability across users from diverse
-linguistic backgrounds, and for them to be able to engage with the shader.
+ Intent §: To increase accessibility and understanding across different
+languages.
+Outcome §: That usability across users from diverse linguistic backgrounds is
+promoted, allowing them to fully engage with the shader.
 
 Contact:
-If you need additional licensing for your commercial product, contact
-me at jakub.m.fober@protonmail.com.
+If you want additional licensing for your commercial product, please contact me:
+jakub.m.fober@protonmail.com
 
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
@@ -215,7 +214,7 @@ technique ChromaticAberration
 		"\n"
 		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
 		"Licensed under CC BY-NC-ND 3.0 +\n"
-		"for additional permissions see the source.";
+		"for additional permissions see the source code.";
 >
 {
 	pass ChromaticColorSplit

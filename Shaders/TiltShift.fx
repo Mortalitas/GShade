@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Tilt-Shift PS (version 2.0.6)
+Tilt-Shift PS (version 2.0.7)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -11,7 +11,7 @@ License:
 This work is licensed under the Creative Commons,
 Attribution 3.0 Unported License.
 To view a copy of this license, visit
-http://creativecommons.org/licenses/by/3.0/.
+http://creativecommons.org/licenses/by/3.0/
 */
 
 /*-------------.
@@ -320,7 +320,7 @@ technique TiltShift
 		"	· minimal sample count.\n"
 		"\n"
 		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY 3.0 (see source).";
+		"Licensed under CC BY 3.0";
 >
 {
 	pass GaussianBlurHorizontal

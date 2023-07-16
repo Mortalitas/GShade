@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Filmic Sharpen PS (version 1.4.1)
+Filmic Sharpen PS (version 1.4.2)
 
 Copyright:
 This code © 2018-2023 Jakub Maximilian Fober
@@ -11,17 +11,12 @@ License:
 This work is licensed under the Creative Commons
 Attribution-ShareAlike 4.0 International License.
 To view a copy of this license, visit
-http://creativecommons.org/licenses/by-sa/4.0/.
-
-Please add the name of the shader used and a link to ReShade website
-https://reshade.me, to any derivative work shared online.
+http://creativecommons.org/licenses/by-sa/4.0/
 
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders
 
 Contact:
-If you want to use this shader code in your commercial game/project,
-contact me at
 jakub.m.fober@protonmail.com
 */
 
@@ -166,7 +161,7 @@ technique FilmicSharpen
 	ui_label = "Filmic Sharpen";
 	ui_tooltip =
 		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-SA 4.0.";
+		"Licensed under CC BY-SA 4.0";
 >
 {
 	pass
