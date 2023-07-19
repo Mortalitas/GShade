@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.5.2)
+Perfect Perspective PS (version 5.5.3)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -165,6 +165,9 @@ uniform float K
 <
 	ui_type = "slider";
 	ui_category = "Distortion";
+#if PANTOMORPHIC_MODE==1
+	ui_category_closed = true;
+#endif
 #if PANTOMORPHIC_MODE // k indicates horizontal axis projection type
 	ui_label = "Projection type 'k' horizontal";
 	ui_tooltip = "Projection coefficient 'k' horizontal, represents\n"
