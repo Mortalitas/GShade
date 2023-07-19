@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Tilt-Shift PS (version 2.0.7)
+Tilt-Shift PS (version 2.0.8)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -225,7 +225,7 @@ void TiltShiftPassHorizontalPS(
 
 	color = GammaConvert::to_display(color); // manual gamma
 	// Dither output to increase perceivable picture bit-depth
-	color = BlueNoise::dither(uint2(pixCoord.xy), color);
+	color = BlueNoise::dither(color, uint2(pixCoord.xy));
 }
 
 // Vertical dynamic blur pass
@@ -303,7 +303,7 @@ void TiltShiftPassVerticalPS(
 	// Manual gamma
 	color = GammaConvert::to_display(color);
 	// Dither output to increase perceivable picture bit-depth
-	color = BlueNoise::dither(uint2(pixCoord.xy), color);
+	color = BlueNoise::dither(color, uint2(pixCoord.xy));
 }
 
 /*--------------.

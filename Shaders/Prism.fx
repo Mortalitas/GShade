@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Chromatic Aberration (Prism) PS (version 2.1.4)
+Chromatic Aberration (Prism) PS (version 2.1.5)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -195,7 +195,7 @@ void ChromaticAberrationPS(
 	// Preserve brightness
 	color *= 2f/evenSampleCount;
 	color = GammaConvert::to_display(color); // linear workflow
-	color = BlueNoise::dither(uint2(pixelPos.xy), color); // dither
+	color = BlueNoise::dither(color, uint2(pixelPos.xy)); // dither
 }
 
 /*-------------.

@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Filmic Sharpen PS (version 1.4.2)
+Filmic Sharpen PS (version 1.4.3)
 
 Copyright:
 This code © 2018-2023 Jakub Maximilian Fober
@@ -149,7 +149,7 @@ void FilmicSharpenPS(
 	}
 
 	// Dither final 8/10-bit result
-	color = BlueNoise::dither(uint2(pixelPos.xy), color);
+	color = BlueNoise::dither(color, uint2(pixelPos.xy));
 }
 
 /*-------------.
