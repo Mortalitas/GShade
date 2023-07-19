@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Tilt-Shift PS (version 2.0.8)
+Tilt-Shift PS (version 2.0.9)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -93,9 +93,6 @@ uniform uint BlurLineWidth
 sampler BackBuffer
 {
 	Texture = ReShade::BackBufferTex;
-#if BUFFER_COLOR_SPACE==1 || BUFFER_COLOR_SPACE==2
-	SRGBTexture = true;
-#endif
 	// Border style
 	AddressU = MIRROR;
 	AddressV = MIRROR;
@@ -210,17 +207,17 @@ void TiltShiftPassHorizontalPS(
 			float weight = bellWeight(mad(i, rcpWeightStep, -1f));
 			// Get step offset
 			float offset = (i-1u)*rcpOffsetStep-0.5;
-			color += tex2Dlod(
-				BackBuffer,
-				float4(blurRadius*offset+texCoord.x, texCoord.y, 0f, 0f) // Offset coordinates
-			).rgb*weight;
+			color += GammaConvert::to_linear(tex2Dlod(
+					BackBuffer,
+					float4(blurRadius*offset+texCoord.x, texCoord.y, 0f, 0f) // Offset coordinates
+				).rgb)*weight;
 			cumulativeWeight += weight;
 		}
 		// Restore brightness
 		color /= cumulativeWeight;
 	}
 	// Bypass blur
-	else color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
+	else color = GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb);
 	color = saturate(color); // Clamp values
 
 	color = GammaConvert::to_display(color); // manual gamma
@@ -256,17 +253,18 @@ void TiltShiftPassVerticalPS(
 			float weight = bellWeight(mad(i, rcpWeightStep, -1f));
 			// Get step offset
 			float offset = (i-1u)*rcpOffsetStep-0.5;
-			color += tex2Dlod(
-				BackBuffer,
-				float4(texCoord.x, blurRadius*offset+texCoord.y, 0f, 0f) // Offset coordinates
-			).rgb*weight;
+			color += GammaConvert::to_linear(
+				tex2Dlod(
+					BackBuffer,
+					float4(texCoord.x, blurRadius*offset+texCoord.y, 0f, 0f) // Offset coordinates
+				).rgb)*weight;
 			cumulativeWeight += weight;
 		}
 		// Restore brightness
 		color /= cumulativeWeight;
 	}
 	else // Bypass blur
-		color = tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb;
+		color = GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixCoord.xy)).rgb);
 
 	// Clamp values
 	color = saturate(color);

@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Filmic Anamorph Sharpen PS (version 1.4.9)
+Filmic Anamorph Sharpen PS (version 1.4.10)
 
 Copyright:
 This code © 2018-2023 Jakub Maximilian Fober
@@ -74,16 +74,6 @@ uniform int DepthMaskContrast
 	ui_min = 0; ui_max = 2000; ui_step = 1;
 > = 128;
 
-uniform int Coefficient
-<
-	ui_type = "radio";
-	ui_tooltip = "For digital video signal use BT.709, for analog (like VGA) use BT.601";
-	ui_label = "YUV coefficients";
-	ui_items = "BT.709 - digital\0BT.601 - analog\0";
-	ui_category = "Additional settings";
-	ui_category_closed = true;
-> = 0;
-
 uniform bool Preview
 <
 	ui_type = "input";
@@ -105,9 +95,6 @@ sampler BackBuffer
 	Texture = ReShade::BackBufferTex;
 	AddressU = MIRROR;
 	AddressV = MIRROR;
-	#if BUFFER_COLOR_SPACE == 1 || BUFFER_COLOR_SPACE == 2
-		SRGBTexture = true;
-	#endif
 };
 
 /*----------------.
@@ -143,7 +130,7 @@ float3 FilmicAnamorphSharpenPS(
 ) : SV_Target
 {
 	// Sample display image
-	float3 Source = tex2D(BackBuffer, UvCoord).rgb;
+	float3 Source = GammaConvert::to_linear(tex2D(BackBuffer, UvCoord).rgb);
 
 	// Generate radial mask
 	float Mask;
@@ -153,7 +140,7 @@ float3 FilmicAnamorphSharpenPS(
 		Mask = 1f-length(UvCoord*2f-1f);
 		Mask = Overlay(Mask) * Strength;
 		// Bypass
-		if (Mask<=0) return Source;
+		if (Mask<=0) return GammaConvert::to_display(Source);
 	}
 	else Mask = Strength;
 
@@ -196,9 +183,14 @@ float3 FilmicAnamorphSharpenPS(
 
 		[unroll]for(int s=0; s<4; s++)
 		{
-			HighPassColor += ColorConvert::RGB_to_Luma(tex2D(BackBuffer, NorSouWesEst[s]).rgb);
-			DepthMask += ReShade::GetLinearizedDepth(NorSouWesEst[s])
-			+ ReShade::GetLinearizedDepth(DepthNorSouWesEst[s]);
+			HighPassColor +=
+				ColorConvert::RGB_to_Luma(
+					GammaConvert::to_linear(
+						tex2D(BackBuffer, NorSouWesEst[s]).rgb
+				));
+			DepthMask +=
+				 ReShade::GetLinearizedDepth(NorSouWesEst[s])
+				+ReShade::GetLinearizedDepth(DepthNorSouWesEst[s]);
 		}
 
 		HighPassColor = 0.5-0.5*(HighPassColor*0.25-ColorConvert::RGB_to_Luma(Source));
@@ -233,14 +225,15 @@ float3 FilmicAnamorphSharpenPS(
 		if(Preview) // Preview mode ON
 		{
 			float PreviewChannel = lerp(HighPassColor, HighPassColor*DepthMask, 0.5);
-			return GammaConvert::to_display(float3(
-				1f-DepthMask * (1f-HighPassColor),
-				PreviewChannel,
-				PreviewChannel
-			));
+			return
+				GammaConvert::to_display(float3(
+					1f-DepthMask * (1f-HighPassColor),
+					PreviewChannel,
+					PreviewChannel
+				));
 		}
 
-		return Sharpen;
+		return GammaConvert::to_display(Sharpen);
 	}
 	else
 	{
@@ -256,7 +249,11 @@ float3 FilmicAnamorphSharpenPS(
 		// Luma high-pass color
 		float HighPassColor = 0f;
 		[unroll] for(uint s=0u; s<4u; s++)
-			HighPassColor += ColorConvert::RGB_to_Luma(tex2D(BackBuffer, NorSouWesEst[s]).rgb);
+			HighPassColor +=
+				ColorConvert::RGB_to_Luma(
+					GammaConvert::to_linear(
+						tex2D(BackBuffer, NorSouWesEst[s]).rgb
+				));
 
 		// !!! added space above to make it more obvious
 		// !!! that loop is now a one-liner in this else branch
