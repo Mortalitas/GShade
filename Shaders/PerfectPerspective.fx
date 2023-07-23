@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.5.3)
+Perfect Perspective PS (version 5.6.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -96,6 +96,7 @@ uniform uint FovAngle
 	ui_category = "In game";
 	ui_category_closed = true;
 	ui_text = "(Match game settings)";
+	ui_units = "°";
 	ui_label = "Field of view (FoV)";
 	ui_tooltip = "This should match your in-game FoV value.";
 	ui_max = 140u;
@@ -333,6 +334,7 @@ uniform uint BorderGContinuity
 <
 	ui_type = "slider";
 	ui_category = "Border cosmetics";
+	ui_units = "G";
 	ui_label = "Corner roundness";
 	ui_tooltip =
 		"G-surfacing continuity level for the corners:\n"
@@ -433,6 +435,7 @@ uniform uint GridWidth
 <
 	ui_type = "slider";
 	ui_min = 2u; ui_max = 16u;
+	ui_units = " pixels";
 	ui_label = "Grid bar width";
 	ui_tooltip = "Adjust calibration grid bar width in pixels.";
 	ui_category = "Calibration mode";
@@ -442,6 +445,7 @@ uniform float GridTilt
 <
 	ui_type = "slider";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+	ui_units = "°";
 	ui_label = "Tilt grid";
 	ui_tooltip = "Adjust calibration grid tilt in degrees.";
 	ui_category = "Calibration mode";
@@ -452,6 +456,7 @@ uniform float GridTilt
 uniform uint ResScaleScreen
 <
 	ui_type = "input";
+	ui_units = " pixels";
 	ui_label = "Screen (native) resolution";
 	ui_tooltip = "Set it to default screen resolution.";
 	ui_text = "Pixel scale-map settings:";
@@ -463,6 +468,7 @@ uniform uint ResScaleVirtual
 <
 	ui_type = "drag";
 	ui_min = 16u; ui_max = 16384u;
+	ui_units = " pixels";
 	ui_label = "Virtual resolution";
 	ui_tooltip =
 		"Simulates application running beyond native\n"
