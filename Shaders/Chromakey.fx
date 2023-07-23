@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Chromakey PS (version 1.5.3)
+Chromakey PS (version 1.6.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -44,6 +44,7 @@ uniform bool RadialY <
 uniform int FOV
 <
 	ui_type = "slider";
+	ui_units = "°";
 	ui_label = "FOV (horizontal)";
 	ui_tooltip = "Field of view in degrees";
 	ui_step = .01;
@@ -68,6 +69,7 @@ uniform bool Floor <
 uniform float FloorAngle
 <
 	ui_type = "slider";
+	ui_units = "°";
 	ui_label = "Floor angle";
 	ui_type = "slider";
 	ui_category = "Floor masking (experimental)";

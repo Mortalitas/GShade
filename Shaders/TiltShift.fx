@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Tilt-Shift PS (version 2.0.9)
+Tilt-Shift PS (version 2.1.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -51,6 +51,7 @@ uniform int BlurAngle
 <
 	ui_type = "slider";
 	ui_min = -90; ui_max = 90;
+	ui_units = "°";
 	ui_label = "Tilt angle";
 	ui_tooltip = "Tilt the blur line.";
 	ui_category = "Tilt-shift blur";
@@ -80,10 +81,11 @@ uniform uint BlurLineWidth
 <
 	ui_type = "slider";
 	ui_min = 2u; ui_max = 64u;
+	ui_units = " pixels";
 	ui_label = "Visualized line width";
 	ui_tooltip = "Tilt-shift line thickness in pixels.";
 	ui_category = "Blur line";
-> = 32u;
+> = 15u;
 
 /*---------------.
 | :: Textures :: |

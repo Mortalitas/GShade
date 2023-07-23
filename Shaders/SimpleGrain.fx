@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Simple Grain PS version (version 1.0.9)
+Simple Grain PS version (version 1.0.10)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -40,15 +40,6 @@ uniform int Framerate
 	ui_step = 1;
 	ui_min = 0; ui_max = 120;
 > = 12;
-
-uniform int Coefficient
-<
-	ui_type = "radio";
-	ui_tooltip = "For digital video signal (HDMI, DVI, Display Port) use BT.709,\n"
-	"for analog (like VGA, S-Video) use BT.601";
-	ui_label = "YUV coefficients";
-	ui_items = "BT.709 (digital signal)\0BT.601 (analog signal))\0";
-> = 0;
 
 /*---------------.
 | :: Uniforms :: |

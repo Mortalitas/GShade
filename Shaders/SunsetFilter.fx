@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-SunsetFilter PS (version 1.0.2)
+SunsetFilter PS (version 1.1.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -49,6 +49,7 @@ uniform bool Flip
 uniform int Axis
 <
 	ui_type = "slider";
+	ui_units = "°";
 	ui_label = "Angle";
 	ui_min = -180; ui_max = 180;
 	ui_category = "Controls";

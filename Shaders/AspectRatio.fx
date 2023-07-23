@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Aspect Ratio PS (version 1.1.2)
+Aspect Ratio PS (version 1.2.0)
 
 Copyright:
 This code © 2019-2023 Jakub Maksymilian Fober
@@ -49,6 +49,7 @@ uniform float A
 uniform float Zoom
 <
 	ui_type = "slider";
+	ui_units = "x";
 	ui_label = "Scale image";
 	ui_category = "Aspect ratio";
 	ui_min = 1f; ui_max = 1.5;
