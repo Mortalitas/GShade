@@ -1132,27 +1132,27 @@ texture HBlurTex {
     Width = FAKE_GI_WIDTH ;
     Height = FAKE_GI_HEIGHT ;
     Format = RGBA16F;
-	AddressU = BORDER;
-	AddressV = BORDER;
-	AddressW = BORDER;
 };
 
 texture VBlurTex {
     Width = FAKE_GI_WIDTH ;
     Height = FAKE_GI_HEIGHT ;
     Format = RGBA16F;
-	AddressU = BORDER;
-	AddressV = BORDER;
-	AddressW = BORDER;
 
 };
 
 sampler HBlurSampler {
     Texture = HBlurTex;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	AddressW = BORDER;
 };
 
 sampler VBlurSampler {
     Texture = VBlurTex;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	AddressW = BORDER;
 };
 
 

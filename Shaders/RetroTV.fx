@@ -28,11 +28,8 @@ texture pixel_mask < source = "pixelmask_960x480.png"; >
 	Width = 960;
 	Height = 480;
 	MipLevels = 1;
-	
-    MinFilter = POINT;
-    MagFilter = POINT;
 };
-sampler sampler_pixel_mask { Texture = pixel_mask; AddressU = REPEAT; AddressV = REPEAT;};
+sampler sampler_pixel_mask { Texture = pixel_mask; AddressU = REPEAT; AddressV = REPEAT; MinFilter = POINT; MagFilter = POINT;};
 
 texture tv_border < source = "TV_Border.png"; >
 {

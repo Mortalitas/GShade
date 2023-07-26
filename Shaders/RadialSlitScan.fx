@@ -82,11 +82,6 @@ sampler samplerColor {
     AddressU = WRAP;
     AddressV = WRAP;
     AddressW = WRAP;
-    
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA16;
-    
 };
 
 sampler ssTarget {
@@ -95,10 +90,6 @@ sampler ssTarget {
     AddressU = WRAP;
     AddressV = WRAP;
     AddressW = WRAP;
-
-    Height = BUFFER_HEIGHT;
-    Width = BUFFER_WIDTH;
-    Format = RGBA16;
 };
 
 float get_longest_distance(float2 texcoord) {

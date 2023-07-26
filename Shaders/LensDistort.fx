@@ -328,8 +328,8 @@ uniform uint GridWidth
 	ui_category = "Grid";
 > = 2u;
 
-uniform float GridTilt 
-
+uniform float GridTilt
+<
 	ui_type = "slider";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 	ui_units = "°";
@@ -353,7 +353,6 @@ uniform uint ChromaticSamplesLimit
 > = 32u;
 
 #if PARALLAX_ABERRATION
-<
 uniform uint ParallaxSamples
 <
 	ui_type = "slider";

@@ -89,11 +89,6 @@ texture ssTexture {
 
 sampler samplerColor {
     Texture = texColorBuffer;
-
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA16;
-    
 };
 
 sampler ssTarget {
@@ -102,10 +97,6 @@ sampler ssTarget {
     AddressU = WRAP;
     AddressV = WRAP;
     AddressW = WRAP;
-
-    Height = BUFFER_HEIGHT;
-    Width = BUFFER_WIDTH;
-    Format = RGBA16;
 };
 
 float get_pix_w() {

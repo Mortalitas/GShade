@@ -146,10 +146,6 @@ sampler samplerColor
     AddressU = MIRROR;
     AddressV = MIRROR;
     AddressW = MIRROR;
-
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA16;
 };
 
 float2x2 swirlTransform(float theta) {
