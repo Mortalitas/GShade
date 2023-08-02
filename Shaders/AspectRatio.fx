@@ -19,13 +19,13 @@ http://creativecommons.org/licenses/by/4.0/
 '-------------*/
 
 #ifndef ASPECT_RATIO_TEX
-	#define ASPECT_RATIO_TEX "AspectRatio.jpg"
+	#define ASPECT_RATIO_TEX "TestPattern.png"
 #endif
 #ifndef ASPECT_RATIO_TEX_WIDTH
-	#define ASPECT_RATIO_TEX_WIDTH 1351
+	#define ASPECT_RATIO_TEX_WIDTH 1920
 #endif
 #ifndef ASPECT_RATIO_TEX_HEIGHT
-	#define ASPECT_RATIO_TEX_HEIGHT 1013
+	#define ASPECT_RATIO_TEX_HEIGHT 1080
 #endif
 
 /*--------------.
