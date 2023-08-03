@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.6.0)
+Perfect Perspective PS (version 5.7.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -304,11 +304,22 @@ uniform bool MirrorBorder
 	ui_tooltip = "Choose mirrored or original image on the border.";
 > = false;
 
+uniform float VignetteOffset
+<
+	ui_type = "slider";
+	ui_category = "Cosmetics";
+	ui_category_closed = true;
+	ui_label = "Vignette brightness";
+	ui_tooltip = "Brighten the image with vignette enabled.";
+	ui_min = 0f;
+	ui_max = 0.25;
+> = 0.1;
+
 uniform bool BorderVignette
+	ui_type = "input";
 <
 	ui_type = "input";
-	ui_category = "Border cosmetics";
-	ui_category_closed = true;
+	ui_category = "Cosmetics";
 	ui_label = "Vignette on border";
 	ui_tooltip = "Apply vignetting effect to border.";
 > = false;
@@ -316,7 +327,7 @@ uniform bool BorderVignette
 uniform float4 BorderColor
 <
 	ui_type = "color";
-	ui_category = "Border cosmetics";
+	ui_category = "Cosmetics";
 	ui_label = "Border color";
 	ui_tooltip = "Use alpha to change border transparency.";
 > = float4(0.027, 0.027, 0.027, 0.96);
@@ -324,7 +335,7 @@ uniform float4 BorderColor
 uniform float BorderCorner
 <
 	ui_type = "slider";
-	ui_category = "Border cosmetics";
+	ui_category = "Cosmetics";
 	ui_label = "Corner radius";
 	ui_tooltip = "Value of 0 gives sharp corners.";
 	ui_min = 0f; ui_max = 1f;
@@ -333,7 +344,7 @@ uniform float BorderCorner
 uniform uint BorderGContinuity
 <
 	ui_type = "slider";
-	ui_category = "Border cosmetics";
+	ui_category = "Cosmetics";
 	ui_units = "G";
 	ui_label = "Corner roundness";
 	ui_tooltip =
@@ -1030,6 +1041,8 @@ float3 PerfectPerspectivePS(
 		vignette /= dot(incident, incident); // inverse square law
 	}
 #endif
+	// Brighten the vignette
+	if (UseVignette) vignette += VignetteOffset;
 
 	// Rectilinear perspective transformation
 #if PANTOMORPHIC_MODE // simple rectilinear transformation
