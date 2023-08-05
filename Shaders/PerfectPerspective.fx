@@ -316,7 +316,6 @@ uniform float VignetteOffset
 > = 0.1;
 
 uniform bool BorderVignette
-	ui_type = "input";
 <
 	ui_type = "input";
 	ui_category = "Cosmetics";
