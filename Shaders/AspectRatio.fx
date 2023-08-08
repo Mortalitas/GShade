@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Aspect Ratio PS (version 1.2.0)
+Aspect Ratio PS (version 1.3.1)
 
 Copyright:
 This code © 2019-2023 Jakub Maksymilian Fober
@@ -93,17 +93,47 @@ sampler AspectBgSampler { Texture = AspectBgTex; };
 '--------------*/
 
 float3 AspectRatioPS(
-	float4 pos : SV_Position,
-	float2 texcoord : TEXCOORD
+	float4 pixelPos : SV_Position,
+	float2 texCoord : TEXCOORD
 ) : SV_Target
 {
 	bool Mask = false;
 
 	// Center coordinates
-	float2 coord = texcoord-0.5;
+	float2 aspectCoord = texCoord-0.5;
 
-	// if (Zoom != 1f) coord /= Zoom;
-	if (Zoom != 1f) coord /= clamp(Zoom, 1f, 1.5); // Anti-cheat
+	// Calculate squeeze parameters
+	float deformation = abs(A)+1f;
+	float scaling = abs(A)*Zoom+1f;
+
+	// Squeeze horizontally or vertically
+	float Mask, pixelScale;
+	if (A<0f)
+	{
+		// Apply deformation
+		aspectCoord.x *= deformation;
+		// Scale to borders
+		aspectCoord /= scaling;
+		// Mask image borders
+		Mask = 0.5-abs(aspectCoord.x);
+		pixelScale = BUFFER_WIDTH*scaling/deformation;
+		// Create smooth mask
+		Mask = saturate(Mask*pixelScale+0.5);
+	}
+	else if (A>0f)
+	{
+		// Apply deformation
+		aspectCoord.y *= deformation;
+		// Scale to borders
+		aspectCoord /= scaling;
+		// Mask image borders
+		Mask = 0.5-abs(aspectCoord.y);
+		pixelScale = BUFFER_HEIGHT*scaling/deformation;
+		// Create smooth mask
+		Mask = saturate(Mask*pixelScale+0.5);
+	}
+	else // bypass
+		return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
 
 	// Squeeze horizontally
 	if (A<0)
@@ -127,18 +157,19 @@ float3 AspectRatioPS(
 	}
 	
 	// Coordinates back to the corner
-	coord += 0.5;
+	aspectCoord += 0.5;
 
 	// Sample display image and return
-	if (UseBackground && !FitScreen) // If borders are visible
-		return Mask
-			? lerp(tex2D(AspectBgSampler, texcoord).rgb, Color.rgb, Color.a)
-			: tex2D(ReShade::BackBuffer, coord).rgb;
+#if ASPECT_RATIO_USE_TEXTURE
+	if (Zoom<1f) // If borders are visible
+		return lerp(
+				lerp(tex2D(AspectBgSampler, texCoord).rgb, Color.rgb, Color.a),
+				tex2D(ReShade::BackBuffer, aspectCoord).rgb,
+				Mask
+			);
 	else
-		if (Mask)
-			return Color.rgb;
-		else
-			return tex2D(ReShade::BackBuffer, coord).rgb;
+#endif
+		return lerp(Color.rgb, tex2D(ReShade::BackBuffer, aspectCoord).rgb, Mask);
 }
 
 /*-------------.
