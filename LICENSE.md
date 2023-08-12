@@ -84,7 +84,6 @@
   * Papyrus6.png
 
 * MartyMcFly/Pascal Glitcher (github.com/martymcmodding):
-  * MShadersLUTAtlas.fxh
   * Posterize.fx
   * qUINT_bloom.fx
   * qUINT_common.fxh
@@ -123,17 +122,6 @@
   * TalimRed.png
   * TalimSmoke.png
   * TalimSpiderweb.png
-
-* TreyM (github.com/TreyM)
-  * AtmosphericDensity.fx
-  * LensDiffusion.fx
-  * Macros.fxh
-  * MShadersAVGen.fxh
-  * MShadersBlendingModes.fxh
-  * MShadersCommon.fxh
-  * MShadersGaussianBlurBounds.fxh
-  * MShadersMacros.fxh
-  * VHSM.fx
 
 * Yae (twitter.com/lapismenangis)
   * MultiLut_yaes.png
