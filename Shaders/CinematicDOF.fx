@@ -545,8 +545,7 @@ namespace CinematicDOF
 	{
 		// apply small tow to the incoming fragment, so the whitepoint gets slightly lower than max.
 		// De-tonemap color (reinhard). Thanks Marty :) 
-		fragment = ConeOverlap(fragment);
-		fragment = pow(abs(fragment), HighlightGammaFactor);
+		fragment = pow(abs(ConeOverlap(fragment)), HighlightGammaFactor);
 		return fragment / max((1.001 - (HighlightBoost * fragment)), 0.001);
 	}
 	
