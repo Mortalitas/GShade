@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.7.0)
+Perfect Perspective PS (version 5.8.0)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -472,7 +472,7 @@ uniform uint ResScaleScreen
 	ui_text = "Pixel scale-map settings:";
 	ui_category = "Calibration mode";
 	ui_category_closed = true;
-> = 1920u;
+> = BUFFER_WIDTH;
 
 uniform uint ResScaleVirtual
 <
@@ -484,7 +484,7 @@ uniform uint ResScaleVirtual
 		"Simulates application running beyond native\n"
 		"screen resolution (using VSR or DSR).";
 	ui_category = "Calibration mode";
-> = 1920u;
+> = BUFFER_WIDTH;
 
 /*---------------.
 | :: Textures :: |
