@@ -18,14 +18,19 @@ http://creativecommons.org/licenses/by/4.0/
 | :: Macros :: |
 '-------------*/
 
-#ifndef ASPECT_RATIO_TEX
-	#define ASPECT_RATIO_TEX "TestPattern.png"
+#ifndef ASPECT_RATIO_USE_TEXTURE
+	#define ASPECT_RATIO_USE_TEXTURE 0
 #endif
-#ifndef ASPECT_RATIO_TEX_WIDTH
-	#define ASPECT_RATIO_TEX_WIDTH 1920
-#endif
-#ifndef ASPECT_RATIO_TEX_HEIGHT
-	#define ASPECT_RATIO_TEX_HEIGHT 1080
+#if ASPECT_RATIO_USE_TEXTURE
+	#ifndef ASPECT_RATIO_TEX
+		#define ASPECT_RATIO_TEX "TestPattern.png"
+	#endif
+	#ifndef ASPECT_RATIO_TEX_WIDTH
+		#define ASPECT_RATIO_TEX_WIDTH 1920
+	#endif
+	#ifndef ASPECT_RATIO_TEX_HEIGHT
+		#define ASPECT_RATIO_TEX_HEIGHT 1080
+	#endif
 #endif
 
 /*--------------.
@@ -50,24 +55,9 @@ uniform float Zoom
 <
 	ui_type = "slider";
 	ui_units = "x";
-	ui_label = "Scale image";
-	ui_category = "Aspect ratio";
-	ui_min = 1f; ui_max = 1.5;
-> = 1f;
-
-uniform bool FitScreen
-<
-	ui_type = "input";
 	ui_label = "Scale image to borders";
-	ui_category = "Borders";
-> = true;
-
-uniform bool UseBackground
-<
-	ui_type = "input";
-	ui_label = "Use background image";
-	ui_category = "Borders";
-> = true;
+	ui_category = "Aspect ratio";
+> = 1f;
 
 uniform float4 Color
 <
@@ -80,6 +70,7 @@ uniform float4 Color
 | :: Textures :: |
 '---------------*/
 
+#if ASPECT_RATIO_USE_TEXTURE
 texture AspectBgTex
 < source = ASPECT_RATIO_TEX; >
 {
@@ -87,6 +78,7 @@ texture AspectBgTex
 	Height = ASPECT_RATIO_TEX_HEIGHT;
 };
 sampler AspectBgSampler { Texture = AspectBgTex; };
+#endif
 
 /*--------------.
 | :: Shaders :: |
@@ -97,8 +89,6 @@ float3 AspectRatioPS(
 	float2 texCoord : TEXCOORD
 ) : SV_Target
 {
-	bool Mask = false;
-
 	// Center coordinates
 	float2 aspectCoord = texCoord-0.5;
 
@@ -135,27 +125,6 @@ float3 AspectRatioPS(
 	else // bypass
 		return tex2Dfetch(ReShade::BackBuffer, uint2(pixelPos.xy)).rgb;
 
-	// Squeeze horizontally
-	if (A<0)
-	{
-		coord.x *= abs(A)+1f; // Apply distortion
-
-		// Scale to borders
-		if (FitScreen) coord /= abs(A)+1f;
-		else // Mask image borders
-			Mask = abs(coord.x)>0.5;
-	}
-	// Squeeze vertically
-	else if (A>0)
-	{
-		coord.y *= A+1f; // Apply distortion
-
-		// Scale to borders
-		if (FitScreen) coord /= abs(A)+1f;
-		else // Mask image borders
-			Mask = abs(coord.y)>0.5;
-	}
-	
 	// Coordinates back to the corner
 	aspectCoord += 0.5;
 
