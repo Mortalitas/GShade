@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.8.0)
+Perfect Perspective PS (version 5.8.1)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -270,7 +270,7 @@ uniform bool UseVignette
 	ui_category = "Distortion";
 	ui_label = "Apply vignetting";
 	ui_tooltip = "Apply lens-correct natural vignetting effect.";
-> = true;
+> = false;
 
 // :: Border :: //
 
