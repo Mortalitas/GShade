@@ -32,17 +32,7 @@ Contact:
 If you want additional licensing for your commercial product, please contact me:
 jakub.m.fober@protonmail.com
 
-██████████▀▀▀▀▀      ▄▄▄▄▄▄▄      ▀▀▀▀▀███████████
-██▀▀▀           █████▀▀▀▀▀▀▀█████            ▀▀▀██
-▀               ███           ███                ▀
-                ██             ██
-                ██             ██
-                ██             ██
-▄               ███           ███                ▄
-██▄▄▄           █████▄▄▄▄▄▄▄█████            ▄▄▄██
-██████████▄▄▄▄▄      ▀▀▀▀▀▀▀      ▄▄▄▄▄███████████
-  P   A   N   T   O   M   O   R   P   H   I   C
-
+--------------------------------------------------------------------------------
 For updates visit GitHub repository at
 https://github.com/Fubaxiusz/fubax-shaders.
 
