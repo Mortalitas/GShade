@@ -1,6 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.9.2 - UI
+//Version 0.9.3 - UI
 
 //license
 //CC0 ^_^
@@ -9,7 +9,7 @@
 #if UI_DIFFICULTY == 1
 
 uniform int Hints<
-	ui_text = "This shader is in -ALPHA PHASE-, expect major changes.\n\n"
+	ui_text = "This shader is in -BETA PHASE-, expect major changes.\n\n"
 			  "Set UI_DIFFICULTY to 0 to make the UI simpler if you want.\n"
 			  "Advanced categories are unnecessary options that\n"
 			  "can break the look of the shader if modified improperly.\n\n"
