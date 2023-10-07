@@ -66,7 +66,7 @@ static const float2 pix = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 #define FAR_PLANE RESHADE_DEPTH_LINEARIZATION_FAR_PLANE 
 
 #define PI 3.1415927
-static const float PI2div360 = 0.01745329
+static const float PI2div360 = 0.01745329;
 #define rad(x) (x * PI2div360)
 ///////////////Include/////////////////////
 ///////////////PreProcessor-Definitions////
