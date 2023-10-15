@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Perfect Perspective PS (version 5.8.1)
+Perfect Perspective PS (version 5.8.2)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -1153,7 +1153,10 @@ technique PerfectPerspective
 		"	3# adjust visible borders. You can change the zoom factor,\n"
 		"	   such that no borders are visible, or that no image area is lost.\n"
 		"\n"
-		"	4# additionally for sharp image, use sharpening FX or run game at a\n"
+		"	4# use 4lex4nder/ReshadeEffectShaderToggler addon, to render the distortion\n"
+		"	   under user interface.\n"
+		"\n"
+		"	5# additionally for sharp image, use sharpening FX or run game at a\n"
 		"	   Super-Resolution. Debug options can help you find the proper value.\n"
 		"\n"
 		"	(*) for more available settings set PANTOMORPHIC_MODE value to 1 or 2.\n"
