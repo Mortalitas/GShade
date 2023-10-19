@@ -1,33 +1,39 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.8.3)
+/* Perfect Perspective PS (version 5.8.4)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
 
 License:
 This work is licensed under the Creative Commons Attribution-NonCommercial-
-NoDerivs 3.0 Unported License. To view a copy of this license, visit
-http://creativecommons.org/licenses/by-nc-nd/3.0/
+NoDerivs 3.0 Unported License + additional permissions. To view a copy of this
+license, visit http://creativecommons.org/licenses/by-nc-nd/3.0/
 
-Additional permissions under Creative Commons Plus (CC+):
+Additional permissions under Creative Commons Plus protocol (CC+):
 
-§ 1. The copyright owner further grants permission for commercial reuse of image
-recordings based on the work (e.g., Let's Play videos, gameplay streams, and
-screenshots featuring ReShade filters). Any such use must include credit to the
-creator and the name of the used shader.
- Intent §: To facilitate non-corporate, common use of the shader at no cost.
-Outcome §: That recognition of the work in any derivative images is ensured.
+§ 1. The copyright owner further downgrades the licensing terms to the CC-BY 3.0
+variant of the license, waiving the NonCommercial-NoDerivs terms, for the
+purpose of journalistic publications talking about this work, and/or for the use
+in gameplay videos/images specifically published by common gamers.
+Intents §: To facilitate the practical use of the shader and specifically its
+           derivative images/videos by the journalists of the video-game
+           industry, professional and amateur and by common gamers. At the same
+           time preventing typically closed-source commercial plugins utilizing
+           this work from being published by some third-party.
+Outcome §: That it would be practically and legally acceptable for journalists
+           and games to promote this work if they want to share their image/
+           video material under their own terms.
 
 § 2. Additionally, permission is granted for the translation of the front-end UI
 text within this shader.
- Intent §: To increase accessibility and understanding across different
-languages.
+Intents §: To increase accessibility and understanding across different language
+           regions/groups.
 Outcome §: That usability across users from diverse linguistic backgrounds is
-promoted, allowing them to fully engage with the shader.
+           promoted, allowing them to fully engage with the shader.
 
 Contact:
-If you want additional licensing for your commercial work, please contact me:
+For inquiries regarding alternative licensing options, please contact me at:
 jakub.m.fober@protonmail.com
 
 --------------------------------------------------------------------------------
