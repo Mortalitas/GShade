@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.8.2,4)
+/* Perfect Perspective PS (version 5.8.3)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -129,13 +129,13 @@ uniform float Ky
 		"Projection coefficient 'k' top, represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"	Perception of | Value |  Projection  	\n"
-		"	--------------+-------+--------------	\n"
-		"	illumination  |  -1   | Orthographic 	\n"
-		"	  distance    | -0.5  |   Equisolid  	\n"
-		"	    speed     |   0   |  Equidistant 	\n"
-		"	    shape     |  0.5  | Stereographic	\n"
-		"	straight path |   1   |  Rectilinear 	\n"
+		"	 Perception of | Value |  Projection  	\n"
+		"	---------------+-------+--------------	\n"
+		"	  brightness   |  -1   |  Orthographic	\n"
+		"	   distances   | -0.5  |   Equisolid  	\n"
+		"	     speed     |   0   |  Equidistant 	\n"
+		"	    shapes     |  0.5  | Stereographic	\n"
+		"	straight lines |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -162,13 +162,13 @@ uniform float K
 #endif
 		"various azimuthal projections types:\n"
 		"\n"
-		"	Perception of | Value |  Projection  	\n"
-		"	--------------+-------+--------------	\n"
-		"	illumination  |  -1   | Orthographic 	\n"
-		"	  distance    | -0.5  |   Equisolid  	\n"
-		"	    speed     |   0   |  Equidistant 	\n"
-		"	    shape     |  0.5  | Stereographic	\n"
-		"	straight path |   1   |  Rectilinear 	\n"
+		"	 Perception of | Value |  Projection  	\n"
+		"	---------------+-------+--------------	\n"
+		"	  brightness   |  -1   |  Orthographic	\n"
+		"	   distances   | -0.5  |   Equisolid  	\n"
+		"	     speed     |   0   |  Equidistant 	\n"
+		"	    shapes     |  0.5  | Stereographic	\n"
+		"	straight lines |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -185,13 +185,13 @@ uniform float Ky
 		"Projection coefficient 'k' vertical, represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"	Perception of | Value |  Projection  	\n"
-		"	--------------+-------+--------------	\n"
-		"	illumination  |  -1   | Orthographic 	\n"
-		"	  distance    | -0.5  |   Equisolid  	\n"
-		"	    speed     |   0   |  Equidistant 	\n"
-		"	    shape     |  0.5  | Stereographic	\n"
-		"	straight path |   1   |  Rectilinear 	\n"
+		"	 Perception of | Value |  Projection  	\n"
+		"	---------------+-------+--------------	\n"
+		"	  brightness   |  -1   |  Orthographic	\n"
+		"	   distances   | -0.5  |   Equisolid  	\n"
+		"	     speed     |   0   |  Equidistant 	\n"
+		"	    shapes     |  0.5  | Stereographic	\n"
+		"	straight lines |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -208,13 +208,13 @@ uniform float KyA
 		"Projection coefficient 'k' bottom, represents\n"
 		"various azimuthal projections types:\n"
 		"\n"
-		"	Perception of | Value |  Projection  	\n"
-		"	--------------+-------+--------------	\n"
-		"	illumination  |  -1   | Orthographic 	\n"
-		"	  distance    | -0.5  |   Equisolid  	\n"
-		"	    speed     |   0   |  Equidistant 	\n"
-		"	    shape     |  0.5  | Stereographic	\n"
-		"	straight path |   1   |  Rectilinear 	\n"
+		"	 Perception of | Value |  Projection  	\n"
+		"	---------------+-------+--------------	\n"
+		"	  brightness   |  -1   |  Orthographic	\n"
+		"	   distances   | -0.5  |   Equisolid  	\n"
+		"	     speed     |   0   |  Equidistant 	\n"
+		"	    shapes     |  0.5  | Stereographic	\n"
+		"	straight lines |   1   |  Rectilinear 	\n"
 		"\n"
 		"\n"
 		"[Ctrl+click] to type value.";
@@ -252,7 +252,7 @@ uniform bool UseVignette
 	ui_category = "Distortion";
 	ui_label = "Apply vignetting";
 	ui_tooltip = "Apply lens-correct natural vignetting effect.";
-> = false;
+> = true;
 
 // Border
 
@@ -294,8 +294,8 @@ uniform float VignetteOffset
 	ui_label = "Vignette brightness";
 	ui_tooltip = "Brighten the image with vignette enabled.";
 	ui_min = 0f;
-	ui_max = 0.25;
-> = 0.1;
+	ui_max = 0.2;
+> = 0.05;
 
 uniform bool BorderVignette
 <
@@ -536,13 +536,8 @@ float get_theta(float radius, float rcp_f, float k) // get spherical θ angle
 	else if (k<0f)  return asin(k*radius*rcp_f)/k; // equisolid, orthographic projections
 	else  /*k==0f*/ return        radius*rcp_f;    // equidistant projection
 }
-float get_vignette(float theta, float k) // get vignetting mask in linear color space
-{
-	// Create spherical vignette |cos(max(|k|,1/2)θ)|^(k/2+3/2)
-	float spherical_vignette = cos(max(abs(k), 0.5)*theta); // limit FoV span, |k'| ∈ [0.5, 1] range
-	// Mix cosine-law of illumination and inverse-square law
-	return pow(abs(spherical_vignette), mad(k, 0.5, 1.5));
-}
+float get_vignette(float theta, float r, float rcp_f) // get vignetting mask in linear color space
+{ return sin(theta)/(r*rcp_f); }
 float2 get_phi_weights(float2 viewCoord) // get pantomorphic interpolation weights
 {
 	viewCoord *= viewCoord; // squared vector coordinates
@@ -931,9 +926,9 @@ float3 PerfectPerspectivePS(
 #endif
 	// Bypass perspective mapping
 	{
+		float3 display;
 		if (CalibrationModeView)
 		{
-			float3 display;
 			switch (CalibrationMode) // choose output type
 			{
 				case 1u: // pixel scale-map
@@ -951,7 +946,21 @@ float3 PerfectPerspectivePS(
 			return BlueNoise::dither(display, uint2(pixelPos.xy)); // dither final 8/10-bit result
 		}
 		else // bypass all effects
-			return tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+		{
+			display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+
+			if (UseVignette && VignetteOffset!=0f) // maintain constant brightness across all FoV values
+			{
+				// Manually correct gamma
+				display = GammaConvert::to_linear(display);
+				display *= 1f+VignetteOffset;
+				display = GammaConvert::to_display(display);
+				// Dither final 8/10-bit result
+				display = BlueNoise::dither(display, uint2(pixelPos.xy));
+			}
+
+			return display;
+		}
 	}
 
 // end of distortion mapping bypass
@@ -993,30 +1002,28 @@ float3 PerfectPerspectivePS(
 	);
 	float vignette = UseVignette
 		? dot(phiMtx, float2(
-			get_vignette(theta2.x, K),
-	#if PANTOMORPHIC_MODE==1
-			get_vignette(theta2.y, Ky)))
-	#elif PANTOMORPHIC_MODE>=2
-			get_vignette(theta2.y, viewCoord.y>=0f ? KyA : Ky)))
-	#endif
+			get_vignette(theta2.x, radius, rcp_focal),
+			get_vignette(theta2.y, radius, rcp_focal)))+VignetteOffset
 		: 1f;
 	float theta = dot(phiMtx, theta2); // pantomorphic incident
 #else // get θ from anamorphic radius
 	float theta = get_theta(radius, rcp_focal, K);
-	float vignette = UseVignette ? get_vignette(theta, K) : 1f;
-	// Anamorphic vignette correction
-	if (UseVignette && S!=1f)
+	float vignette;
+	if (UseVignette)
 	{
-		// Get anamorphic-incident 3D vector
-		float3 incident = float3(
-			(sin(theta)*rcp_radius)*viewCoord,
-			 cos(theta)
-		);
-		vignette /= dot(incident, incident); // inverse square law
+		if (S!=1f) // get actual theta and radius
+		{
+			// Get anamorphic-incident 3D vector
+			float3 incident = float3(
+				(sin(theta)*rcp_radius)*viewCoord,
+				 cos(theta)
+			);
+			vignette = get_vignette(acos(normalize(incident).z), length(viewCoord), rcp_focal)+VignetteOffset;
+		}
+		else vignette = get_vignette(theta, radius, rcp_focal)+VignetteOffset;
 	}
+	else vignette = 1f; // no vignetting
 #endif
-	// Brighten the vignette
-	if (UseVignette) vignette += VignetteOffset;
 
 	// Rectilinear perspective transformation
 #if PANTOMORPHIC_MODE // simple rectilinear transformation
