@@ -1,4 +1,4 @@
-#include "Include/RadegastShaders.BlendingModes.fxh"
+#include "RadegastShaders.BlendingModes.fxh"
 
 uniform float x_col <
     ui_type = "slider";

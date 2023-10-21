@@ -1,6 +1,5 @@
 uniform float radius <
     ui_type = "slider";
-    #endif
     ui_label="Radius";
     ui_min = 0.0; 
     ui_max = 1.0;

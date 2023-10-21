@@ -13,7 +13,6 @@ uniform float inner_radius <
 
 uniform float angle <
     ui_type = "slider";
-    #endif
     ui_label="Angle";
     ui_min = -1800.0; 
     ui_max = 1800.0; 
