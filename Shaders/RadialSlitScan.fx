@@ -1,79 +1,16 @@
-#include "Reshade.fxh"
-#include "Blending.fxh"
-
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
 /*-----------------------------------------------------------------------------------------------------*/
-/* Radial Slit Scan Shader - by Radegast Stravinsky of Ultros.                                         */
+/* Radial Slit Scan Shader - by Radegast Stravinsky of Ultros.                                               */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
-uniform float2 coordinates <
-    ui_type = "slider";
-    ui_label="Coordinates";
-    ui_tooltip="The X and Y position of the center of the effect.";
-    ui_min = 0.0; 
-    ui_max = 1.0;
-> = float2(0.5, 0.5);
-
-uniform float frame_rate <
-    source = "framecount";
->;
-
-uniform float2 anim_rate <
-    source = "pingpong";
-    min = 0.0;
-    max = 1.0;
-    step = 0.001;
-    smoothing = 0.0;
->;
-
-uniform float min_depth <
-    ui_type     = "slider";
-    ui_label    = "Minimum Depth";
-    ui_tooltip  = "Unmasks anything before a set depth.";
-    ui_category = "Depth";
-    ui_min=0.0;
-    ui_max=1.0;
-> = 0;
-
-uniform float3 border_color <
-    ui_type = "color";
-    ui_label = "Border Color";
-    ui_category = "Color Settings";
-> = float3(1.0, 0.0, 0.0);
-
-uniform float opacity <
-    ui_type = "slider";
-    ui_label = "Opacity";
-    ui_category = "Color Settings";
-> = 1.0;
-
-uniform float blending_amount <
-    ui_type = "slider";
-    ui_label = "Opacity";
-    ui_category = "Blending";
-    ui_tooltip = "Adjusts the blending amount.";
-    ui_min = 0.0;
-    ui_max = 1.0;
-> = 1.0;
-
-BLENDING_COMBO(
-    render_type, 
-    "Blending Mode", 
-    "Blends the effect with the previous layers.",
-    "Blending",
-    false,
-    0,
-    0
-);
+#include "ReShade.fxh"
+#include "RadialSlitScan.fxh"
 
 texture texColorBuffer: COLOR;
 
 texture ssTexture {
     Height = BUFFER_HEIGHT;
     Width = BUFFER_WIDTH;
+    Format = RGBA16;
 };
 
 sampler samplerColor {
@@ -112,7 +49,7 @@ float get_longest_distance(float2 texcoord) {
 void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
 {
     float2 center = coordinates/2.0;
-    float2 tc = texcoord - center;;
+    float2 tc = texcoord - center;
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     tc.x /= ar_raw;
     center.x /= ar_raw;
@@ -129,55 +66,52 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
     float4 cols = tex2Dfetch(ssTarget, texcoord);
     float4 col_to_write = tex2Dfetch(ssTarget, texcoord);
 
-   
-    if (dist >= slice_to_fill)
-        color = float4(ComHeaders::Blending::Blend(render_type, base.rgb, color.rgb, blending_amount), 1.0);
+
+    if (dist > slice_to_fill)
+        color = base;
+
     else
         discard;
 };
 
-void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float3 color : SV_TARGET)
+void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
 {
-    color = tex2D(samplerColor, texcoord).rgb;
     const float depth = ReShade::GetLinearizedDepth(texcoord).r;
+    float4 base = tex2D(samplerColor, texcoord);
+    color = base;
+    float2 uv = texcoord;
+    float2 center = coordinates/2.0;
+    float2 tc = texcoord - center;
 
-    if (depth > min_depth){
-        float2 center = coordinates/2.0;
-        float2 tc = texcoord - center;
+    float4 screen = tex2D(samplerColor, texcoord);
+    const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
 
-        const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
+    center.x /= ar_raw;
+    tc.x /= ar_raw;
+    float max_radius = get_longest_distance(coordinates);
+    float dist = distance(tc, center);
 
-        center.x /= ar_raw;
-        tc.x /= ar_raw;
-        const float max_radius = get_longest_distance(coordinates);
-        const float dist = distance(tc, center);
+    float slice_to_fill = (anim_rate.x * max_radius);
+    float4 scanned;
+    tc.x *= ar_raw;
 
-        const float slice_to_fill = anim_rate.x * max_radius;
-        tc.x *= ar_raw;
-
-        if (dist < slice_to_fill){
-            const float3 scanned_color = tex2D(ssTarget, texcoord).rgb;
-            color = ComHeaders::Blending::Blend(render_type, color, scanned_color, blending_amount);
-        }
-        else if (dist > slice_to_fill && dist <= slice_to_fill + 0.0025){
-            color = lerp(color, border_color, opacity);
-        }
+    if(dist < slice_to_fill){
+        float4 scanned_color = tex2D(ssTarget, texcoord);
+        color.rgb = ComHeaders::Blending::Blend(render_type, base.rgb, scanned_color.rgb, blending_amount);
     }
+    else if (dist > slice_to_fill && dist <= slice_to_fill + 0.0025){
+        color = tex2D(samplerColor, texcoord);
+        color.rgba = lerp( screen.rgba, float4(border_color, 1.0), opacity);
+    }
+    else
+        color = tex2D(samplerColor, texcoord);
 
-#if GSHADE_DITHER
-    color.rgb += TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
-
-#if GSHADE_DITHER
-	color.rgb += TriDither(color.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH);
-#endif
-
+    if(depth < min_depth)
+        color = tex2D(samplerColor, texcoord);
 }
 
-
-technique SlitScan <
-ui_label="Radial Slit Scan";
-ui_tooltip="Scans and freezes pixels in an outward expanding circle. Resets after a few seconds.\nThe border color can be changed or hidden.";
+technique RadialSlitScan <
+    ui_label="Radial Slit Scan";
 > {
     pass p0 {
 

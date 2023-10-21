@@ -1,91 +1,23 @@
 /*-----------------------------------------------------------------------------------------------------*/
-/* Tiny Planet Shader v4.0 - by Radegast Stravinsky of Ultros.                                         */
+/* Tiny Planet Shader - by Radegast Stravinsky of Ultros.                                         */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
 /*-----------------------------------------------------------------------------------------------------*/
+
+#include "TinyPlanet.fxh"
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
+texture texColorBuffer : COLOR;
+texture texDepthBuffer : DEPTH;
 
-#define PI 3.141592358
 
-uniform float center_x <
-    ui_type = "slider";
-    ui_label = "X Projection Position";
-    ui_tooltip = "Adjusts the X coordinate projection of the sphere onto the display. The value is in degrees.";
-    ui_min = 0.0; 
-    ui_max = 360.0;
-> = 0;
-
-uniform float center_y <
-    ui_type = "slider";
-    ui_label = "Y Projection Position";
-    ui_tooltip = "Adjusts the Y coordinate projection of the sphere onto the display. The value is in degrees.";
-    ui_min = 0.0; 
-    ui_max = 360.0;
-> =0;
-
-uniform float2 offset <
-    ui_type = "slider";
-    ui_label = "Offset";
-    ui_tooltip = "Horizontally/Vertically offsets the center of the display by a certain amount.";
-    ui_min = -.5; 
-    ui_max = .5;
-> = 0;
-
-uniform float scale <
-    ui_type = "slider";
-    ui_label = "Scale";
-    ui_tooltip = "Determine's the display's Z-position on the projected sphere. Use this to zoom into or zoom out of the planet if it's too small or big respectively.";
-    ui_min = 0.0; 
-    ui_max = 10.0;
-> = 10.0;
-
-uniform float z_rotation <
-    ui_type = "slider";
-    ui_label = "Z-Rotation";
-    ui_tooltip = "Rotates the display along the z-axis. This can help you orient characters or features on your display the way you want.";
-    ui_min = 0.0; 
-    ui_max = 360.0;
-> = 0.5;
-
-uniform float seam_scale <
-    ui_type = "slider";
-    ui_min = 0.5;
-    ui_max = 1.0;
-    ui_label = "Seam Blending";
-    ui_tooltip = "Blends the ends of the screen so that the seam is somewhat reasonably hidden.";
-> = 0.5;
-
-float3x3 getrot(float3 r)
+texture TinyPlanetTarget
 {
-    const float cx = cos(radians(r.x));
-    const float sx = sin(radians(r.x));
-    const float cy = cos(radians(r.y));
-    const float sy = sin(radians(r.y));
-    const float cz = cos(radians(r.z));
-    const float sz = sin(radians(r.z));
-
-    const float m1 = cy * cz;
-    const float m2= cx * sz + sx * sy * cz;
-    const float m3= sx * sz - cx * sy * cz;
-    const float m4= -cy * sz;
-    const float m5= cx * cz - sx * sy * sz;
-    const float m6= sx * cz + cx * sy * sz;
-    const float m7= sy;
-    const float m8= -sx * cy;
-    const float m9= cx * cy;
-
-    return float3x3
-    (
-        m1,m2,m3,
-        m4,m5,m6,
-        m7,m8,m9
-    );
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    MipLevels = LINEAR;
+    Format = RGBA8;
 };
 
-texture texColorBuffer : COLOR;
 
 sampler samplerColor
 {
@@ -106,22 +38,6 @@ sampler samplerColor
 
     SRGBTexture = false;
 };
-
-// Vertex Shaders
-void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
-{
-    if (id == 2)
-        texcoord.x = 2.0;
-    else
-        texcoord.x = 0.0;
-
-    if (id == 1)
-        texcoord.y  = 2.0;
-    else
-        texcoord.y = 0.0;
-
-    position = float4( texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
-}
 
 // Pixel Shaders (in order of appearance in the technique)
 float4 PreTP(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
@@ -157,28 +73,20 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
     const float lon = atan2(sphere_pnt.y, sphere_pnt.x);
     const float lat = acos(sphere_pnt.z / r);
 
-#if GSHADE_DITHER
-	const float4 outcolor = tex2D(samplerColor, float2(lon, lat) / rads);
-	return float4(outcolor.rgb + TriDither(outcolor.rgb, texcoord, BUFFER_COLOR_BIT_DEPTH), outcolor.a);
-#else
     return tex2D(samplerColor, float2(lon, lat) / rads);
-#endif
 }
 
 // Technique
-technique TinyPlanet<
-    ui_label="Tiny Planet"; 
-    ui_tooltip="Projects the image onto a sphere. Can be used to make planets.";
->
+technique TinyPlanet <ui_label="Tiny Planet";>
 {
-    pass p0
+     pass p0
     {
-        VertexShader = FullScreenVS;
+        VertexShader = PostProcessVS;
         PixelShader = PreTP;
     }
     pass p1
     {
-        VertexShader = FullScreenVS;
+        VertexShader = PostProcessVS;
         PixelShader = TinyPlanet;
     }
 };
