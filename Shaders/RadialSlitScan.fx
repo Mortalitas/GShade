@@ -48,7 +48,7 @@ float get_longest_distance(float2 texcoord) {
 // Pixel Shaders
 void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 color : SV_TARGET)
 {
-    float2 center = coordinates/2.0;
+    float2 center = float2(x_coord, y_coord)/2.0;
     float2 tc = texcoord - center;
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     tc.x /= ar_raw;
@@ -56,7 +56,7 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
     
     float4 base = tex2D(samplerColor, texcoord);
     color = base;
-    float max_radius = get_longest_distance(coordinates);
+    float max_radius = get_longest_distance(center);
     
     float dist = distance(tc, center);
 
@@ -80,7 +80,7 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
     float4 base = tex2D(samplerColor, texcoord);
     color = base;
     float2 uv = texcoord;
-    float2 center = coordinates/2.0;
+    float2 center = float2(x_coord, y_coord)/2.0;
     float2 tc = texcoord - center;
 
     float4 screen = tex2D(samplerColor, texcoord);
@@ -88,7 +88,7 @@ void SlitScanPost(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out flo
 
     center.x /= ar_raw;
     tc.x /= ar_raw;
-    float max_radius = get_longest_distance(coordinates);
+    float max_radius = get_longest_distance(center);
     float dist = distance(tc, center);
 
     float slice_to_fill = (anim_rate.x * max_radius);

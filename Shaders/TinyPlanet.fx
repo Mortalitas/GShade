@@ -57,7 +57,7 @@ float4 TinyPlanet(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TA
 {
     const float ar = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     
-    const float3x3 rot = getrot(float3(center_x,center_y, z_rotation));
+    const float3x3 rot = getrot(float3(lerp(0,360,x_coord),lerp(0, 360,y_coord), z_rotation));
 
     const float2 rads = float2(PI * 2.0 , PI);
     const float2 pnt = (texcoord - 0.5 - offset).xy * float2(scale, scale*ar);

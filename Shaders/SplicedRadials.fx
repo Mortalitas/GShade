@@ -42,8 +42,8 @@ float4 SplicedRadialsPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) :
     float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
 
     const float depth = ReShade::GetLinearizedDepth(texcoord).r;
-    float2 center = coordinates  / 2.0;
-    float2 offset_center = offset_coords / 2.0;
+    float2 center = float2(x_coord, y_coord)  / 2.0;
+    float2 offset_center = float2(offset_x, offset_y) / 2.0;
 
     if (use_mouse_point)
         center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH / 2.0, mouse_coordinates.y * BUFFER_RCP_HEIGHT / 2.0);
