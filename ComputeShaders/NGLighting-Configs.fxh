@@ -16,7 +16,7 @@
 #define TM_Mode 1
 #define IT_Intensity 1
 //clamps the maximum luma of pixels to avoid unsolvable fireflies
-#define LUM_MAX 100
+#define LUM_MAX 25
 
 #define HLDIV 4 //multiply history length by this value before evaluating the radius
 #define TemporalFilterDisocclusionThreshold 0.004
@@ -27,7 +27,7 @@
 #define MBSDMultiplier 160 //Default is 90
 
 //Temporal stabilizer Intensity
-#define TSIntensity 0.99
+#define TSIntensity 0.8
 //Temporal Stabilizer Clamping kernel shape
 #define shape 8//4 for cross, 8 for square
 #define TEMPORAL_STABILIZER_MINMAX_CLAMPING 1

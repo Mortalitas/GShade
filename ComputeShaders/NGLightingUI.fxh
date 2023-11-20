@@ -9,16 +9,12 @@
 #if UI_DIFFICULTY == 1
 
 uniform int Hints<
-	ui_text = "This shader is in -BETA PHASE-, expect major changes.\n\n"
-			  "Set UI_DIFFICULTY to 0 to make the UI simpler if you want.\n"
+	ui_text = "Set UI_DIFFICULTY to 0 to make the UI simpler if you want.\n"
 			  "Advanced categories are unnecessary options that\n"
 			  "can break the look of the shader if modified improperly.\n\n"
 			  "Use with ReShade_MotionVectors at Quarter Resolution.\n"
 			  "Using higher resolutions for the motion vector only makes it WORSE "
 			  "when the game is using temporal filters (TAA,DLSS2,FSR2,TAAU,TSR,etc.)";
-			  //"Disabing NGL_HYBRID_MODE can give you better performance\n"
-			  //"But you can use only one effect (either GI or Reflection).\n"
-			  //"Don't forget to give me feedbacks in reshade discord";
 			  
 	ui_category = "Hints - Please Read for good results.";
 	ui_category_closed = true;
@@ -277,8 +273,7 @@ uniform int Preprocessordefinitionstooltip<
 #if UI_DIFFICULTY == 0
 
 uniform int Hints<
-	ui_text = "This shader is in -ALPHA PHASE-, expect major changes.\n\n"
-			  "Set UI_DIFFICULTY to 1 if you want access to more settings.\n"
+	ui_text = "Set UI_DIFFICULTY to 1 if you want to access more settings.\n"
 			  "Advanced categories are unnecessary options that\n"
 			  "can break the look of the shader if modified improperly.\n\n"
 			  "Use with ReShade_MotionVectors at Quarter Resolution.\n"

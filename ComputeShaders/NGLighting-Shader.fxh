@@ -1,6 +1,6 @@
 //Stochastic Screen Space Ray Tracing
 //Written by MJ_Ehsan for Reshade
-//Version 0.9.3
+//Version 1.0.0
 
 //Thanks Lord of Lunacy, Leftfarian, and other devs for helping me. <3
 //Thanks Alea & MassiHancer for testing. <3
@@ -39,20 +39,21 @@
 //      By using the background texture provided by VFog to blend the Reflection.
 //      Then Blending back the fog to the image. This way fog affects the reflection.
 //      But the reflection doesn't break the fog.
-//5- [ ]Add ACEScg and or Filmic inverse tonemapping as optional alternatives to Timothy Lottes
+//5- [x]Add ACEScg and or Filmic inverse tonemapping as optional alternatives to Timothy Lottes
 //6- [v]Add AO support
 //7- [v]Add second temporal pass after second spatial pass.
-//8- [o]Add Spatiotemporal upscaling. have to either add jitter to the RayMarching pass or a checkerboard pattern.
+//8- [x]Add Spatiotemporal upscaling. have to either add jitter to the RayMarching pass or a checkerboard pattern.
 //9- [v]Add Smooth Normals.
 //10-[v]Use pre-calulated blue noise instead of white. From Nvidia's SpatioTemporal Blue Noise sequence
 //11-[v]Add depth awareness to smooth normals. To do so, add depth in the alpha channel of 
 //	  NormTex and NormTex1 for optimization.
 //12-[v]Make normal based edge awareness of all passes based on angular distance of the 2 normals.
-//13-[o]Make sample distance of smooth normals exponential.
+//13-[ ]Make sample distance of smooth normals exponential.
 //14-[ ]
 
 ///////////////Include/////////////////////
 
+#include "ReShadeUI.fxh"
 #include "ReShade.fxh"
 #include "NGLightingUI.fxh"
 
@@ -85,7 +86,7 @@ sampler sTexDepth {Texture = TexDepth;};
 texture texMotionVectors { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16F; };
 sampler SamplerMotionVectors { Texture = texMotionVectors; AddressU = Clamp; AddressV = Clamp; MipFilter = Point; MinFilter = Point; MagFilter = Point; };
 
-texture SSSR_ReflectionTex  { Width = BUFFER_WIDTH*RESOLUTION_SCALE_; Height = BUFFER_HEIGHT*RESOLUTION_SCALE_; Format = RGBA16f; };
+texture SSSR_ReflectionTex  { Width = BUFFER_WIDTH*RESOLUTION_SCALE_; Height = BUFFER_HEIGHT*RESOLUTION_SCALE_; Format = RGBA16f; MipLevels = 4; };
 sampler sSSSR_ReflectionTex { Texture = SSSR_ReflectionTex; };
 
 texture SSSR_HitDistTex { Width = BUFFER_WIDTH*RESOLUTION_SCALE_; Height = BUFFER_HEIGHT*RESOLUTION_SCALE_; Format = R16f; MipLevels = 7; };
@@ -372,12 +373,12 @@ float3 GetRoughTex(float2 texcoord, float4 normal)
 		roughfac = (1 - roughness);
 		fromrough.x = lerp(0, 0.1, saturate(roughness*10));
 		fromrough.y = 0.8;
-		torough = float2(0, pow(max(roughness, 0.0), roughfac));
+		torough = float2(0, pow(roughness, roughfac));
 		
 		float3 center = toYCC(tex2D(sTexColor, texcoord).rgb);
 		float depth = LDepth(texcoord);
 
-		float Roughness = 0.0;
+		float Roughness;
 		//cross (+)
 		float2 offsets[4] = {float2(p.x,0), float2(-p.x,0),float2( 0,-p.y),float2(0,p.y)};
 		[unroll]for(int x; x < 4; x++)
@@ -386,21 +387,21 @@ float3 GetRoughTex(float2 texcoord, float4 normal)
 			float  SampleDepth = LDepth(SampleCoord);
 			if(abs(SampleDepth - depth)*facing < Threshold)
 			{
-				float3 SampleColor = toYCC(tex2Dlod( sTexColor, float4(SampleCoord, 0.0, 0.0)).rgb);
+				float3 SampleColor = toYCC(tex2D( sTexColor, SampleCoord).rgb);
 				SampleColor = min(abs(center.g - SampleColor.g), 0.25);
 				Roughness += SampleColor.r;
 			}
 		}
 		
-		Roughness = pow( max(Roughness, 0.0), roughfac*0.66);
+		Roughness = pow( Roughness, roughfac*0.66);
 		Roughness = clamp(Roughness, fromrough.x, fromrough.y);
 		Roughness = (Roughness - fromrough.x) / ( 1 - fromrough.x );
 		Roughness = Roughness / fromrough.y;
 		Roughness = clamp(Roughness, torough.x, torough.y);
 		
 		return saturate(Roughness);
-	}
-	return 0.0;//RoughnessTex
+	} 
+	return 0;//RoughnessTex
 }
 
 #define BT 1000
@@ -442,7 +443,7 @@ static const float sRGBGamma = 2.2;
 
 float3 InvTonemapper(float3 color)
 {
-	if(LinearConvert)color = pow(max(color, 0.0), LinearGamma);
+	if(LinearConvert)color = pow(color, LinearGamma);
 	
 	float3 L;
 	if(TM_Mode)L = max(max(color.r, color.g), color.b); //Lottes
@@ -490,11 +491,12 @@ bool IsSaturatedStrict(float2 coord)
 // The following code is licensed under the MIT license: https://gist.github.com/TheRealMJP/bc503b0b87b643d3505d41eab8b332ae
 // Samples a texture with Catmull-Rom filtering, using 9 texture fetches instead of 16.
 // See http://vec3.ca/bicubic-filtering-in-fewer-taps/ for more details
-float4 tex2Dcatrom(in sampler tex, in float2 uv, in float2 texsize)
+float4 tex2Dcatrom(in sampler tex, in float2 uv, in float2 texsize, in float lod)
 {
 	float4 result = 0.0f;
 	
 	if(UseCatrom){
+	texsize /= exp2(lod);
     float2 samplePos = uv; samplePos *= texsize;
     float2 texPos1 = floor(samplePos - 0.5f) + 0.5f;
 
@@ -516,18 +518,18 @@ float4 tex2Dcatrom(in sampler tex, in float2 uv, in float2 texsize)
     texPos3 /= texsize;
     texPos12 /= texsize;
 
-    result += tex2D(tex, float2(texPos0.x, texPos0.y)) * w0.x * w0.y;
-    result += tex2D(tex, float2(texPos12.x, texPos0.y)) * w12.x * w0.y;
-    result += tex2D(tex, float2(texPos3.x, texPos0.y)) * w3.x * w0.y;
-    result += tex2D(tex, float2(texPos0.x, texPos12.y)) * w0.x * w12.y;
-    result += tex2D(tex, float2(texPos12.x, texPos12.y)) * w12.x * w12.y;
-    result += tex2D(tex, float2(texPos3.x, texPos12.y)) * w3.x * w12.y;
-    result += tex2D(tex, float2(texPos0.x, texPos3.y)) * w0.x * w3.y;
-    result += tex2D(tex, float2(texPos12.x, texPos3.y)) * w12.x * w3.y;
-    result += tex2D(tex, float2(texPos3.x, texPos3.y)) * w3.x * w3.y;
+    result += tex2Dlod(tex, float4(texPos0.x, texPos0.y, 0, lod)) * w0.x * w0.y;
+    result += tex2Dlod(tex, float4(texPos12.x, texPos0.y, 0, lod)) * w12.x * w0.y;
+    result += tex2Dlod(tex, float4(texPos3.x, texPos0.y, 0, lod)) * w3.x * w0.y;
+    result += tex2Dlod(tex, float4(texPos0.x, texPos12.y, 0, lod)) * w0.x * w12.y;
+    result += tex2Dlod(tex, float4(texPos12.x, texPos12.y, 0, lod)) * w12.x * w12.y;
+    result += tex2Dlod(tex, float4(texPos3.x, texPos12.y, 0, lod)) * w3.x * w12.y;
+    result += tex2Dlod(tex, float4(texPos0.x, texPos3.y, 0, lod)) * w0.x * w3.y;
+    result += tex2Dlod(tex, float4(texPos12.x, texPos3.y, 0, lod)) * w12.x * w3.y;
+    result += tex2Dlod(tex, float4(texPos3.x, texPos3.y, 0, lod)) * w3.x * w3.y;
 	} //UseCatrom
 	else{
-	result = tex2D(tex, uv);
+	result = tex2Dlod(tex, float4(uv, 0, lod));
 	} //UseBilinear
     return max(0, result);
 }
@@ -573,7 +575,7 @@ float4 SNH(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 		sc += diff;
 	}
 	
-	return s1.rgba/sc;
+	return float4(normalize(s1.rgb), s1.a);
 }
 
 #if SMOOTH_NORMALS > 0 //For the sake of compiler error due to removing the sampler for SMOOTH_NORMALS 0
@@ -593,7 +595,7 @@ float4 SNV(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 		sc += diff;
 	}
 	
-	s1.rgba = s1.rgba/sc;
+	s1.rgba = float4(normalize(s1.rgb), s1.a);
 	s1.rgb = blend_normals( Bump(texcoord, BUMP), s1.rgb);
 	return float4(s1.rgb, LDepth(texcoord));
 }
@@ -684,7 +686,7 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		float3 raydir;
 		float4 reflection;
 		float a;
-		if(!GI)raydir = lerp(raydirG, raydirR, pow(max(1-(0.5*cos(raybias*PI)+0.5), 0.0), rsqrt(InvTonemapper((GI)?1:Roughness))));
+		if(!GI)raydir = lerp(raydirG, raydirR, pow(1-(0.5*cos(raybias*PI)+0.5), rsqrt(InvTonemapper((GI)?1:Roughness))));
 		else raydir = raydirR;
 		
 		DoRayMarch(IGNoise, position, raydir, reflection.rgb, HitDistance, a);
@@ -751,9 +753,6 @@ void TemporalFilter(float4 vpos : SV_Position, float2 texcoord : TexCoord, out f
 	outbound.rg = (outbound.r > 1 || outbound.g < 0);
 	
 	mask = min(1-outbound.r, mask);
-
-	Current = tex2Dcatrom(sSSSR_ReflectionTex, texcoord, BUFFER_SCREEN_SIZE*RESOLUTION_SCALE_).rgba;
-	History = tex2D(sSSSR_FilterTex1, PastUV);
 	
 	HistoryLength.r *= mask; //sets the history length to 0 for discarded samples
 	HistoryLength.r = min(HistoryLength.r, MAX_Frames); //Limits the linear accumulation to MAX_Frames, The rest will be accumulated exponentialy with the speed = (1-1/Max_Frames)
@@ -776,6 +775,10 @@ void TemporalFilter(float4 vpos : SV_Position, float2 texcoord : TexCoord, out f
 				 * (1 - sqrt(Roughness))                  //More effective on lower roughnesses
 				 * MBSDMultiplier), 					  //Motion Based Deghosting Multiplier
 				   MBSDThreshold);						//Motion Based Deghosting Max Threshold
+	
+	float lod = max((4 - HistoryLength.r), 0);
+	Current = tex2Dcatrom(sSSSR_ReflectionTex, texcoord, BUFFER_SCREEN_SIZE*RESOLUTION_SCALE_, lod).rgba;
+	History = tex2D(sSSSR_FilterTex1, PastUV);
 	
 	HistoryLength.r++;
 	FinalColor = lerp(History, Current, 1 / HistoryLength.r);
@@ -811,7 +814,7 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 	float2 p = pix;
 	float SpecRadius = 1;
 	if(!GI)SpecRadius = GetSpecularSpatialDenoiserRadius(texcoord);
-	p*=SpecRadius;
+	p *= SpecRadius;
 	float3 normal; float depth;
 	GetNormalAndDepthFromGeometry(texcoord, normal, depth);
 	
@@ -824,7 +827,7 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 	float STNormal = 1 - saturate(ST * 100);
 	float STDepth = ST/2.5;
 	
-	const float SizeList[3] = {2,4,8};
+	const float SizeList[3] = {4,8,16};
 	const float SizeListSmall[3] = {0,1,2};
 	
 	p *= round(lerp(SizeList[size], SizeListSmall[size], min(HL/64, 1)));
@@ -839,8 +842,13 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 		float2(-pr.x, pr.y),float2(0,-p.y),float2( pr.x, pr.y)};
 		
 	float4 color = tex2Dlod(Tex, float4(texcoord, 0, 0));
-	float4 sColor = color;
-	int samples = 1;
+	float4 ColorSum = color, sColor = 0;
+	float wsum = 1, w = 0;
+	
+	float4 Min = 1e+7, Max = 0;
+	float clum = Tonemapper(lum(color.rgb)).x;
+	float slum;
+	float lumDiffT = rcp(max(saturate(16-HL), 0.07));
 	float3 snormal; float sdepth; bool determinator;
 
 	[loop]for(int i = 0; i <= 7; i++)
@@ -852,12 +860,20 @@ float4 AdaptiveBox(in int size, in sampler Tex, in float2 texcoord, in float che
 		determinator =     
 			  (dot(snormal, normal)) > STNormal
 			&& abs(sdepth - depth) * facing < STDepth;
-
-			sColor += tex2Dlod(Tex, float4(offset[i],0,0))*determinator;
-			samples +=determinator;
+			
+		sColor = tex2Dlod(Tex, float4(offset[i],0,0));
+		slum = Tonemapper(lum(sColor.rgb)).x;
+		w = exp(-abs(slum - clum) * lumDiffT);
+		w=1;
+		ColorSum += (sColor * determinator * w);
+		wsum += (determinator * w);
+		
+		Min = min(sColor, Min);
+		Max = max(sColor, Max);
 	}
-	sColor /= samples;
-	return sColor;
+	ColorSum /= wsum;
+	ColorSum = clamp(ColorSum, Min, Max);
+	return ColorSum;
 }
 
 void SpatialFilter0( in float4 vpos : SV_Position, in float2 texcoord : TexCoord, out float4 FinalColor : SV_Target0)
@@ -914,7 +930,7 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	float2 MotionVectors = GetMotionVectorsDeflickered(texcoord);
 
 	float4 current = tex2D(sSSSR_FilterTex1, texcoord);
-	float4 history = tex2Dcatrom(sSSSR_FilterTex2, texcoord +  MotionVectors, BUFFER_SCREEN_SIZE);
+	float4 history = tex2Dcatrom(sSSSR_FilterTex2, texcoord +  MotionVectors, BUFFER_SCREEN_SIZE, 0);
 	//history.rgb = Tonemapper(history.rgb);
 	history.rgb = toYCC(history.rgb);
 	float4 CurrToYCC = float4(toYCC(current.rgb), current.a);
@@ -1029,7 +1045,7 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 			float Div = max(1, max(AO_Radius_Reflection, AO_Radius_Background));
 			AO.g = saturate(GI.a * Div / AO_Radius_Reflection);
 			AO.r = saturate(GI.a * Div / AO_Radius_Background);
-			AO   = saturate(pow(max(AO, 0.0), AO_Intensity));
+			AO   = saturate(pow(AO, AO_Intensity));
 			
 			//modify saturation and exposure
 			GI.rgb *= SatExp.g;

@@ -1,22 +1,12 @@
-//#ifndef NGL_HYBRID_MODE
- #define NGL_HYBRID_MODE 0
-//#endif
-//#ifndef HQ_DENOISER
- #define HQ_DENOISER 0
-//#endif
-
-//#if HQ_DENOISER
-// #include "NGLighting-Shader - SVGF.fxh"
-//#else
- #include "NGLighting-Shader.fxh"
-//#endif
+#define NGL_HYBRID_MODE 0
+#include "NGLighting-Shader.fxh"
 
 technique NGLighting<
 	ui_label = "NiceGuy Lighting (GI/Reflection)";
-	ui_tooltip = "            NiceGuy Lighting 0.9.3 beta            \n"
-				 "                  ||By Ehsan2077||                 \n"
-				 "|Optional: Use with qUINT_MotionVectors above this technique in the load order at quarter detail.|\n"
-				 "|And    don't   forget    to   read   the   hints.|";
+	ui_tooltip = "||           NiceGuy Lighting ||Version 1.0.0              ||\n"
+				 "||                       By NiceGuy                        ||\n"
+				 "||A free and  lightweight  ray traced GI shader for ReShade||\n"
+				 "IMPORTANT NOTICE: Read the Hints before modifying the shader!";
 >
 {
 	pass
@@ -48,43 +38,13 @@ technique NGLighting<
 		RenderTarget0 = SSSR_LowResNormTex;
 		RenderTarget1 = SSSR_LowResDepthTex;
 	}
-#endif //RESOLUTION_SCALE
+#endif //DX9 compatibility
 	pass
 	{
 		VertexShader  = PostProcessVS;
 		PixelShader   = RayMarch;
 		RenderTarget0 = SSSR_ReflectionTex;
 	}
-#if HQ_DENOISER
-	pass
-	{
-		VertexShader  = PostProcessVS;
-		PixelShader   = TemporalFilter;
-		RenderTarget0 = SSSR_FilterTex0;
-		RenderTarget1 = SSSR_Moments_HL0;
-	}
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = GetVariance;
-		RenderTarget0 = SSSR_VarianceTex0;
-		RenderTarget1 = SSSR_Moments_HL1;
-		RenderTarget2 = SSSR_FilterTex1;
-	}
-	pass{VertexShader = PostProcessVS;PixelShader = Filter1;RenderTarget0 = SSSR_FilterTex4; RenderTarget1 = SSSR_VarianceTex1;}//specified for temporal accumulation history
-	pass{VertexShader = PostProcessVS;PixelShader = Filter2;RenderTarget0 = SSSR_FilterTex0; RenderTarget1 = SSSR_VarianceTex0;}
-	pass{VertexShader = PostProcessVS;PixelShader = Filter3;RenderTarget0 = SSSR_FilterTex1; RenderTarget1 = SSSR_VarianceTex1;}
-	pass{VertexShader = PostProcessVS;PixelShader = Filter4;RenderTarget0 = SSSR_FilterTex0; RenderTarget1 = SSSR_VarianceTex0;}
-	pass
-	{
-		VertexShader  = PostProcessVS;
-		PixelShader   = Filter5;
-		RenderTarget0 = SSSR_FilterTex1;
-		RenderTarget1 = SSSR_PNormalTex;
-		RenderTarget2 = SSSR_POGColTex;
-		RenderTarget3 = SSSR_FilterTex2;
-	}
-#else //Default denoiser
 	pass
 	{
 		VertexShader  = PostProcessVS;
@@ -92,29 +52,14 @@ technique NGLighting<
 		RenderTarget0 = SSSR_FilterTex0;
 		RenderTarget1 = SSSR_HLTex0;
 	}
-	pass
-	{
-		VertexShader  = PostProcessVS;
-		PixelShader   = SpatialFilter0;
-		RenderTarget0 = SSSR_FilterTex1;
-	}
-	pass
-	{
-		VertexShader  = PostProcessVS;
-		PixelShader   = SpatialFilter1;
-		RenderTarget0 = SSSR_FilterTex0;
-	}
-	pass
-	{
-		VertexShader  = PostProcessVS;
-		PixelShader   = SpatialFilter2;
-		RenderTarget0 = SSSR_FilterTex1;
+	pass{VertexShader = PostProcessVS; PixelShader = SpatialFilter0; RenderTarget0 = SSSR_FilterTex1;}
+	pass{VertexShader = PostProcessVS; PixelShader = SpatialFilter1; RenderTarget0 = SSSR_FilterTex0;}
+	pass{VertexShader = PostProcessVS; PixelShader = SpatialFilter2; RenderTarget0 = SSSR_FilterTex1;
 		RenderTarget1 = SSSR_PNormalTex;
 		RenderTarget2 = SSSR_POGColTex;
 		RenderTarget3 = SSSR_HLTex1;
 		RenderTarget4 = SSSR_FilterTex2;
 	}
-#endif
 	pass
 	{
 		VertexShader  = PostProcessVS;
