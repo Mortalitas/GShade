@@ -92,7 +92,7 @@ uniform float uicount <
 	texture DRD_TexBackBuffer2 { Width = BUFFER_WIDTH / 8; Height = BUFFER_HEIGHT / 8; Format = RGBA16f; };
 	sampler sDRD_TexBackBuffer2{ Texture = DRD_TexBackBuffer2; };
 	
-    texture DRD_BokehTex <source = "bokeh.jpg";> { Width = 683; Height = 1024; Format = RGBA8; MipLevels = 8; };
+    texture DRD_BokehTex <source = "NGbokeh.jpg";> { Width = 683; Height = 1024; Format = RGBA8; MipLevels = 8; };
     sampler sDRD_BokehTex {Texture = DRD_BokehTex; };
 
 ///////////////Textures-Samplers///////////
