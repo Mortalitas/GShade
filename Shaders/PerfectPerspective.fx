@@ -1,21 +1,21 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.8.6)
+/* Perfect Perspective PS (version 5.8.7)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
 
 License:
-This work is licensed under the Creative Commons Attribution-NonCommercial-
-NoDerivs 3.0 Unported License + additional permissions. To view a copy of this
-license, visit http://creativecommons.org/licenses/by-nc-nd/3.0/
+This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
+Unported License + additional permissions. To view a copy of this license, visit
+http://creativecommons.org/licenses/by-sa/3.0/
 
 Additional permissions under Creative Commons Plus protocol (CC+):
 
 § 1. The copyright owner further downgrades the licensing terms to the CC-BY 3.0
-variant of the license, waiving the NonCommercial-NoDerivs terms, for the
-purpose of journalistic publications talking about this work, and/or for the use
-in gameplay videos/images specifically published by common gamers.
+variant of the license, waiving the ShareAlike terms, for the purpose of
+journalistic publications talking about this work, and/or for the use in
+gameplay videos/images specifically published by common gamers.
 Intents §: To facilitate the practical use of the shader and specifically its
            derivative images/videos by the journalists of the video-game
            industry, professional and amateur and by common gamers. At the same
@@ -24,13 +24,6 @@ Intents §: To facilitate the practical use of the shader and specifically its
 Outcome §: That it would be practically and legally acceptable for journalists
            and games to promote this work if they want to share their image/
            video material under their own terms.
-
-§ 2. Additionally, permission is granted for the translation of the front-end UI
-text within this shader.
-Intents §: To increase accessibility and understanding across different language
-           regions/groups.
-Outcome §: That usability across users from diverse linguistic backgrounds is
-           promoted, allowing them to fully engage with the shader.
 
 Contact:
 For inquiries regarding alternative licensing options, please contact me at:
@@ -1166,7 +1159,7 @@ technique PerfectPerspective
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
 		"\n"
 		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
-		"Licensed under CC BY-NC-ND 3.0 +\n"
+		"Licensed under CC+ BY-SA 3.0\n"
 		"for additional permissions see the source code.";
 >
 {
