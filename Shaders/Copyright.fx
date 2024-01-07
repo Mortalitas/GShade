@@ -75,6 +75,9 @@
 
     Version 1.5 by Marot Satil & uchu suzume
     x Fixed incorrect declaration of arguments in Texture combo.
+
+    Version 1.6 by uchu suzume
+    + Adjusted UI layout, initial values, and label names.
 */
 
 #include "ReShade.fxh"
@@ -247,7 +250,7 @@ uniform float3 ColorOverrideB <
     ui_label = "Color B";
     ui_tooltip = "Color applied to recolor.   ";
     ui_type = "color";
-> = float3(0.0, 0.0, 0.0);
+> = float3(1.0, 1.0, 1.0);
 #endif
 
 
@@ -271,11 +274,23 @@ uniform float cLayer_Blend <
 > = 1.0;
 
 
+uniform float cLayer_Depth <
+    ui_label = "Depth Position";
+    ui_type = "slider";
+    ui_tooltip = "Place the texture behind characters,   \nterrains, etc.";
+    ui_spacing = 2;
+    ui_min = 0.0;
+    ui_max = 1.0;
+    ui_step = 0.001;
+> = 1.0;
+
+
 uniform float Gauss_Blend <
     ui_label = "Blending Amount Gaussian Layer";
     ui_tooltip = "The amount of blending applied to the   \nGaussian Layer.";
+    ui_spacing = 2;
     ui_category = "Gaussian Layer";
-    ui_category_closed = true;
+    ui_category_closed = false;
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 3.0;
@@ -373,7 +388,7 @@ BLENDING_COMBO(
 
 BLENDING_COMBO(
     cLayer_BlendMode_BG,
-    "BG Blending Mode",
+    "BG Blend Mode",
         "Select the blending mode applied to the bg-texture.   \n\
     - note -   \nWhen using this mode, it requires reducing blending\namount of logo texture.   \nThe priority of this mode is to be set to later.   ",
     "BG Blending Mode",
@@ -385,8 +400,7 @@ BLENDING_COMBO(
 uniform float cLayer_Blend_BG <
     ui_label = "BG Blending Amount";
     ui_tooltip = "The amount of blending applied to the bg-texture.   ";
-    ui_category = "BG Blending Mode";
-    ui_category_closed = true;
+    ui_category = "BG Blend Mode";
     ui_type = "slider";
     ui_min = 0.0;
     ui_max = 1.0;
@@ -398,7 +412,7 @@ uniform float4 cLayer_CAb_Color_A <
     ui_label = "CAb Color A";
     ui_tooltip = "A Color appling to Chromatic Aberration layer.   ";
     ui_category = "Chromatic Aberration";
-    ui_category_closed = true;
+    ui_category_closed = false;
     ui_type = "color";
 > = float4(1.0, 0.0, 0.0, 1.0);
 
@@ -453,16 +467,6 @@ uniform int cLayer_BlendMode_CAb <
                ;
 > = 0;
 
-
-uniform float cLayer_Depth <
-    ui_label = "Depth Position";
-    ui_type = "slider";
-    ui_tooltip = "Place the texture behind characters,   \nterrains, etc.";
-    ui_spacing = 2;
-    ui_min = 0.0;
-    ui_max = 1.0;
-    ui_step = 0.001;
-> = 1.0;
 
 uniform float2 MouseCoords < source = "mousepoint"; >;
 uniform bool LeftMouseDown < source = "mousebutton"; keycode = 0; toggle = true; >;
