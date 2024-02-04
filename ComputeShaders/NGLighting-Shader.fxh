@@ -53,7 +53,6 @@
 
 ///////////////Include/////////////////////
 
-#include "ReShadeUI.fxh"
 #include "ReShade.fxh"
 #include "NGLightingUI.fxh"
 
