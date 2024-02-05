@@ -1143,16 +1143,10 @@ texture VBlurTex {
 
 sampler HBlurSampler {
     Texture = HBlurTex;
-	AddressU = BORDER;
-	AddressV = BORDER;
-	AddressW = BORDER;
 };
 
 sampler VBlurSampler {
     Texture = VBlurTex;
-	AddressU = BORDER;
-	AddressV = BORDER;
-	AddressW = BORDER;
 };
 
 
