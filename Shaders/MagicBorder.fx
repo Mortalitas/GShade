@@ -77,24 +77,28 @@ namespace MagicBorder
 	uniform float2 PictureFrameLeftTop <
 		ui_label = "Picture frame left top coord";
 		ui_type = "drag";
+		ui_min = 0.0; ui_max = 1.0;
 		ui_tooltip = "The left top coordinate of the picture frame";
 	> = float2(0.1, 0.1);
 	
 	uniform float2 PictureFrameRightTop <
 		ui_label = "Picture frame right top coord";
 		ui_type = "drag";
+		ui_min = 0.0; ui_max = 1.0;
 		ui_tooltip = "The right top coordinate of the picture frame";
 	> = float2(0.9, 0.1);
 	
 	uniform float2 PictureFrameRightBottom <
 		ui_label = "Picture frame right bottom coord";
 		ui_type = "drag";
+		ui_min = 0.0; ui_max = 1.0;
 		ui_tooltip = "The right bottom coordinate of the picture frame";
 	> = float2(0.9, 0.9);
 	
 	uniform float2 PictureFrameLeftBottom <
 		ui_label = "Picture frame left bottom coord";
 		ui_type = "drag";
+		ui_min = 0.0; ui_max = 1.0;
 		ui_tooltip = "The left bottom coordinate of the picture frame";
 	> = float2(0.1, 0.9);
 	
