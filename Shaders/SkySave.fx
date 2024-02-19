@@ -1,28 +1,28 @@
-// SkySave
-// Author: Marot Satil
-// 
-// This is free and unencumbered software released into the public domain.
-// 
-// Anyone is free to copy, modify, publish, use, compile, sell, or
-// distribute this software, either in source code form or as a compiled
-// binary, for any purpose, commercial or non-commercial, and by any
-// means.
-// 
-// In jurisdictions that recognize copyright laws, the author or authors
-// of this software dedicate any and all copyright interest in the
-// software to the public domain. We make this dedication for the benefit
-// of the public at large and to the detriment of our heirs and
-// successors. We intend this dedication to be an overt act of
-// relinquishment in perpetuity of all present and future rights to this
-// software under copyright law.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-// IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-// OTHER DEALINGS IN THE SOFTWARE.
+// Made by Marot Satil for GShade, a fork of ReShade.
+// You can follow me via @MarotSatil on Twitter, but I don't use it all that much and if you message me directly it's very likely to get flagged as spam.
+// If you have questions about this shader or need to contact me for any other reason, reaching out to me via the username Marot on Discord is likely a better bet.
+//
+// This shader was designed to do exactly what the name implies, save all pixels further than a certain distance away
+// from the camera (SkySave) and then restore them after other techniques have been applied (SkyRestore).
+//
+// Copyright © 2024 Marot Satil
+// This work is free. You can redistribute it and/or modify it under the
+// terms of the Do What The Fuck You Want To Public License, Version 2,
+// as published by Sam Hocevar.
+//
+//            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+//                    Version 2, December 2004
+//
+// Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+//
+// Everyone is permitted to copy and distribute verbatim or modified
+// copies of this license document, and changing it is allowed as long
+// as the name is changed.
+//
+//            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+//   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+//
+//  0. You just DO WHAT THE FUCK YOU WANT TO.
 //
 
 #include "ReShade.fxh"
