@@ -58,7 +58,7 @@ namespace BlueNoise
 	   https://momentsingraphics.de/BlueNoise.html */
 	texture BlueNoiseTex
 	<
-		source = "bluenoise.png";
+		source = "j_bluenoise.png";
 		pooled = true;
 	>
 	{
