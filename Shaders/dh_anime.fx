@@ -1,15 +1,17 @@
 #include "ReShade.fxh"
 
-#if GSHADE_DITHER
-    #include "TriDither.fxh"
-#endif
-
-#define getColor_DHa(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
-#define getBlur_DHa(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
-#define getDepth_DHa(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
-#define diff3t_DHa(v1,v2,t) (abs(v1.x-v2.x)>t || abs(v1.y-v2.y)>t || abs(v1.z-v2.z)>t)
+#define NOISE_SIZE 16
+#define BUFFER_SIZE int2(BUFFER_WIDTH,BUFFER_HEIGHT)
+#define getColor(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
+#define getBlur(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
+#define getDepth(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
+#define diff3t(v1,v2,t) (abs(v1.x-v2.x)>t || abs(v1.y-v2.y)>t || abs(v1.z-v2.z)>t)
 
 namespace DHAnime {
+
+	texture blueNoiseTex < source ="dh_bluenoise.png" ; > { Width = NOISE_SIZE; Height = NOISE_SIZE; MipLevels = 1; Format = RGBA8; };
+    sampler blueNoiseSampler { Texture = blueNoiseTex;  AddressU = REPEAT;	AddressV = REPEAT;	AddressW = REPEAT;};
+
 
 //// uniform
 
@@ -56,6 +58,11 @@ namespace DHAnime {
 	    ui_max = 255;
 	    ui_step = 1;
 	> = 16;
+	
+	uniform bool bDithering <
+	    ui_category = "Colors";
+		ui_label = "Dithering";
+	> = false;
 
 //// textures
 
@@ -71,14 +78,16 @@ namespace DHAnime {
 
 	float3 normal(float2 texcoord)
 	{
-		const float3 offset = float3(BUFFER_PIXEL_SIZE.xy, 0.0);
-		const float2 posCenter = texcoord.xy;
-		const float2 posNorth  = posCenter - offset.zy;
-		const float2 posEast   = posCenter + offset.xz;
-
-		const float3 vertCenter = float3(posCenter - 0.5, 1) * getDepth_DHa(posCenter);
-
-		return normalize(cross(vertCenter - float3(posNorth - 0.5,  1) * getDepth_DHa(posNorth), vertCenter - float3(posEast - 0.5,   1) * getDepth_DHa(posEast)));
+		float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+		float2 posCenter = texcoord.xy;
+		float2 posNorth  = posCenter - offset.zy;
+		float2 posEast   = posCenter + offset.xz;
+	
+		float3 vertCenter = float3(posCenter - 0.5, 1) * getDepth(posCenter);
+		float3 vertNorth  = float3(posNorth - 0.5,  1) * getDepth(posNorth);
+		float3 vertEast   = float3(posEast - 0.5,   1) * getDepth(posEast);
+	
+		return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast));
 	}
 
 	
@@ -98,15 +107,18 @@ namespace DHAnime {
 	      Delta.rgb -= Delta.brg;
 	      Delta.rgb += float3(2,4,6);
 	      Delta.brg = step(V, RGB) * Delta.brg;
-	      return frac(max(Delta.r, max(Delta.g, Delta.b)) / 6);
+	      float H;
+	      H = max(Delta.r, max(Delta.g, Delta.b));
+	      return frac(H / 6);
 	}
 
 	float3 RGBtoHSL(in float3 RGB) {
 	    float3 HSL = 0;
-	    const float U = -min(RGB.r, min(RGB.g, RGB.b));
-	    const float V = max(RGB.r, max(RGB.g, RGB.b));
+	    float U, V;
+	    U = -min(RGB.r, min(RGB.g, RGB.b));
+	    V = max(RGB.r, max(RGB.g, RGB.b));
 	    HSL.z = ((V - U) * 0.5);
-	    const float C = V + U;
+	    float C = V + U;
 	    if (C != 0)
 	    {
 	    	HSL.x = RGBCVtoHUE(RGB, C, V);
@@ -114,39 +126,48 @@ namespace DHAnime {
 	    }
 	    return HSL;
 	}
-
+	  
 	float3 HUEtoRGB(in float H) 
 	{
-	    return saturate(float3(abs(H * 6 - 3) - 1, 2 - abs(H * 6 - 2), 2 - abs(H * 6 - 4)));
+	    float R = abs(H * 6 - 3) - 1;
+	    float G = 2 - abs(H * 6 - 2);
+	    float B = 2 - abs(H * 6 - 4);
+	    return saturate(float3(R,G,B));
 	}
-
+	  
 	float3 HSLtoRGB(in float3 HSL)
 	{
-	    return (HUEtoRGB(HSL.x) - 0.5) * ((1 - abs(2 * HSL.z - 1)) * HSL.y) + HSL.z;
+	    float3 RGB = HUEtoRGB(HSL.x);
+	    float C = (1 - abs(2 * HSL.z - 1)) * HSL.y;
+	    return (RGB - 0.5) * C + HSL.z;
 	}
 
 
 //// PS
 
-	void PS_Input(float4 vpos : SV_Position, in float2 coords : TEXCOORD, out float4 outNormal : SV_Target, out float4 outBlur : SV_Target1)
+	void PS_Input(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outNormal : SV_Target, out float4 outBlur : SV_Target1)
 	{
-		saveNormal(normal(coords),outNormal);
-
+		float3 normal = normal(coords);
+		saveNormal(normal,outNormal);
+		
 		if(iSurfaceBlur>0) {
 			float4 sum;
 			int count;
-
+			
+			int maxDistance = iSurfaceBlur*iSurfaceBlur;
+			float depth = getDepth(coords);
+			
 			int2 delta;
 			for(delta.x=-iSurfaceBlur;delta.x<=iSurfaceBlur;delta.x++) {
 				for(delta.y=-iSurfaceBlur;delta.y<=iSurfaceBlur;delta.y++) {
 					int d = dot(delta,delta);
-					if(d<=iSurfaceBlur*iSurfaceBlur) {
-						const float2 searchCoords = coords+BUFFER_PIXEL_SIZE*delta;
-						const float searchDepth = getDepth_DHa(searchCoords);
-						const float dRatio = getDepth_DHa(coords)/searchDepth;
+					if(d<=maxDistance) {
+						float2 searchCoords = coords+ReShade::PixelSize*delta;
+						float searchDepth = getDepth(searchCoords);
+						float dRatio = depth/searchDepth;
 						
 						if(dRatio>=0.95 && dRatio<=1.05) {
-							sum += getColor_DHa(searchCoords);
+							sum += getColor(searchCoords);
 							count++;
 						}
 					}
@@ -154,23 +175,28 @@ namespace DHAnime {
 			}
 			outBlur = sum/count;
 		} else {
-			outBlur = getColor_DHa(coords);
+			outBlur = getColor(coords);
 		}
 	}
 
-	void PS_Manga(float4 vpos : SV_Position, in float2 coords : TEXCOORD, out float4 outPixel : SV_Target)
+	void PS_Manga(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target)
 	{
 		// black line
 		if(iBlackLineThickness>0) {
+			int maxDistance = iBlackLineThickness*iBlackLineThickness;
+			float depth = getDepth(coords);
+			float3 normal = loadNormal(coords);
+			
 			int2 delta;
 			for(delta.x=-iBlackLineThickness;delta.x<=iBlackLineThickness;delta.x++) {
 				for(delta.y=-iBlackLineThickness;delta.y<=iBlackLineThickness;delta.y++) {
-					if(dot(delta,delta)<=iBlackLineThickness*iBlackLineThickness) {
-						const float2 searchCoords = coords+BUFFER_PIXEL_SIZE*delta;
-						const float searchDepth = getDepth_DHa(searchCoords);
-						const float3 searchNormal = loadNormal(searchCoords);
+					int d = dot(delta,delta);
+					if(d<=maxDistance) {
+						float2 searchCoords = coords+ReShade::PixelSize*delta;
+						float searchDepth = getDepth(searchCoords);
+						float3 searchNormal = loadNormal(searchCoords);
 
-						if(getDepth_DHa(coords)/searchDepth<=fBlackLineThreshold && diff3t_DHa(loadNormal(coords),searchNormal,0.1)) {
+						if(depth/searchDepth<=fBlackLineThreshold && diff3t(normal,searchNormal,0.1)) {
 							outPixel = float4(0.0,0.0,0.0,1.0);
 							return;
 						}
@@ -179,23 +205,40 @@ namespace DHAnime {
 			}
 		}
 
-		float3 color = getBlur_DHa(coords).rgb;
+		float3 color = getBlur(coords).rgb;
 		float3 hsl = RGBtoHSL(color);
 		
 		// shading steps
 		float stepSize = 1.0/iShadingSteps;
-		hsl.z = round(hsl.z/stepSize)/iShadingSteps;
+		if(bDithering) {
+			int2 coordsNoise = int2(coords*BUFFER_SIZE)%NOISE_SIZE;
+			float noise = tex2Dfetch(blueNoiseSampler,coordsNoise).r;
+			
+			float exact = (hsl.z/stepSize)/iShadingSteps;
+			float ceiled = ceil(hsl.z/stepSize)/iShadingSteps;
+			float rounded = round(hsl.z/stepSize)/iShadingSteps;
+			float floored = floor(hsl.z/stepSize)/iShadingSteps;
+			
+			float ditherRatio = min(ceiled-exact,exact-floored)/stepSize;
+			float dithered = ceiled-exact<exact-floored 
+				? ceiled
+				: floored;
+				
+			if(noise>0.7) {
+				hsl.z = dithered;
+			} else {
+				hsl.z = exact;
+			}
+		} else {
+			hsl.z = round(hsl.z/stepSize)/iShadingSteps;
+		}
 
 		// saturation
 		hsl.y = clamp(hsl.y*fSaturation,0,1);
 
 		color = HSLtoRGB(hsl);
 
-#if GSHADE_DITHER
-		outPixel = float4(color.rgb + TriDither(color.rgb, coords, BUFFER_COLOR_BIT_DEPTH),1.0);
-#else
-		outPixel = float4(color,1.0);
-#endif
+		outPixel = float4(color,1.0);	
 	}
 
 //// Techniques
