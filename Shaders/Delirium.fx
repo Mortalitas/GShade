@@ -18,7 +18,7 @@ ui_tooltip = "Delirium Intensity.";
 > = 1;
 
 
-#include "Reshade.fxh"
+#include "ReShade.fxh"
 #ifndef M_PI
 #define M_PI 3.1415927
 #endif
