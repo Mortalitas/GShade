@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.8.9)
+/* Perfect Perspective PS (version 5.8.10)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -1110,7 +1110,7 @@ float3 PerfectPerspectivePS(
 
 technique PerfectPerspective
 <
-	ui_label = "Perfect Perspective (fisheye, anamorphic, aximorphic)";
+	ui_label = "Perfect Perspective (fisheye, bodycam, anamorphic, aximorphic)";
 	ui_tooltip =
 		"Adjust perspective for distortion-free picture:\n"
 		"\n"
@@ -1158,7 +1158,7 @@ technique PerfectPerspective
 		"	arXiv:2010.04077 [cs.GR] (2020)\n"
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
 		"\n"
-		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
+		"This effect © 2018-2024 Jakub Maksymilian Fober\n"
 		"Licensed under CC+ BY-SA 3.0\n"
 		"for additional permissions see the source code.";
 >
