@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.8.10)
+/* Perfect Perspective PS (version 5.8.11)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -504,8 +504,8 @@ float glength(uint G, float2 pos)
 	// Sharp corner
 	if (G==0u) return max(abs(pos.x), abs(pos.y)); // g0
 	// Higher-power length function
-	pos = pow(abs(pos), ++G); // power of G+1
-	return pow(pos.x+pos.y, rcp(G)); // power G+1 root
+	pos = exp(log(abs(pos))*(++G)); // to the power of G+1
+	return exp(log(pos.x+pos.y)*rcp(G)); // to the power of G+1 root
 }
 
 /* Linear pixel step function for anti-aliasing by Jakub Max Fober.
