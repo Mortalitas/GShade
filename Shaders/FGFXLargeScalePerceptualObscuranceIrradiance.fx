@@ -3,6 +3,7 @@
 // FGFX::LSPOIrr - Large Scale Perceptual Obscurance and Irradiance
 // Author  : Alex Tuduran | alex.tuduran@gmail.com | github.com/AlexTuduran
 // Version : 0.7 [ReShade 3.0]
+// License : MIT
 
 // -------------------------------------------------------------------------- //
 // preprocessor definitions
