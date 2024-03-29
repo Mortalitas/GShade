@@ -16,6 +16,10 @@ Fitted modified ACES Tonemapping curve:
 	https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 Bandwidth Efficient Graphics (Dual Kawase Blur):
 	https://community.arm.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-20-66/siggraph2015_2D00_mmg_2D00_marius_2D00_notes.pdf
+Neighborhood Clamping:
+	https://www.elopezr.com/temporal-aa-and-the-quest-for-the-holy-trail/	
+TAA (Used for denoising)
+	https://de45xmedrsdbp.cloudfront.net/Resources/files/TemporalAA_small-59732822.pdf
 Lord of Lunacy - https://github.com/LordOfLunacy
 BlueSkyDefender - https://blueskydefender.github.io/AstrayFX/
 */
@@ -105,21 +109,7 @@ uniform float INTENSITY <
 	ui_label = "GI Intensity";
 	ui_tooltip = "Intensity of the effect";
 	ui_category = "Display";
-> = 0.3;
-
-uniform float BLUR_OFFSET <
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 5.0;
-	ui_label = "Denoiser Strength";
-	ui_tooltip = "Uses a low cost blur to denoise at the cost of fine details";
-	ui_category = "Display";
-> = 2.5;
-
-uniform bool DISABLE_DENOISER <
-	ui_label = "Disable Denoising";
-	ui_category = "Display";
-> = 0;
+> = 0.35;
 
 
 uniform int TONEMAPPER <
@@ -133,11 +123,11 @@ uniform int TONEMAPPER <
 uniform float AMBIENT_NEG <
 	ui_type = "slider";
 	ui_min = 0.0;
-	ui_max = 0.3;
+	ui_max = 1.0;
 	ui_label = "Ambient Reduction";
 	ui_tooltip = "Removes ambient light before adding GI to the image";
 	ui_category = "Display";
-> = 0.05;
+> = 0.3;
 
 uniform float DEPTH_MASK <
 	ui_type = "slider";
@@ -147,6 +137,14 @@ uniform float DEPTH_MASK <
 	ui_tooltip = "Depth dropoff to allow compatibility with in game fog";
 	ui_category = "Display";
 > = 0.0;	
+
+uniform int SAMPLE_COUNT <
+	ui_type = "combo";
+	ui_items = "High - 8 samples per mip\0Medium - 6 samples per mip\0Low - 4 samples per mip\0Ultra - 16 samples per mip\0";
+	ui_label = "Sample Quality";
+	ui_tooltip = "Higher settings reduce noise but are slower to run";
+	ui_category = "Sampling";
+> = 1;
 
 uniform bool SHADOW <
 	ui_label = "Shadows";
@@ -163,14 +161,23 @@ uniform float SHADOW_BIAS <
 	ui_max = 0.01;
 > = 0.001;
 
-uniform float DIRECT_BIAS <
+uniform float TAA_ERROR <
 	ui_type = "slider";
-	ui_label = "Direct Bias";
-	ui_tooltip = "Modifies light levels for sampling. 0.0 is more realistic, 1.0 may help in scenes with significant color banding and dark sections";
+	ui_label = "Temporal Error";
+	ui_tooltip = "Reduces noise, but may introduce ghosting";
+	ui_category = "Sampling";
+	ui_min = 0.0;
+	ui_max = 0.1;
+> = 0.0;
+
+uniform float COLORMAP_BIAS <
+	ui_type = "slider";
+	ui_label = "Colormap Bias";
+	ui_tooltip = "Attempts to reduce artifacts in dark colors at the cost of lighting quality";
 	ui_category = "Sampling";
 	ui_min = 0.0;
 	ui_max = 1.0;
-> = 0.0;
+> = 0.5;
 
 uniform bool REMOVE_DIRECTL <
 	ui_label = "Brightness Mask";
@@ -201,11 +208,14 @@ ui_type = "slider";
 	ui_label = "Distance Scale";
 	ui_tooltip = "The scale at which brightness calculations are made"; 
 	ui_category = "Sampling";
-> = 2.0;
+> = 2.5;
+
+uniform int FRAME_COUNT <
+	source = "framecount";>;
 
 uniform int DEBUG <
 	ui_type = "combo";
-	ui_items = "None\0GI * Color Map\0GI\0GI Inverse\0Color Map\0";
+	ui_items = "None\0GI * Color Map\0GI\0Shadows\0Lighting\0Color Map\0DeGhosting mask\0";
 	ui_min = 0;
 	ui_max = 4;
 > = 0;
@@ -214,6 +224,11 @@ uniform bool SHOW_MIPS <
 	ui_label = "Display Mipmaps";
 	ui_tooltip = "Just for fun, for anyone wanting to visualize how it works\n"
 		"recommended to turn off denoising and use debug view 2";
+> = 0;
+
+uniform bool STATIC_NOISE <
+	ui_label = "Static Noise";
+	ui_tooltip = "Disables sample jittering";
 > = 0;
 
 uniform int PREPRO_SETTINGS <
@@ -238,17 +253,15 @@ texture RYBlueNoiseTex < source = "ZNbluenoise512.png"; >
 	Height = 512.0;
 	Format = RGBA8;
 };
-texture RYNorTex{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; MipLevels = 1;};
+texture RYNorTex{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; MipLevels = 3;};
 texture RYNorDivTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT / ZNRY_SAMPLE_DIV; Format = RGBA8; MipLevels = ZNRY_MAX_LODS;};
 texture RYBufTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT / ZNRY_SAMPLE_DIV; Format = R16; MipLevels = ZNRY_MAX_LODS;};
 texture RYLumDownTex{Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8;};
 texture RYLumTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT / ZNRY_SAMPLE_DIV; Format = RGBA8; MipLevels = ZNRY_MAX_LODS;};
 texture RYGITex{Width = BUFFER_WIDTH * (ZNRY_RENDER_SCL / 100.0); Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8;};
-texture RYDownTex{Width = BUFFER_WIDTH / (0.5 * ZNRY_SAMPLE_DIV); Height = BUFFER_HEIGHT / (0.5 * ZNRY_SAMPLE_DIV); Format = RGBA8;};
-texture RYDownTex1{Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA8;};
-texture RYUpTex{Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8;};
-texture RYUpTex1{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
-
+texture RY_PreFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
+texture RY_PreDep {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16; MipLevels = 5;};
+texture RY_CurFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8; MipLevels = 5;};
 
 sampler NoiseSam{Texture = RYBlueNoiseTex;};
 sampler NorSam{Texture = RYNorTex;};
@@ -256,11 +269,10 @@ sampler NorDivSam{Texture = RYNorDivTex;};
 sampler DepSam{Texture = RYBufTex;};
 sampler LumDown{Texture = RYLumDownTex;};
 sampler LumSam{Texture = RYLumTex;};
-sampler DownSam{Texture = RYDownTex;};
-sampler DownSam1{Texture = RYDownTex1;};
-sampler UpSam{Texture = RYUpTex;};
-sampler UpSam1{Texture = RYUpTex1;};
 sampler GISam{Texture = RYGITex;};
+sampler PreFrm {Texture = RY_PreFrm;};
+sampler PreDep {Texture = RY_PreDep;};
+sampler CurFrm {Texture = RY_CurFrm;};
 
 //============================================================================================
 //Tonemappers
@@ -323,7 +335,7 @@ float3 eyePos(float2 xy, float z, float2 pw)//takes screen coords (0-1) and dept
 }
 
 
-float4 DAMPGI(float2 xy, float2 offset)
+float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI, A is shadows;
 {
 	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 	float f = RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
@@ -350,14 +362,25 @@ float4 DAMPGI(float2 xy, float2 offset)
 		float2(0.0, 1.0), float2(1.0, 0.0),
 		float2(0.0, -1.0), float2(-1.0, 0.0)};
 	
+	float2 dir3[16] = {
+		float2(0.382, 0.92), float2(0.7071, 0.7071),
+		float2(0.92, 0.382), float2(1.0, 0.0),
+		float2(0.92, -0.382), float2(0.7071, -0.7071),
+		float2(0.382, -0.92), float2(0.0, -1.0),
+		float2(-0.382, -0.92), float2(-0.7071, -0.7071),
+		float2(-0.92, -0.382), float2(-1.0, 0.0),
+		float2(-0.92, 0.382), float2(-0.7071, 0.7071),
+		float2(-0.382, 0.92), float2(0.0, 1.0)};
+			
 	//Variable calculations for adaptive sampling
-	float3 trueC = tex2D(LumSam, xy).rgb;
-	int sampCt = int(floor(offset.r + (trueC.r + trueC.g + trueC.b) / 3.0));
+	int sampCt = SAMPLE_COUNT;
 	int RAD;
 	int DIRL;
-	if(sampCt == 0) {RAD = 8, DIRL = 0;}
-	if(sampCt == 1) {RAD = 6, DIRL = 1;}
-	else{RAD = 4, DIRL = 2;}
+	
+	if(sampCt == 1) {RAD = 6; DIRL = 1;}
+	else if(sampCt == 2) {RAD = 4; DIRL = 2;}
+	else if(sampCt == 3) {RAD = 16; DIRL = 3;}
+	else {RAD = 8; DIRL = 0;}
     
     float trueD = ReShade::GetLinearizedDepth(xy);
     float3 surfN = normalize(2.0 * tex2D(NorSam, xy).rgb - 1.0);
@@ -365,7 +388,6 @@ float4 DAMPGI(float2 xy, float2 offset)
     float d = trueD;
     float3 rp = float3(xy, d);
     float3 l;
-    float cdC;//Counter variable to allow consistent brightness with distance
     float occ;
     
     for(int i = 0; i < RAD; i++){
@@ -377,9 +399,10 @@ float4 DAMPGI(float2 xy, float2 offset)
     	
     	//Array selection for adaptive sampling
     	float2 vec;
-    	if(DIRL == 0) {vec = dir0[i];}
-    	if(DIRL == 1) {vec = dir1[i];}
-    	if(DIRL == 2) {vec = dir2[i];}
+    	if(DIRL == 0) {vec = dir0[i];}//High
+    	if(DIRL == 1) {vec = dir1[i];}//Medium
+    	if(DIRL == 2) {vec = dir2[i];}//Low
+    	if(DIRL == 3) {vec = dir3[i];}//Ultra
     	
  	   for(int ii = 2; ii <= LODS; ii++)
     	{
@@ -411,10 +434,10 @@ float4 DAMPGI(float2 xy, float2 offset)
    		 float3 shvMin = normalize(minD - float3(xy, trueD));
    		 float shd = distance(rp, float3(xy, trueD));
    		 
-   		 if(d <= (trueD + shd * shvMin.z) + SHADOW_BIAS - ((SHADOW_BIAS) * iLOD)) {sh = 1;}
+   		 if(d <= (trueD + shd * shvMin.z) + SHADOW_BIAS) {sh = 1;}
 			
 			float4 colb = tex2Dlod(LumSam, float4(rp.xy, 0, iLOD)).rgba;
-			float3 col = colb.rgb;
+			float3 col = pow(colb.rgb, 2.2);
 			float smb = 1.0;
 			if(BLOCK_SCATTER == 1)
 			{
@@ -429,15 +452,17 @@ float4 DAMPGI(float2 xy, float2 offset)
 			float amb = 0.6 + 0.4 * dot(surfN, normalize(float3(xy, trueD) - rp));
 			
 			col *= ed;
-			l += sh * (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
+			l += (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
+			occ += sh * (col.r + col.g + col.b) / ed;
 			
 			iLOD++;	
     	}}
     
-    l *= (1.0 + pow(RAY_LENGTH, 2.0)) * (6.0 / RAD);
+    l *= (1.0 + pow(RAY_LENGTH, 2.0)) * (8.0 / RAD);
 	l = pow(l / (2.0 * pow(2.0, LODS)), 1.0 / 2.2);
+	occ = saturate(8.0 * occ / (RAD * LODS));
 	//l *= pow(occ / 6.0, 4.0);
-	return float4(l, 1.0);
+	return float4(occ * l, pow(occ, 1.0 / 2.2));
 }
 
 float3 tonemap(float3 input)
@@ -453,30 +478,47 @@ float3 tonemap(float3 input)
 	return pow(input, 1.0 / 2.2);
 }
 
-float3 BlendGI(float3 input, float3 GI, float depth)
+float3 BlendGI(float3 input, float4 GI, float depth)
 {
 	GI *= 1.0 - pow(depth, 1.0 - DEPTH_MASK * 0.5) * DEPTH_MASK;
-	float3 ICol = lerp(normalize(0.000001 + pow(input, 2.2)), input, 0.5 + 0.5 * DIRECT_BIAS) / 0.577;
+	float3 ICol = lerp(normalize(0.000001 + pow(input, 2.2)), input, 0.5 + 0.5 * COLORMAP_BIAS) / 0.577;
 	float ILum = (input.r + input.g + input.b) / 3.0;
 	float GILum = (GI.r + GI.g + GI.b) / 3.0;
 	
 	if(REMOVE_DIRECTL == 0) {ILum = 0.0;}
 	
-	if(DEBUG == 1) {input = (GI- ILum) * ICol - (INTENSITY * AMBIENT_NEG);}
-	else if(DEBUG == 2) {input = GI;}
-	else if(DEBUG == 3) {input = pow(lerp(1.0, GI, abs(0.5 - GILum)), 3.0);}
-	else if(DEBUG == 4) {input = ICol;}
-	else{input += (INTENSITY * (GI - ILum) * ICol) - (INTENSITY * AMBIENT_NEG);}
-	
+	if(DEBUG == 1) {input = (GI.rgb) * ICol;}
+	else if(DEBUG == 2) {input = GI.rgb;}
+	else if(DEBUG == 3) {input = GI.a;}
+	else if(DEBUG == 4) {input = GI.a * pow(lerp(1.0, GI.rgb, GILum), 3.0);}
+	else if(DEBUG == 5) {input = ICol;}
+	else if(DEBUG == 6) {input = GI.rgb;}
+	else{input = lerp(input, GI.a * input, AMBIENT_NEG) + (INTENSITY * (GI.rgb - ILum) * ICol);}
+	//else {input = input * GI.a + GI.rgb;}
 	return input;
 }
-
-
 
 
 float eyeDis(float2 xy, float2 pw)
 {
 	return eyePos(xy, ReShade::GetLinearizedDepth(xy), pw).z;
+}
+
+//Modified neighborhood clamping for temporal denoising
+float4 NbrClamp(float2 xy, float4 col)
+{
+	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+	float4 minCol = 1.0;
+	float4 maxCol = 0.0;
+
+	for(int i = 0; i <= 1; i++) for(int ii = 0; ii <= 1; ii++)
+	{
+		float2 coord = xy + 2.0 * float2(i - 0.5, ii - 0.5) / res;
+		float4 c = tex2Dlod(GISam, float4(coord, 0, 1));
+		minCol = min(minCol, c);
+		maxCol = max(maxCol, c); 		
+	}
+	return clamp(col, minCol - TAA_ERROR, maxCol + TAA_ERROR);
 }
 
 //============================================================================================
@@ -515,12 +557,12 @@ float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 	
 	float p = 2.2;
 	float3 te = acc;
-	te = pow(te, p);
+	//te = pow(te, p);
 	
 	float3 ten = normalize(te);
-	te = -te / (te - 1.4);
+	te = -te / (te - 1.05);
 	float teb = (te.r + te.g + te.b) / 3.0;
-	te = lerp(te, ten / 0.577, DIRECT_BIAS);
+	//te = lerp(te, ten / 0.577, 0.0);
 	return saturate(float4(te, 1.0));
 }
 
@@ -587,8 +629,11 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 float4 RawGI(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float2 bxy = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-	float3 noise = tex2D(NoiseSam, frac(0.5 + texcoord * (bxy / (512 / (ZNRY_RENDER_SCL / 100.0))))).rgb;
+	float2 tempOff = (1-STATIC_NOISE) * 0.2 * float2(sin(0.2 * FRAME_COUNT), cos(0.2 * FRAME_COUNT));
+	float2 offset = frac(0.5 + tempOff + texcoord * (bxy / (512 / (ZNRY_RENDER_SCL / 100.0))));
+	float3 noise = tex2D(NoiseSam, offset).rgb;
 	return float4(DAMPGI(texcoord, 1.0 - 2.0 * noise.xy));
+	
 }
 
 float4 NormalDiv(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
@@ -597,77 +642,35 @@ float4 NormalDiv(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
 	return float4(nor, 1.0);
 }
 
-//Dual Kawase Downsample 1
-float4 DownSample(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
+//Temporal Denoisers
+float4 CurrentFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
-    float2 hp = 0.5 / res;
-    float offset = BLUR_OFFSET;
-
-    float3 acc = tex2D(GISam, xy).rgb * 4.0;
-    acc += tex2D(GISam, xy - hp * offset).rgb;
-    acc += tex2D(GISam, xy + hp * offset).rgb;
-    acc += tex2D(GISam, xy + float2(hp.x, -hp.y) * offset).rgb;
-    acc += tex2D(GISam, xy - float2(hp.x, -hp.y) * offset).rgb;
-
-    return float4(acc / 8.0, 1.0);
+	float4 CF = tex2D(GISam, texcoord);
+	float3 nor = tex2D(NorSam, texcoord).rgb;
+	float CD = ReShade::GetLinearizedDepth(texcoord);//(nor.x + nor.y + nor.z) / 3.0;
+	float4 PF = tex2D(PreFrm, texcoord);
+	float PD = tex2D(PreDep, texcoord).r;
+	float DeGhostMask = 0.95 * saturate(100.0 * distance(CD, PD));
+	if(DEBUG == 6) {return DeGhostMask;}
+	CF = lerp(PF.rgba, CF, 0.05 + DeGhostMask);
+	//CF.a = NbrClamp(texcoord, CF.a).r;
+	CF = NbrClamp(texcoord, CF);
+	return float4(CF);//DeGhostMask;
 }
 
-//Dual Kawase Downsample 2
-float4 DownSample1(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
+float PreviousDepth(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
-	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
-    float2 hp = 0.5 / res;
-    float offset = BLUR_OFFSET;
+	float3 nor = tex2D(NorSam, texcoord).rgb;
+	return ReShade::GetLinearizedDepth(texcoord);//(nor.x + nor.y + nor.z) / 3.0;
+}
 
-    float3 acc = tex2D(DownSam, xy).rgb * 4.0;
-    acc += tex2D(DownSam, xy - hp * offset).rgb;
-    acc += tex2D(DownSam, xy + hp * offset).rgb;
-    acc += tex2D(DownSam, xy + float2(hp.x, -hp.y) * offset).rgb;
-    acc += tex2D(DownSam, xy - float2(hp.x, -hp.y) * offset).rgb;
-
-    return float4(acc / 8.0, 1.0);
+float4 PreviousFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
+{
+	float4 PF = tex2D(CurFrm, texcoord);
+	return float4(PF);
 }
 
 
-//Second denoising pass
-float4 UpSample(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
-{
-	
-	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
-    float2 hp = 0.5 / res;
-    float offset = BLUR_OFFSET;
-	float3 acc = tex2D(DownSam1, xy + float2(-hp.x * 2.0, 0.0) * offset).rgb;
-    
-    acc += tex2D(DownSam1, xy + float2(-hp.x, hp.y) * offset).rgb * 2.0;
-    acc += tex2D(DownSam1, xy + float2(0.0, hp.y * 2.0) * offset).rgb;
-    acc += tex2D(DownSam1, xy + float2(hp.x, hp.y) * offset).rgb * 2.0;
-    acc += tex2D(DownSam1, xy + float2(hp.x * 2.0, 0.0) * offset).rgb;
-    acc += tex2D(DownSam1, xy + float2(hp.x, -hp.y) * offset).rgb * 2.0;
-    acc += tex2D(DownSam1, xy + float2(0.0, -hp.y * 2.0) * offset).rgb;
-    acc += tex2D(DownSam1, xy + float2(-hp.x, -hp.y) * offset).rgb * 2.0;
-
-    return float4(acc / 12.0, 1.0);
-}
-
-float4 UpSample1(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
-{
-	if(DISABLE_DENOISER) {return tex2D(GISam, xy);}
-	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
-    float2 hp = 0.5 / res;
-    float offset = BLUR_OFFSET;
-	float3 acc = tex2D(UpSam, xy + float2(-hp.x * 2.0, 0.0) * offset).rgb;
-    
-    acc += tex2D(UpSam, xy + float2(-hp.x, hp.y) * offset).rgb * 2.0;
-    acc += tex2D(UpSam, xy + float2(0.0, hp.y * 2.0) * offset).rgb;
-    acc += tex2D(UpSam, xy + float2(hp.x, hp.y) * offset).rgb * 2.0;
-    acc += tex2D(UpSam, xy + float2(hp.x * 2.0, 0.0) * offset).rgb;
-    acc += tex2D(UpSam, xy + float2(hp.x, -hp.y) * offset).rgb * 2.0;
-    acc += tex2D(UpSam, xy + float2(0.0, -hp.y * 2.0) * offset).rgb;
-    acc += tex2D(UpSam, xy + float2(-hp.x, -hp.y) * offset).rgb * 2.0;
-
-    return float4(acc / 12.0, 1.0);
-}
 
 //============================================================================================
 //Main
@@ -678,13 +681,11 @@ float4 UpSample1(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 float3 DAMPRT(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	float3 GI = tex2Dlod(UpSam1, float4(texcoord, 0, 0)).rgb;
+	float4 GI = tex2Dlod(CurFrm, float4(texcoord, 0, 1));
 	float depth = ReShade::GetLinearizedDepth(texcoord);
-	
 	
 	input = BlendGI(input, GI, depth);
 	input = tonemap(input);
-	
 	
 	return input;
 }
@@ -734,30 +735,24 @@ technique ZN_DAMPRT <
 	pass
 	{
 		VertexShader = PostProcessVS;
-		PixelShader = DownSample;
-		RenderTarget = RYDownTex;
-	}
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = DownSample1;
-		RenderTarget = RYDownTex1;
-	}
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = UpSample;
-		RenderTarget = RYUpTex;
-	}
-	pass
-	{
-		VertexShader = PostProcessVS;
-		PixelShader = UpSample1;
-		RenderTarget = RYUpTex1;
+		PixelShader = CurrentFrame;
+		RenderTarget = RY_CurFrm;
 	}
 	pass
 	{
 		VertexShader = PostProcessVS;
 		PixelShader = DAMPRT;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = PreviousFrame;
+		RenderTarget = RY_PreFrm;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = PreviousDepth;
+		RenderTarget = RY_PreDep;
 	}
 }
