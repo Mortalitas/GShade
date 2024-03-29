@@ -47,7 +47,7 @@ BlueSkyDefender - https://blueskydefender.github.io/AstrayFX/
 
 #ifndef ZNRY_MAX_LODS
 //============================================================================================
-	#define ZNRY_MAX_LODS 6 //How many Lods are checked during sampling, moderate impact
+	#define ZNRY_MAX_LODS 7 //How many Lods are checked during sampling, moderate impact
 //============================================================================================
 #endif
 
@@ -105,7 +105,7 @@ uniform float INTENSITY <
 	ui_label = "GI Intensity";
 	ui_tooltip = "Intensity of the effect";
 	ui_category = "Display";
-> = 0.15;
+> = 0.3;
 
 uniform float BLUR_OFFSET <
 	ui_type = "slider";
@@ -115,6 +115,11 @@ uniform float BLUR_OFFSET <
 	ui_tooltip = "Uses a low cost blur to denoise at the cost of fine details";
 	ui_category = "Display";
 > = 2.5;
+
+uniform bool DISABLE_DENOISER <
+	ui_label = "Disable Denoising";
+	ui_category = "Display";
+> = 0;
 
 
 uniform int TONEMAPPER <
@@ -132,7 +137,7 @@ uniform float AMBIENT_NEG <
 	ui_label = "Ambient Reduction";
 	ui_tooltip = "Removes ambient light before adding GI to the image";
 	ui_category = "Display";
-> = 0.15;
+> = 0.05;
 
 uniform float DEPTH_MASK <
 	ui_type = "slider";
@@ -176,7 +181,7 @@ uniform bool REMOVE_DIRECTL <
 uniform bool BLOCK_SCATTER <
 	ui_label = "Block Scattering";
 	//hidden = true;
-	ui_tooltip = "Takes into account extra information about sampled surfaces || Low-Medium Performance Impact";
+	ui_tooltip = "Prevents surface scattering and brightening of already bright areas || Low-Medium Performance Impact";
 	ui_category = "Sampling";
 > = 1;
 
@@ -236,9 +241,10 @@ texture RYBlueNoiseTex < source = "ZNbluenoise512.png"; >
 texture RYNorTex{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; MipLevels = 1;};
 texture RYNorDivTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT / ZNRY_SAMPLE_DIV; Format = RGBA8; MipLevels = ZNRY_MAX_LODS;};
 texture RYBufTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT / ZNRY_SAMPLE_DIV; Format = R16; MipLevels = ZNRY_MAX_LODS;};
+texture RYLumDownTex{Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8;};
 texture RYLumTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT / ZNRY_SAMPLE_DIV; Format = RGBA8; MipLevels = ZNRY_MAX_LODS;};
 texture RYGITex{Width = BUFFER_WIDTH * (ZNRY_RENDER_SCL / 100.0); Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8;};
-texture RYDownTex{Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8;};
+texture RYDownTex{Width = BUFFER_WIDTH / (0.5 * ZNRY_SAMPLE_DIV); Height = BUFFER_HEIGHT / (0.5 * ZNRY_SAMPLE_DIV); Format = RGBA8;};
 texture RYDownTex1{Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA8;};
 texture RYUpTex{Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA8;};
 texture RYUpTex1{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
@@ -248,6 +254,7 @@ sampler NoiseSam{Texture = RYBlueNoiseTex;};
 sampler NorSam{Texture = RYNorTex;};
 sampler NorDivSam{Texture = RYNorDivTex;};
 sampler DepSam{Texture = RYBufTex;};
+sampler LumDown{Texture = RYLumDownTex;};
 sampler LumSam{Texture = RYLumTex;};
 sampler DownSam{Texture = RYDownTex;};
 sampler DownSam1{Texture = RYDownTex1;};
@@ -326,44 +333,56 @@ float4 DAMPGI(float2 xy, float2 offset)
 	
 	
 	int LODS = ZNRY_MAX_LODS;
-	/*
-	float2 dir[8]; //Clockwise from verticle
-    dir[0] = float2(0.0, 1.0);
-    dir[1] = float2(0.7071, 0.7071);
-    dir[2] = float2(1.0, 0.0);
-    dir[3] = float2(0.7071, -0.7071);
-    dir[4] = float2(0.0, -1.0);
-    dir[5] = float2(-0.7071, -0.7071);
-    dir[6] = float2(-1.0, 0.0);
-    dir[7] = float2(-0.7071, 0.7071);
-    */
-    float2 dir[6] = {
-	    float2(0.866, 0.5),
-	    float2(0.866, -0.5),
-	    float2(0.0, -1.0),
-	    float2(-0.86, -0.5),
-	    float2(-0.85, 0.5),
-	    float2(0.0, 1.0)};
+	
+	//Different sample densities for adaptive sampling
+	float2 dir0[8] = {
+		float2(0.0, 1.0), float2(0.7071, 0.7071),
+		float2(1.0, 0.0), float2(0.7071, -0.7071),
+		float2(0.0, -1.0), float2(-0.7071, -0.7071),
+		float2(-1.0, 0.0), float2(-0.7071, 0.7071)};
+    
+    float2 dir1[6] = {
+	    float2(0.866, 0.5), float2(0.866, -0.5),
+	    float2(0.0, -1.0), float2(-0.86, -0.5),
+		float2(-0.85, 0.5), float2(0.0, 1.0)};
+	
+	float2 dir2[4] = {
+		float2(0.0, 1.0), float2(1.0, 0.0),
+		float2(0.0, -1.0), float2(-1.0, 0.0)};
+	
+	//Variable calculations for adaptive sampling
+	float3 trueC = tex2D(LumSam, xy).rgb;
+	int sampCt = int(floor(offset.r + (trueC.r + trueC.g + trueC.b) / 3.0));
+	int RAD;
+	int DIRL;
+	if(sampCt == 0) {RAD = 8, DIRL = 0;}
+	if(sampCt == 1) {RAD = 6, DIRL = 1;}
+	else{RAD = 4, DIRL = 2;}
+    
     float trueD = ReShade::GetLinearizedDepth(xy);
     float3 surfN = normalize(2.0 * tex2D(NorSam, xy).rgb - 1.0);
+    
     float d = trueD;
     float3 rp = float3(xy, d);
     float3 l;
     float cdC;//Counter variable to allow consistent brightness with distance
     float occ;
     
-    for(int i = 0; i < 6; i++){
+    for(int i = 0; i < RAD; i++){
     	
     	d =  trueD;
     	int iLOD = 0;
     	rp = float3(xy, d);
     	float3 minD  = float3(rp.xy, 1.0);
-    	//float3 maxD = 1.0;
     	
+    	//Array selection for adaptive sampling
+    	float2 vec;
+    	if(DIRL == 0) {vec = dir0[i];}
+    	if(DIRL == 1) {vec = dir1[i];}
+    	if(DIRL == 2) {vec = dir2[i];}
     	
  	   for(int ii = 2; ii <= LODS; ii++)
     	{
-    		
     		//Max shadow vector calculation
     		float3 compVec0 = normalize(0.000000001 + rp - float3(xy, trueD));
     		float3 compVec1 = normalize(0.000000001 + minD - float3(xy, trueD));
@@ -371,12 +390,13 @@ float4 DAMPGI(float2 xy, float2 offset)
 			if(compVec0.z <= compVec1.z) {minD = rp;}//d <= trueD && 
     		
 			//Ray vector and depth calculations
-			float2 rd = offset.xy * abs(SHOW_MIPS - 1.0);   
-    		rp.xy += (RAY_LENGTH * (dir[i] + rd) * pow(2, ii)) / res;
+			float2 rd = offset.xy * abs(SHOW_MIPS - 1.0);
+			rd += (-0.5 * surfN.xy);//Biases sampling group
+   
+    		rp.xy += (RAY_LENGTH * (vec + rd) * pow(2, ii)) / res;
     		if(rp.x > 1.0 || rp.y > 1.0) {break;}
     		if(rp.x < 0 || rp.y < 0) {break;}
     		
-    		//float3 rpq = round((rp.xy * res) / pow(2.0, iLOD + 1.0)) / (res / pow(2.0, iLOD + 1.0);
 			d = pow(tex2Dlod(DepSam, float4(rp.xy, 0, iLOD)).r, BUFFER_SCALE);
     		rp.z = d;
     		
@@ -389,40 +409,34 @@ float4 DAMPGI(float2 xy, float2 offset)
    		 float3 eyeXY = eyePos(rp.xy, rp.z, PW);
 			float3 texXY = eyePos(xy, trueD, PW);
    		 float3 shvMin = normalize(minD - float3(xy, trueD));
-   		 //float3 shvMax = normalize(float3(xy, trueD) - maxD);
    		 float shd = distance(rp, float3(xy, trueD));
    		 
-   		 if(d <= (trueD + shd * shvMin.z) + SHADOW_BIAS) {sh = 1;}
-			//if(trueD > (d + shd * shvMax.z) - SHADOW_BIAS) {sh2 = 1;}
-			if(1 == 1)
+   		 if(d <= (trueD + shd * shvMin.z) + SHADOW_BIAS - ((SHADOW_BIAS) * iLOD)) {sh = 1;}
+			
+			float4 colb = tex2Dlod(LumSam, float4(rp.xy, 0, iLOD)).rgba;
+			float3 col = colb.rgb;
+			float smb = 1.0;
+			if(BLOCK_SCATTER == 1)
 			{
-				float4 colb = tex2Dlod(LumSam, float4(rp.xy, 0, iLOD)).rgba;
-				float3 col = colb.rgb;
-				float smb = 1.0;
-				if(BLOCK_SCATTER == 1)
-				{
-					float3 nor = 2.0 * tex2Dlod(NorDivSam, float4(rp.xy, 0, iLOD)).rgb - 1.0;
-					smb = 0.5 + 0.5 * dot(-surfN, nor);
-					smb *= 4.0;
-				}
-				
-				float ed = 1.0 + pow(DISTANCE_SCALE * distance(texXY, 0.0), 2.0) / f;
-				//float pd = 1.0 + 1.0 * distance(rp.xy, xy);
-				float cd = 1.0 + (pow(DISTANCE_SCALE * distance(eyeXY, texXY), 2.0)) / f;
-				float amb = 0.5 + 0.5 * dot(surfN, normalize(float3(xy, trueD) - rp));
-				
-				if(iLOD < 2){occ += (1.0 - amb);}
-				
-				col *= ed;
-				l += sh * (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
-				//cdC += cd / pow(2.0, iLOD);
+				float3 nor = 2.0 * tex2Dlod(NorDivSam, float4(rp.xy, 0, iLOD)).rgb - 1.0;
+				smb = 0.5 + 0.5 * dot(-surfN, nor);
+				smb *= 4.0;
 			}
+				
+			float ed = 1.0 + pow(DISTANCE_SCALE * distance(texXY, 0.0), 2.0) / f;
+			//float pd = 1.0 + 1.0 * distance(rp.xy, xy);
+			float cd = 1.0 + (pow(DISTANCE_SCALE * distance(eyeXY, texXY), 2.0)) / f;
+			float amb = 0.6 + 0.4 * dot(surfN, normalize(float3(xy, trueD) - rp));
+			
+			col *= ed;
+			l += sh * (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
+			
 			iLOD++;	
     	}}
     
-    l *= 1.0 + pow(RAY_LENGTH, 2.0);
+    l *= (1.0 + pow(RAY_LENGTH, 2.0)) * (6.0 / RAD);
 	l = pow(l / (2.0 * pow(2.0, LODS)), 1.0 / 2.2);
-	l *= pow(occ / 6.0, 4.0);
+	//l *= pow(occ / 6.0, 4.0);
 	return float4(l, 1.0);
 }
 
@@ -439,11 +453,10 @@ float3 tonemap(float3 input)
 	return pow(input, 1.0 / 2.2);
 }
 
-
 float3 BlendGI(float3 input, float3 GI, float depth)
 {
 	GI *= 1.0 - pow(depth, 1.0 - DEPTH_MASK * 0.5) * DEPTH_MASK;
-	float3 ICol = lerp(normalize(0.001 + pow(input, 2.2)) / 0.577, input, DIRECT_BIAS);
+	float3 ICol = lerp(normalize(0.000001 + pow(input, 2.2)), input, 0.5 + 0.5 * DIRECT_BIAS) / 0.577;
 	float ILum = (input.r + input.g + input.b) / 3.0;
 	float GILum = (GI.r + GI.g + GI.b) / 3.0;
 	
@@ -459,6 +472,8 @@ float3 BlendGI(float3 input, float3 GI, float depth)
 }
 
 
+
+
 float eyeDis(float2 xy, float2 pw)
 {
 	return eyePos(xy, ReShade::GetLinearizedDepth(xy), pw).z;
@@ -468,11 +483,38 @@ float eyeDis(float2 xy, float2 pw)
 //Buffer Definitions
 //============================================================================================
 
-//Saves LightMap and LODS
-float4 LightMap(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
+float4 LightDown(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 {
+	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
+    float2 hp = 0.5 / res;
+    float offset = 3.0;
+
+    float3 acc = tex2D(ReShade::BackBuffer, xy).rgb * 4.0;
+    acc += tex2D(ReShade::BackBuffer, xy - hp * offset).rgb;
+    acc += tex2D(ReShade::BackBuffer, xy + hp * offset).rgb;
+    acc += tex2D(ReShade::BackBuffer, xy + float2(hp.x, -hp.y) * offset).rgb;
+    acc += tex2D(ReShade::BackBuffer, xy - float2(hp.x, -hp.y) * offset).rgb;
+
+    return float4(acc / 8.0, 1.0);
+}
+
+
+//Saves LightMap and LODS
+float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
+{
+	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
+    float2 hp = 0.5 / res;
+    float offset = 3.0;
+
+    float3 acc = tex2D(LumDown, xy).rgb * 4.0;
+    acc += tex2D(LumDown, xy - hp * offset).rgb;
+    acc += tex2D(LumDown, xy + hp * offset).rgb;
+    acc += tex2D(LumDown, xy + float2(hp.x, -hp.y) * offset).rgb;
+    acc += tex2D(LumDown, xy - float2(hp.x, -hp.y) * offset).rgb;
+	acc /= 8.0;
+	
 	float p = 2.2;
-	float3 te = tex2D(ReShade::BackBuffer, texcoord).rgb;
+	float3 te = acc;
 	te = pow(te, p);
 	
 	float3 ten = normalize(te);
@@ -509,7 +551,7 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	{
 		float vx = vc - eyeDis(texcoord + float2(1, 0) / uvd, PW);
 		float vy = vc - eyeDis(texcoord + float2(0, 1) / uvd, PW);
-		output = 0.5 + 0.5 * normalize(float3(vx, vy, vc / FarPlane));
+		output = 0.5 + 0.5 * normalize(float3(vx, -vy, vc / FarPlane));
 	}
 	else
 	{		 
@@ -537,7 +579,7 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 		if(abs(eylC - vc) > abs(eyrC - vc)) {vy = -vyl;}
 		else {vy = vyr;}
 		
-		output = float3(0.5 + 0.5 * normalize(float3(vx, vy, vc / FarPlane)));
+		output = float3(0.5 + 0.5 * normalize(float3(vx, -vy, vc / FarPlane)));
 	}
 	return float4(output, 1.0);
 }
@@ -610,7 +652,7 @@ float4 UpSample(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 
 float4 UpSample1(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 {
-	
+	if(DISABLE_DENOISER) {return tex2D(GISam, xy);}
 	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
     float2 hp = 0.5 / res;
     float offset = BLUR_OFFSET;
@@ -653,6 +695,12 @@ technique ZN_DAMPRT <
 				"The sucessor to SDIL, a slightly more expensive, but much stronger base";
 >
 {
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = LightDown;
+		RenderTarget = RYLumDownTex;
+	}
 	pass
 	{
 		VertexShader = PostProcessVS;
