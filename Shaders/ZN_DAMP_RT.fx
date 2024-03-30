@@ -51,7 +51,7 @@ BlueSkyDefender - https://blueskydefender.github.io/AstrayFX/
 
 #ifndef ZNRY_MAX_LODS
 //============================================================================================
-	#define ZNRY_MAX_LODS 7 //How many Lods are checked during sampling, moderate impact
+	#define ZNRY_MAX_LODS 6 //How many Lods are checked during sampling, moderate impact
 //============================================================================================
 #endif
 
@@ -142,7 +142,7 @@ uniform int SAMPLE_COUNT <
 	ui_type = "combo";
 	ui_items = "High - 8 samples per mip\0Medium - 6 samples per mip\0Low - 4 samples per mip\0Ultra - 16 samples per mip\0";
 	ui_label = "Sample Quality";
-	ui_tooltip = "Higher settings reduce noise but are slower to run";
+	ui_tooltip = "Higher settings reduce noise but are slower to run. Note that increasing the render scale is often more effective.";
 	ui_category = "Sampling";
 > = 1;
 
@@ -164,10 +164,10 @@ uniform float SHADOW_BIAS <
 uniform float TAA_ERROR <
 	ui_type = "slider";
 	ui_label = "Temporal Error";
-	ui_tooltip = "Reduces noise, but may introduce ghosting";
+	ui_tooltip = "Reduces noise, but may introduce ghosting, good for screenshots";
 	ui_category = "Sampling";
 	ui_min = 0.0;
-	ui_max = 0.1;
+	ui_max = 0.3;
 > = 0.0;
 
 uniform float COLORMAP_BIAS <
@@ -208,7 +208,7 @@ ui_type = "slider";
 	ui_label = "Distance Scale";
 	ui_tooltip = "The scale at which brightness calculations are made"; 
 	ui_category = "Sampling";
-> = 2.5;
+> = 3.0;
 
 uniform int FRAME_COUNT <
 	source = "framecount";>;
@@ -223,7 +223,7 @@ uniform int DEBUG <
 uniform bool SHOW_MIPS <
 	ui_label = "Display Mipmaps";
 	ui_tooltip = "Just for fun, for anyone wanting to visualize how it works\n"
-		"recommended to turn off denoising and use debug view 2";
+		"recommended to use either the lighting or GI debug view";
 > = 0;
 
 uniform bool STATIC_NOISE <
@@ -235,7 +235,8 @@ uniform int PREPRO_SETTINGS <
 	ui_type = "radio";
 	ui_text = "Preprocessor Definition Guide:\n"
 			"\n"
-			"ZNRY_MAX_LODS - The maximum LOD sampled, has a direct performance impact, and an exponential impact on ray range. Max is 8\n"
+			"ZNRY_MAX_LODS - The maximum LOD sampled, has a direct performance impact, and an exponential impact on ray range. Max is 9\n"
+			"7 is usually enough for near fullscreen coverage\n"
 			"\n"
 			"ZNRY_RENDER_SCL - The resolution scale for GI, default is automatically selected based on resolution, changes may require reloading ReShade.\n"
 			"\n"
@@ -372,7 +373,7 @@ float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI
 		float2(-0.92, 0.382), float2(-0.7071, 0.7071),
 		float2(-0.382, 0.92), float2(0.0, 1.0)};
 			
-	//Variable calculations for adaptive sampling
+	
 	int sampCt = SAMPLE_COUNT;
 	int RAD;
 	int DIRL;
@@ -426,30 +427,25 @@ float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI
     		
     		//Occlusion calculations
    		 int sh;
-   		 int sh2;
-   		 
-   		 if(SHADOW == 0) {sh = 1; sh2 = 1;}
+   		 if(SHADOW == 0) {sh = 1;}
    		 float3 eyeXY = eyePos(rp.xy, rp.z, PW);
 			float3 texXY = eyePos(xy, trueD, PW);
    		 float3 shvMin = normalize(minD - float3(xy, trueD));
    		 float shd = distance(rp, float3(xy, trueD));
-   		 
    		 if(d <= (trueD + shd * shvMin.z) + SHADOW_BIAS) {sh = 1;}
 			
-			float4 colb = tex2Dlod(LumSam, float4(rp.xy, 0, iLOD)).rgba;
-			float3 col = pow(colb.rgb, 2.2);
+			//Diffuse Lighting calculations
+			float3 col = tex2Dlod(LumSam, float4(rp.xy, 0, iLOD)).rgb;
 			float smb = 1.0;
 			if(BLOCK_SCATTER == 1)
 			{
 				float3 nor = 2.0 * tex2Dlod(NorDivSam, float4(rp.xy, 0, iLOD)).rgb - 1.0;
-				smb = 0.5 + 0.5 * dot(-surfN, nor);
-				smb *= 4.0;
+				smb = 2.01 + 1.99 * dot(-surfN, nor);
 			}
 				
 			float ed = 1.0 + pow(DISTANCE_SCALE * distance(texXY, 0.0), 2.0) / f;
-			//float pd = 1.0 + 1.0 * distance(rp.xy, xy);
 			float cd = 1.0 + (pow(DISTANCE_SCALE * distance(eyeXY, texXY), 2.0)) / f;
-			float amb = 0.6 + 0.4 * dot(surfN, normalize(float3(xy, trueD) - rp));
+			float amb = 0.5 + 0.5 * dot(surfN, normalize(float3(xy, trueD) - rp));
 			
 			col *= ed;
 			l += (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
@@ -461,7 +457,6 @@ float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI
     l *= (1.0 + pow(RAY_LENGTH, 2.0)) * (8.0 / RAD);
 	l = pow(l / (2.0 * pow(2.0, LODS)), 1.0 / 2.2);
 	occ = saturate(8.0 * occ / (RAD * LODS));
-	//l *= pow(occ / 6.0, 4.0);
 	return float4(occ * l, pow(occ, 1.0 / 2.2));
 }
 
@@ -486,7 +481,6 @@ float3 BlendGI(float3 input, float4 GI, float depth)
 	float GILum = (GI.r + GI.g + GI.b) / 3.0;
 	
 	if(REMOVE_DIRECTL == 0) {ILum = 0.0;}
-	
 	if(DEBUG == 1) {input = (GI.rgb) * ICol;}
 	else if(DEBUG == 2) {input = GI.rgb;}
 	else if(DEBUG == 3) {input = GI.a;}
@@ -494,7 +488,7 @@ float3 BlendGI(float3 input, float4 GI, float depth)
 	else if(DEBUG == 5) {input = ICol;}
 	else if(DEBUG == 6) {input = GI.rgb;}
 	else{input = lerp(input, GI.a * input, AMBIENT_NEG) + (INTENSITY * (GI.rgb - ILum) * ICol);}
-	//else {input = input * GI.a + GI.rgb;}
+	
 	return input;
 }
 
@@ -557,7 +551,7 @@ float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 	
 	float p = 2.2;
 	float3 te = acc;
-	//te = pow(te, p);
+	te = pow(te, p);
 	
 	float3 ten = normalize(te);
 	te = -te / (te - 1.05);
@@ -629,7 +623,7 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 float4 RawGI(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float2 bxy = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-	float2 tempOff = (1-STATIC_NOISE) * 0.2 * float2(sin(0.2 * FRAME_COUNT), cos(0.2 * FRAME_COUNT));
+	float2 tempOff = (1-STATIC_NOISE) * 1.0 * float2(sin(0.2 * FRAME_COUNT), cos(0.2 * FRAME_COUNT));
 	float2 offset = frac(0.5 + tempOff + texcoord * (bxy / (512 / (ZNRY_RENDER_SCL / 100.0))));
 	float3 noise = tex2D(NoiseSam, offset).rgb;
 	return float4(DAMPGI(texcoord, 1.0 - 2.0 * noise.xy));
@@ -650,7 +644,7 @@ float4 CurrentFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	float CD = ReShade::GetLinearizedDepth(texcoord);//(nor.x + nor.y + nor.z) / 3.0;
 	float4 PF = tex2D(PreFrm, texcoord);
 	float PD = tex2D(PreDep, texcoord).r;
-	float DeGhostMask = 0.95 * saturate(100.0 * distance(CD, PD));
+	float DeGhostMask = 0.95 * saturate(60.0 * distance(CD, PD));
 	if(DEBUG == 6) {return DeGhostMask;}
 	CF = lerp(PF.rgba, CF, 0.05 + DeGhostMask);
 	//CF.a = NbrClamp(texcoord, CF.a).r;
