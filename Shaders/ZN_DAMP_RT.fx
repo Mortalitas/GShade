@@ -74,7 +74,7 @@ uniform float BUFFER_SCALE <
 	ui_min = 0.5;
 	ui_max = 5.0;
 	ui_label = "Buffer Scale";
-	ui_tooltip = "Adjustst the accuracy of the depth buffer for closer objects";
+	ui_tooltip = "Adjust the accuracy of the depth buffer for closer objects";
 	ui_category = "Depth Buffer Settings";
 	ui_category_closed = true;
 > = 2.0;
@@ -187,7 +187,7 @@ uniform int SAMPLE_COUNT <
 
 uniform bool SHADOW <
 	ui_label = "Shadows";
-	ui_tooltip = "Rejects some samples to cast soft shadows, essentially a pretty nice AO || No Performance Impact";
+	ui_tooltip = "Rejects some samples to cast soft shadows || No Performance Impact";
 	ui_category = "Sampling";
 > = 1;
 
@@ -202,7 +202,7 @@ uniform float SHADOW_BIAS <
 
 uniform float TAA_ERROR <
 	ui_type = "slider";
-	ui_label = "Temporal Error";
+	ui_label = "TAA Error";
 	ui_tooltip = "Reduces noise almost completely, introduces ghosting, good for screenshots";
 	ui_category = "Sampling";
 	ui_min = 0.0;
@@ -219,7 +219,7 @@ uniform bool REMOVE_DIRECTL <
 uniform bool BLOCK_SCATTER <
 	ui_label = "Block Scattering";
 	//hidden = true;
-	ui_tooltip = "Prevents surface scattering and brightening of already bright areas || Low-Medium Performance Impact";
+	ui_tooltip = "Prevents surface scattering and brightening of already bright areas || Medium Performance Impact";
 	ui_category = "Sampling";
 > = 1;
 
@@ -228,18 +228,18 @@ ui_type = "slider";
 	ui_min = 0.5;
 	ui_max = 5.0;
 	ui_label = "Ray Step Length";
-	ui_tooltip = "Changes the length of ray steps per Mip, reduces overall sample quality but increases ray range || Moderate Performance Impact"; 
+	ui_tooltip = "Changes the length of ray steps per Mip, reduces overall sample quality but increases ray range || Low Performance Impact"; 
 	ui_category = "Sampling";
 > = 2.5;
 
 uniform float DISTANCE_SCALE <
 ui_type = "slider";
 	ui_min = 0.01;
-	ui_max = 10.0;
+	ui_max = 20.0;
 	ui_label = "Distance Scale";
 	ui_tooltip = "The scale at which brightness calculations are made"; 
 	ui_category = "Sampling";
-> = 3.0;
+> = 5.0;
 
 uniform int FRAME_COUNT <
 	source = "framecount";>;
@@ -283,7 +283,7 @@ uniform int PREPRO_SETTINGS <
 
 uniform int SHADER_VERSION <
 	ui_type = "radio";
-	ui_text = "\n" "Shader Version - A21 (v0.2.1)";
+	ui_text = "\n" "Shader Version - A22 (v0.2.2)";
 	ui_label = " ";
 > = 0;
 
@@ -306,8 +306,8 @@ texture RYLumTex{Width = BUFFER_WIDTH / ZNRY_SAMPLE_DIV; Height = BUFFER_HEIGHT 
 texture RYGITex{Width = BUFFER_WIDTH * (ZNRY_RENDER_SCL / 100.0); Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8;MipLevels = 3;};
 texture RY_PreFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
 texture RY_PreDep {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16; MipLevels = 5;};
-texture RY_CurFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8; MipLevels = 5;};
-texture RY_DualFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8; MipLevels = 5;};
+texture RY_CurFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Height = BUFFER_HEIGHT; Format = RGBA8; MipLevels = 5;};
+texture RY_DualFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; MipLevels = 5;};
 
 sampler NoiseSam{Texture = RYBlueNoiseTex; MipFilter = Point;};
 sampler NorSam{Texture = RYNorTex;};
@@ -315,7 +315,12 @@ sampler NorDivSam{Texture = RYNorDivTex;};
 sampler DepSam{Texture = RYBufTex;};
 sampler LumDown{Texture = RYLumDownTex;};
 sampler LumSam{Texture = RYLumTex;};
-sampler GISam{Texture = RYGITex;};
+sampler GISam{
+	Texture = RYGITex;
+	MagFilter = POINT;
+	MinFilter = POINT;
+	MipFilter = POINT;
+};
 sampler PreFrm {Texture = RY_PreFrm;};
 sampler PreDep {Texture = RY_PreDep;};
 sampler CurFrm {Texture = RY_CurFrm;};
@@ -509,12 +514,13 @@ float3 tonemap(float3 input)
 {
 	if(TONEMAPPER == 4) {return input;}
 	input = pow(saturate(input), 2.2);
-	input = clamp(-input / (input - 1.6), 0.0, 1.0);
+	input = clamp(-input / (input - 1.1), 0.0, 1.0);
 	if(TONEMAPPER == 0) {input = ZNFilmic(input);}
 	if(TONEMAPPER == 1){input = SONYA7RIII(input);}
 	if(TONEMAPPER == 2){input = ACESFilm(input);}
 	if(TONEMAPPER == 3){input = input / (input + 0.5);}
 	if(TONEMAPPER == 5){input = pow(input, 0.5 * input + 1.0);}
+	input = saturate(input * 1.1);
 	return pow(input, 1.0 / 2.2);
 }
 
@@ -704,11 +710,19 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 //Renders GI to a texture for resolution scaling and blending
 float4 RawGI(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
+	float2 TAA_SAM_DST[8] = {
+		float2(1,-3), float2(-1,3), 
+		float2(5,1), float2(-3,-5),
+		float2(-5,5), float2(-7,-1),
+		float2(3,7), float2(7,-7)};
 	float2 bxy = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-	float2 tempOff = 1.0 * (1-STATIC_NOISE) * float2(sin(FRAME_COUNT), cos(FRAME_COUNT));
-	float2 offset = frac(0.5 + tempOff + texcoord * (bxy / (512 / (ZNRY_RENDER_SCL / 100.0))));
+	float2 MSOff = (100 / ZNRY_RENDER_SCL) * TAA_SAM_DST[FRAME_COUNT % 8] / (16.0 * bxy);
+	
+	float2 tempOff = 10.0 * (1-STATIC_NOISE) * float2(sin(0.01 * FRAME_COUNT), cos(0.01 * FRAME_COUNT));
+	tempOff = round(tempOff * bxy) / bxy;
+	float2 offset = frac(0.4 + tempOff + texcoord * (bxy / (512 / (ZNRY_RENDER_SCL / 100.0))));
 	float3 noise = tex2D(NoiseSam, offset).rgb;
-	return float4(DAMPGI(texcoord, 1.0 - 2.0 * noise.xy));
+	return float4(DAMPGI(MSOff + texcoord, 1.0 - 2.0 * noise.xy));
 	
 }
 
