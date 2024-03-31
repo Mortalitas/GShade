@@ -130,7 +130,7 @@ uniform float AMBIENT_NEG <
 	ui_label = "Ambient Reduction";
 	ui_tooltip = "Removes ambient light before adding GI to the image";
 	ui_category = "Display";
-> = 0.3;
+> = 0.4;
 
 uniform float DEPTH_MASK <
 	ui_type = "slider";
@@ -165,7 +165,7 @@ uniform float3 DETINT_COLOR <
 	ui_label = "Detint Color";
 	ui_tooltip = "Can help remove certain boosted colors from the Colormap";
 	ui_category = "Colors";
-> = float3(0.5, 0.5, 1.0);
+> = float3(0.06, 0.45, 1.0);
 
 uniform float DETINT_LEVEL <
 	ui_type = "slider";
@@ -230,7 +230,7 @@ ui_type = "slider";
 	ui_label = "Ray Step Length";
 	ui_tooltip = "Changes the length of ray steps per Mip, reduces overall sample quality but increases ray range || Moderate Performance Impact"; 
 	ui_category = "Sampling";
-> = 3.0;
+> = 2.5;
 
 uniform float DISTANCE_SCALE <
 ui_type = "slider";
@@ -281,6 +281,12 @@ uniform int PREPRO_SETTINGS <
 			"This has a massive performance impact, with minimal quality drops, not recommended to increase past half resolution";
 > = 1;
 
+uniform int SHADER_VERSION <
+	ui_type = "radio";
+	ui_text = "\n" "Shader Version - A21 (v0.2.1)";
+	ui_label = " ";
+> = 0;
+
 //============================================================================================
 //Textures/Samplers
 //=================================================================================
@@ -303,7 +309,7 @@ texture RY_PreDep {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16; M
 texture RY_CurFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8; MipLevels = 5;};
 texture RY_DualFrm {Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Height = BUFFER_HEIGHT * (ZNRY_RENDER_SCL / 100.0); Format = RGBA8; MipLevels = 5;};
 
-sampler NoiseSam{Texture = RYBlueNoiseTex;};
+sampler NoiseSam{Texture = RYBlueNoiseTex; MipFilter = Point;};
 sampler NorSam{Texture = RYNorTex;};
 sampler NorDivSam{Texture = RYNorDivTex;};
 sampler DepSam{Texture = RYBufTex;};
@@ -454,7 +460,7 @@ float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI
     		
 			//Ray vector and depth calculations
 			float2 rd = offset.xy * abs(SHOW_MIPS - 1.0);
-			rd += (1.0 * surfN.xy);//Biases sampling group
+			rd += (0.5 * surfN.xy);//Biases sampling group
    
     		rp.xy += (RAY_LENGTH * (vec + rd) * pow(2, ii)) / res;
     		if(rp.x > 1.0 || rp.y > 1.0) {break;}
@@ -487,16 +493,16 @@ float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI
 			float amb = 0.5 + 0.5 * dot(surfN, normalize(rp - float3(xy, trueD)));
 			
 			col *= ed;
-			l += (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
+			l += sh * (pow(4.0, iLOD) / (4.0 * cd)) * smb * amb * (col / ed);
 			occ += sh * (col.r + col.g + col.b) / ed;
 			
 			iLOD++;	
     	}}
     
-    l *= (1.0 + pow(RAY_LENGTH, 2.0)) * (8.0 / RAD);
+    l *= (1.0 + pow(RAY_LENGTH, 2.0)) * (6.0 / RAD);
 	l = pow(l / (2.0 * pow(2.0, LODS)), 1.0 / 2.2);
 	occ = saturate(8.0 * occ / (RAD * LODS));
-	return float4(occ * l, pow(occ, 1.0 / 2.2));
+	return float4(l, pow(occ, 1.0 / 2.2));
 }
 
 float3 tonemap(float3 input)
@@ -598,7 +604,7 @@ float4 LightDown(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 {
 	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
     float2 hp = 0.5 / res;
-    float offset = 3.0;
+    float offset = 2.0;
 
     float3 acc = tex2D(ReShade::BackBuffer, xy).rgb * 4.0;
     acc += tex2D(ReShade::BackBuffer, xy - hp * offset).rgb;
@@ -615,10 +621,11 @@ float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 {
 	float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT) / 2.0;
     float2 hp = 0.5 / res;
-    float offset = 3.0;
+    float offset = 2.0;
 
     float3 acc = tex2D(LumDown, xy).rgb * 4.0;
-    acc += tex2D(LumDown, xy - hp * offset).rgb;
+    
+	acc += tex2D(LumDown, xy - hp * offset).rgb;
     acc += tex2D(LumDown, xy + hp * offset).rgb;
     acc += tex2D(LumDown, xy + float2(hp.x, -hp.y) * offset).rgb;
     acc += tex2D(LumDown, xy - float2(hp.x, -hp.y) * offset).rgb;
@@ -629,7 +636,7 @@ float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 	te = pow(te, p);
 	
 	float3 ten = normalize(te);
-	te = -te / (te - 1.05);
+	te = -te / (te - 1.4);
 	float teb = (te.r + te.g + te.b) / 3.0;
 	//te = lerp(te, ten / 0.577, 0.0);
 	return saturate(float4(te, 1.0));
@@ -662,7 +669,7 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	{
 		float vx = vc - eyeDis(texcoord + float2(1, 0) / uvd, PW);
 		float vy = vc - eyeDis(texcoord + float2(0, 1) / uvd, PW);
-		output = 0.5 + 0.5 * normalize(float3(-vx, vy, vc / FarPlane));
+		output = 0.5 + 0.5 * normalize(float3(-vx, -vy, vc / FarPlane));
 	}
 	else
 	{		 
@@ -690,7 +697,7 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 		if(abs(eylC - vc) > abs(eyrC - vc)) {vy = -vyl;}
 		else {vy = vyr;}
 		
-		output = float3(0.5 + 0.5 * normalize(float3(-vx, vy, vc / FarPlane)));
+		output = float3(0.5 + 0.5 * normalize(float3(-vx, -vy, vc / FarPlane)));
 	}
 	return float4(output, 1.0);
 }
@@ -698,7 +705,7 @@ float4 NormalBuffer(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 float4 RawGI(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float2 bxy = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
-	float2 tempOff = (1-STATIC_NOISE) * 1.0 * float2(sin(0.2 * FRAME_COUNT), cos(0.2 * FRAME_COUNT));
+	float2 tempOff = 1.0 * (1-STATIC_NOISE) * float2(sin(FRAME_COUNT), cos(FRAME_COUNT));
 	float2 offset = frac(0.5 + tempOff + texcoord * (bxy / (512 / (ZNRY_RENDER_SCL / 100.0))));
 	float3 noise = tex2D(NoiseSam, offset).rgb;
 	return float4(DAMPGI(texcoord, 1.0 - 2.0 * noise.xy));
@@ -734,9 +741,9 @@ float4 CurrentFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	float CD = ReShade::GetLinearizedDepth(texcoord);//(nor.x + nor.y + nor.z) / 3.0;
 	float4 PF = tex2D(PreFrm, texcoord);
 	float PD = tex2D(PreDep, texcoord).r;
-	float DeGhostMask = 0.95 * saturate(60.0 * distance(CD, PD));
+	float DeGhostMask = 0.9 * saturate(60.0 * distance(CD, PD));
 	if(DEBUG == 6) {return DeGhostMask;}
-	CF = lerp(PF.rgba, CF, 0.05 + DeGhostMask);
+	CF = lerp(PF.rgba, CF, 0.1 + DeGhostMask);
 	//CF.a = NbrClamp(texcoord, CF.a).r;
 	CF = NbrClamp(texcoord, CF, DeGhostMask);
 	return float4(CF);//DeGhostMask;
