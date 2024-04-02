@@ -96,15 +96,15 @@ uniform float HighlightMaxThreshold <
     #include "TriDither.fxh"
 #endif
 
-texture LumaInputTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8; MipLevels = 6; };
-sampler LumaInputSampler { Texture = LumaInputTex; MipLODBias = 6.0f; };
-sampler LumaInputSamplerHQ { Texture = LumaInputTex; };
+texture ACGLumaInputTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8; MipLevels = 6; };
+sampler LumaInputSampler { Texture = ACGLumaInputTex; MipLODBias = 6.0f; };
+sampler LumaInputSamplerHQ { Texture = ACGLumaInputTex; };
 
-texture LumaTex { Width = 1; Height = 1; Format = R8; };
-sampler LumaSampler { Texture = LumaTex; };
+texture ACGLumaTex { Width = 1; Height = 1; Format = R8; };
+sampler LumaSampler { Texture = ACGLumaTex; };
 
-texture LumaTexLF { Width = 1; Height = 1; Format = R8; };
-sampler LumaSamplerLF { Texture = LumaTexLF; };
+texture ACGLumaTexLF { Width = 1; Height = 1; Format = R8; };
+sampler LumaSamplerLF { Texture = ACGLumaTexLF; };
 
 texture texLUTDay < source = fLUT_TextureDay; > { Width = fLUT_TileSizeXY*fLUT_TileAmount; Height = fLUT_TileSizeXY; Format = RGBA8; };
 sampler	SamplerLUTDay	{ Texture = texLUTDay; };
@@ -206,7 +206,7 @@ float3 ApplyLUT(float4 position : SV_Position, float2 texcoord : TexCoord) : SV_
 	const float lerpfact2 = frac(lutcoord2.z);
 
 	lutcoord2.x += (lutcoord2.z-lerpfact2)*texelsize.y;
-	
+
 	const float3 highlightColor = lerp(tex2D(SamplerLUTDay, lutcoord2.xy).xyz, tex2D(SamplerLUTDay, float2(lutcoord2.x+texelsize.y,lutcoord2.y)).xyz,lerpfact2);
 
 	//apply highlights
@@ -241,13 +241,13 @@ technique AdaptiveColorGrading {
 	pass Input {
 		VertexShader = PostProcessVS;
 		PixelShader = LumaInput;
-		RenderTarget = LumaInputTex
+		RenderTarget = ACGLumaInputTex
 	;
 	}
 	pass StoreLuma {
 		VertexShader = PostProcessVS;
 		PixelShader = SampleLuma;
-		RenderTarget = LumaTex;
+		RenderTarget = ACGLumaTex;
 	}
 	pass Apply_LUT {
 		VertexShader = PostProcessVS;
@@ -256,6 +256,6 @@ technique AdaptiveColorGrading {
 	pass StoreLumaLF {
 		VertexShader = PostProcessVS;
 		PixelShader = SampleLumaLF;
-		RenderTarget = LumaTexLF;
+		RenderTarget = ACGLumaTexLF;
 	}
 }
