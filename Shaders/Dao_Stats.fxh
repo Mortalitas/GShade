@@ -1,5 +1,5 @@
 /*******************************************************
-	ReShade Header: Stats
+	ReShade Header: Dao_Stats
 	https://github.com/Daodan317081/reshade-shaders
 *******************************************************/
 

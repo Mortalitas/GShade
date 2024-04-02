@@ -5,9 +5,9 @@
 *******************************************************/
 
 #include "ReShade.fxh"
-#include "Stats.fxh"
-#include "Tools.fxh"
-#include "Canvas.fxh"
+#include "Dao_Stats.fxh"
+#include "Dao_Tools.fxh"
+#include "Dao_Canvas.fxh"
 
 #if GSHADE_DITHER
     #include "TriDither.fxh"

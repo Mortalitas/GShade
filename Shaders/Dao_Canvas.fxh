@@ -1,5 +1,5 @@
 /*******************************************************
-	ReShade Header: Canvas.fxh
+	ReShade Header: Dao_Canvas.fxh
 	https://github.com/Daodan317081/reshade-shaders
 *******************************************************/
 
