@@ -1,3 +1,9 @@
+////////////////////////////////////////////////////////
+// Pirate Depth DOF
+// Author: Heathen
+// Repository: https://github.com/Heathen/Pirate-Shaders
+////////////////////////////////////////////////////////
+
 //===================================================================================================================
 //Preprocess Settings
 #define DEPTH_TEXTURE_QUALITY		0.5	//[>0.0] 1.0 - Screen resolution. Lowering this might ruin the AO precision. Go from 1.0 to AO texture quality.

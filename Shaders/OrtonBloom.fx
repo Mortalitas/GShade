@@ -1,3 +1,9 @@
+////////////////////////////////////////////////////////
+// OrtonBloom
+// Author: moriz1
+// Repository: https://github.com/moriz1/ReShade_Shaders
+////////////////////////////////////////////////////////
+
 #ifndef ORTON_BLOOM_DOWNSCALE_BLUR_RES
 	#define ORTON_BLOOM_DOWNSCALE_BLUR_RES 1	// [0 to 3]	Change to value higher than 0 to improve performance at high resolutions
 												//			Recommended for 4K: 1 or 2. Leave at 0 for lower resolutions
