@@ -30,8 +30,17 @@
 
 //GaussQuality
 //0 = original, 1 = new. New is the same as original but has additional sample points in-between.
-//When using 1, setting N_PASSES to 9 can help smooth wider bloom settings.
-#define gGaussQuality 0
+//When using 1, setting gGaussQuantity to 9 can help smooth wider bloom settings.
+#ifndef gGaussQuality
+    #define gGaussQuality 0
+#endif
+
+//Use a separate uniform for each GaussQuality type to avoid out-of-range compile failures from user input.
+#if (gGaussQuality == 0)
+    #define gGaussQuantity gN_PASSES
+#else
+    #define gGaussQuantity gN_PASSES_NEW
+#endif
 
 uniform int gGaussEffect <
     ui_label = "Gauss Effect";
@@ -81,16 +90,21 @@ uniform int gGaussBloomWarmth <
     ui_items="Neutral\0Warm\0Hazy/Foggy\0";
 > = 0;
 
+//When gGaussQuality = 0, gGaussQuantity must be set to 3, 4, or 5. When using gGaussQuality = 1, gGaussQuantity must be set to 3,4,5,6,7,8, or 9.
+#if (gGaussQuality == 0)
 uniform int gN_PASSES <
     ui_label = "Number of Gaussian Passes";
-    ui_tooltip = "When gGaussQuality = 0, gN_PASSES must be set to 3, 4, or 5.\nWhen using gGaussQuality = 1, gN_PASSES must be set to 3,4,5,6,7,8, or 9.\nStill fine tuning this. Changing the number of passes can affect brightness.";
+    ui_tooltip = "Still fine tuning this. Changing the number of passes can affect brightness.";
     ui_type = "slider";
-#if (gGaussQuality == 0)
     ui_min = 3;
     ui_max = 5;
     ui_step = 1;
 > = 5;
 #else
+uniform int gN_PASSES_NEW <
+    ui_label = "Number of Gaussian Passes";
+    ui_tooltip = "Still fine tuning this. Changing the number of passes can affect brightness.";
+    ui_type = "slider";
     ui_min = 3;
     ui_max = 9;
     ui_step = 1;
@@ -163,7 +177,7 @@ float4 HGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 	#endif
 	
 	float4 color = tex2D(ReShade::BackBuffer, texcoord) * sampleWeights[0];
-	for(int i = 1; i < gN_PASSES; ++i) {
+	for(int i = 1; i < gGaussQuantity; ++i) {
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(sampleOffsets[i]*gBloomHW * PIXEL_SIZE.x, 0.0), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord - float2(sampleOffsets[i]*gBloomHW * PIXEL_SIZE.x, 0.0), 0.0, 0.0)) * sampleWeights[i];
 	}
@@ -181,7 +195,7 @@ float4 VGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 	#endif
 
 	float4 color = tex2D(ReShade::BackBuffer, texcoord) * sampleWeights[0];
-	for(int i = 1; i < gN_PASSES; ++i) {
+	for(int i = 1; i < gGaussQuantity; ++i) {
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(0.0, sampleOffsets[i]*gBloomVW * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord - float2(0.0, sampleOffsets[i]*gBloomVW * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 	}
@@ -199,7 +213,7 @@ float4 SGaussianBlurPS(in float4 pos : SV_Position, in float2 texcoord : TEXCOOR
 	#endif
 
 	float4 color = tex2D(ReShade::BackBuffer, texcoord) * sampleWeights[0];
-	for(int i = 1; i < gN_PASSES; ++i) {
+	for(int i = 1; i < gGaussQuantity; ++i) {
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(sampleOffsets[i]*gBloomSW * PIXEL_SIZE.x, sampleOffsets[i] * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord - float2(sampleOffsets[i]*gBloomSW * PIXEL_SIZE.x, sampleOffsets[i] * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
 		color += tex2Dlod(ReShade::BackBuffer, float4(texcoord + float2(-sampleOffsets[i]*gBloomSW * PIXEL_SIZE.x, sampleOffsets[i] * PIXEL_SIZE.y), 0.0, 0.0)) * sampleWeights[i];
