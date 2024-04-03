@@ -83,12 +83,19 @@ uniform int gGaussBloomWarmth <
 
 uniform int gN_PASSES <
     ui_label = "Number of Gaussian Passes";
-    ui_tooltip = "When gGaussQuality = 0, N_PASSES must be set to 3, 4, or 5.\nWhen using gGaussQuality = 1, N_PASSES must be set to 3,4,5,6,7,8, or 9.\nStill fine tuning this. Changing the number of passes can affect brightness.";
+    ui_tooltip = "When gGaussQuality = 0, gN_PASSES must be set to 3, 4, or 5.\nWhen using gGaussQuality = 1, gN_PASSES must be set to 3,4,5,6,7,8, or 9.\nStill fine tuning this. Changing the number of passes can affect brightness.";
     ui_type = "slider";
+#if (gGaussQuality == 0)
+    ui_min = 3;
+    ui_max = 5;
+    ui_step = 1;
+> = 5;
+#else
     ui_min = 3;
     ui_max = 9;
     ui_step = 1;
 > = 5;
+#endif
 
 uniform float gBloomHW <
     ui_label = "Horizontal Bloom Width";
