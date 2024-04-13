@@ -325,6 +325,7 @@ namespace CinematicDOF
 		ui_tooltip = "Controls if a custom shape has to be used for the highlights.\nCircle means no custom shape.\nAnamorphic distortion only works with Circle";
 		ui_bind = "CINEMATIC_DOF_SHAPES";
 	> = 0;
+#if CINEMATIC_DOF_SHAPES != 0
 	uniform float HighlightShapeRotationAngle <
 		ui_category = "Highlight shape settings";
 		ui_label="Shape rotation";
@@ -341,7 +342,11 @@ namespace CinematicDOF
 		ui_tooltip = "Controls the gamma of the shape.\nNormally this should be 2.20";
 		ui_step = 0.01;
 	> = 2.20;
-	
+#else
+	static const int HighlightShape = false;
+	static const float HighlightShapeRotationAngle = 0.0;
+	static const float HighlightShapeGamma = 0.0;
+#endif
 	
 	// ------------- ADVANCED SETTINGS
 	uniform bool MitigateUndersampling <
