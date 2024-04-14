@@ -343,7 +343,6 @@ namespace CinematicDOF
 		ui_step = 0.01;
 	> = 2.20;
 #else
-	static const int HighlightShape = false;
 	static const float HighlightShapeRotationAngle = 0.0;
 	static const float HighlightShapeGamma = 0.0;
 #endif
