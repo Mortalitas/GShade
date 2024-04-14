@@ -338,13 +338,6 @@ namespace DH_UBER_RT_0181 {
         ui_items = "Render size\0Target size\0";
     > = 1;
     
-    uniform int iRTMaxRaysMode <
-        ui_type = "combo";
-        ui_category = "Common RT";
-        ui_label = "... per pixel of";
-        ui_items = "Render size\0Target size\0";
-    > = 1;
-    
     uniform float fRTMinRayBrightness <
         ui_type = "slider";
         ui_category = "Common RT";
@@ -784,12 +777,6 @@ namespace DH_UBER_RT_0181 {
         if(depth<fWeaponDepth) {
             result.z /= RESHADE_DEPTH_LINEARIZATION_FAR_PLANE;
         }
-        result *= BUFFER_SIZE3;
-        return result;
-    }
-    
-    float3 getWorldPosition(float2 coords,float depth) {
-        float3 result = float3((coords-0.5)*depth,depth);
         result *= BUFFER_SIZE3;
         return result;
     }
@@ -1476,9 +1463,6 @@ namespace DH_UBER_RT_0181 {
         float aoHits = 0;
         int rays = 0;
         
-#if !TEX_NOISE
-        uint seed = getPixelIndex(coords,RENDER_SIZE)+random+framecount;
-#endif
         
 #if !TEX_NOISE
         uint seed = getPixelIndex(subCoords,BUFFER_SIZE)+random+framecount;
