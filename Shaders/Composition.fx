@@ -9,6 +9,12 @@
 #define GOLDEN_RATIO 1.6180339887
 #define INV_GOLDEN_RATIO  1.0 / 1.6180339887
 
+uniform int UIGridType <
+    ui_type = "combo";
+    ui_label = "Grid Type";
+    ui_items = "Center Lines\0Thirds\0Fifths\0Golden Ratio\0Diagonals\0";
+> = 0;
+
 uniform float4 UIGridColor <
 	ui_type = "color";
     ui_label = "Grid Color";
@@ -21,19 +27,14 @@ uniform float UIGridLineWidth <
     ui_steps = 0.01;
 > = 1.0;
 
-uniform int UIGridType <
-    ui_type = "combo";
-    ui_label = "Grid Type";
-    ui_items = "Center Lines\0Thirds\0Fifths\0Golden Ratio\0Diagonals\0";
-> = 0;
-
 struct sctpoint {
     float3 color;
     float2 coord;
     float2 offset;
 };
 
-sctpoint NewPoint(float3 color, float2 offset, float2 coord) {
+sctpoint NewPoint(float3 color, float2 offset, float2 coord)
+{
     sctpoint p;
     p.color = color;
     p.offset = offset;
@@ -41,7 +42,8 @@ sctpoint NewPoint(float3 color, float2 offset, float2 coord) {
     return p;
 }
 
-float3 DrawPoint(float3 texcolor, sctpoint p, float2 texcoord) {
+float3 DrawPoint(float3 texcolor, sctpoint p, float2 texcoord)
+{
     float2 pixelsize = BUFFER_PIXEL_SIZE * p.offset;
     
     if(p.coord.x == -1 || p.coord.y == -1)
@@ -55,7 +57,8 @@ float3 DrawPoint(float3 texcolor, sctpoint p, float2 texcoord) {
     return texcolor;
 }
 
-float3 Composition_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target {
+float3 Composition_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
+{
     const float3 background = tex2D(ReShade::BackBuffer, texcoord).rgb;
     float3 result;
 
