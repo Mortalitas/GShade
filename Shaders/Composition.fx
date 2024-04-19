@@ -6,8 +6,8 @@
 
 #include "ReShade.fxh"
 
-#define GOLDEN_RATIO 1.6180339887
-#define INV_GOLDEN_RATIO  1.0 / 1.6180339887
+#define COMP_GOLDEN_RATIO 1.6180339887
+#define COMP_INV_GOLDEN_RATIO  1.0 / 1.6180339887
 
 uniform int UIGridType <
     ui_type = "combo";
@@ -117,11 +117,11 @@ float3 Composition_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : S
         // Golden Ratio
         case 3:
         {
-            sctpoint lineV1 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(1.0 / GOLDEN_RATIO, texcoord.y));
-            sctpoint lineV2 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(1.0 - 1.0 / GOLDEN_RATIO, texcoord.y));
+            sctpoint lineV1 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(1.0 / COMP_GOLDEN_RATIO, texcoord.y));
+            sctpoint lineV2 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(1.0 - 1.0 / COMP_GOLDEN_RATIO, texcoord.y));
 
-            sctpoint lineH1 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(texcoord.x, 1.0 / GOLDEN_RATIO));
-            sctpoint lineH2 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(texcoord.x, 1.0 - 1.0 / GOLDEN_RATIO));
+            sctpoint lineH1 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(texcoord.x, 1.0 / COMP_GOLDEN_RATIO));
+            sctpoint lineH2 = NewPoint(UIGridColor.rgb, UIGridLineWidth, float2(texcoord.x, 1.0 - 1.0 / COMP_GOLDEN_RATIO));
 
             result = DrawPoint(background, lineV1, texcoord);
             result = DrawPoint(result, lineV2, texcoord);

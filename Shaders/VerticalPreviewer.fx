@@ -24,10 +24,10 @@
 	x Fixed a double include of ReShade.fxh.
 */
 
-#define GOLDEN_RATIO 1.6180339887
-#define INV_GOLDEN_RATIO  1.0 / 1.6180339887
-#define SILVER_RATIO 1.4142135623
-#define INV_SILVER_RATIO  1.0 / 1.4142135623
+#define VP_GOLDEN_RATIO 1.6180339887
+#define VP_INV_GOLDEN_RATIO  1.0 / 1.6180339887
+#define VP_SILVER_RATIO 1.4142135623
+#define VP_INV_SILVER_RATIO  1.0 / 1.4142135623
 
 uniform bool VPreToggle <
     ui_text = "*** The preview by this shader is ignored on the screenshot ***";
@@ -153,8 +153,12 @@ uniform float cLayer_Blend_BGFill <
 
 #include "ReShade.fxh"
 
+#ifndef VP_Texture_Mask
+    #define VP_Texture_Mask "VPMask.png"
+#endif
+
 texture texVoid <
-    source = "UIMask.png";
+    source = VP_Texture_Mask;
 > {
     Width = BUFFER_WIDTH;
     Height = BUFFER_HEIGHT;
@@ -275,11 +279,11 @@ float3 DrawFifths(float3 background, float3 gridColor, float lineWidth, float2 t
 float3 DrawGoldenRatio(float3 background, float3 gridColor, float lineWidth, float2 texCoord) {
     float3 result;
 
-    sctpoint lineV1 = NewPoint(gridColor, lineWidth, float2(1.0 / GOLDEN_RATIO, texCoord.y));
-    sctpoint lineV2 = NewPoint(gridColor, lineWidth, float2(1.0 - 1.0 / GOLDEN_RATIO, texCoord.y));
+    sctpoint lineV1 = NewPoint(gridColor, lineWidth, float2(1.0 / VP_GOLDEN_RATIO, texCoord.y));
+    sctpoint lineV2 = NewPoint(gridColor, lineWidth, float2(1.0 - 1.0 / VP_GOLDEN_RATIO, texCoord.y));
 
-    sctpoint lineH1 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 / GOLDEN_RATIO));
-    sctpoint lineH2 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 - 1.0 / GOLDEN_RATIO));
+    sctpoint lineH1 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 / VP_GOLDEN_RATIO));
+    sctpoint lineH2 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 - 1.0 / VP_GOLDEN_RATIO));
     
     result = DrawPoint(background, lineV1, texCoord);
     result = DrawPoint(result, lineV2, texCoord);
@@ -292,11 +296,11 @@ float3 DrawGoldenRatio(float3 background, float3 gridColor, float lineWidth, flo
 float3 DrawSilverRatio(float3 background, float3 gridColor, float lineWidth, float2 texCoord) {
     float3 result;
 
-    sctpoint lineV1 = NewPoint(gridColor, lineWidth, float2(1.0 / SILVER_RATIO, texCoord.y));
-    sctpoint lineV2 = NewPoint(gridColor, lineWidth, float2(1.0 - 1.0 / SILVER_RATIO, texCoord.y));
+    sctpoint lineV1 = NewPoint(gridColor, lineWidth, float2(1.0 / VP_SILVER_RATIO, texCoord.y));
+    sctpoint lineV2 = NewPoint(gridColor, lineWidth, float2(1.0 - 1.0 / VP_SILVER_RATIO, texCoord.y));
 
-    sctpoint lineH1 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 / SILVER_RATIO));
-    sctpoint lineH2 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 - 1.0 / SILVER_RATIO));
+    sctpoint lineH1 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 / VP_SILVER_RATIO));
+    sctpoint lineH2 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 - 1.0 / VP_SILVER_RATIO));
     
     result = DrawPoint(background, lineV1, texCoord);
     result = DrawPoint(result, lineV2, texCoord);
@@ -352,7 +356,7 @@ float3 DrawGoldenSection(float3 background, float3 gridColor, float lineWidth, f
     sctpoint line1 = NewPoint(gridColor, lineWidth + 0.6, float2(texCoord.x, texCoord.x));
     sctpoint line2 = NewPoint(gridColor, lineWidth + 0.6, float2(texCoord.x,1.0 - texCoord.x));
 
-    float slope = pow(GOLDEN_RATIO, 2);
+    float slope = pow(VP_GOLDEN_RATIO, 2);
 
     sctpoint line3 = NewPoint(gridColor, lineWidth + 2.0, float2(texCoord.x, texCoord.x * slope));
     sctpoint line4 = NewPoint(gridColor, lineWidth + 2.0, float2(texCoord.x, 1.0 - texCoord.x * slope));
@@ -360,11 +364,11 @@ float3 DrawGoldenSection(float3 background, float3 gridColor, float lineWidth, f
     sctpoint line5 = NewPoint(gridColor, lineWidth + 2.0, float2(texCoord.x, (1.0 - texCoord.x) * slope));
     sctpoint line6 = NewPoint(gridColor, lineWidth + 2.0, float2(texCoord.x, texCoord.x * slope + 1.0 - slope));
 
-    sctpoint lineV1 = NewPoint(gridColor, lineWidth, float2(1.0 / GOLDEN_RATIO, texCoord.y));
-    sctpoint lineV2 = NewPoint(gridColor, lineWidth, float2(1.0 - 1.0 / GOLDEN_RATIO, texCoord.y));
+    sctpoint lineV1 = NewPoint(gridColor, lineWidth, float2(1.0 / VP_GOLDEN_RATIO, texCoord.y));
+    sctpoint lineV2 = NewPoint(gridColor, lineWidth, float2(1.0 - 1.0 / VP_GOLDEN_RATIO, texCoord.y));
 
-    sctpoint lineH1 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 / GOLDEN_RATIO));
-    sctpoint lineH2 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 - 1.0 / GOLDEN_RATIO));
+    sctpoint lineH1 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 / VP_GOLDEN_RATIO));
+    sctpoint lineH2 = NewPoint(gridColor, lineWidth, float2(texCoord.x, 1.0 - 1.0 / VP_GOLDEN_RATIO));
 
     result = DrawPoint(background, line1, texCoord);
     result = DrawPoint(result, line2, texCoord);
