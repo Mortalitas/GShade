@@ -741,7 +741,7 @@ ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
 
 technique Vertical_Previewer_S <
 ui_label = "Vertical Previewer and Composition (Visible In Screenshots)";
-ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
+ui_tooltip = "+++ Vertical Previewer and Composition +++\n"
                      "***バーチカル プレビュワー アンド コンポジション***\n\n"
                      "By showing a preview on the screen to protect\n"
                      "your neck while taking vertical screenshots.\n\n"
