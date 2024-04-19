@@ -153,22 +153,10 @@ uniform float cLayer_Blend_BGFill <
 
 #include "ReShade.fxh"
 
-#ifndef VP_Texture_Mask
-    #define VP_Texture_Mask "VPMask.png"
-#endif
-
-texture texVoid <
-    source = VP_Texture_Mask;
-> {
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA8;
-};
 texture texDraw { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 texture texDrawARatio { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 texture texVPreOut { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 
-sampler samplerVoid { Texture = texVoid; };
 sampler samplerDraw { Texture = texDraw; };
 sampler samplerDrawARatio { Texture = texDrawARatio; };
 sampler samplerVPreOut { Texture = texVPreOut; };
@@ -687,7 +675,7 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
     float4 backColor = tex2D(samplerDrawARatio, texCoord);
         switch (cLayerVPre_Angle) {
             default:
-                const float4 Void = tex2D(samplerVoid, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+                const float4 Void = float4(0.0, 0.0, 0.0, 1.0) * all(SumUV + pivot == saturate(SumUV + pivot));
                 const float4 VPreOut = tex2D(samplerDrawARatio, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
                 const float FillValue = cLayer_Blend_BGFill + 0.5;
                 if (cLayer_Blend_BGFill != 0.0f) {
@@ -709,7 +697,7 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
 technique Vertical_Previewer <
 ui_label = "Vertical Previewer and Composition (Hidden In Screenshots)";
 enabled_in_screenshot = false;
-ui_tooltip = "+++　Vertical Previewer and Composition +++\n"
+ui_tooltip = "+++ Vertical Previewer and Composition +++\n"
                      "***バーチカル プレビュワー アンド コンポジション***\n\n"
                      "By showing a preview on the screen to protect\n"
                      "your neck while taking vertical screenshots.\n\n"
