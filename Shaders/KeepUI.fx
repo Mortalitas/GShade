@@ -78,12 +78,6 @@ uniform float fKeepUIOccludeMinAlpha <
 > = 0;
 #endif
 
-// Disable occlusion assistance in unsupported games.
-#if KeepUIType == 0
-	#undef KeepUIOccludeAssist
-	#define KeepUIOccludeAssist 0
-#endif
-
 uniform bool bKeepUIHideInScreenshot <
     ui_category = "Options";
     ui_label = "Hide KeepUI In Screenshots";
