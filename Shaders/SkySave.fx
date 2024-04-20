@@ -27,7 +27,7 @@
 
 #include "ReShade.fxh"
 
-texture SkySave_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f; };
+texture SkySave_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
 sampler SkySave_Sampler { Texture = SkySave_Tex; };
 
 uniform float fSkySaveDepth <
@@ -37,30 +37,23 @@ uniform float fSkySaveDepth <
 	ui_label = "Depth";
 > = 0.999;
 
+uniform bool fSkySaveInvertDepth <
+	ui_label = "Invert Depth";
+> = false;
+
 void PS_SkySave(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
-	if (ReShade::GetLinearizedDepth(texcoord) > fSkySaveDepth)
-	{
-        color = tex2D(ReShade::BackBuffer, texcoord);
-	}
-	else
-	{
-		color = float4(0.0, 0.0, 0.0, 2.0);
-	}
+	color = tex2D(ReShade::BackBuffer, texcoord);
+
+	color.a = step(fSkySaveDepth, fSkySaveInvertDepth ? 1.0 - ReShade::GetLinearizedDepth(texcoord) : ReShade::GetLinearizedDepth(texcoord));
 }
 
 void PS_SkyRestore(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target)
 {
+    color = tex2D(ReShade::BackBuffer, texcoord);
     const float4 keep = tex2D(SkySave_Sampler, texcoord);
 
-	if (keep.a != 2.0)
-	{
-		color = keep;
-	}
-	else
-	{
-		color = tex2D(ReShade::BackBuffer, texcoord);
-	}
+    color.rgb = lerp(color.rgb, keep.rgb, keep.a).rgb;
 }
 
 technique SkySave <
