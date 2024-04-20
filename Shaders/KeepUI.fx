@@ -31,6 +31,16 @@
 	#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
 #endif
 
+uniform int bKeepUIForceType <
+	ui_type = "combo";
+    ui_category = "Options";
+    ui_label = "UI Detection Type Override";
+    ui_tooltip = "Manually enable ";
+	ui_min = 0; ui_max = 2;
+	ui_items = "Disabled\0Alpha\0Depth\0";
+    ui_bind = "KeepUIType";
+> = 0;
+
 #ifndef KeepUIType
 	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
 
@@ -103,6 +113,7 @@ uniform int iBlendSource <
 #include "ReShade.fxh"
 #include "GShade.fxh"
 
+#if KeepUIType != 0 // Supported game.
 texture KeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 sampler KeepUI_Sampler { Texture = KeepUI_Tex; };
 
@@ -151,21 +162,21 @@ void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
     {
         color   = float4(lerp(tex2D(ReShade::BackBuffer, texcoord), keep, keep.a).rgb, keep.a);
     }
-#elif KeepUIType == 0 // Unsupported game.
-    color = tex2D(ReShade::BackBuffer, texcoord);
-#else // Supported game.
+#else
     color = tex2D(ReShade::BackBuffer, texcoord);
     const float4 keep = tex2D(KeepUI_Sampler, texcoord);
 
     color.rgb   = lerp(color.rgb, keep.rgb, keep.a).rgb;
 #endif
 }
+#endif
 
 technique FFKeepUI <
     ui_tooltip = "Place this at the top of your Technique list to save the UI into a texture for restoration with FFRestoreUI.\n"
                  "To use this Technique, you must also enable \"FFRestoreUI\".\n";
 >
 {
+#if KeepUIType != 0 // Supported game.
     pass
     {
         VertexShader = PostProcessVS;
@@ -179,6 +190,7 @@ technique FFKeepUI <
         PixelShader = PS_OccludeUI;
     }
 #endif
+#endif
 }
 
 technique FFRestoreUI <
@@ -189,9 +201,11 @@ technique FFRestoreUI <
 #endif
 >
 {
+#if KeepUIType != 0 // Supported game.
     pass
     {
         VertexShader = PostProcessVS;
         PixelShader = PS_RestoreUI;
     }
+#endif
 }
