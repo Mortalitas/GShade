@@ -31,16 +31,6 @@
 	#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
 #endif
 
-uniform int bKeepUIForceType <
-	ui_type = "combo";
-    ui_category = "Options";
-    ui_label = "UI Detection Type Override";
-    ui_tooltip = "Manually enable ";
-	ui_min = 0; ui_max = 2;
-	ui_items = "Disabled\0Alpha\0Depth\0";
-    ui_bind = "KeepUIType";
-> = 0;
-
 #ifndef KeepUIType
 	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
 
@@ -54,6 +44,19 @@ uniform int bKeepUIForceType <
 	#endif
 #endif
 
+#if KeepUIType == 0 // Unsupported game.
+uniform int bKeepUIForceType <
+	ui_type = "combo";
+    ui_category = "Options";
+    ui_label = "UI Detection Type Override";
+    ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
+    ui_min = 0; ui_max = 2;
+    ui_items = "Disabled\0Alpha\0Depth\0";
+    ui_bind = "KeepUIType";
+> = 0;
+#endif
+
+#if KeepUIType != 0 // Supported game.
 uniform bool bKeepUIOcclude <
     ui_category = "Options";
     ui_label = "Occlusion Assistance";
@@ -112,6 +115,7 @@ uniform int iBlendSource <
 
 #include "ReShade.fxh"
 #include "GShade.fxh"
+#endif
 
 #if KeepUIType != 0 // Supported game.
 texture KeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
