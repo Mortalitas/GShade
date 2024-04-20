@@ -115,7 +115,9 @@ uniform int iBlendSource <
 #endif
 
 #include "ReShade.fxh"
+#if KeepUIType == 2
 #include "GShade.fxh"
+#endif
 #endif
 
 #if KeepUIType != 0 // Supported game.
