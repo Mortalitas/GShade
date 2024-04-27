@@ -84,6 +84,20 @@
   * Papyrus6.png
 
 * MartyMcFly/Pascal Glitcher (github.com/martymcmodding):
+  * AreaLUT.png
+  * ca_lut_new.png
+  * iMMERSE_bluenoise.png
+  * MartysMods_CHROMATICABERRATION.fx
+  * MartysMods_FILMGRAIN.fx
+  * MartysMods_HALFTONE.fx
+  * MartysMods_LAUNCHPAD.fx
+  * MartysMods_LOCALLAPLACIAN.fx
+  * MartysMods_LONGEXPOSURE.fx
+  * MartysMods_MXAO.fx
+  * MartysMods_NVSHARPEN.fx
+  * MartysMods_SHARPEN.fx
+  * MartysMods_SMAA.fx
+  * MartysMods_TODDYHANCER.fx
   * Posterize.fx
   * qUINT_bloom.fx
   * qUINT_common.fxh
@@ -122,6 +136,17 @@
   * TalimRed.png
   * TalimSmoke.png
   * TalimSpiderweb.png
+
+* TreyM (github.com/IAmTreyM)
+  * ATMOSPHERE.fx
+  * CustomNegative.png
+  * CustomPrint.png
+  * FILMDECK.fx
+  * Grain.png
+  * FSR1_2X.fx
+  * ross.png
+  * StandardNegativeAtlas.png
+  * StandardPrintAtlas.png
 
 * Yae (twitter.com/lapismenangis)
   * MultiLut_yaes.png
