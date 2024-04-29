@@ -462,7 +462,7 @@ uniform int CREDITS <
 
 uniform int SHADER_VERSION <
 	ui_type = "radio";
-	ui_text = "\n" "Shader Version - A25 (v0.2.5)";
+	ui_text = "\n" "Shader Version - A25-01 (v0.2.5.0.1)";
 	ui_label = " ";
 > = 0;
 
@@ -556,12 +556,14 @@ texture A25RY_DualFrm {
 };
 sampler DualFrm {Texture = A25RY_DualFrm;};
 
-texture texMotionVectors;	
-sampler motionSam {Texture = texMotionVectors;};
+#define MV_TEX_PROPS { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RG16F; };
+#define SAM_POINT MagFilter = POINT; MinFilter = POINT; MipFilter = POINT;
 
-texture MotVectTexVort;	
-sampler motionSam1 {Texture = MotVectTexVort;};
+texture2D texMotionVectors MV_TEX_PROPS
+sampler2D motionSam { Texture = texMotionVectors; SAM_POINT };
 
+texture2D MotVectTexVort MV_TEX_PROPS
+sampler2D motionSam1 { Texture = MotVectTexVort; SAM_POINT };
 
 //============================================================================================
 //Tonemappers
@@ -1048,8 +1050,8 @@ float3 DAMPRT(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	return input;
 }
 
-technique ZN_DAMPRT_A24_6 <
-    ui_label = "DAMP RT A25";
+technique ZN_DAMPRT_A25_01 <
+    ui_label = "DAMP RT A25-01";
     ui_tooltip ="Zentient DAMP RT - by Zenteon\n" 
 				"The sucessor to SDIL, a much more efficient and accurate GI approximation";
 >
