@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Linear Gamma Workflow Library (version 1.4.1)
+Linear Gamma Workflow Library (version 1.4.3)
 
 Author:
 Jakub Maksymilian Fober
@@ -24,14 +24,14 @@ https://creativecommons.org/publicdomain/mark/1.0/
 namespace GammaConvert
 {
 	// Convert display gamma for all vector types
-	#if BUFFER_COLOR_SPACE==1 || BUFFER_COLOR_SPACE==2 // Transform from and to sRGB gamma
+	#if BUFFER_COLOR_SPACE<=2 // transform from and to sRGB gamma
 		// Sourced from International Color Consortium, at https://color.org/chardata/rgb/srgb.xalter
-		#define _TO_DISPLAY_GAMMA(g) ((g)<=0.0031308? (g)*12.92 : pow(abs(g), rcp(2.4))*1.055-0.055)
-		#define _TO_LINEAR_GAMMA(g)  ((g)<=0.04049936? (g)/12.92 : pow((abs(g)+0.055)/1.055, 2.4))
-//	#elif BUFFER_COLOR_SPACE==3 // Transform from and to HDR10 ST 2084
-//		#define _TO_DISPLAY_GAMMA(g) (pow(abs((0.8359375+18.8515625*pow(abs(g), 0.1593017578125))/(1f+18.6875*pow(abs(g), 0.1593017578125))), 78.84375))
-//		#define _TO_LINEAR_GAMMA(g)  (pow(abs(max(pow(abs(g), 32f/2523f)-0.8359375, 0f)/(18.8515625-18.6875*pow(abs(g), 32f/2523f))), 8192f/1305f))
-	#else // Bypass transform
+		#define _TO_DISPLAY_GAMMA(g) ((g)<=0.0031308?  (g)*12.92 : exp(log(abs(g))/2.4)*1.055-0.055)
+		#define _TO_LINEAR_GAMMA(g)  ((g)<=0.04049936? (g)/12.92 : exp(log((abs(g)+0.055)/1.055)*2.4))
+//	#elif BUFFER_COLOR_SPACE==3 // transform from and to HDR10 ST 2084
+		// #define _TO_DISPLAY_GAMMA(g) (exp(log(abs((0.8359375+18.8515625*exp(log(abs(g))*0.1593017578125))/(1f+18.6875*exp(log(abs(g))*0.1593017578125))))*78.84375))
+		// #define _TO_LINEAR_GAMMA(g)  (exp(log(abs(max(exp(log(abs(g))*32f/2523f)-0.8359375, 0f)/(18.8515625-18.6875*exp(log(abs(g))*32f/2523f))))*8192f/1305f))
+	#else // bypass transform
 		#define _TO_DISPLAY_GAMMA(g) (g)
 		#define _TO_LINEAR_GAMMA(g)  (g)
 	#endif
