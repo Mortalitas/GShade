@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.10.1)
+/* Perfect Perspective PS (version 5.10.2)
 
 Copyright:
 This code © 2018-2024 Jakub Maksymilian Fober
@@ -307,22 +307,11 @@ uniform float4 BorderColor
 
 // Cosmetics
 
-uniform float VignetteOffset
-<
-	ui_type = "slider";
-	ui_category = "Cosmetics";
-	ui_category_closed = true;
-	hidden = !ADVANCED_MENU;
-	ui_units = "+";
-	ui_label = "Vignette exposure";
-	ui_tooltip = "Brighten the image with vignette enabled.";
-	ui_min = 0f; ui_max = 0.2; ui_step = 0.01;
-> = 0.05;
-
 uniform float BorderCorner
 <
 	ui_type = "slider";
 	ui_category = "Cosmetics";
+	ui_category_closed = true;
 	ui_label = "Corner roundness";
 	ui_tooltip = "Value of 0 gives sharp corners.";
 	ui_min = 0f; ui_max = 1f; ui_step = 0.01;
@@ -351,6 +340,17 @@ uniform uint BorderGContinuity
 		"and G3 for luxurious items.";
 	ui_min = 1u; ui_max = 3u;
 > = 3u;
+
+uniform float VignetteOffset
+<
+	ui_type = "slider";
+	ui_category = "Cosmetics";
+	hidden = !ADVANCED_MENU;
+	ui_units = "+";
+	ui_label = "Vignette exposure";
+	ui_tooltip = "Brighten the image with vignette enabled.";
+	ui_min = 0f; ui_max = 0.2; ui_step = 0.01;
+> = 0.05;
 
 uniform bool MirrorBorder
 <
