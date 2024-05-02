@@ -1,9 +1,9 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.8.11)
+/* Perfect Perspective PS (version 5.10.0)
 
 Copyright:
-This code © 2018-2023 Jakub Maksymilian Fober
+This code © 2018-2024 Jakub Maksymilian Fober
 
 License:
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
@@ -53,11 +53,27 @@ by Fober, J. M.
 
 /* >> Macros << */
 
+/* Special hidden menu options.
+   0 disables advanced options.
+   1 enables advanced options. */
+#ifndef ADVANCED_MENU
+	#define ADVANCED_MENU 0
+#endif
+
 /* Alternative to anamorphic.
    1 gives separate distortion option for vertical axis.
    2 gives separate option for top and bottom half. */
 #ifndef AXIMORPHIC_MODE
 	#define AXIMORPHIC_MODE 1
+#endif
+
+/* High quality sampling.
+   0 disables mipmapping.
+   1 gives level 2 mipmap.
+   ...
+   4 maximum mipmapping lvl, equivalent of x16 anisotropic filtering. */
+#ifndef MIPMAPPING_LEVEL
+	#define MIPMAPPING_LEVEL 2
 #endif
 
 /* >> Commons << */
@@ -76,10 +92,10 @@ uniform uint FovAngle
 	ui_type = "slider";
 	ui_category = "In game";
 	ui_category_closed = true;
-	ui_text = "(Match game settings)";
+	ui_text = "> Match game settings <";
 	ui_units = "°";
-	ui_label = "Field of view (FoV)";
-	ui_tooltip = "This should match your in-game FoV value.";
+	ui_label = "Field of view (FOV)";
+	ui_tooltip = "Should match in-game FOV value.";
 	ui_max = 140u;
 > = 90u;
 
@@ -89,7 +105,7 @@ uniform uint FovType
 	ui_category = "In game";
 	ui_label = "Field of view type";
 	ui_tooltip =
-		"This should match game-specific FoV type.\n"
+		"This should match game-specific FOV type.\n"
 		"\n"
 		"Adjust so that round objects are still round when at the corner, and not oblong.\n"
 		"Tilt head to see better.\n"
@@ -116,48 +132,22 @@ uniform uint FovType
 
 // Perspective
 
-#if AXIMORPHIC_MODE>=2 // vertical axis projection is driven by separate ky top and ky bottom parameter
-uniform float Ky
-<
-	ui_type = "slider";
-	ui_category = "Distortion";
-	ui_category_closed = true;
-	ui_text = "(brightness[-1], distances[-0.5], speed[0], shapes[0.5], straight-lines[1])";
-	ui_label = "Projection type 'k' top (asymmetrical)";
-	ui_tooltip =
-		"Projection coefficient 'k' top, represents\n"
-		"various azimuthal projections types:\n"
-		"\n"
-		"	 Perception of | Value |  Projection  	\n"
-		"	---------------+-------+--------------	\n"
-		"	  brightness   |  -1   |  Orthographic	\n"
-		"	   distances   | -0.5  |   Equisolid  	\n"
-		"	     speed     |   0   |  Equidistant 	\n"
-		"	    shapes     |  0.5  | Stereographic	\n"
-		"	straight lines |   1   |  Rectilinear 	\n"
-		"\n"
-		"\n"
-		"[Ctrl+click] to type value.";
-	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
-> = 0.5;
-#endif
-
 // k indicates horizontal axis or whole picture projection type
 uniform float K
 <
 	ui_type = "slider";
 	ui_category = "Distortion";
-#if AXIMORPHIC_MODE==1
 	ui_category_closed = true;
-	ui_text = "(brightness[-1], distances[-0.5], speed[0], shapes[0.5], straight-lines[1])";
-#endif
+	ui_units = " k";
+	ui_text =
+		"> -0.5 | distance <\n"
+		">    0 | speed    <\n"
+		">  0.5 | shape    <";
 #if AXIMORPHIC_MODE // k indicates horizontal axis projection type
-	ui_label = "Projection type 'k' horizontal";
+	ui_label = "Horizontal profile";
 	ui_tooltip = "Projection coefficient 'k' horizontal, represents\n"
 #else // k represents whole picture projection type
-	ui_category_closed = true;
-	ui_text = "(brightness[-1], distances[-0.5], speed[0], shapes[0.5], straight-lines[1])";
-	ui_label = "Projection type 'k'";
+	ui_label = "Fisheye profile";
 	ui_tooltip = "Projection coefficient 'k', represents\n"
 #endif
 		"various azimuthal projections types:\n"
@@ -180,7 +170,8 @@ uniform float Ky
 <
 	ui_type = "slider";
 	ui_category = "Distortion";
-	ui_label = "Projection type 'k' vertical";
+	ui_units = " k";
+	ui_label = "Vertical profile";
 	ui_tooltip =
 		"Projection coefficient 'k' vertical, represents\n"
 		"various azimuthal projections types:\n"
@@ -199,11 +190,35 @@ uniform float Ky
 > = 0.5;
 
 #elif AXIMORPHIC_MODE>=2 // vertical axis projection is driven by separate ky top and ky bottom parameter
+uniform float Ky
+<
+	ui_type = "slider";
+	ui_category = "Distortion";
+	ui_units = " k";
+	ui_label = "Top profile";
+	ui_tooltip =
+		"Projection coefficient 'k' top, represents\n"
+		"various azimuthal projections types:\n"
+		"\n"
+		"	 Perception of | Value |  Projection  	\n"
+		"	---------------+-------+--------------	\n"
+		"	  brightness   |  -1   |  Orthographic	\n"
+		"	   distances   | -0.5  |   Equisolid  	\n"
+		"	     speed     |   0   |  Equidistant 	\n"
+		"	    shapes     |  0.5  | Stereographic	\n"
+		"	straight lines |   1   |  Rectilinear 	\n"
+		"\n"
+		"\n"
+		"[Ctrl+click] to type value.";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+> = 0.5;
+
 uniform float KyA
 <
 	ui_type = "slider";
 	ui_category = "Distortion";
-	ui_label = "Projection type 'k' bottom (asymmetrical)";
+	ui_units = " k";
+	ui_label = "Bottom profile";
 	ui_tooltip =
 		"Projection coefficient 'k' bottom, represents\n"
 		"various azimuthal projections types:\n"
@@ -225,9 +240,10 @@ uniform float S
 <
 	ui_type = "slider";
 	ui_category = "Distortion";
-	ui_label = "Anamorphic squeeze 's'";
+	ui_units = "x";
+	ui_label = "Anamorphic squeeze";
 	ui_tooltip =
-		"Anamorphic squeeze factor 's', affects\n"
+		"Anamorphic squeeze factor, affects\n"
 		"vertical axis:\n"
 		"\n"
 		"	Value | Lens Type          	\n"
@@ -250,8 +266,8 @@ uniform bool UseVignette
 <
 	ui_type = "input";
 	ui_category = "Distortion";
-	ui_label = "Apply vignetting";
-	ui_tooltip = "Apply lens-correct natural vignetting effect.";
+	ui_label = "Natural vignette";
+	ui_tooltip = "Apply projection-correct natural vignetting effect.";
 > = true;
 
 // Border
@@ -259,7 +275,10 @@ uniform bool UseVignette
 uniform float CroppingFactor
 <
 	ui_type = "slider";
-	ui_text = "(circular[0], cropped-circle[0.5], full-frame[1])";
+	ui_text =
+		">   0 | circular       <\n"
+		"> 0.5 | cropped-circle <\n"
+		">   1 | full-frame     <";
 	ui_category = "Border appearance";
 	ui_category_closed = true;
 	ui_label = "Cropping";
@@ -275,59 +294,44 @@ uniform float CroppingFactor
 		"\n"
 		"For horizontal display, circular will snap to vertical bounds,\n"
 		"cropped-circle to horizontal bounds, and full-frame to corners.";
-	ui_min = 0f; ui_max = 1f;
+	ui_min = 0f; ui_max = 1f; ui_step = 0.005;
 > = 0.5;
 
-uniform bool MirrorBorder
+uniform float4 BorderColor
 <
-	ui_type = "input";
+	ui_type = "color";
 	ui_category = "Border appearance";
-	ui_label = "Mirror on border";
-	ui_tooltip = "Choose mirrored or original image on the border.";
-> = false;
+	ui_label = "Border color";
+	ui_tooltip = "Use alpha to change border transparency.";
+> = float4(0.027, 0.027, 0.027, 0.96);
 
 uniform float VignetteOffset
 <
 	ui_type = "slider";
 	ui_category = "Cosmetics";
-	ui_category_closed = true;
-	ui_label = "Vignette brightness";
+	hidden = !ADVANCED_MENU;
+	ui_units = "+";
+	ui_label = "Vignette exposure";
 	ui_tooltip = "Brighten the image with vignette enabled.";
-	ui_min = 0f;
-	ui_max = 0.2;
+	ui_min = 0f; ui_max = 0.2; ui_step = 0.01;
 > = 0.05;
-
-uniform bool BorderVignette
-<
-	ui_type = "input";
-	ui_category = "Cosmetics";
-	ui_label = "Vignette on border";
-	ui_tooltip = "Apply vignetting effect to border.";
-> = false;
-
-uniform float4 BorderColor
-<
-	ui_type = "color";
-	ui_category = "Cosmetics";
-	ui_label = "Border color";
-	ui_tooltip = "Use alpha to change border transparency.";
-> = float4(0.027, 0.027, 0.027, 0.96);
 
 uniform float BorderCorner
 <
 	ui_type = "slider";
 	ui_category = "Cosmetics";
-	ui_label = "Corner radius";
+	ui_label = "Corner roundness";
 	ui_tooltip = "Value of 0 gives sharp corners.";
-	ui_min = 0f; ui_max = 1f;
+	ui_min = 0f; ui_max = 1f; ui_step = 0.01;
 > = 0.062;
 
 uniform uint BorderGContinuity
 <
 	ui_type = "slider";
 	ui_category = "Cosmetics";
+	hidden = !ADVANCED_MENU;
 	ui_units = "G";
-	ui_label = "Corner roundness";
+	ui_label = "Corner profile";
 	ui_tooltip =
 		"G-surfacing continuity level for the corners:\n"
 		"\n"
@@ -345,138 +349,54 @@ uniform uint BorderGContinuity
 	ui_min = 1u; ui_max = 3u;
 > = 3u;
 
-// Calibration Options
-
-uniform bool CalibrationModeView
+uniform bool MirrorBorder
 <
 	ui_type = "input";
-	ui_label = "Display calibration mode";
-	ui_tooltip =
-		"Display calibration grid for lens-matching or\n"
-		"pixel scale-map for resolution matching.";
-	ui_category = "Calibration mode";
+	ui_category = "Cosmetics";
 	ui_category_closed = true;
+	ui_label = "Mirror on border";
+	ui_tooltip = "Choose mirrored or original image on the border.";
 > = false;
-
-uniform uint CalibrationMode
-<
-	ui_type = "combo";
-	ui_items =
-		"Calibration grid\0"
-		"Pixel scale-map\0";
-	ui_label = "Select test mode";
-	ui_tooltip =
-		"Calibration grid:\n"
-		"\n"
-		"	Use calibration grid in conjunction with Image.fx, to match\n"
-		"	lens distortion with a real-world camera profile.\n"
-		"\n"
-		"Pixel scale-map:\n"
-		"\n"
-		"	Use pixel scale-map to get optimal resolution for super-sampling.\n"
-		"\n"
-		"	Value | Definition    	\n"
-		"	------+---------------	\n"
-		"	  red | under-sampling	\n"
-		"	green | 1:1           	\n"
-		"	 blue | oversampling  	\n"
-		"\n"
-		"\n"
-		"This color scheme makes it easy to spot regions with magnified pixels,\n"
-		"and pixels which are squeezed together.";
-	ui_text = "Testing mode:";
-	ui_category = "Calibration mode";
-> = 0u;
-
-uniform float DimCalibrationBackground
-<
-	ui_type = "slider";
-	ui_min = 0.25; ui_max = 1f; ui_step = 0.1;
-	ui_label = "Dim background";
-	ui_tooltip = "Adjust background visibility.";
-	ui_category = "Calibration mode";
-> = 1f;
-
-// Grid
-
-uniform uint GridLook
-<
-	ui_type = "combo";
-	ui_items =
-		"yellow grid\0"
-		"black grid\0"
-		"white grid\0"
-		"red-green grid\0";
-	ui_label = "Grid look";
-	ui_tooltip = "Select look of the grid.";
-	ui_text = "Calibration grid settings:";
-	ui_category = "Calibration mode";
-	ui_category_closed = true;
-> = 0u;
-
-uniform uint GridSize
-<
-	ui_type = "slider";
-	ui_min = 1u; ui_max = 32u;
-	ui_label = "Grid size";
-	ui_tooltip = "Adjust calibration grid size.";
-	ui_category = "Calibration mode";
-> = 16u;
-
-uniform uint GridWidth
-<
-	ui_type = "slider";
-	ui_min = 2u; ui_max = 16u;
-	ui_units = " pixels";
-	ui_label = "Grid bar width";
-	ui_tooltip = "Adjust calibration grid bar width in pixels.";
-	ui_category = "Calibration mode";
-> = 2u;
-
-uniform float GridTilt
-<
-	ui_type = "slider";
-	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
-	ui_units = "°";
-	ui_label = "Tilt grid";
-	ui_tooltip = "Adjust calibration grid tilt in degrees.";
-	ui_category = "Calibration mode";
-> = 0f;
-
-// Pixel Scale Map
-
-uniform uint ResScaleScreen
-<
-	ui_type = "input";
-	ui_units = " pixels";
-	ui_label = "Screen (native) resolution";
-	ui_tooltip = "Set it to default screen resolution.";
-	ui_text = "Pixel scale-map settings:";
-	ui_category = "Calibration mode";
-	ui_category_closed = true;
-> = BUFFER_WIDTH;
-
-uniform uint ResScaleVirtual
-<
-	ui_type = "drag";
-	ui_min = 16u; ui_max = 16384u;
-	ui_units = " pixels";
-	ui_label = "Virtual resolution";
-	ui_tooltip =
-		"Simulates application running beyond native\n"
-		"screen resolution (using VSR or DSR).";
-	ui_category = "Calibration mode";
-> = BUFFER_WIDTH;
 
 /* >> Textures << */
 
-// Define screen texture with mirror tiles
-sampler BackBuffer
+#if MIPMAPPING_LEVEL
+// Buffer texture target with mipmapping
+texture2D BackBufferMipTarget_Tex
+< pooled = true; >
 {
-	Texture = ReShade::BackBufferTex;
+	Width = BUFFER_WIDTH;
+	Height = BUFFER_HEIGHT;
+
+	// Storing linear gamma picture in higher bit depth
+	Format = RGB10A2;
+
+	// Maximum MIP map level
+	#if MIPMAPPING_LEVEL>0 && MIPMAPPING_LEVEL<=4
+	MipLevels = MIPMAPPING_LEVEL+1;
+	#else
+	MipLevels = 5; // maximum MIP level
+	#endif
+};
+#endif
+
+// Define screen texture with mirror tiles and anisotropic filtering
+sampler2D BackBuffer
+{
+#if MIPMAPPING_LEVEL
+	Texture = BackBufferMipTarget_Tex; // back buffer texture target with additional MIP levels
+#else
+	Texture = ReShade::BackBufferTex; // back buffer texture target
+#endif
+
 	// Border style
 	AddressU = MIRROR;
 	AddressV = MIRROR;
+
+	// Filtering
+	MagFilter = ANISOTROPIC;
+	MinFilter = ANISOTROPIC;
+	MipFilter = ANISOTROPIC;
 };
 
 /* >> Functions << */
@@ -504,8 +424,8 @@ float glength(uint G, float2 pos)
 	// Sharp corner
 	if (G==0u) return max(abs(pos.x), abs(pos.y)); // g0
 	// Higher-power length function
-	pos = exp(log(abs(pos))*(++G)); // to the power of G+1
-	return exp(log(pos.x+pos.y)*rcp(G)); // to the power of G+1 root
+	pos = exp(log(abs(pos))*(++G)); // position to the power of G+1
+	return exp(log(pos.x+pos.y)/G); // position to the power of G+1 root
 }
 
 /* Linear pixel step function for anti-aliasing by Jakub Max Fober.
@@ -525,26 +445,26 @@ float aastep(float grad)
    · arXiv:2010.04077 [cs.GR] (2020) */
 float get_radius(float theta, float rcp_f, float k) // get image radius
 {
-	if      (k>0f)  return tan(k*theta)/(rcp_f*k); // stereographic, rectilinear projections
-	else if (k<0f)  return sin(k*theta)/(rcp_f*k); // equisolid, orthographic projections
-	else  /*k==0f*/ return       theta / rcp_f;    // equidistant projection
+	if      (k>0f)  return tan(abs(k)*theta)/rcp_f/abs(k); // stereographic, rectilinear projections
+	else if (k<0f)  return sin(abs(k)*theta)/rcp_f/abs(k); // equisolid, orthographic projections
+	else  /*k==0f*/ return            theta /rcp_f;        // equidistant projection
 }
 #define get_rcp_focal(halfOmega, radiusOfOmega, k) get_radius(halfOmega, radiusOfOmega, k) // get reciprocal focal length
 float get_theta(float radius, float rcp_f, float k) // get spherical θ angle
 {
-	if      (k>0f)  return atan(k*radius*rcp_f)/k; // stereographic, rectilinear projections
-	else if (k<0f)  return asin(k*radius*rcp_f)/k; // equisolid, orthographic projections
-	else  /*k==0f*/ return        radius*rcp_f;    // equidistant projection
+	if      (k>0f)  return atan(abs(k)*radius*rcp_f)/abs(k); // stereographic, rectilinear projections
+	else if (k<0f)  return asin(abs(k)*radius*rcp_f)/abs(k); // equisolid, orthographic projections
+	else  /*k==0f*/ return             radius*rcp_f;         // equidistant projection
 }
 float get_vignette(float theta, float r, float rcp_f) // get vignetting mask in linear color space
-{ return sin(theta)/(r*rcp_f); }
+{ return sin(theta)/r/rcp_f; }
 float2 get_phi_weights(float2 viewCoord) // get aximorphic interpolation weights
 {
 	viewCoord *= viewCoord; // squared vector coordinates
 	return viewCoord/(viewCoord.x+viewCoord.y); // [cos²φ sin²φ] vector
 }
 
-// Get radius at Ω for a given FoV type
+// Get radius at Ω for a given FOV type
 float getRadiusOfOmega(float2 viewProportions)
 {
 	switch (FovType) // uniform input
@@ -659,161 +579,55 @@ float GetBorderMask(float2 borderCoord)
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
-// Generate lens-match grid
-float3 GridModeViewPass(
-	uint2  pixelCoord,
-	float2 texCoord,
-	float3 display
+#if MIPMAPPING_LEVEL
+void BackBufferMipTarget_VS(
+	in  uint   vertexId : SV_VertexID,
+	out float4 position : SV_Position // no texture mapping
 )
 {
-	// Sample background without distortion
-	display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, pixelCoord).rgb); // manual gamma correction
+	// Generate vertex position for triangle ABC covering whole screen
+	position.x = vertexId==2? 3f :-1f;
+	position.y = vertexId==1?-3f : 1f;
 
-	// Get view coordinates, normalized at the corner
-	texCoord = (texCoord*2f-1f)*normalize(BUFFER_SCREEN_SIZE);
-
-	if (GridTilt!=0f) // tilt view coordinates
-	{
-		// Convert angle to radians
-		const static float tiltRad = radians(GridTilt);
-		// Get rotation matrix components
-		const static float tiltSin = sin(tiltRad);
-		const static float tiltCos = cos(tiltRad);
-		// Rotate coordinates
-		texCoord = mul(
-			// Get rotation matrix
-			float2x2(
-				 tiltCos, tiltSin,
-				-tiltSin, tiltCos
-			),
-			texCoord // rotated coordinates
-		);
-	}
-
-	// Get coordinates pixel size
-	float2 delX = float2(ddx(texCoord.x), ddy(texCoord.x));
-	float2 delY = float2(ddx(texCoord.y), ddy(texCoord.y));
-	// Scale coordinates to grid size and center
-	texCoord = frac(texCoord*GridSize)-0.5;
-	/* Scale coordinates to pixel size for anti-aliasing of grid
-	   using anti-aliasing step function from research paper
-	   arXiv:2010.04077 [cs.GR] (2020) */
-	texCoord *= float2(
-		rsqrt(dot(delX, delX)),
-		rsqrt(dot(delY, delY))
-	)/GridSize; // pixel density
-	// Set grid with
-	texCoord = saturate(GridWidth*0.5-abs(texCoord)); // clamp values
-
-	// Adjust grid look
-	{
-		// Safe bottom-color in linear range
-		static float safeBottomColor = GammaConvert::to_linear(16f/255f); // linear workflow
-		safeBottomColor *= 1f-DimCalibrationBackground;
-		display = mad(
-			display, // background
-			DimCalibrationBackground, // dimming amount
-			safeBottomColor
-		);
-	}
-	// Apply calibration grid colors
-	switch (GridLook)
-	{
-		case 1: // black
-			display *= (1f-texCoord.x)*(1f-texCoord.y);
-			break;
-		case 2: // white
-			display = 1f-(1f-texCoord.x)*(1f-texCoord.y)*(1f-display);
-			break;
-		case 3: // display red-green
-		{
-			display = lerp(display, float3(1f, 0f, 0f), texCoord.y);
-			display = lerp(display, float3(0f, 1f, 0f), texCoord.x);
-		} break;
-		default: // yellow
-			display = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y));
-			break;
-	}
-
-	return display; // background picture with grid superimposed over it
+	// Initialize other values
+	position.z = 0f; // not used
+	position.w = 1f; // not used
 }
 
-// Debug view mode shader
-float3 SamplingScaleModeViewPass(
-	float2 texCoord,
-	float3 display
+void BackBufferMipTarget_PS(
+	in  float4 pos     : SV_Position,
+	out float4 display : SV_Target
 )
 {
-	// Define Mapping color
-	const static float3   underSample = float3(235f, 16f, 16f)/255f; // red
-	const static float3 neutralSample = float3(16f, 235f, 16f)/255f; // green
-	const static float3   superSample = float3(16f, 16f, 235f)/255f; // blue
-
-	// Scale texture coordinates to pixel size
-	texCoord *= BUFFER_SCREEN_SIZE*ResScaleVirtual/float(ResScaleScreen);
-	texCoord = float2(
-		length(float2(ddx(texCoord.x), ddy(texCoord.x))),
-		length(float2(ddx(texCoord.y), ddy(texCoord.y)))
+	// Generating MIP maps in linear gamma color space
+	display.rgb = GammaConvert::to_linear(
+		tex2Dfetch(
+			ReShade::BackBuffer, // standard back-buffer
+			uint2(pos.xy)        // pixel position without resampling
+		).rgb
 	);
-	// Get pixel area
-	float pixelScale = texCoord.x*texCoord.y*2f;
-	// Get pixel area in false-color
-	float3 pixelScaleMap = lerp(
-		lerp(
-			underSample,
-			neutralSample,
-			s_curve(saturate(pixelScale-1f)) // ↤ [0, 1] area range
-		),
-		superSample,
-		s_curve(saturate(pixelScale-2f)) // ↤ [1, 2] area range
-	);
-
-	// Linear workflow
-	display = GammaConvert::to_display(display);
-
-	const static float safeRange[2] = {16f/255f, 235f/255f};
-	// Get luma channel mapped to save range
-	display.x = lerp(
-		safeRange[0], // safe range bottom
-		safeRange[1], // safe range top
-		ColorConvert::RGB_to_Luma(display)
-	);
-	// Adjust background look
-	display = lerp(
-		safeRange[0], // safe bottom-color range
-		display, // background
-		DimCalibrationBackground // dimming amount
-	);
-	// Adjust background look
-	display = lerp(
-		// Linear workflow
-		GammaConvert::to_linear(display.x), // background
-		pixelScaleMap, // pixel scale map
-		sqrt(1.25)-0.5 // golden ratio by JMF
-	);
-	return display;
+	display.a = 1f;
 }
+#endif
 
 // Vertex shader generating a triangle covering the entire screen
-void PerfectPerspectiveVS(
-	in  uint   id        : SV_VertexID,
+void PerfectPerspective_VS(
+	in  uint   vertexId  : SV_VertexID,
 	out float4 position  : SV_Position,
 	out float2 texCoord  : TEXCOORD0,
 	out float2 viewCoord : TEXCOORD1
 )
 {
-	// Define vertex position
-	const static float2 vertexPos[3] =
-	{
-		float2(-1f, 1f), // top left
-		float2(-1f,-3f), // bottom left
-		float2( 3f, 1f)  // top right
-	};
-	// Export vertex position
-	position = float4(vertexPos[id], 0f, 1f);
+	// Generate vertex position for triangle ABC covering whole screen
+	position.x = vertexId==2? 3f :-1f;
+	position.y = vertexId==1?-3f : 1f;
+	// Initialize other values
+	position.z = 0f; // not used
+	position.w = 1f; // not used
+
 	// Export screen centered texture coordinates
-	texCoord.x = viewCoord.x =  vertexPos[id].x;
-	texCoord.y = viewCoord.y = -vertexPos[id].y;
+	texCoord.x = viewCoord.x =  position.x;
+	texCoord.y = viewCoord.y = -position.y;
 	// Map to corner and normalize texture coordinates
 	texCoord = texCoord*0.5+0.5;
 	// Get aspect ratio transformation vector
@@ -826,7 +640,7 @@ void PerfectPerspectiveVS(
 
 	// Half field of view angle in radians
 	const static float halfOmega = radians(FovAngle*0.5);
-	// Get radius at Ω for a given FoV type
+	// Get radius at Ω for a given FOV type
 	const static float radiusOfOmega = getRadiusOfOmega(viewProportions);
 	// Reciprocal focal length
 	const static float rcp_focal = get_rcp_focal(halfOmega, radiusOfOmega, K);
@@ -908,7 +722,7 @@ void PerfectPerspectiveVS(
 }
 
 // Main perspective shader pass
-float3 PerfectPerspectivePS(
+float3 PerfectPerspective_PS(
 	float4 pixelPos  : SV_Position,
 	float2 texCoord  : TEXCOORD0,
 	float2 viewCoord : TEXCOORD1
@@ -927,41 +741,23 @@ float3 PerfectPerspectivePS(
 #endif
 	// Bypass perspective mapping
 	{
-		float3 display;
-		if (CalibrationModeView)
+#if MIPMAPPING_LEVEL
+		float3 display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+#else // manual gamma linearization
+		float3 display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
+#endif
+
+		if (UseVignette && VignetteOffset!=0f) // maintain constant brightness across all FOV values
 		{
-			switch (CalibrationMode) // choose output type
-			{
-				case 1u: // pixel scale-map
-					display = SamplingScaleModeViewPass(
-						texCoord,
-						GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb) // manual gamma correction
-					); break;
-				default: // calibration grid
-					display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
-					break;
-			}
-			// Linear workflow
-			display = GammaConvert::to_display(display); // manually correct gamma
-
-			return BlueNoise::dither(display, uint2(pixelPos.xy)); // dither final 8/10-bit result
+			display *= 1f+VignetteOffset;
+			// Manually correct gamma
+			display = GammaConvert::to_display(display);
+			// Dither final 8/10-bit result
+			display = BlueNoise::dither(display, uint2(pixelPos.xy));
 		}
-		else // bypass all effects
-		{
-			display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+		else display = GammaConvert::to_display(display);
 
-			if (UseVignette && VignetteOffset!=0f) // maintain constant brightness across all FoV values
-			{
-				// Manually correct gamma
-				display = GammaConvert::to_linear(display);
-				display *= 1f+VignetteOffset;
-				display = GammaConvert::to_display(display);
-				// Dither final 8/10-bit result
-				display = BlueNoise::dither(display, uint2(pixelPos.xy));
-			}
-
-			return display;
-		}
+		return display;
 	}
 
 // end of distortion mapping bypass
@@ -974,7 +770,7 @@ float3 PerfectPerspectivePS(
 	const static float2 viewProportions = normalize(BUFFER_SCREEN_SIZE);
 	// Half field of view angle in radians
 	const static float halfOmega = radians(FovAngle*0.5);
-	// Get radius at Ω for a given FoV type
+	// Get radius at Ω for a given FOV type
 	const static float radiusOfOmega = getRadiusOfOmega(viewProportions);
 	// Reciprocal focal length
 	const static float rcp_focal = get_rcp_focal(halfOmega, radiusOfOmega, K);
@@ -1051,23 +847,12 @@ float3 PerfectPerspectivePS(
 #elif AXIMORPHIC_MODE>=2 // take both vertical k factors into account
 		|| Ky!=1f || KyA!=1f
 #endif // consider only global k
-		? tex2D(BackBuffer, texCoord).rgb // perspective projection lookup
+		? tex2Dgrad(BackBuffer, texCoord, ddx(texCoord), ddy(texCoord)).rgb // perspective projection lookup with mip-mapping and anisotropic filtering
 		: tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
 
-	// manual gamma correction
-	display = GammaConvert::to_linear(display);
-
-	// Display calibration view
-	if (CalibrationModeView)
-	switch (CalibrationMode) // choose output type
-	{
-		case 1u: // pixel scale-map
-			display = SamplingScaleModeViewPass(texCoord, display);
-			break;
-		default: // calibration grid
-			display = GridModeViewPass(uint2(pixelPos.xy), texCoord, display);
-			break;
-	}
+#if !MIPMAPPING_LEVEL
+	display = GammaConvert::to_linear(display); // manual gamma linearization
+#endif
 
 	// Display border
 	if (
@@ -1082,8 +867,12 @@ float3 PerfectPerspectivePS(
 	{
 		// Get border image
 		float3 border = lerp(
-			// manual gamma correction
+			// Sample distorted or undistorted picture at the border
+#if MIPMAPPING_LEVEL
+			MirrorBorder ? display : tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb, // border background
+#else // manual gamma linearization
 			MirrorBorder ? display : GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb), // border background
+#endif
 			// Linear workflow
 			GammaConvert::to_linear(BorderColor.rgb), // border color
 			GammaConvert::to_linear(BorderColor.a)    // border alpha
@@ -1092,7 +881,7 @@ float3 PerfectPerspectivePS(
 		// Outside border mask with anti-aliasing
 		float borderMask = GetBorderMask(viewCoord);
 		// Apply vignette with border
-		display = BorderVignette
+		display = MirrorBorder
 			? vignette*lerp(display, border, borderMask)  // vignette on border
 			: lerp(vignette*display, border, borderMask); // vignette only inside
 	}
@@ -1101,7 +890,6 @@ float3 PerfectPerspectivePS(
 
 	// Manually correct gamma
 	display = GammaConvert::to_display(display);
-
 	// Dither final 8/10-bit result
 	return BlueNoise::dither(display, uint2(pixelPos.xy));
 }
@@ -1110,47 +898,40 @@ float3 PerfectPerspectivePS(
 
 technique PerfectPerspective
 <
-	ui_label = "Perfect Perspective (fisheye, bodycam, anamorphic, aximorphic)";
+	ui_label = "Perfect Perspective (fisheye)";
 	ui_tooltip =
-		"Adjust perspective for distortion-free picture:\n"
+		"Adjust picture perspective for perfect distortion:\n"
 		"\n"
-		"	· Fish-eye\n"
-		"	· Panini\n"
-		"	· Aximorphic (*)\n"
-		"	· Aximorphic asymmetrical (**)\n"
-		"	· Anamorphic\n"
-		"	· Vignetting (natural)\n"
+		"      Fish-eye | AXIMORPHIC_MODE 0\n"
+		"    Anamorphic | AXIMORPHIC_MODE 0\n"
+		"    Aximorphic | AXIMORPHIC_MODE 1\n"
+		"  Asymmetrical | AXIMORPHIC_MODE 2\n"
+		"\n"
 		"\n"
 		"Instruction:\n"
 		"\n"
-		"	1# select proper FoV angle and type. If FoV type is unknown,\n"
-		"	   find a round object within the game and look at it upfront,\n"
-		"	   then rotate the camera so that the object is in the corner.\n"
+		"	1. select proper FOV angle and type matching game settings.\n"
+		"	   if FOV type is unknown:\n"
+		"\n"
+		"	 a. find a round object within the game\n"
+		"	 b. stand upfront\n"
+		"	 c. rotate the camera putting the object at the corner\n"
 #if AXIMORPHIC_MODE
-		"	   Make sure all 'k' parameters are equal 0.5 and adjust FoV type such that\n"
+		"	 d. make sure all 'k' parameters are equal to 0.5\n"
 #else
-		"	   Set 'k' to 0.5, change squeeze factor to 1x and adjust FoV type such that\n"
+		"	 d. set 'k' to 0.5, change squeeze factor to 1x\n"
 #endif
-		"	   the object does not have an egg shape, but a perfect round shape.\n"
+		"	 e. switch FOV type until object has a round shape, not an egg\n"
 		"\n"
-		"	2# adjust perspective type according to game-play style.\n"
-#if AXIMORPHIC_MODE
-		"	   If you look mostly at the horizon, 'k.y' can be increased.\n"
-#else
-		"	   If you look mostly at the horizon, anamorphic squeeze can be increased.\n"
-#endif
-		"	   For curved-display correction, set it to higher value.\n"
+		"	2. adjust distortion according to a game-play style\n"
 		"\n"
-		"	3# adjust visible borders. You can change the zoom factor,\n"
-		"	   such that no borders are visible, or that no image area is lost.\n"
+		"	3. adjust visible borders. You can change the cropping, such that\n"
+		"	   no borders will be visible, or that no image area get lost\n"
 		"\n"
-		"	4# use 4lex4nder/ReshadeEffectShaderToggler addon, to render the distortion\n"
-		"	   under user interface.\n"
+		"	 + use '4lex4nder/ReshadeEffectShaderToggler' add-on, to render\n"
+		"	   under the UI (user interface).\n"
 		"\n"
-		"	5# additionally for sharp image, use sharpening FX or run game at a\n"
-		"	   Super-Resolution. Debug options can help you find the proper value.\n"
-		"\n"
-		"	(*) for more available settings set AXIMORPHIC_MODE value to 0, 1 or 2.\n"
+		"	 + use sharpening or run the game at Super-Resolution\n"
 		"\n"
 		"\n"
 		"The algorithm is part of a scientific article:\n"
@@ -1160,12 +941,20 @@ technique PerfectPerspective
 		"\n"
 		"This effect © 2018-2024 Jakub Maksymilian Fober\n"
 		"Licensed under CC+ BY-SA 3.0\n"
-		"for additional permissions see the source code.";
+		"for additional permissions under the CC+ protocol, see the source code.";
 >
 {
+#if MIPMAPPING_LEVEL
+	pass CreateMipMaps
+	{
+		VertexShader = BackBufferMipTarget_VS;
+		PixelShader  = BackBufferMipTarget_PS;
+		RenderTarget = BackBufferMipTarget_Tex;
+	}
+#endif
 	pass PerspectiveDistortion
 	{
-		VertexShader = PerfectPerspectiveVS;
-		PixelShader = PerfectPerspectivePS;
+		VertexShader = PerfectPerspective_VS;
+		PixelShader  = PerfectPerspective_PS;
 	}
 }
