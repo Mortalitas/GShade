@@ -30,13 +30,6 @@
 
 texture texColorBuffer : COLOR;
 
-texture drunkDistortTarget
-{
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA8;
-};
-
 sampler samplerColor
 {
     Texture = texColorBuffer;
@@ -55,11 +48,6 @@ sampler samplerColor
     MipLODBias = 0.0f;
 
     SRGBTexture = false;
-};
-
-sampler result
-{
-    Texture = drunkDistortTarget;
 };
 
 // Helper Functions

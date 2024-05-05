@@ -7,13 +7,6 @@
 
 texture texColorBuffer : COLOR;
 
-texture pbDistortTarget
-{
-    Width = BUFFER_WIDTH;
-    Height = BUFFER_HEIGHT;
-    Format = RGBA8;
-};
-
 sampler samplerColor
 {
     Texture = texColorBuffer;
@@ -34,11 +27,6 @@ sampler samplerColor
     SRGBTexture = false;
 };
 
-sampler result
-{
-    Texture = pbDistortTarget;
-};
-
 // Vertex Shader
 void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out float2 texcoord : TEXCOORD0)
 {
@@ -53,16 +41,19 @@ void FullScreenVS(uint id : SV_VertexID, out float4 position : SV_Position, out 
 // Pixel Shaders (in order of appearance in the technique)
 float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
+    float2 tc = texcoord;
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
     float ar = lerp(ar_raw, 1, aspect_ratio * 0.01);
 
-    float2 center = float2(x_coord, y_coord) / 2.0;
+    float2 center = float2(x_coord, y_coord);
+    float2 offset_center = float2(offset_x, offset_y);
     if (use_mouse_point)
-        center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH / 2.0, mouse_coordinates.y * BUFFER_RCP_HEIGHT / 2.0);
+        center = float2(mouse_coordinates.x * BUFFER_RCP_WIDTH, mouse_coordinates.y * BUFFER_RCP_HEIGHT);
 
-    float2 offset_center = float2(offset_x, offset_y) / 2.0;
+    center = mul(swirlTransform(radians(aspect_ratio_angle)), center);
 
-    float2 tc = texcoord - center;
+    tc = mul(swirlTransform(radians(aspect_ratio_angle)), tc - center);
+    tc += mul(swirlTransform(radians(aspect_ratio_angle)), center);
 
     float4 color;
     const float4 base = tex2D(samplerColor, texcoord);
@@ -83,11 +74,17 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
         tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * tension_radius/dist, 1.0 - percent);
 
     if(use_offset_coords) {
-        tc += (2 * offset_center);
+        tc += offset_center;
     }
     else
-        tc += (2 * center);
+        tc += center;
     tc.x *= ar;
+    center.x *= ar;
+
+    center = mul(swirlTransform(radians(-aspect_ratio_angle)), center);
+
+    tc = mul(swirlTransform(radians(-aspect_ratio_angle)), tc - center);
+    tc += mul(swirlTransform(radians(-aspect_ratio_angle)), center);
 
     float out_depth = ReShade::GetLinearizedDepth(tc).r;
     bool inDepthBounds = out_depth >= depth_bounds.x && out_depth <= depth_bounds.y;
