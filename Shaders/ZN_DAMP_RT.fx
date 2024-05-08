@@ -43,8 +43,11 @@ Thanks to Matsilagi for the Sponza Test: //https://mega.nz/#!qVwGhYwT!rEwOWergoV
 //============================================================================================
 #endif
 
-
-#define ZNRY_RENDER_SCL 0.5
+#ifndef ZNRY_RENDER_SCL
+//============================================================================================
+	#define ZNRY_RENDER_SCL 0.5 //Sample Texture Resolution Divider
+//============================================================================================
+#endif
 
 
 #ifndef ZNRY_MAX_LODS
@@ -73,7 +76,7 @@ Thanks to Matsilagi for the Sponza Test: //https://mega.nz/#!qVwGhYwT!rEwOWergoV
 
 #ifndef IMPORT_SAM
 //============================================================================================
-	#define IMPORT_SAM 0 //Hides experimental or unfinished features
+	#define IMPORT_SAM 1 //Hides experimental or unfinished features
 //============================================================================================
 #endif
 
@@ -363,7 +366,7 @@ uniform float SHADOW_Z_THK <
 	hidden = HIDE_INTERMEDIATE;
 	ui_min = 0.001;
 	ui_max = 1.0;
-> = 0.085;
+> = 0.15;
 
 uniform float SHADOW_BIAS <
 	ui_type = "slider";
@@ -526,7 +529,7 @@ uniform int CREDITS <
 
 uniform int SHADER_VERSION <
 	ui_type = "radio";
-	ui_text = "\n" "Shader Version - Test Release A26 (v0.2.6)";
+	ui_text = "\n" "Shader Version - A26-0-1 (v0.2.6.0.1)";
 	ui_label = " ";
 > = 0;
 
@@ -611,9 +614,9 @@ namespace A26{
 	sampler PreFrm {Texture = PreTex;};
 	
 	texture PreLuminTex {
-		Width = BUFFER_WIDTH;
-		Height = BUFFER_HEIGHT;
-		Format = R16;
+		Width = int(BUFFER_WIDTH * ZNRY_RENDER_SCL);
+		Height = int(BUFFER_HEIGHT * ZNRY_RENDER_SCL);
+		Format = R32F;
 		MipLevels = 2;
 	};
 	sampler PreLumin {Texture = PreLuminTex;};
@@ -795,7 +798,7 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
     		   rp	  = float3(xy, d);
     	float3 minD	= 1.0;//rp;//float3(rp.xy, 1.0);
     	float3 maxD	= 0.0;//float3(rp.xy, 0.0);
-    	float2 vec	 = float2(sin((i+1) * 6.28 / sampl), cos((i+1) * 6.28 / sampl));
+    	float2 vec	 = float2(sin((6.28 * offset.r) + (i+1) * 6.28 / sampl), cos((6.28 * offset.r) + (i+1) * 6.28 / sampl));
     	float3 pixP	= float3(xy, trueD);
     	
  	   for(int ii = 2; ii <= ZNRY_MAX_LODS; ii++)
@@ -1072,20 +1075,24 @@ float4 UpFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 {
 	if(DONT_SPATIAL) return tex2D(A26::GISam, texcoord);
 	float4 cCol;// = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	float3 cDep = 2.0 * tex2D(A26::NorSam, texcoord).xyz - 1.0;//ReShade::GetLinearizedDepth(texcoord);
-	float  ang  = hash12(texcoord * RES * (FRAME_COUNT % 128));
+	float3 cNor = 2.0 * tex2D(A26::NorSam, texcoord).xyz - 1.0;//ReShade::GetLinearizedDepth(texcoord);
+	float  cDep = ReShade::GetLinearizedDepth(texcoord);
+	float  ang  = 6.28 * hash12(texcoord * RES * (FRAME_COUNT % 128));
 	float  tw;
 	int UPSCALE_ITER = 8;
 	for(int i; i <= UPSCALE_ITER; i++)
 	{
-		float2 npos = 16.0 * float2(sin(ang), cos(ang)) * hash12((texcoord + 0.5) * RES * (i + 1.0)) / RES;
-		float3 rDep = 2.0 * tex2D(A26::BilaSam, texcoord + npos).xyz - 1.0;
+		float2 npos = float2(sin(ang), cos(ang)) ;//hash12((texcoord + 0.5) * RES * (i + 1.0)) / RES;
+			   npos = 2.0 * npos * (1.0 + i) / RES;
+		float3 rNor = 2.0 * tex2D(A26::BilaSam, texcoord + npos).xyz - 1.0;
+		float  rDep = tex2D(A26::PreLumin, texcoord + npos).r;
 		float4 rCol = tex2D(A26::GISam, texcoord + npos);
-		ang  += 6.28 / UPSCALE_ITER;
-		float w  = pow(max(dot(rDep, cDep) - 0.5, 0), 2.0);
-			  tw += w;
+		ang  += 12.56 / UPSCALE_ITER;
+		float nw  = pow(max(dot(rNor, cNor) - 0.5, 0), 3.0);
+		float dw  = exp(-distance(eyePos(texcoord, rDep), eyePos(texcoord, cDep)) / 20.0);
+			  tw += nw * dw;
 		
-		cCol += rCol * w;
+		cCol += rCol * nw * dw;
 	}
 	if(tw < 0.0001) return tex2D(A26::GISam, texcoord);
 	return cCol / tw;
@@ -1172,7 +1179,7 @@ float3 DAMPRT(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 }
 
 technique ZN_DAMPRT_A26 <
-    ui_label = "DAMP RT A26";
+    ui_label = "DAMP RT A26-0-1";
     ui_tooltip ="Zentient DAMP RT - by Zenteon\n" 
 				"The sucessor to SDIL, a much more efficient and accurate GI approximation";
 >
