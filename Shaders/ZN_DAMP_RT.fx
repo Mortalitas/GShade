@@ -76,7 +76,7 @@ Thanks to Matsilagi for the Sponza Test: //https://mega.nz/#!qVwGhYwT!rEwOWergoV
 
 #ifndef IMPORT_SAM
 //============================================================================================
-	#define IMPORT_SAM 1 //Hides experimental or unfinished features
+	#define IMPORT_SAM 0 //Hides experimental or unfinished features
 //============================================================================================
 #endif
 
@@ -156,12 +156,12 @@ uniform bool SMOOTH_NORMALS <
 uniform float INTENSITY <
 	ui_type = "slider";
 	ui_min = 0.0;
-	ui_max = 40.0;
+	ui_max = 20.0;
 	ui_label = "GI Intensity";
 	ui_tooltip = "Intensity of the effect. It goes up to 40, I don't recommend keeping it there";
 	ui_category = "Display";
 	ui_category_closed = true;
-> = 3.0;
+> = 6.0;
 
 uniform float SHADOW_INT <
 	ui_type = "slider";
@@ -170,7 +170,7 @@ uniform float SHADOW_INT <
 	ui_label = "Shadow Intesity";
 	ui_tooltip = "Darkens shadows before adding GI to the image";
 	ui_category = "Display";
-> = 0.5;
+> = 0.8;
 
 uniform float SHADOW_GAMMA <
 	ui_type = "slider";
@@ -180,28 +180,15 @@ uniform float SHADOW_GAMMA <
 	ui_tooltip = "Gamma applied to shadow before blending";
 	hidden = HIDE_INTERMEDIATE;
 	ui_category = "Display";
-> = 0.4545;
+> = 1.0;
 
-uniform float SHADOW_AMBIENT <
-ui_type = "slider";
-	ui_min = -1.0;
-	ui_max = 1.0;
-	ui_label = "Shadow Ambient";
-	ui_tooltip = "Adds or removes ambient light for shading";
-	hidden = HIDE_EXPERIMENTAL;
-	ui_category = "Display";
-> = 0.0;
 
-uniform float SKY_BRIGHT <
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 0.5;
-	ui_label = "Sky Brightness";
-	ui_tooltip = "Intensity of skylight, may introduce noise and cause over brightening of distant objects";
+uniform float3 SKY_COLOR <
+	ui_type = "color";
+	ui_label = "Ambient Color";
+	ui_tooltip = "Adds ambient light to the scene";
 	ui_category = "Display";
-	hidden = HIDE_INTERMEDIATE;
-	ui_category_closed = true;
-> = 0.0;
+> = float3(0.45, 0.45, 0.5);
 
 uniform float LIGHTMAP_SAT <
 	ui_type = "slider";
@@ -212,7 +199,7 @@ uniform float LIGHTMAP_SAT <
 	hidden = HIDE_INTERMEDIATE;
 	ui_category = "Display";
 	ui_category_closed = true;
-> = 1.1;
+> = 1.2;
 
 uniform float HDR_RED <
 	ui_type = "slider";
@@ -251,6 +238,12 @@ uniform float AMBIENT_NEG <
 	ui_tooltip = "Reduces exposure before adding GI";
 	ui_category = "Display";
 > = 0.0;
+
+uniform bool DO_AO <
+	ui_label = "Ambient occlusion";
+	ui_tooltip = "Lightweight ambient occlusion implementation || Low performance impact";
+	ui_category = "Display";
+> = 1;
 
 uniform float DEPTH_MASK <
 	ui_type = "slider";
@@ -334,6 +327,14 @@ uniform float FRAME_PERSIST <
 	ui_max = 0.95;
 > = 0.875;
 
+uniform int UPSCALE_ITER <
+	ui_type = "slider";
+	ui_label = "Denoiser Samples";
+	ui_tooltip = "Reduces noise and improves upscaling at the cost of detail and performance";
+	ui_min = 2;
+	ui_max = 64;
+> = 8;	
+
 uniform int SAMPLE_COUNT <
 	ui_type = "slider";
 	ui_label = "Ray count";
@@ -343,6 +344,8 @@ uniform int SAMPLE_COUNT <
 	ui_category = "Sampling";
 	ui_category_closed = true;
 > = 5;
+
+
 
 uniform bool SHADOW <
 	ui_label = "Shadows";
@@ -366,7 +369,7 @@ uniform float SHADOW_Z_THK <
 	hidden = HIDE_INTERMEDIATE;
 	ui_min = 0.001;
 	ui_max = 1.0;
-> = 0.15;
+> = 0.01;
 
 uniform float SHADOW_BIAS <
 	ui_type = "slider";
@@ -408,14 +411,14 @@ ui_type = "slider";
 uniform float DISTANCE_SCALE <
 	ui_type = "slider";
 	ui_min = 0.01;
-	ui_max = 5.0;
+	ui_max = 20.0;
 	ui_label = "Distance Scale";
 	ui_tooltip = "The scale at which brightness calculations are made\n"
 				"Higher values cause light to disperse more quickly, lower values will cause light to propogate furtherm.\n"
 					"Note that lower values aren't particularly 'better'"; 
 	ui_category = "Sampling";
 	hidden = HIDE_INTERMEDIATE;
-> = 0.5;
+> = 1.0;
 
 uniform float DISTANCE_POW <
 ui_type = "slider";
@@ -529,7 +532,7 @@ uniform int CREDITS <
 
 uniform int SHADER_VERSION <
 	ui_type = "radio";
-	ui_text = "\n" "Shader Version - A26-0-1 (v0.2.6.0.1)";
+	ui_text = "\n" "Shader Version - Test Release A26-3-0 (v0.2.6.3.0)";
 	ui_label = " ";
 > = 0;
 
@@ -556,7 +559,12 @@ namespace A26{
 		Format = RGBA8;
 		MipLevels = ZNRY_MAX_LODS;
 	};
-	sampler NorDivSam{Texture = NorDivTex;};
+	sampler NorDivSam{
+		Texture = NorDivTex;
+		MinFilter = POINT;
+		MagFilter = POINT;
+		MipFilter = POINT;
+	};
 	
 	texture NorInTex{
 		Width = BUFFER_WIDTH;
@@ -572,7 +580,12 @@ namespace A26{
 		Format = R32F;
 		MipLevels = ZNRY_MAX_LODS;
 	};
-	sampler DepSam{Texture = BufTex;};
+	sampler DepSam{
+		Texture = BufTex;
+		MinFilter = POINT;
+		MagFilter = POINT;
+		MipFilter = POINT;
+	};
 	
 	texture BilaTex{
 		Width = int(BUFFER_WIDTH * ZNRY_RENDER_SCL);
@@ -731,14 +744,20 @@ float3 eyePos(float2 xy, float z)//takes screen coords (0-1) and depth (0-1) and
 {
 	float  nd	 = z * FARPLANE;
 	float3 eyp	= float3((2f * xy - 1f) * nd, nd);
-	return eyp * float3(ASPECT_RATIO, 1.0, 1.0) * FOV;
+	return eyp * float3(ASPECT_RATIO, 1.0, 1.0);
 }
 
 float3 NorEyePos(float2 xy)//takes screen coords (0-1) and depth (0-1) and converts to eyespace position
 {
 	float  nd	 = ReShade::GetLinearizedDepth(xy) * FARPLANE;
 	float3 eyp	= float3((2f * xy - 1f) * nd, nd);
-	return eyp;
+	return eyp * float3(ASPECT_RATIO, 1.0, 1.0);
+}
+
+float3 GetScreenPos(float3 xyz)//takes eyespace position and reprojects to screenspace
+{
+	xyz /= float3(ASPECT_RATIO, 1.0, 1.0);
+	return float3(0.5 + 0.5 * (xyz.xy / xyz.z), xyz.z / FARPLANE);
 }
 
 int weighthash(float2 p, float w1, float w2) //For importance sampling
@@ -764,6 +783,13 @@ float hash12(float2 p)
 	float3 p3  = frac(p.xyx * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
+}
+
+float3 hash3(float3 x)
+{
+	x		= frac(x * float3(.1031, .1030, .0973));
+    x		+= dot(x, x.yxz+33.33);
+    return   frac((x.xxy + x.yxx)*x.zyx);
 }
 
 float4 DAMPGI(float2 xy, float2 offset)//offset is noise value, output RGB is GI, A is shadows;
@@ -806,6 +832,7 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
     		//Max shadow vector calculation
     		float3 compVec0	= normalize(rp - pixP + 0.000001);
     		float3 compVec1	= normalize(minD - pixP + 0.000001);
+    		float3 compVec2	= normalize(maxD - pixP + 0.000001);
 			//float3 compVec2	= normalize(maxD - pixP + 0.000001);			
 			if(compVec0.z <= compVec1.z) {minD = rp;} 
 			if(compVec0.z >= compVec1.z) {maxD = float3(rp.xy, rp.z + SHADOW_Z_THK);} 
@@ -818,7 +845,7 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
     		if(rp.x > 1.0 || rp.y > 1.0) {break;}
     		if(rp.x < 0 || rp.y < 0) {break;}
     		
-			d = tex2Dlod(A26::DepSam, float4(rp.xy, 0, iLOD)).r;
+			d = tex2Dlod(A26::DepSam, float4(rp.xy, 0, floor(0.75 * iLOD))).r;
     		rp.z = d;
     		
     		
@@ -831,9 +858,9 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
    		 float3 shvMax	= normalize(maxD - pixP);
    		 float  shd	   = distance(rp, float3(xy, trueD));
    		 float  sb		= SHADOW_BIAS;
-   		 bool   zd		= 0;
+   		 bool   zd;		//= d >= (trueD + shd * shvMax.z);
    		 
-			if(ENABLE_Z_THK) zd = d > (trueD + shd * shvMin.z + SHADOW_Z_THK) - sb;		 
+			if(ENABLE_Z_THK) zd = d > (trueD + shd * shvMax.z + SHADOW_Z_THK) - sb;		 
    		 if(d <= (trueD + shd * shvMin.z) + sb || zd) {sh = 1.0;}
 			
 			//Diffuse Lighting calculations
@@ -844,11 +871,11 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 			{
 				float3 nor = 2.0 * tex2Dlod(A26::NorDivSam, float4(rp.xy, 0, iLOD)).rgb - 1.0;
 				float3 lv2 = normalize(eyePos(pixP.xy, pixP.z) - eyePos(rp.xy, rp.z) );
-				smb = 2.0 * max(dot(nor, lv2), 0.0);
+				smb = 4.0 * max(dot(nor, lv2), 0.0);
 			}
 				
-			float  ed	 = 1.0 + pow(abs(DISTANCE_SCALE * distance(texXY, 0.0) / f), DISTANCE_POW);
-			float  cd	 = 1.0 + (pow(abs(DISTANCE_SCALE * distance(eyeXY, texXY) / f), DISTANCE_POW));
+			float  ed	 = 1.0 + pow(abs((DISTANCE_SCALE * distance(texXY, 0.0))), DISTANCE_POW) / f;
+			float  cd	 = 1.0 + pow(abs((DISTANCE_SCALE * distance(eyeXY, texXY))), DISTANCE_POW) / f;
 			float3 lv	 = normalize(eyePos(rp.xy, rp.z) - eyePos(pixP.xy, pixP.z));
 			float  amb	= max(dot(surfN, lv), 0.0);
 				   //sh 	+= length(col) / LODS;
@@ -862,8 +889,7 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 			col *= ed;
 			float3 lAcc = smb * amb * (col / (cd *ed));//(pow(4.0, iLOD) / (4.0 * cd)) * 
 			l += rfs * sh * lAcc * pow(1.0 + DIST_BIAS, iLOD);
-			if(d == 1.0) {l += col * amb * SKY_BRIGHT;}
-			occ += sh * saturate((length(col) + SHADOW_AMBIENT) / ed);//1.0 / ((ii + 1.0) - pow(distance(eyePos(minD.xy, minD.z), texXY) * f, 2.0));
+			occ += amb * sh * saturate(length(col) / ed);//1.0 / ((ii + 1.0) - pow(distance(eyePos(minD.xy, minD.z), texXY) * f, 2.0));
 			
 			iW += (lAcc.r + lAcc.g + lAcc.b); //Accumulation for weighted sampling
 			iLOD++;	
@@ -878,7 +904,7 @@ float2 res = float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 	#endif    
     l /= sampl / 16.0;
 	l = pow(l / LODS, 1.0 / 2.2);// / (2.0 * pow(2.0, LODS))
-	occ = saturate(8.0 * occ / (sampl * LODS));
+	occ = saturate(4.0 * length(l + 0.01) * length(tex2D(A26::LumSam, xy)));//saturate(0.1 + occ);////saturate(2.0 * occ / (sampl * LODS));
 	
 	float4 result = float4(l, pow(occ, SHADOW_GAMMA));
 		   //result = result / (result + 1.0);
@@ -896,6 +922,28 @@ float3 tonemap(float3 input)
 	if(TONEMAPPER == 5) input = pow(input, 0.5 * input + 1.0);
 	input = pow(input, 1.0 / 2.2);
 	return saturate(input);
+}
+
+float SampleAO(float2 xy, float SampleLength, float Thickness)
+{
+	float3 NormalVector	= 2f * tex2Dlod(A26::NorSam, float4(xy, 0, 0)).xyz - 1f;
+	float  PixelDepth	  = ReShade::GetLinearizedDepth(xy);
+	float3 PixelPos		= NorEyePos(xy);//GetEyePos(xy, PixelDepth);
+	
+	float Accumulate;
+	#define SMP 8
+	[loop]
+	for(int i; i < SMP; i++)
+	{
+		float3 rVec = normalize(2f * hash3(float3(xy * RES, i)) - 1f);
+			   rVec = SampleLength * normalize(rVec + NormalVector);
+		
+		float3 nPos = GetScreenPos(PixelPos + rVec);
+		float  nDep = ReShade::GetLinearizedDepth(nPos.xy);
+		
+		if(nPos.z > nDep && nPos.z < nDep + Thickness) Accumulate++;//= distance(nPos.z, nDep);
+	}
+	return 1.0 - Accumulate / SMP;
 }
 
 float3 BlendGI(float3 input, float4 GI, float depth, float2 xy)
@@ -994,7 +1042,8 @@ float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 	{
 		float2 mVec	 =  tex2D(motionSam, xy).xy;
 		float3 GISec	=  tex2Dlod(A26::DualFrm, float4(mVec + xy, 0, 2)).rgb;
-		te += lerp(normalize(te), te, 0.9) * GISec * TERT_INTENSITY;
+		te += ((te) * 5.0 * pow(SKY_COLOR, 2.2)) + lerp(normalize(te), te, 0.9) * GISec * TERT_INTENSITY;
+		
 	}
 	
 	
@@ -1029,7 +1078,7 @@ float4 NormalSmooth(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	float  cDep = ReShade::GetLinearizedDepth(texcoord);
 	float  ang  = hash12(texcoord * RES);
 	float  tw;
-	#define ITER  8
+	#define ITER  4
 	for(int i; i <= ITER; i++)
 	{
 		float2 npos = 15.0 * float2(sin(ang), cos(ang)) * hash12((texcoord + 0.5) * RES * (i + 1.0)) / RES;
@@ -1061,8 +1110,9 @@ float4 RawGI(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	
 	float4 GI		= float4(DAMPGI(MSOff + texcoord, 3.0 * (0.5 - noise.xy)));
 		   GI		= saturate(GI + 0.125 * (noise.r - 0.5));
-	
-	return (GI / (GI + 1.0));
+	float  AO		= 1;
+	if(DO_AO) AO	 = SampleAO(texcoord, noise.r, 0.001);
+	return AO * (GI / (GI + 1.0));
 	
 }
 
@@ -1079,17 +1129,16 @@ float4 UpFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 	float  cDep = ReShade::GetLinearizedDepth(texcoord);
 	float  ang  = 6.28 * hash12(texcoord * RES * (FRAME_COUNT % 128));
 	float  tw;
-	int UPSCALE_ITER = 8;
 	for(int i; i <= UPSCALE_ITER; i++)
 	{
 		float2 npos = float2(sin(ang), cos(ang)) ;//hash12((texcoord + 0.5) * RES * (i + 1.0)) / RES;
-			   npos = 2.0 * npos * (1.0 + i) / RES;
+			   npos = (1.0 / ZNRY_RENDER_SCL) * npos * (1.0 + i) / RES;
 		float3 rNor = 2.0 * tex2D(A26::BilaSam, texcoord + npos).xyz - 1.0;
 		float  rDep = tex2D(A26::PreLumin, texcoord + npos).r;
 		float4 rCol = tex2D(A26::GISam, texcoord + npos);
 		ang  += 12.56 / UPSCALE_ITER;
-		float nw  = pow(max(dot(rNor, cNor) - 0.5, 0), 3.0);
-		float dw  = exp(-distance(eyePos(texcoord, rDep), eyePos(texcoord, cDep)) / 20.0);
+		float nw  = pow(max(dot(rNor, cNor) - 0.5, 0), 4.0);
+		float dw  = exp(-distance(eyePos(texcoord, rDep), eyePos(texcoord, cDep)) * 3.0);
 			  tw += nw * dw;
 		
 		cCol += rCol * nw * dw;
@@ -1109,7 +1158,7 @@ float4 CurrentFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	float4 PF	  = tex2D(A26::PreFrm, texcoord + mVec);
 	float  PD	  = tex2D(A26::PreLumin, texcoord + mVec).r;
 	
-	float  DeGhostMask = 1.0 - saturate(pow(abs(PD / CD), 15.0) + 0.02);//pow(1.0 - saturate(distance(CD, PD)), 1.0);
+	float  DeGhostMask = 1.0 - saturate(pow(abs(PD / CD), 12.0) + 0.02);//pow(1.0 - saturate(distance(CD, PD)), 1.0);
 	CF = lerp(PF.rgba, CF, (1.0 - FRAME_PERSIST));
 	CF = NbrClamp(A26::UpSam, texcoord, CF, DeGhostMask);
 	return float4(CF);
@@ -1125,7 +1174,7 @@ float4 DualFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Tar
 	float4 PF	  = tex2D(A26::PreFrm, texcoord + mVec);
 	float  PD	  = tex2D(A26::PreLumin, texcoord + 1.0 * mVec).r;
 	
-	float  DeGhostMask = 1.0 - saturate(pow(abs(PD / CD), 15.0) + 0.02);//pow(1.0 - saturate(distance(CD, PD)), 1.0);
+	float  DeGhostMask = 1.0 - saturate(pow(abs(PD / CD), 12.0) + 0.02);//pow(1.0 - saturate(distance(CD, PD)), 1.0);
 	if(DEBUG == 6) {return DeGhostMask;}
 	CF = lerp(PF.rgba, CF, (1.0 - FRAME_PERSIST));
 	CF = NbrClamp(A26::CurFrm, texcoord, CF, DeGhostMask);
@@ -1165,11 +1214,12 @@ float3 DAMPRT(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 	if(DONT_DENOISE) GI	= saturate(tex2Dlod(A26::UpSam, float4(texcoord, 0, 0)));
 	else 			GI	= tex2Dlod(A26::DualFrm, float4(texcoord, 0, 0));
 	float			depth = ReShade::GetLinearizedDepth(texcoord);
-	
+	if(depth > 0.99) return input;
 	GI = 1.1 * -GI / (GI - 1.1);
 	
 	input = BlendGI(input, GI, depth, texcoord);
-	input = tonemap(input);
+	float3 AmbientFog = pow(SKY_COLOR, 2.2) / exp(pow(15.0 * depth * DEPTH_MASK, 2.0));
+	input = tonemap(input * (1.0 + 5.0 * AmbientFog));
 	
 	if(DEBUG == 6) {input = GI.rgb;}
 	else if(DEBUG == 7) {input = tex2D(A26::NorSam, texcoord).rgb;}
@@ -1179,7 +1229,7 @@ float3 DAMPRT(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 }
 
 technique ZN_DAMPRT_A26 <
-    ui_label = "DAMP RT A26-0-1";
+    ui_label = "DAMP RT A26-3-0";
     ui_tooltip ="Zentient DAMP RT - by Zenteon\n" 
 				"The sucessor to SDIL, a much more efficient and accurate GI approximation";
 >
