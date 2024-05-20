@@ -532,7 +532,7 @@ uniform int CREDITS <
 
 uniform int SHADER_VERSION <
 	ui_type = "radio";
-	ui_text = "\n" "Shader Version - Test Release A26-3-0 (v0.2.6.3.0)";
+	ui_text = "\n" "Shader Version - Test Release A26-3-1 (v0.2.6.3.1)";
 	ui_label = " ";
 > = 0;
 
@@ -926,6 +926,8 @@ float3 tonemap(float3 input)
 
 float SampleAO(float2 xy, float SampleLength, float Thickness)
 {
+	return 1.0;
+	/*
 	float3 NormalVector	= 2f * tex2Dlod(A26::NorSam, float4(xy, 0, 0)).xyz - 1f;
 	float  PixelDepth	  = ReShade::GetLinearizedDepth(xy);
 	float3 PixelPos		= NorEyePos(xy);//GetEyePos(xy, PixelDepth);
@@ -944,6 +946,7 @@ float SampleAO(float2 xy, float SampleLength, float Thickness)
 		if(nPos.z > nDep && nPos.z < nDep + Thickness) Accumulate++;//= distance(nPos.z, nDep);
 	}
 	return 1.0 - Accumulate / SMP;
+	*/
 }
 
 float3 BlendGI(float3 input, float4 GI, float depth, float2 xy)
@@ -1040,7 +1043,7 @@ float4 LightMap(float4 vpos : SV_Position, float2 xy : TexCoord) : SV_Target
 	te = InvReinhardtJ(te);//-te / (te - 1.1);
 	if(DO_BOUNCE)
 	{
-		float2 mVec	 =  tex2D(motionSam, xy).xy;
+		float2 mVec	 =  tex2Dlod(motionSam, float4(xy, 0, 0)).xy;
 		float3 GISec	=  tex2Dlod(A26::DualFrm, float4(mVec + xy, 0, 2)).rgb;
 		te += ((te) * 5.0 * pow(SKY_COLOR, 2.2)) + lerp(normalize(te), te, 0.9) * GISec * TERT_INTENSITY;
 		
@@ -1082,8 +1085,8 @@ float4 NormalSmooth(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_
 	for(int i; i <= ITER; i++)
 	{
 		float2 npos = 15.0 * float2(sin(ang), cos(ang)) * hash12((texcoord + 0.5) * RES * (i + 1.0)) / RES;
-		float3 rNor = tex2D(A26::NorInSam, texcoord + npos).xyz;
-		float3 rCol = tex2D(A26::NorInSam, texcoord + npos).xyz;
+		float3 rNor = tex2Dlod(A26::NorInSam, float4(texcoord + npos, 0, 0)).xyz;
+		float3 rCol = tex2Dlod(A26::NorInSam, float4(texcoord + npos, 0, 0)).xyz;
 		float  rDep = ReShade::GetLinearizedDepth(texcoord + npos);//tex2D(A26::DepSam, texcoord + npos).x;
 		ang  += 6.28 / ITER;
 		float wn  = pow(2.0 * max(dot(2.0 * rNor - 1.0, 2.0 * cNor - 1.0) - 0.5, 0.0), 1.0);//exp(min(dot(rNor, cNor) + 1.0, 1.0) * 12.0);
@@ -1133,9 +1136,9 @@ float4 UpFrame(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 	{
 		float2 npos = float2(sin(ang), cos(ang)) ;//hash12((texcoord + 0.5) * RES * (i + 1.0)) / RES;
 			   npos = (1.0 / ZNRY_RENDER_SCL) * npos * (1.0 + i) / RES;
-		float3 rNor = 2.0 * tex2D(A26::BilaSam, texcoord + npos).xyz - 1.0;
-		float  rDep = tex2D(A26::PreLumin, texcoord + npos).r;
-		float4 rCol = tex2D(A26::GISam, texcoord + npos);
+		float3 rNor = 2.0 * tex2Dlod(A26::BilaSam, float4(texcoord + npos, 0, 0)).xyz - 1.0;
+		float  rDep = tex2Dlod(A26::PreLumin, float4(texcoord + npos, 0, 0)).r;
+		float4 rCol = tex2Dlod(A26::GISam, float4(texcoord + npos, 0, 0));
 		ang  += 12.56 / UPSCALE_ITER;
 		float nw  = pow(max(dot(rNor, cNor) - 0.5, 0), 4.0);
 		float dw  = exp(-distance(eyePos(texcoord, rDep), eyePos(texcoord, cDep)) * 3.0);
@@ -1229,7 +1232,7 @@ float3 DAMPRT(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 }
 
 technique ZN_DAMPRT_A26 <
-    ui_label = "DAMP RT A26-3-0";
+    ui_label = "DAMP RT A26-3-1";
     ui_tooltip ="Zentient DAMP RT - by Zenteon\n" 
 				"The sucessor to SDIL, a much more efficient and accurate GI approximation";
 >
