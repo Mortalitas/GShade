@@ -146,7 +146,7 @@
 #define fLUT_YOMSelections "Neutral\0Nature's Call\0Cherry Blossom\0Bleach\0Golden Hour\0Vibrant Sands\0Azure\0Macaron\0Vintage Film\0Bubble Gum\0Fountain\0Clear Skies\0Action\0Pastel Purity\0Lens Clarity\0Heart\0Teal and Orange\0Haunt\0"
 #define fLUT_NENSelections "Neutral\0Cinnamon\0Autumn\0Pumpkin Spice\0Harley\0Banshee\0Forsaken\0Blood\0Vampire\0Curse\0Poison Ivy\0Monster\0Gameplay Blue\0Gameplay Red\0"
 #define fLUT_YAESelections "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW\0"
-#define fLUT_IPSSelections "Neutral\0IpsusuCool\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0IpsusuAmber\0IpsusuCrystal\0IpsusuMelon\0IpsusuPlaceholder\0
+#define fLUT_IPSSelections "Neutral\0IpsusuCool\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0IpsusuAmber\0IpsusuCrystal\0IpsusuMelon\0IpsusuPlaceholder\0"
 #define fLUT_NGESelections "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0"
 #define fLUT_DEFAULTSelections "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0"
 
