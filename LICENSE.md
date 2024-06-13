@@ -32,7 +32,7 @@
   * FairyHikkidasTimewarp.jpg
   * FairyKawaii.png
   * FairyLunasGarden.png
-  * FairyMelonsplash.png
+  * FairyMelonsplash.jpg
   * FairyMermaid.png
   * FairyMermen.png
   * FairyMerryWhatever.jpg
@@ -41,7 +41,7 @@
   * FairyPersephone02.png
   * FairyPolaroid.png
   * FairyPolaroidDark.png
-  * FairyPrism.png
+  * FairyPrism.jpg
   * FairyPurgatory.jpg
   * FairyRain.png
   * FairyRavenqueenFog.png
