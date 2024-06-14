@@ -25,7 +25,7 @@ uniform float fTargetDepth <
 	ui_min = 0.0;
 	ui_max = 1.0;
 	ui_step = 0.0001;
-> = 0.0;
+> = 0.02;
 
 uniform float4 fColor < 
 	ui_label = "Color";
@@ -37,7 +37,7 @@ uniform float fPosX <
 	ui_label = "Position X";
 	ui_min = -2.0; ui_max = 2.0;
 	ui_step = 0.001;
-> = 0.5;
+> = 0.505;
 
 uniform float fPosY <
 	ui_type = "slider";
