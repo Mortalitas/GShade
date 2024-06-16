@@ -53,6 +53,9 @@
 //	Also tried to refactor the samples so more work can be done while they are being sampled, but it's not so easy and the gains
 //	I'm seeing are so small they might be statistical noise. So it MIGHT be faster - no promises.
 
+//Fix by CeeJay.dk
+//	Gather optimization is only faster on DX11 and up - Not DX10 and up. Correcting this so DX10 does not use the Gather codepath
+
 uniform float Contrast <
 	ui_type = "slider";
 	ui_label = "Contrast Adaptation";
@@ -85,7 +88,7 @@ float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 	const float3 d = tex2Doffset(sTexCASColor, texcoord, int2(-1, 0)).rgb;
 	
  
-#if __RENDERER__ >= 0xa000 // If DX10 or higher
+#if __RENDERER__ >= 0xb000 // If DX11 or higher
 	const float4 red_efhi = tex2DgatherR(sTexCASColor, texcoord + 0.5 * pixel);
 	const float4 green_efhi = tex2DgatherG(sTexCASColor, texcoord + 0.5 * pixel);
 	const float4 blue_efhi = tex2DgatherB(sTexCASColor, texcoord + 0.5 * pixel);
