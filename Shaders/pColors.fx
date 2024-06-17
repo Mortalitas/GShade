@@ -359,11 +359,11 @@ uniform bool UseApproximateTransforms <
 float get_Weight(float v, float t, float s) //value, threshold, curve slope
 {
 	v = (v - t) * s;
-	return (v > 1)
+	return (v > 1.0)
 		? 1.0
 		: (v < 0.0)
 			? 0.0
-			: v * v * (3 - 2 * v);
+			: v * v * (3.0 - 2.0 * v);
 }
 
 float3 Apply_LUT(float3 c) //Adapted from LUT.fx by Marty McFly
@@ -380,7 +380,7 @@ float3 Apply_LUT(float3 c) //Adapted from LUT.fx by Marty McFly
 
 		const float3 oc = LUT_coord;
 		LUT_coord.xy = (LUT_coord.xy * fLUT_Resolution - LUT_coord.xy + 0.5) * texel_size;
-		LUT_coord.z *= (fLUT_Resolution - 1);
+		LUT_coord.z *= (fLUT_Resolution - 1.0);
 	
 		float lerp_factor = frac(LUT_coord.z);
 		LUT_coord.x += floor(LUT_coord.z) * texel_size.y;
@@ -399,12 +399,12 @@ float3 Apply_LUT(float3 c) //Adapted from LUT.fx by Marty McFly
 
 float3 Manipulate_By_Hue(float3 color, float3 hue, float hue_shift, float hue_saturation, float hue_brightness)
 {
-	float weight = max(1 - pUtils::cdistance(color.z, hue.z), 0.0); //Linear with coverage of ~60deg
+	float weight = max(1.0 - pUtils::cdistance(color.z, hue.z), 0.0); //Linear with coverage of ~60deg
 
 	if (weight != 0.0)
 	{
 		color.z += hue_shift * weight;
-		color.xy *= 1 + float2(hue_brightness, hue_saturation) * weight; 
+		color.xy *= 1.0 + float2(hue_brightness, hue_saturation) * weight; 
 		color = Oklab::Saturate_LCh(color);
 	}
 
@@ -429,15 +429,15 @@ float3 ColorsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	if (WBTemperature != 0.0 || WBTint != 0.0)
 	{
 		color.g = color.g - WBTint;
-		color.b = (WBTint < 0)
+		color.b = (WBTint < 0.0)
 			? color.b + WBTemperature + WBTint
 			: color.b + WBTemperature;
 	}
 
 
 	//Global adjustments
-	color.r *= (1 + GlobalBrightness);
-	color.gb *= (1 + GlobalSaturation);
+	color.r *= (1.0 + GlobalBrightness);
+	color.gb *= (1.0 + GlobalSaturation);
 
 
 	////Advanced color correction - Adjustments by hue
@@ -486,25 +486,25 @@ float3 ColorsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	float shadow_weight = get_Weight(adapted_luminance, ShadowThreshold, -ShadowCurveSlope);
 	if (shadow_weight != 0.0)
 	{
-		color.r *= (1 + ShadowBrightness * shadow_weight);
-		color.g = lerp(color.g, ShadowTintColor.g + (1 - ShadowTintColorC) * color.g, shadow_weight) * (1 + ShadowSaturation * shadow_weight);
-		color.b = lerp(color.b, ShadowTintColor.b + (1 - ShadowTintColorC) * color.b, shadow_weight) * (1 + ShadowSaturation * shadow_weight);
+		color.r *= (1.0 + ShadowBrightness * shadow_weight);
+		color.g = lerp(color.g, ShadowTintColor.g + (1.0 - ShadowTintColorC) * color.g, shadow_weight) * (1.0 + ShadowSaturation * shadow_weight);
+		color.b = lerp(color.b, ShadowTintColor.b + (1.0 - ShadowTintColorC) * color.b, shadow_weight) * (1.0 + ShadowSaturation * shadow_weight);
 	}
 	//Highlights
 	float highlight_weight = get_Weight(adapted_luminance, HighlightThreshold, HighlightCurveSlope);
 	if (highlight_weight != 0.0)
 	{
-		color.r *= (1 + HighlightBrightness * highlight_weight);
-		color.g = lerp(color.g, HighlightTintColor.g + (1 - HighlightTintColorC) * color.g, highlight_weight) * (1 + HighlightSaturation * highlight_weight);
-		color.b = lerp(color.b, HighlightTintColor.b + (1 - HighlightTintColorC) * color.b, highlight_weight) * (1 + HighlightSaturation * highlight_weight);
+		color.r *= (1.0 + HighlightBrightness * highlight_weight);
+		color.g = lerp(color.g, HighlightTintColor.g + (1.0 - HighlightTintColorC) * color.g, highlight_weight) * (1.0 + HighlightSaturation * highlight_weight);
+		color.b = lerp(color.b, HighlightTintColor.b + (1.0 - HighlightTintColorC) * color.b, highlight_weight) * (1.0 + HighlightSaturation * highlight_weight);
 	}
 	//Midtones
-	float midtone_weight = max(1 - (shadow_weight + highlight_weight), 0.0);
+	float midtone_weight = max(1.0 - (shadow_weight + highlight_weight), 0.0);
 	if (midtone_weight != 0.0)
 	{
-		color.r *= (1 + MidtoneBrightness * midtone_weight);
-		color.g = lerp(color.g, MidtoneTintColor.g + (1 - MidtoneTintColorC) * color.g, midtone_weight) * (1 + MidtoneSaturation * midtone_weight);
-		color.b = lerp(color.b, MidtoneTintColor.b + (1 - MidtoneTintColorC) * color.b, midtone_weight) * (1 + MidtoneSaturation * midtone_weight);
+		color.r *= (1.0 + MidtoneBrightness * midtone_weight);
+		color.g = lerp(color.g, MidtoneTintColor.g + (1.0 - MidtoneTintColorC) * color.g, midtone_weight) * (1.0 + MidtoneSaturation * midtone_weight);
+		color.b = lerp(color.b, MidtoneTintColor.b + (1.0 - MidtoneTintColorC) * color.b, midtone_weight) * (1.0 + MidtoneSaturation * midtone_weight);
 	}
 	color = Oklab::Oklab_to_RGB(color);
 
