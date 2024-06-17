@@ -54,21 +54,16 @@ namespace pUtils
 	//--clerp, lerps the shortest way between two angles
 	float clerp(float v, float t, float w)
 	{   
-		const float d = v - t;
-		t = (abs(d) > PI)
-			? d - sign(d) * PI
-			: t;
-		return (t - v) * w + v;
+		return v + (((t - v) % PI + 1.5 * PI) % PI) * w;
 	}
 
 	//--cdistance, returns the shortest distance between two angles
 	float cdistance(float v, float t)
 	{   
-		float d = v - t;
-		d = (abs(d) > PI)
-			? d - sign(d) * PI
+		float d = abs(t - v);
+		return (d > PI)
+			? 2.0 * PI - d
 			: d;
-		return abs(d);
 	}
 
 	//--wnoise, returns time variable white noise
