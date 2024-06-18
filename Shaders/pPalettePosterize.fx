@@ -9,6 +9,11 @@
 #include "ReShade.fxh"
 #include "Oklab.fxh"
 
+//Clamp invnorm factor to prevent fp precision errors
+#ifndef _POSTERIZE_MAX_INVNORM_FACTOR
+	#define _POSTERIZE_MAX_INVNORM_FACTOR 12.5 //1000 nits
+#endif
+
 uniform int PaletteType <
 	ui_type = "radio";
 	ui_label = "Color palette";
@@ -32,10 +37,10 @@ uniform int NumColors <
 uniform float PaletteBalance <
 	ui_type = "slider";
 	ui_label = "Palette Balance";
-	ui_min = 0.01; ui_max = 2.0;
+	ui_min = 0.001; ui_max = 1.0;
 	ui_tooltip = "Adjusts thresholds for color palette";
 	ui_category = "Settings";
-> = 1.0;
+> = 0.5;
 uniform float DitheringFactor <
 	ui_type = "slider";
 	ui_label = "Dithering";
@@ -73,8 +78,10 @@ static const int bayer[2 * 2] = {
 float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
-	static const float INVNORM_FACTOR = Oklab::INVNORM_FACTOR;
 	static const float PI = 3.1415927;
+
+	static const float INVNORM_FACTOR = min(Oklab::INVNORM_FACTOR, _POSTERIZE_MAX_INVNORM_FACTOR);
+	static const float HDR_PAPER_WHITE = Oklab::HDR_PAPER_WHITE;
 
 	static const float3 BaseColor = Oklab::RGB_to_LCh(BaseColor);
 	color = (UseApproximateTransforms)
@@ -95,8 +102,8 @@ float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord
 	}
 
 	float luminance = color.r + m;
-	float luminance_norm = luminance / INVNORM_FACTOR;
-	static const float PW_COMPENSATION = rcp(1.0 + INVNORM_FACTOR - Oklab::HDR_PAPER_WHITE);
+	float adapted_luminance = (Oklab::IS_HDR) ? min(2.0 * luminance / HDR_PAPER_WHITE, 1.0) : luminance;
+	static const float PW_COMPENSATION = 2.2 - HDR_PAPER_WHITE / INVNORM_FACTOR;
 	static const float PALETTE_CONTROL = PW_COMPENSATION * PaletteBalance;
 	float hue_range;
 	float hue_offset = 0.0;
@@ -114,15 +121,15 @@ float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord
 		case 2: //Complementary
 		{
 			hue_range = PI/2.0;
-			hue_offset = (luminance_norm > 0.5 * PALETTE_CONTROL)
+			hue_offset = (adapted_luminance > 0.5 * PALETTE_CONTROL)
 				? PI*0.75
 				: 0.0;
 		} break;
 		case 3: //Triadic
 		{
 			hue_range = PI/2.0;
-			hue_offset = (luminance_norm > 0.33 * PALETTE_CONTROL)
-				? PI*0.4167 * floor(luminance_norm * 3.0 / PALETTE_CONTROL)
+			hue_offset = (adapted_luminance > 0.33 * PALETTE_CONTROL)
+				? PI*0.4167 * floor(adapted_luminance * 3.0 / PALETTE_CONTROL)
 				: 0.0;
 		} break;
 		case 4: //All colors
@@ -133,7 +140,7 @@ float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord
 
 	color.r = ceil(luminance * NumColors) / NumColors;
 	color.g = (DesaturateHighlights)
-		? BaseColor.g * (1.0 - (luminance_norm * luminance_norm) * DesaturateFactor)
+		? BaseColor.g * (1.0 - (adapted_luminance * adapted_luminance) * DesaturateFactor)
 		: BaseColor.g;
 	color.b = BaseColor.b + (color.r - rcp(NumColors)) * hue_range + hue_offset;
 	
