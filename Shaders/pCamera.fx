@@ -388,7 +388,7 @@ float3 RedoTonemap(float3 c)
 
 float3 ClipBlacks(float3 c)
 {
-    return float3(max(c.r, 0), max(c.g, 0), max(c.b, 0));
+    return float3(max(c.r, 0.0), max(c.g, 0.0), max(c.b, 0.0));
 }
 
 float3 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bool sample_linear)
@@ -478,15 +478,15 @@ float3 BokehBlur(sampler s, float2 texcoord, float size, bool sample_linear)
 		} break;
 	}
 
-	static const float2 OFFSET[90] = { float2(0, 4), float2(3.4641, 2), float2(3.4641, -2), float2(0, -4), float2(-3.4641, -2), float2(-3.4641, 2), float2(0, 8), float2(6.9282, 4), float2(6.9282, -4), float2(0, -8), float2(-6.9282, -4), float2(-6.9282, 4), float2(4, 6.9282), float2(8, 0), float2(4, -6.9282), float2(-4, -6.9282), float2(-8, 0), float2(-4, 6.9282), float2(0, 12), float2(4.1042, 11.2763), float2(7.7135, 9.1925), float2(10.3923, 6), float2(11.8177, 2.0838), float2(11.8177, -2.0838), float2(10.3923, -6), float2(7.7135, -9.1925), float2(4.1042, -11.2763), float2(0, -12), float2(-4.1042, -11.2763), float2(-7.7135, -9.1925), float2(-10.3923, -6), float2(-11.8177, -2.0838), float2(-11.8177, 2.0838), float2(-10.3923, 6), float2(-7.7135, 9.1925), float2(-4.1042, 11.2763), float2(0, 16), float2(4.1411, 15.4548), float2(8, 13.8564), float2(11.3137, 11.3137), float2(13.8564, 8), float2(15.4548, 4.1411), float2(16, 0), float2(15.4548, -4.1411), float2(13.8564, -8), float2(11.3137, -11.3137), float2(8, -13.8564), float2(4.1411, -15.4548), float2(0, -16), float2(-4.1411, -15.4548), float2(-8, -13.8564), float2(-11.3137, -11.3137), float2(-13.8564, -8), float2(-15.4548, -4.1411), float2(-16, 0), float2(-15.4548, 4.1411), float2(-13.8564, 8), float2(-11.3137, 11.3137), float2(-8, 13.8564), float2(-4.1411, 15.4548), float2(0, 20), float2(4.1582, 19.563), float2(8.1347, 18.2709), float2(11.7557, 16.1803), float2(14.8629, 13.3826), float2(17.3205, 10), float2(19.0211, 6.1803), float2(19.8904, 2.0906), float2(19.8904, -2.0906), float2(19.0211, -6.1803), float2(17.3205, -10), float2(14.8629, -13.3826), float2(11.7557, -16.1803), float2(8.1347, -18.2709), float2(4.1582, -19.563), float2(0, -20), float2(-4.1582, -19.563), float2(-8.1347, -18.2709), float2(-11.7557, -16.1803), float2(-14.8629, -13.3826), float2(-17.3205, -10), float2(-19.0211, -6.1803), float2(-19.8904, -2.0906), float2(-19.8904, 2.0906), float2(-19.0211, 6.1803), float2(-17.3205, 10), float2(-14.8629, 13.3826), float2(-11.7557, 16.1803), float2(-8.1347, 18.2709), float2(-4.1582, 19.563) };
+	static const float2 OFFSET[90] = { float2(0.0, 4.0), float2(3.4641, 2.0), float2(3.4641, -2.0), float2(0.0, -4.0), float2(-3.4641, -2.0), float2(-3.4641, 2.0), float2(0.0, 8.0), float2(6.9282, 4.0), float2(6.9282, -4.0), float2(0.0, -8.0), float2(-6.9282, -4.0), float2(-6.9282, 4.0), float2(4.0, 6.9282), float2(8.0, 0.0), float2(4.0, -6.9282), float2(-4.0, -6.9282), float2(-8.0, 0.0), float2(-4.0, 6.9282), float2(0.0, 12.0), float2(4.1042, 11.2763), float2(7.7135, 9.1925), float2(10.3923, 6.0), float2(11.8177, 2.0838), float2(11.8177, -2.0838), float2(10.3923, -6.0), float2(7.7135, -9.1925), float2(4.1042, -11.2763), float2(0.0, -12.0), float2(-4.1042, -11.2763), float2(-7.7135, -9.1925), float2(-10.3923, -6.0), float2(-11.8177, -2.0838), float2(-11.8177, 2.0838), float2(-10.3923, 6.0), float2(-7.7135, 9.1925), float2(-4.1042, 11.2763), float2(0.0, 16.0), float2(4.1411, 15.4548), float2(8.0, 13.8564), float2(11.3137, 11.3137), float2(13.8564, 8.0), float2(15.4548, 4.1411), float2(16.0, 0.0), float2(15.4548, -4.1411), float2(13.8564, -8.0), float2(11.3137, -11.3137), float2(8.0, -13.8564), float2(4.1411, -15.4548), float2(0.0, -16.0), float2(-4.1411, -15.4548), float2(-8.0, -13.8564), float2(-11.3137, -11.3137), float2(-13.8564, -8.0), float2(-15.4548, -4.1411), float2(-16.0, 0.0), float2(-15.4548, 4.1411), float2(-13.8564, 8.0), float2(-11.3137, 11.3137), float2(-8.0, 13.8564), float2(-4.1411, 15.4548), float2(0.0, 20.0), float2(4.1582, 19.563), float2(8.1347, 18.2709), float2(11.7557, 16.1803), float2(14.8629, 13.3826), float2(17.3205, 10.0), float2(19.0211, 6.1803), float2(19.8904, 2.0906), float2(19.8904, -2.0906), float2(19.0211, -6.1803), float2(17.3205, -10.0), float2(14.8629, -13.3826), float2(11.7557, -16.1803), float2(8.1347, -18.2709), float2(4.1582, -19.563), float2(0.0, -20.0), float2(-4.1582, -19.563), float2(-8.1347, -18.2709), float2(-11.7557, -16.1803), float2(-14.8629, -13.3826), float2(-17.3205, -10.0), float2(-19.0211, -6.1803), float2(-19.8904, -2.0906), float2(-19.8904, 2.0906), float2(-19.0211, 6.1803), float2(-17.3205, 10.0), float2(-14.8629, 13.3826), float2(-11.7557, 16.1803), float2(-8.1347, 18.2709), float2(-4.1582, 19.563) };
     
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 	float2 step_length = TEXEL_SIZE * size * size_compensation;
 
 	static const float MAX_VARIANCE = 0.1;
-	float2 variance = pUtils::FrameCount * float2(sin(2000 * PI * texcoord.x), cos(2000 * PI * texcoord.y)) * 1000.0;
+	float2 variance = pUtils::FrameCount * float2(sin(2000.0 * PI * texcoord.x), cos(2000.0 * PI * texcoord.y)) * 1000.0;
 	variance %= MAX_VARIANCE;
-	variance = 1 + variance - MAX_VARIANCE * 0.5;
+	variance = 1.0 + variance - MAX_VARIANCE * 0.5;
 
 	float3 color;
 	[branch]
@@ -568,7 +568,7 @@ vs2ps VS_DOF(uint id : SV_VertexID)
 	if (UseDOF)
 	{
 		float depth = (UseDOFAF) ? tex2Dfetch(spStorageTex, 0, 0).x : DOFManualFocusDist;
-		float scale = ((float(DOFFocalLength*DOFFocalLength) / 10000) * DOF_SENSOR_SIZE / 18) / ((1 + depth*depth) * DOFAperture) * length(float2(BUFFER_WIDTH, BUFFER_HEIGHT))/2048;
+		float scale = ((float(DOFFocalLength*DOFFocalLength) / 10000.0) * float(DOF_SENSOR_SIZE) / 18.0) / ((1.0 + depth*depth) * DOFAperture) * length(float2(BUFFER_WIDTH, BUFFER_HEIGHT))/2048.0;
 		o.texcoord.z = depth;
 		o.texcoord.w = scale;
 	}
@@ -595,10 +595,10 @@ float2 StoragePass(vs2ps o) : COLOR
 {
 	float2 data = tex2D(spStorageTexC, o.texcoord.xy).xy;
 	//Sample DOF
-	data.x = lerp(data.x, o.texcoord.w, min(pUtils::FrameTime / (DOFFocusSpeed * 500 + EPSILON), 1.0));
+	data.x = lerp(data.x, o.texcoord.w, min(pUtils::FrameTime / (DOFFocusSpeed * 500.0 + EPSILON), 1.0));
 
 	//Sample AE
-	data.y = lerp(data.y, max(Oklab::get_Adapted_Luminance_RGB(SampleLinear(o.texcoord.xy).rgb, AE_RANGE), AE_MIN_BRIGHTNESS), min(pUtils::FrameTime / (AESpeed * 1000 + EPSILON), 1.0));
+	data.y = lerp(data.y, max(Oklab::get_Adapted_Luminance_RGB(SampleLinear(o.texcoord.xy).rgb, AE_RANGE), AE_MIN_BRIGHTNESS), min(pUtils::FrameTime / (AESpeed * 1000.0 + EPSILON), 1.0));
 	return data.xy;
 }
 float2 StoragePassC(float4 vpos : SV_Position, float2 texcoord : TexCoord) : COLOR
@@ -723,7 +723,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	{
 		float diagonal_length = length(pUtils::ASPECT_RATIO);
 		
-		float fov_factor = PI * FEFoV/360;
+		float fov_factor = PI * float(FEFoV)/360.0;
 		if (FEVFOV)
 		{
 			fov_factor = atan(tan(fov_factor) * BUFFER_ASPECT_RATIO);
@@ -732,7 +732,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 		float crop_value = lerp(1.0 + (diagonal_length - 1.0) * cos(fov_factor), diagonal_length, FECrop * pow(sin(fov_factor), 6.0));//This is stupid and there is a better way.
 		
 		//Circularize radiant vector and apply cropping
-		float2 cn_radiant_vector = 2 * radiant_vector * pUtils::ASPECT_RATIO / crop_value * fit_fov;
+		float2 cn_radiant_vector = 2.0 * radiant_vector * pUtils::ASPECT_RATIO / crop_value * fit_fov;
 
 		if (length(cn_radiant_vector) < 1.0)
 		{
@@ -741,7 +741,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 			float theta = acos(z) / fov_factor;
 
 			float2 d = normalize(cn_radiant_vector);
-			texcoord = (theta * d) / (2 * pUtils::ASPECT_RATIO) + 0.5;
+			texcoord = (theta * d) / (2.0 * pUtils::ASPECT_RATIO) + 0.5;
 		} 
 	}
 
@@ -749,7 +749,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	[branch]
 	if (GeoIStrength != 0.0)
 	{
-		float2 bump = 0.6666667 * tex2D(spBumpTex, texcoord * _BUMP_MAP_SCALE).xy + 0.33333334 * tex2D(spBumpTex, texcoord * _BUMP_MAP_SCALE * 3).xy;
+		float2 bump = 0.6666667 * tex2D(spBumpTex, texcoord * _BUMP_MAP_SCALE).xy + 0.33333334 * tex2D(spBumpTex, texcoord * _BUMP_MAP_SCALE * 3.0).xy;
     
 		bump = bump * 2.0 - 1.0;
 		texcoord += bump * TEXEL_SIZE * (GeoIStrength * GeoIStrength);
@@ -767,7 +767,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	if (UseDOF)
 	{
 		float4 dof_data = tex2D(spBokehBlurTex, texcoord);
-		float dof_mix = min(10 * dof_data.a, 1.0);
+		float dof_mix = min(10.0 * dof_data.a, 1.0);
 		color = lerp(color, RedoTonemap(dof_data.rgb), dof_mix);
 	}
 
@@ -800,7 +800,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	if (VignetteStrength != 0.0)
 	{
 		float weight = clamp((length(float2(abs(texcoord_clean.x - 0.5) * rcp(VignetteWidth), abs(texcoord_clean.y - 0.5))) - VignetteInnerRadius) / (VignetteOuterRadius - VignetteInnerRadius), 0.0, 1.0);
-		color.rgb *= 1 - VignetteStrength * weight;
+		color.rgb *= 1.0 - VignetteStrength * weight;
 	}
 
 	//Noise
@@ -831,7 +831,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	//Auto exposure
 	if (UseAE)
 	{
-		color *= lerp(1.0, AETarget / tex2Dlod(spStorageTex, float4(AEPx, AEPy, 0, STORAGE_TEX_MIPLEVELS - 1)).y, AEGain);
+		color *= lerp(1.0, AETarget / tex2Dlod(spStorageTex, float4(AEPx, AEPy, 0.0, STORAGE_TEX_MIPLEVELS - 1)).y, AEGain);
 	}
     
 	//DEBUG stuff
@@ -839,7 +839,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	{
 		if (pow((texcoord_clean.x - DOFFocusPx) * BUFFER_ASPECT_RATIO, 2.0) + pow(texcoord_clean.y - DOFFocusPy, 2.0) < 0.0001)
 		{
-			color.rgb = float3(1.0, 0, 0) * INVNORM_FACTOR;
+			color.rgb = float3(1.0, 0.0, 0.0) * INVNORM_FACTOR;
 		}
 	}
 

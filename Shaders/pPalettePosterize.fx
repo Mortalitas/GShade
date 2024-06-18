@@ -86,7 +86,7 @@ float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord
 	float m;
 	if (DitheringFactor != 0.0)
 	{
-		int2 xy = int2(texcoord * ReShade::ScreenSize) % 2.0;
+		int2 xy = int2(texcoord * ReShade::ScreenSize) % 2;
 		m = (bayer[xy.x + 2 * xy.y] * 0.25 - 0.5) * INVNORM_FACTOR * DitheringFactor;
 	}
 	else
@@ -96,7 +96,7 @@ float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord
 
 	float luminance = color.r + m;
 	float luminance_norm = luminance / INVNORM_FACTOR;
-	static const float PW_COMPENSATION = rcp(1 + INVNORM_FACTOR - Oklab::HDR_PAPER_WHITE);
+	static const float PW_COMPENSATION = rcp(1.0 + INVNORM_FACTOR - Oklab::HDR_PAPER_WHITE);
 	static const float PALETTE_CONTROL = PW_COMPENSATION * PaletteBalance;
 	float hue_range;
 	float hue_offset = 0.0;
@@ -133,7 +133,7 @@ float3 PosterizeDitherPass(float4 vpos : SV_Position, float2 texcoord : TexCoord
 
 	color.r = ceil(luminance * NumColors) / NumColors;
 	color.g = (DesaturateHighlights)
-		? BaseColor.g * (1 - (luminance_norm * luminance_norm) * DesaturateFactor)
+		? BaseColor.g * (1.0 - (luminance_norm * luminance_norm) * DesaturateFactor)
 		: BaseColor.g;
 	color.b = BaseColor.b + (color.r - rcp(NumColors)) * hue_range + hue_offset;
 	
