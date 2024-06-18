@@ -257,13 +257,13 @@ namespace Oklab
 	{
 		return float3(clamp(c.r, 0.0, INVNORM_FACTOR), clamp(c.g, 0.0, INVNORM_FACTOR), clamp(c.b, 0.0, INVNORM_FACTOR));
 	}
-	float Luminance_RGB(float3 c)
+	float get_Luminance_RGB(float3 c)
 	{
 		return dot(c, float3(0.2126, 0.7152, 0.0722));
 	}
-	float Adapted_Luminance_RGB(float3 c, float range)
+	float get_Adapted_Luminance_RGB(float3 c, float range)
 	{
-		return min(2.0 * Luminance_RGB(c) / HDR_PAPER_WHITE, range);
+		return min(2.0 * get_Luminance_RGB(c) / HDR_PAPER_WHITE, range);
 	}
 
 

@@ -420,7 +420,7 @@ float3 ColorsPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	color = (UseApproximateTransforms)
 		? Oklab::Fast_DisplayFormat_to_Linear(color)
 		: Oklab::DisplayFormat_to_Linear(color);
-	float adapted_luminance = Oklab::Adapted_Luminance_RGB(color, 1.0);
+	float adapted_luminance = Oklab::get_Adapted_Luminance_RGB(color, 1.0);
 	color = Oklab::RGB_to_Oklab(color);
 
 	

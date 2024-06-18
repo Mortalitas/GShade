@@ -598,7 +598,7 @@ float2 StoragePass(vs2ps o) : COLOR
 	data.x = lerp(data.x, o.texcoord.w, min(pUtils::FrameTime / (DOFFocusSpeed * 500 + EPSILON), 1.0));
 
 	//Sample AE
-	data.y = lerp(data.y, max(Oklab::Adapted_Luminance_RGB(SampleLinear(o.texcoord.xy).rgb, AE_RANGE), AE_MIN_BRIGHTNESS), min(pUtils::FrameTime / (AESpeed * 1000 + EPSILON), 1.0));
+	data.y = lerp(data.y, max(Oklab::get_Adapted_Luminance_RGB(SampleLinear(o.texcoord.xy).rgb, AE_RANGE), AE_MIN_BRIGHTNESS), min(pUtils::FrameTime / (AESpeed * 1000 + EPSILON), 1.0));
 	return data.xy;
 }
 float2 StoragePassC(float4 vpos : SV_Position, float2 texcoord : TexCoord) : COLOR
@@ -631,7 +631,7 @@ float4 BokehBlurPass(vs2ps o) : COLOR
 float3 HighPassFilter(vs2ps o) : COLOR
 {
 	float3 color = (UseDOF) ? tex2D(spBokehBlurTex, o.texcoord.xy).rgb : (BlurStrength == 0.0) ? SampleLinear(o.texcoord.xy, true).rgb : tex2D(spGaussianBlurTex, o.texcoord.xy).rgb;
-	float adapted_luminance = Oklab::Adapted_Luminance_RGB(RedoTonemap(color), 1.0);
+	float adapted_luminance = Oklab::get_Adapted_Luminance_RGB(RedoTonemap(color), 1.0);
 
 	color *= pow(abs(adapted_luminance), BloomCurve*BloomCurve);
 	return color;
@@ -705,7 +705,7 @@ float3 BloomUpS0(vs2ps o) : COLOR
 
 	if (BloomGamma != 1.0)
 	{
-		color *= pow(abs(Oklab::Luminance_RGB(color / Oklab::INVNORM_FACTOR)), BloomGamma);
+		color *= pow(abs(Oklab::get_Luminance_RGB(color / Oklab::INVNORM_FACTOR)), BloomGamma);
 	}
 	return color;
 }
@@ -808,7 +808,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	if (NoiseStrength != 0.0)
 	{
 		static const float NOISE_CURVE = max(INVNORM_FACTOR * 0.025, 1.0);
-		float luminance = Oklab::Luminance_RGB(color);
+		float luminance = Oklab::get_Luminance_RGB(color);
 
 		//White noise
 		float noise1 = pUtils::wnoise(texcoord_clean, float2(6.4949, 39.116));
