@@ -63,7 +63,7 @@ namespace Oklab
 	//Invnorm factor
 	#if BUFFER_COLOR_SPACE == 2     //scRGB
 		#ifndef HDR_PEAK_LUMINANCE_NITS
-			#define HDR_PEAK_LUMINANCE_NITS 1000.0
+			#define HDR_PEAK_LUMINANCE_NITS 1000
 		#endif
 		static const float INVNORM_FACTOR = HDR_PEAK_LUMINANCE_NITS / SDR_WHITEPOINT;
 	#elif BUFFER_COLOR_SPACE == 3   //HDR10 ST2084
