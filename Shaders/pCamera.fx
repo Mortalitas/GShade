@@ -639,35 +639,35 @@ float3 HighPassFilter(vs2ps o) : COLOR
 //Downsample
 float3 BloomDownS1(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex0, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex0, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS2(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex1, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex1, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS3(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex2, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex2, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS4(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex3, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex3, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS5(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex4, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex4, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS6(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex5, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex5, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS7(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex6, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex6, o.texcoord.xy, 0.85);
 }
 float3 BloomDownS8(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex7, o.texcoord.xy, 1.0);
+	return BoxSample(spBloomTex7, o.texcoord.xy, 0.85);
 }
 //Upsample
 float3 BloomUpS7(vs2ps o) : COLOR
