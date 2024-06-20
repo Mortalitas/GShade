@@ -28,32 +28,32 @@
 // Special thanks to Sleeps_Hungry for the addition of the FFOccludeUI technique.
 
 #ifndef KeepUIDebug
-	#define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
+    #define KeepUIDebug 0 // Set to 1 if you need to use KeepUI's debug features.
 #endif
 
 #ifndef KeepUIType
-	#define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
+    #define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
 
     #ifndef __GSHADE__
     // KeepUI is disabled and the option to manually enable it is provided if running under ReShade with the UIBind addon made by cot6.
-	// Ipsusu requested this in order to better support REST under ReShade, don't shoot me. - Marot
-	#elif (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
-		#undef KeepUIType
-		#define KeepUIType 1
-	// Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
-	#elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
-		#undef KeepUIType
-		#define KeepUIType 2
-	#endif
+    // Ipsusu requested this in order to better support REST under ReShade, don't shoot me. - Marot
+    #elif (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
+        #undef KeepUIType
+        #define KeepUIType 1
+    // Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
+    #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
+        #undef KeepUIType
+        #define KeepUIType 2
+    #endif
 #endif
 
 #if KeepUIType == 0 // Unsupported game.
 uniform int bKeepUIForceType <
-	ui_type = "combo";
+    ui_type = "combo";
     ui_category = "Options";
     ui_label = "UI Detection Type Override";
 #ifndef __GSHADE__
-	ui_tooltip = "Manually enable a specific UI detection type for unsupported games.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIType";
+    ui_tooltip = "Manually enable a specific UI detection type for unsupported games.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIType";
 #else
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
 #endif
@@ -72,7 +72,7 @@ uniform bool bKeepUIOcclude <
 > = 0;
 
 #ifndef KeepUIOccludeAssist
-	#define KeepUIOccludeAssist 0
+    #define KeepUIOccludeAssist 0
 #endif
 
 #if KeepUIOccludeAssist
