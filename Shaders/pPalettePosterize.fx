@@ -27,10 +27,10 @@ uniform float3 BaseColor <
 	ui_tooltip = "Color from which other colors are calculated";
 	ui_category = "Settings";
 > = float3(0.52, 0.05, 0.05);
-uniform int NumColors <
+uniform float NumColors <
 	ui_type = "slider";
 	ui_label = "Number of colors";
-	ui_min = 2; ui_max = 16;
+	ui_min = 2.0; ui_max = 16.0; ui_step = 1.0;
 	ui_tooltip = "Number of colors to posterize to";
 	ui_category = "Settings";
 > = 4;

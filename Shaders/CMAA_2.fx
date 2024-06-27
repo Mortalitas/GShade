@@ -728,7 +728,7 @@ float4 DetectComplexShapes(uint2 coord, float4 edges, float4 edgesLeft, float4 e
 			return packZ(horizontal, invertedZ, shapeQualityScore, lineLengthLeft, lineLengthRight);//((uint(horizontal) << 19) | (uint(invertedZ) << 18) | (uint(shapeQualityScore) << 16) | (uint(lineLengthLeft) << 8) | (uint(lineLengthRight)));
 		}
 	}
-	return 0;
+	return float4(0.0, 0.0, 0.0, 0.0);
 
 }
 

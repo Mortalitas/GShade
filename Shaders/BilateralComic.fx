@@ -258,6 +258,7 @@ void BilateralFilterPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out
 
 void OutputPS(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 color : SV_Target0)
 {
+	color = float4(0.0, 0.0, 0.0, 0.0);
 	float sobel = tex2D(sSobel, texcoord).x;
 	if(1 - sobel > (1 - EdgeThreshold)) sobel = 0;
 	sobel *= exp(-(2 - EdgeStrength));
