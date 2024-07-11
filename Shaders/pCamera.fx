@@ -104,7 +104,7 @@ uniform int BokehQuality <
 uniform bool DOFDebug <
 	ui_type = "bool";
 	ui_label = "AF debug";
-	ui_tooltip = "Display AF point";
+	ui_tooltip = "Display autofocus point";
 	ui_category = "DOF";
 > = false;
 
