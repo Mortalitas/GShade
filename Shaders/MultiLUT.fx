@@ -526,7 +526,7 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_FILE2 fLUT_IPSTextureName
     #define _SOURCE_MULTILUT_TILE_SIZE2 32
 	#define _SOURCE_MULTILUT_TILE_AMOUNT2 32
-    #define _SOURCE_MULTILUT_AMOUNT2 17
+    #define _SOURCE_MULTILUT_AMOUNT2 18
 #elif MultiLUTTexture2_Source == 12 // Nightingale MultiLut_Nightingale.png
     #define _SOURCE_MULTILUT_FILE2 fLUT_NGETextureName
     #define _SOURCE_MULTILUT_TILE_SIZE2 32
@@ -598,7 +598,7 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_FILE3 fLUT_IPSTextureName
     #define _SOURCE_MULTILUT_TILE_SIZE3 32
 	#define _SOURCE_MULTILUT_TILE_AMOUNT3 32
-    #define _SOURCE_MULTILUT_AMOUNT3 17
+    #define _SOURCE_MULTILUT_AMOUNT3 18
 #elif MultiLUTTexture3_Source == 12 // Nightingale MultiLut_Nightingale.png
     #define _SOURCE_MULTILUT_FILE3 fLUT_NGETextureName
     #define _SOURCE_MULTILUT_TILE_SIZE3 32
