@@ -37,6 +37,9 @@
 //
 // MultiLut_Nightingale.png was provided by Nightingale Silence!
 // Follow them on Twitter here: https://twitter.com/franandneo
+//
+// MultiLut_Marot.png was provided by Marot!
+// Follow them on Twitter here: https://twitter.com/MarotSatil
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Lightly optimized by Marot Satil for the GShade project.
 
