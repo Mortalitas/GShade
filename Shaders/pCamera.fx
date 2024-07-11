@@ -234,6 +234,12 @@ uniform float VignetteWidth <
 	ui_tooltip = "Controls the shape of vignette";
 	ui_category = "Vignette";
 > = 1.0;
+uniform bool VignetteDebug <
+	ui_type = "bool";
+	ui_label = "Vignette debug";
+	ui_tooltip = "Display vignette radii";
+	ui_category = "Vignette";
+> = false;
 
 //Noise
 uniform float NoiseStrength <
@@ -838,6 +844,18 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	if (DOFDebug)
 	{
 		if (pow((texcoord_clean.x - DOFFocusPx) * BUFFER_ASPECT_RATIO, 2.0) + pow(texcoord_clean.y - DOFFocusPy, 2.0) < 0.0001)
+		{
+			color.rgb = float3(1.0, 0.0, 0.0) * INVNORM_FACTOR;
+		}
+	}
+	if (VignetteDebug)
+	{
+		float vignette_distance = length(radiant_vector * float2(rcp(VignetteWidth), 1.0));
+		if (abs(vignette_distance - VignetteInnerRadius) < 0.001) //Inner radius
+		{
+			color.rgb = float3(1.0, 0.0, 0.0) * INVNORM_FACTOR;
+		}
+		if (abs(vignette_distance - VignetteOuterRadius) < 0.0015) //Outer radius
 		{
 			color.rgb = float3(1.0, 0.0, 0.0) * INVNORM_FACTOR;
 		}
