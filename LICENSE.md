@@ -85,6 +85,9 @@
   * Papyrus2.png
   * Papyrus6.png
 
+* Marot (twitter.com/MarotSatil)
+  * MultiLut_Marot.png
+
 * MartyMcFly/Pascal Glitcher (github.com/martymcmodding):
   * AreaLUT.png
   * ca_lut_new.png

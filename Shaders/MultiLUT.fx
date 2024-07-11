@@ -133,8 +133,9 @@
 #define fLUT_YAETextureName "MultiLut_yaes.png"
 #define fLUT_IPSTextureName "MultiLut_Ipsusu.png"
 #define fLUT_NGETextureName "MultiLut_Nightingale.png"
+#define fLUT_MARTextureName "MultiLut_Marot.png"
 
-#define fLUT_AtlasList "GShade [Angelite-Compatible]\0Custom\0ReShade\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0"
+#define fLUT_AtlasList "GShade [Angelite-Compatible]\0Custom\0ReShade\0Johto\0Espresso Glow\0Faeshade/Dark Veil/HQ Shade/MoogleShade\0ninjafada Gameplay\0seri14\0Yomi\0Neneko\0Yaes\0Ipsusu\0Nightingale\0Marot\0"
 
 #define fLUT_GSSelections "Color0\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Sepia\0Color10\0Color11\0Cross process\0Azure Red Dual Tone\0Sepia\0B&W mid constrast\0B&W high contrast\0"
 #define fLUT_RESSelections "Neutral\0Color1\0Color2\0Color3 (Blue oriented)\0Color4 (Hollywood)\0Color5\0Color6\0Color7\0Color8\0Cool light\0Flat & green\0Red lift matte\0Cross process\0Azure Red Dual Tone\0Vogue\0Sepia\0B&W mid constrast\0B&W high contrast\0"
@@ -148,6 +149,7 @@
 #define fLUT_YAESelections "Neutral\0Faded Light\0Faded Muted\0Balanced green\0Balanced purple\0Brain freeze\0Burnt brown\0All purple\0Muted green\0Mono tinted\0True BW\0Faded BW\0"
 #define fLUT_IPSSelections "Neutral\0IpsusuCool\0IpsusuWarm\0IpsusuPastel\0IpsusuVanilla\0IpsusuAmber\0IpsusuCrystal\0IpsusuMelon\0IpsusuPlaceholder\0"
 #define fLUT_NGESelections "Day\0DarkOrange\0Daydream\0Orange\0Bluelight\0Sweet\0Summer\0Spring\0Melancholia\0Film\0Brown\0Light\0"
+#define fLUT_MARSelections "Vanilla\0Realism\0Vivid\0Deus\0Legacy\0City Of Sin\0Film Noir\0"
 #define fLUT_DEFAULTSelections "Color0 (Usually Neutral)\0Color1\0Color2\0Color3\0Color4\0Color5\0Color6\0Color7\0Color8\0Color9\0Color10 | Colors above 10\0Color11 | may not work for\0Color12 | all MultiLUT files.\0Color13\0Color14\0Color15\0Color16\0Color17\0"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -192,6 +194,8 @@ uniform int fLUT_LutSelector <
     ui_items = fLUT_IPSSelections;
 #elif MultiLUTTexture_Source == 12 // Nightingale
     ui_items = fLUT_NGESelections;
+#elif MultiLUTTexture_Source == 13 // Marot
+    ui_items = fLUT_MARSelections;
 #else
     ui_items = fLUT_DEFAULTSelections;
 #endif
@@ -268,6 +272,8 @@ uniform int fLUT_LutSelector2 <
     ui_items = fLUT_IPSSelections;
 #elif MultiLUTTexture_Source == 12 // Nightingale
     ui_items = fLUT_NGESelections;
+#elif MultiLUTTexture_Source == 13 // Marot
+    ui_items = fLUT_MARSelections;
 #else
     ui_items = fLUT_DEFAULTSelections;
 #endif
@@ -345,6 +351,8 @@ uniform int fLUT_LutSelector3 <
     ui_items = fLUT_IPSSelections;
 #elif MultiLUTTexture_Source == 12 // Nightingale
     ui_items = fLUT_NGESelections;
+#elif MultiLUTTexture_Source == 13 // Marot
+    ui_items = fLUT_MARSelections;
 #else
     ui_items = fLUT_DEFAULTSelections;
 #endif
@@ -452,6 +460,11 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_TILE_SIZE 32
 	#define _SOURCE_MULTILUT_TILE_AMOUNT 32
     #define _SOURCE_MULTILUT_AMOUNT 12
+#elif MultiLUTTexture_Source == 13 // Marot MultiLut_Marot.png
+    #define _SOURCE_MULTILUT_FILE fLUT_MARTextureName
+    #define _SOURCE_MULTILUT_TILE_SIZE 32
+	#define _SOURCE_MULTILUT_TILE_AMOUNT 32
+    #define _SOURCE_MULTILUT_AMOUNT 7
 #endif
 
 #if MultiLUTTexture2_Source == 0 // GShade/Angelite MultiLut_GShade.png
@@ -519,6 +532,11 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_TILE_SIZE2 32
 	#define _SOURCE_MULTILUT_TILE_AMOUNT2 32
     #define _SOURCE_MULTILUT_AMOUNT2 12
+#elif MultiLUTTexture2_Source == 13 // Marot MultiLut_Marot.png
+    #define _SOURCE_MULTILUT_FILE2 fLUT_MARTextureName
+    #define _SOURCE_MULTILUT_TILE_SIZE2 32
+	#define _SOURCE_MULTILUT_TILE_AMOUNT2 32
+    #define _SOURCE_MULTILUT_AMOUNT2 7
 #endif
 
 #if MultiLUTTexture3_Source == 0 // GShade/Angelite MultiLut_GShade.png
@@ -586,6 +604,11 @@ uniform float fLUT_AmountLuma3 <
     #define _SOURCE_MULTILUT_TILE_SIZE3 32
 	#define _SOURCE_MULTILUT_TILE_AMOUNT3 32
     #define _SOURCE_MULTILUT_AMOUNT3 12
+#elif MultiLUTTexture3_Source == 13 // Marot MultiLut_Marot.png
+    #define _SOURCE_MULTILUT_FILE3 fLUT_MARTextureName
+    #define _SOURCE_MULTILUT_TILE_SIZE3 32
+	#define _SOURCE_MULTILUT_TILE_AMOUNT3 32
+    #define _SOURCE_MULTILUT_AMOUNT3 7
 #endif
 
 texture texMultiLUT < source = _SOURCE_MULTILUT_FILE; > { Width = _SOURCE_MULTILUT_TILE_SIZE * _SOURCE_MULTILUT_TILE_AMOUNT; Height = _SOURCE_MULTILUT_TILE_SIZE * _SOURCE_MULTILUT_AMOUNT; Format = RGBA8; };
