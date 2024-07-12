@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _P_OKLAB_VERSION
-	#define _P_OKLAB_VERSION 100
+	#define _P_OKLAB_VERSION 101
 #endif
 
 #if _P_OKLAB_VERSION < P_OKLAB_VERSION_REQUIRE
@@ -41,6 +41,22 @@ namespace Oklab
 	static const float EPSILON = pUtils::EPSILON;
 
 	static const float SDR_WHITEPOINT = 80.0; //Set HDR sRGB equivalent whitelevel to 80 to match 0-1 SDR
+
+
+	//Handle unknown color space
+	#if BUFFER_COLOR_SPACE == 0
+		#if BUFFER_COLOR_BIT_DEPTH == 8
+			#undef BUFFER_COLOR_SPACE
+			#define BUFFER_COLOR_SPACE 1
+		#elif BUFFER_COLOR_BIT_DEPTH == 16
+			#undef BUFFER_COLOR_SPACE
+			#define BUFFER_COLOR_SPACE 2
+		#else
+			#undef BUFFER_COLOR_SPACE
+			#define BUFFER_COLOR_SPACE 3
+		#endif
+	#endif
+
 
 	//Show paper white option if in HDR
 	#if BUFFER_COLOR_SPACE > 1
