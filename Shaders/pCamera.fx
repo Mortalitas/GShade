@@ -678,35 +678,35 @@ float3 BloomDownS8(vs2ps o) : COLOR
 //Upsample
 float3 BloomUpS7(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex8, o.texcoord.xy, 0.5) * 0.25;
+	return BoxSample(spBloomTex8, o.texcoord.xy, 0.35);
 }
 float3 BloomUpS6(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex7, o.texcoord.xy, 0.5);
+	return BoxSample(spBloomTex7, o.texcoord.xy, 0.35);
 }
 float3 BloomUpS5(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex6, o.texcoord.xy, 0.5);
+	return BoxSample(spBloomTex6, o.texcoord.xy, 0.35);
 }
 float3 BloomUpS4(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex5, o.texcoord.xy, 0.5);
+	return BoxSample(spBloomTex5, o.texcoord.xy, 0.35);
 }
 float3 BloomUpS3(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex4, o.texcoord.xy, 0.5);
+	return BoxSample(spBloomTex4, o.texcoord.xy, 0.35);
 }
 float3 BloomUpS2(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex3, o.texcoord.xy, 0.5);
+	return BoxSample(spBloomTex3, o.texcoord.xy, 0.35);
 }
 float3 BloomUpS1(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex2, o.texcoord.xy, 0.5) + tex2D(spBloomTex1, o.texcoord.xy).rgb;
+	return BoxSample(spBloomTex2, o.texcoord.xy, 0.35) + tex2D(spBloomTex1, o.texcoord.xy).rgb;
 }
 float3 BloomUpS0(vs2ps o) : COLOR
 {
-	float3 color = BoxSample(spBloomTex1, o.texcoord.xy, 0.5);
+	float3 color = BoxSample(spBloomTex1, o.texcoord.xy, 0.35);
 	color = RedoTonemap(color);
 
 	if (BloomGamma != 1.0)
