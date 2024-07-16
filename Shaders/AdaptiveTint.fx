@@ -7,21 +7,14 @@
 #include "ReShade.fxh"
 #include "Dao_Stats.fxh"
 #include "Dao_Tools.fxh"
-#include "Dao_Canvas.fxh"
 
 #if GSHADE_DITHER
     #include "TriDither.fxh"
 #endif
 
-#ifndef UI_ADAPTIVE_TINT_DEBUG_WINDOW_WIDTH
-	#define UI_ADAPTIVE_TINT_DEBUG_WINDOW_WIDTH 300
-#endif
-
 #define UI_CATEGORY_CURVES "Curves"
 #define UI_CATEGORY_COLOR "Color"
-#define UI_CATEGORY_DEBUG "Debug"
 #define UI_CATEGORY_GENERAL "General"
-#define UI_TOOLTIP_DEBUG "Enable Technique 'AdaptiveTintDebug'\n#define UI_ADAPTIVE_TINT_DEBUG_WINDOW_WIDTH=xyz\nDefault width is 300"
 
 uniform int iUIInfo<
 	ui_type = "combo";
@@ -34,7 +27,6 @@ uniform int iUIWhiteLevelFormula <
 	ui_type = "combo";
 	ui_category = UI_CATEGORY_CURVES;
 	ui_label = "White Level Curve (red)";
-	ui_tooltip = UI_TOOLTIP_DEBUG;
 	ui_items = "Linear: x * (value - y) + z\0Square: x * (value - y)^2 + z\0Cube: x * (value - y)^3 + z\0";
 > = 1;
 
@@ -42,7 +34,6 @@ uniform float3 f3UICurveWhiteParam <
 	ui_type = "slider";
 	ui_category = UI_CATEGORY_CURVES;
 	ui_label = "Curve Parameters";
-	ui_tooltip = UI_TOOLTIP_DEBUG;
 	ui_min = -10.0; ui_max = 10.0;
 	ui_step = 0.01;
 > = float3(-0.5, 1.0, 1.0);
@@ -51,7 +42,6 @@ uniform int iUIBlackLevelFormula <
 	ui_type = "combo";
 	ui_category = UI_CATEGORY_CURVES;
 	ui_label = "Black Level Curve (cyan)";
-	ui_tooltip = UI_TOOLTIP_DEBUG;
 	ui_items = "Linear: x * (value - y) + z\0Square: x * (value - y)^2 + z\0Cube: x * (value - y)^3 + z\0";
 > = 1;
 
@@ -59,7 +49,6 @@ uniform float3 f3UICurveBlackParam <
 	ui_type = "slider";
 	ui_category = UI_CATEGORY_CURVES;
 	ui_label = "Curve Parameters";
-	ui_tooltip = UI_TOOLTIP_DEBUG;
 	ui_min = -10.0; ui_max = 10.0;
 	ui_step = 0.01;
 > = float3(0.5, 0.0, 0.0);
@@ -68,7 +57,6 @@ uniform float fUIColorTempScaling <
 	ui_type = "slider";
 	ui_category = UI_CATEGORY_CURVES;
 	ui_label = "Color Temperature Scaling";
-	ui_tooltip = UI_TOOLTIP_DEBUG;
 	ui_min = 1.0; ui_max = 10.0;
 	ui_step = 0.01;
 > = 2.0;
@@ -93,13 +81,6 @@ uniform float3 fUITintCold <
     ui_label = "Cold Tint";
 > = float3(0.02, 0.04, 0.04);
 
-uniform int iUIDebug <
-	ui_type = "combo";
-	ui_category = UI_CATEGORY_DEBUG;
-	ui_label = "Show Tint Layer";
-	ui_items = "Off\0Tint\0Factor\0";
-> = 0;
-
 uniform float fUIStrength <
 	ui_type = "slider";
 	ui_category = UI_CATEGORY_GENERAL;
@@ -107,17 +88,6 @@ uniform float fUIStrength <
 	ui_min = 0.0; ui_max = 1.0;
 > = 1.0;
 
-
-/*******************************************************
-	Debug image
-*******************************************************/
-CANVAS_SETUP(AdaptiveTintDebug, BUFFER_WIDTH/4, BUFFER_HEIGHT/4)
-
-/*******************************************************
-	Checkerboard
-*******************************************************/
-texture2D texAlphaCheckerboard < source = "alpha-checkerboard.png"; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
-sampler2D SamplerAlphaCheckerboard { Texture = texAlphaCheckerboard; };
 
 /*******************************************************
 	Functions
@@ -173,14 +143,6 @@ float3 AdaptiveTint_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 	const float3 factor = Tools::Functions::Level(luma.r, levels.x, levels.y).rrr;
 	const float3 result = lerp(tint, lerp(luma, backbuffer, fUISaturation + 1.0), factor);
 
-	/*******************************************************
-		Debug
-	*******************************************************/
-	if(iUIDebug == 1) //tint
-		return lerp(tint, tex2D(SamplerAlphaCheckerboard, texcoord).rgb, factor);
-	if(iUIDebug == 2) //factor
-		return lerp(BLACK, WHITE, factor);
-
 #if GSHADE_DITHER
     const float3 color = lerp(backbuffer, result, fUIStrength);
 	return color + TriDither(color, texcoord, BUFFER_COLOR_BIT_DEPTH);
@@ -189,27 +151,6 @@ float3 AdaptiveTint_PS(float4 vpos : SV_Position, float2 texcoord : TexCoord) : 
 #endif
 }
 
-/*******************************************************
-	Generate small image for shader debug/setup
-*******************************************************/
-
-CANVAS_DRAW_BEGIN(AdaptiveTintDebug, 0.0.rrr;);
-	const float3 originalBackBuffer = Stats::OriginalBackBuffer(texcoord);
-	const float3 originalLuma = dot(originalBackBuffer, LumaCoeff).xxx;
-	const float avgLuma = Stats::AverageLuma();
-	const float3 avgColor = Stats::AverageColor();
-	const float2 curves = CalculateLevels(texcoord.x);
-	const float2 levels = CalculateLevels(avgLuma);
-	const float3 localFactor = saturate(Tools::Functions::Level(originalLuma.r, levels.x, levels.y).rrr);
-
-    CANVAS_DRAW_BACKGROUND(AdaptiveTintDebug, localFactor);
-	CANVAS_DRAW_SCALE(AdaptiveTintDebug, RED, BLUE, int2(0, 10), int2(10, BUFFER_HEIGHT/4-10), GetColorTemp(texcoord), BLACK);
-	CANVAS_DRAW_SCALE(AdaptiveTintDebug, BLACK, WHITE, int2(10, 0), int2(BUFFER_WIDTH/4-10, 10), avgLuma, MAGENTA);
-	CANVAS_DRAW_BOX(AdaptiveTintDebug, avgColor, int2(0, 0), int2(10, 10));
-    CANVAS_DRAW_CURVE_XY(AdaptiveTintDebug, RED, curves.y);
-    CANVAS_DRAW_CURVE_XY(AdaptiveTintDebug, CYAN, curves.x);
-CANVAS_DRAW_END(AdaptiveTintDebug);
-
 technique AdaptiveTint
 {
 	pass {
@@ -217,5 +158,3 @@ technique AdaptiveTint
 		PixelShader = AdaptiveTint_PS;
 	}
 }
-
-CANVAS_TECHNIQUE(AdaptiveTintDebug)
