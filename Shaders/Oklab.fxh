@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _P_OKLAB_VERSION
-	#define _P_OKLAB_VERSION 101
+	#define _P_OKLAB_VERSION 102
 #endif
 
 #if _P_OKLAB_VERSION < P_OKLAB_VERSION_REQUIRE
@@ -51,9 +51,17 @@ namespace Oklab
 		#elif BUFFER_COLOR_BIT_DEPTH == 16
 			#undef BUFFER_COLOR_SPACE
 			#define BUFFER_COLOR_SPACE 2
-		#else
+		#elif BUFFER_COLOR_BIT_DEPTH == 12 || BUFFER_COLOR_BIT_DEPTH == 14
 			#undef BUFFER_COLOR_SPACE
 			#define BUFFER_COLOR_SPACE 3
+		#else
+			#ifndef HDR_ENABLE
+				#define HDR_ENABLE 0
+			#endif
+			#if HDR_ENABLE == 1
+				#undef BUFFER_COLOR_SPACE
+				#define BUFFER_COLOR_SPACE 3
+			#endif
 		#endif
 	#endif
 
