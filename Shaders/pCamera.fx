@@ -5,7 +5,7 @@
 // Repository: https://github.com/GimleLarpes/potatoFX
 ///////////////////////////////////////////////////////////////////////////////////
 
-#define P_OKLAB_VERSION_REQUIRE 100
+#define P_OKLAB_VERSION_REQUIRE 102
 #include "ReShade.fxh"
 #include "Oklab.fxh"
 
@@ -189,7 +189,14 @@ uniform float BloomStrength <
 	ui_label = "Bloom amount";
 	ui_tooltip = "Amount of blooming to apply";
 	ui_category = "Bloom";
-> = 0.16;
+> = 0.18;
+uniform float BloomRadius <
+	ui_type = "slider";
+	ui_min = 0.1; ui_max = 1.0;
+	ui_label = "Bloom radius";
+	ui_tooltip = "Controls radius of bloom";
+	ui_category = "Bloom";
+> = 0.95;
 uniform float BloomCurve <
 	ui_type = "slider";
 	ui_min = 1.0; ui_max = 5.0;
@@ -333,34 +340,34 @@ texture pStorageTexC < pooled = true; > { Width = _STORAGE_TEX_RESOLUTION; Heigh
 sampler spStorageTexC { Texture = pStorageTexC; };
 
 texture pBumpTex < source = _BUMP_MAP_SOURCE; pooled = true; > { Width = _BUMP_MAP_RESOLUTION; Height = _BUMP_MAP_RESOLUTION; Format = RG8; };
-sampler spBumpTex { Texture = pBumpTex; AddressU = REPEAT; AddressV = REPEAT;};
+sampler spBumpTex { Texture = pBumpTex; AddressU = REPEAT; AddressV = REPEAT; };
 
 texture pDirtTex < source = _DIRT_MAP_SOURCE; pooled = true; > { Width = _DIRT_MAP_RESOLUTION; Height = _DIRT_MAP_RESOLUTION; Format = RGBA8; };
-sampler spDirtTex { Texture = pDirtTex; AddressU = REPEAT; AddressV = REPEAT;};
+sampler spDirtTex { Texture = pDirtTex; AddressU = REPEAT; AddressV = REPEAT; };
 
 texture pBokehBlurTex < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
-sampler spBokehBlurTex { Texture = pBokehBlurTex;};
+sampler spBokehBlurTex { Texture = pBokehBlurTex; AddressU = MIRROR; AddressV = MIRROR; };
 texture pGaussianBlurTex < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
-sampler spGaussianBlurTex { Texture = pGaussianBlurTex;};
+sampler spGaussianBlurTex { Texture = pGaussianBlurTex; AddressU = MIRROR; AddressV = MIRROR; };
 
 texture pBloomTex0 < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
-sampler spBloomTex0 { Texture = pBloomTex0;};
+sampler spBloomTex0 { Texture = pBloomTex0; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex1 < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
-sampler spBloomTex1 { Texture = pBloomTex1;};
+sampler spBloomTex1 { Texture = pBloomTex1; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex2 < pooled = true; > { Width = BUFFER_WIDTH/8; Height = BUFFER_HEIGHT/8; Format = RGBA16F; };
-sampler spBloomTex2 { Texture = pBloomTex2;};
+sampler spBloomTex2 { Texture = pBloomTex2; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex3 < pooled = true; > { Width = BUFFER_WIDTH/16; Height = BUFFER_HEIGHT/16; Format = RGBA16F; };
-sampler spBloomTex3 { Texture = pBloomTex3;};
+sampler spBloomTex3 { Texture = pBloomTex3; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex4 < pooled = true; > { Width = BUFFER_WIDTH/32; Height = BUFFER_HEIGHT/32; Format = RGBA16F; };
-sampler spBloomTex4 { Texture = pBloomTex4;};
+sampler spBloomTex4 { Texture = pBloomTex4; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex5 < pooled = true; > { Width = BUFFER_WIDTH/64; Height = BUFFER_HEIGHT/64; Format = RGBA16F; };
-sampler spBloomTex5 { Texture = pBloomTex5;};
+sampler spBloomTex5 { Texture = pBloomTex5; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex6 < pooled = true; > { Width = BUFFER_WIDTH/128; Height = BUFFER_HEIGHT/128; Format = RGBA16F; };
-sampler spBloomTex6 { Texture = pBloomTex6;};
+sampler spBloomTex6 { Texture = pBloomTex6; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex7 < pooled = true; > { Width = BUFFER_WIDTH/256; Height = BUFFER_HEIGHT/256; Format = RGBA16F; };
-sampler spBloomTex7 { Texture = pBloomTex7;};
+sampler spBloomTex7 { Texture = pBloomTex7; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex8 < pooled = true; > { Width = BUFFER_WIDTH/512; Height = BUFFER_HEIGHT/512; Format = RGBA16F; };
-sampler spBloomTex8 { Texture = pBloomTex8;};
+sampler spBloomTex8 { Texture = pBloomTex8; AddressU = MIRROR; AddressV = MIRROR; };
 
 
 //Functions
@@ -435,7 +442,7 @@ float3 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bo
 	if (sample_linear)
 	{
 		color = SampleLinear(texcoord, true) * WEIGHT[start];
-		[loop]
+		[unroll]
 		for (int i = start + 1; i < end; ++i)
 		{
 			color += SampleLinear(texcoord + direction * OFFSET[i] * step_length, true) * WEIGHT[i];
@@ -445,7 +452,7 @@ float3 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bo
 	else
 	{
 		color = tex2D(s, texcoord).rgb * WEIGHT[start];
-		[loop]
+		[unroll]
 		for (int i = start + 1; i < end; ++i)
 		{
 			color += tex2D(s, texcoord + direction * OFFSET[i] * step_length).rgb * WEIGHT[i];
@@ -499,7 +506,7 @@ float3 BokehBlur(sampler s, float2 texcoord, float size, bool sample_linear)
 	if (sample_linear)
 	{
 		color = SampleLinear(texcoord, true);
-		[loop]
+		[unroll]
 		for (int i = 0; i < samples; ++i)
 		{
 			color += SampleLinear(texcoord + step_length * OFFSET[i] * variance, true);
@@ -508,7 +515,7 @@ float3 BokehBlur(sampler s, float2 texcoord, float size, bool sample_linear)
 	else
 	{
 		color = tex2D(s, texcoord).rgb;
-		[loop]
+		[unroll]
 		for (int i = 0; i < samples; ++i)
 		{
 			color += tex2D(s, texcoord + step_length * OFFSET[i] * variance).rgb;
@@ -525,6 +532,48 @@ float3 BoxSample(sampler s, float2 texcoord, float d)
 
 	float3 color = tex2D(s, texcoord + o.xy).rgb + tex2D(s, texcoord + o.zy).rgb + tex2D(s, texcoord + o.xw).rgb + tex2D(s, texcoord + o.zw).rgb;
 	return color * 0.25;
+}
+
+float3 HQDownSample(sampler s, float2 texcoord)
+{
+	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+
+	static const float2 OFFSET[13] = { float2(-1.0, 1.0), float2(1.0, 1.0), float2(-1.0, -1.0), float2(1.0, -1.0),
+	                                   float2(-2.0, 2.0), float2(0.0, 2.0), float2(2.0, 2.0),
+									   float2(-2.0, 0.0), float2(0.0, 0.0), float2(2.0, 0.0),
+									   float2(-2.0, -2.0), float2(0.0, -2.0), float2(2.0, -1.0) };
+	static const float WEIGHT[13] = { 0.125, 0.125, 0.125, 0.125,
+	                                  0.0555555, 0.0555555, 0.0555555,
+									  0.0555555, 0.0555555, 0.0555555,
+									  0.0555555, 0.0555555, 0.0555555 };
+
+	float3 color = float3(0.0, 0.0, 0.0);
+	[unroll]
+	for (int i = 0; i < 13; ++i)
+	{
+		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE).rgb * WEIGHT[i];
+	}
+	return color;
+}
+
+float3 HQUpSample(sampler s, float2 texcoord)
+{
+	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+
+	static const float2 OFFSET[9] = { float2(-1.0, 1.0), float2(0.0, 1.0), float2(1.0, 1.0),
+	                                  float2(-1.0, 0.0), float2(0.0, 0.0), float2(1.0, 0.0),
+									  float2(-1.0, -1.0), float2(0.0, -1.0), float2(1.0, -1.0) };
+	static const float WEIGHT[9] = { 0.0625, 0.125, 0.0625,
+	                                 0.125, 0.25, 0.125,
+									 0.0625, 0.125, 0.0625 };
+
+	float3 color = float3(0.0, 0.0, 0.0);
+	[unroll]
+	for (int i = 0; i < 9; ++i)
+	{
+		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE).rgb * WEIGHT[i];
+	}
+	return color;
 }
 
 
@@ -645,68 +694,68 @@ float3 HighPassFilter(vs2ps o) : COLOR
 //Downsample
 float3 BloomDownS1(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex0, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex0, o.texcoord.xy);
 }
 float3 BloomDownS2(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex1, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex1, o.texcoord.xy);
 }
 float3 BloomDownS3(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex2, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex2, o.texcoord.xy);
 }
 float3 BloomDownS4(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex3, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex3, o.texcoord.xy);
 }
 float3 BloomDownS5(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex4, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex4, o.texcoord.xy);
 }
 float3 BloomDownS6(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex5, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex5, o.texcoord.xy);
 }
 float3 BloomDownS7(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex6, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex6, o.texcoord.xy);
 }
 float3 BloomDownS8(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex7, o.texcoord.xy, 0.85);
+	return HQDownSample(spBloomTex7, o.texcoord.xy);
 }
 //Upsample
 float3 BloomUpS7(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex8, o.texcoord.xy, 0.35);
+	return BloomRadius * HQUpSample(spBloomTex8, o.texcoord.xy);
 }
 float3 BloomUpS6(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex7, o.texcoord.xy, 0.35);
+	return BloomRadius * HQUpSample(spBloomTex7, o.texcoord.xy);
 }
 float3 BloomUpS5(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex6, o.texcoord.xy, 0.35);
+	return BloomRadius * HQUpSample(spBloomTex6, o.texcoord.xy);
 }
 float3 BloomUpS4(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex5, o.texcoord.xy, 0.35);
+	return BloomRadius * HQUpSample(spBloomTex5, o.texcoord.xy);
 }
 float3 BloomUpS3(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex4, o.texcoord.xy, 0.35);
+	return BloomRadius * HQUpSample(spBloomTex4, o.texcoord.xy);
 }
 float3 BloomUpS2(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex3, o.texcoord.xy, 0.35);
+	return BloomRadius * HQUpSample(spBloomTex3, o.texcoord.xy);
 }
 float3 BloomUpS1(vs2ps o) : COLOR
 {
-	return BoxSample(spBloomTex2, o.texcoord.xy, 0.35) + tex2D(spBloomTex1, o.texcoord.xy).rgb;
+	return BloomRadius * HQUpSample(spBloomTex2, o.texcoord.xy);
 }
 float3 BloomUpS0(vs2ps o) : COLOR
 {
-	float3 color = BoxSample(spBloomTex1, o.texcoord.xy, 0.35);
+	float3 color = BloomRadius * HQUpSample(spBloomTex1, o.texcoord.xy);
 	color = RedoTonemap(color);
 
 	if (BloomGamma != 1.0)
