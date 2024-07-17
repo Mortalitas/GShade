@@ -404,6 +404,11 @@ float3 ClipBlacks(float3 c)
     return float3(max(c.r, 0.0), max(c.g, 0.0), max(c.b, 0.0));
 }
 
+float3 KarisAverage(float3 c)
+{
+	return 1.0 / (1.0 + Oklab::get_Luminance_RGB(c) * 0.25);
+}
+
 float3 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bool sample_linear)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
@@ -543,9 +548,9 @@ float3 HQDownSample(sampler s, float2 texcoord)
 									   float2(-2.0, 0.0), float2(0.0, 0.0), float2(2.0, 0.0),
 									   float2(-2.0, -2.0), float2(0.0, -2.0), float2(2.0, -1.0) };
 	static const float WEIGHT[13] = { 0.125, 0.125, 0.125, 0.125,
-	                                  0.0555555, 0.0555555, 0.0555555,
-									  0.0555555, 0.0555555, 0.0555555,
-									  0.0555555, 0.0555555, 0.0555555 };
+	                                  0.03125, 0.0625, 0.03125,
+									  0.0625, 0.125, 0.0625,
+									  0.03125, 0.0625, 0.03125 };
 
 	float3 color = float3(0.0, 0.0, 0.0);
 	[unroll]
@@ -555,8 +560,41 @@ float3 HQDownSample(sampler s, float2 texcoord)
 	}
 	return color;
 }
+float3 HQDownSampleKA(sampler s, float2 texcoord)
+{
+	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+	
+	static const float2 OFFSET[13] = { float2(-1.0, 1.0), float2(1.0, 1.0), float2(-1.0, -1.0), float2(1.0, -1.0),
+	                                   float2(-2.0, 2.0), float2(0.0, 2.0), float2(2.0, 2.0),
+									   float2(-2.0, 0.0), float2(0.0, 0.0), float2(2.0, 0.0),
+									   float2(-2.0, -2.0), float2(0.0, -2.0), float2(2.0, -1.0) };
 
-float3 HQUpSample(sampler s, float2 texcoord)
+	float3 samplecolor[13];
+	[unroll]
+	for (int i = 0; i < 13; ++i)
+	{
+		samplecolor[i] = tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE).rgb;
+	}
+
+	//Groups
+	float3 groups[5];
+	groups[0] = 0.125 * (samplecolor[0] + samplecolor[1] + samplecolor[2] + samplecolor[3]);
+	groups[1] = 0.03125 * (samplecolor[4] + samplecolor[5] + samplecolor[7] + samplecolor[8]);
+	groups[2] = 0.03125 * (samplecolor[5] + samplecolor[6] + samplecolor[8] + samplecolor[9]);
+	groups[3] = 0.03125 * (samplecolor[7] + samplecolor[8] + samplecolor[10] + samplecolor[11]);
+	groups[4] = 0.03125 * (samplecolor[8] + samplecolor[9] + samplecolor[11] + samplecolor[12]);
+
+	//Karis average
+	groups[0] *= KarisAverage(groups[0]);
+	groups[1] *= KarisAverage(groups[1]);
+	groups[2] *= KarisAverage(groups[2]);
+	groups[3] *= KarisAverage(groups[3]);
+	groups[4] *= KarisAverage(groups[4]);
+
+	return groups[0] + groups[1] + groups[2] + groups[3] + groups[4];
+}
+
+float3 HQUpSample(sampler s, float2 texcoord, float radius)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 
@@ -571,7 +609,7 @@ float3 HQUpSample(sampler s, float2 texcoord)
 	[unroll]
 	for (int i = 0; i < 9; ++i)
 	{
-		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE).rgb * WEIGHT[i];
+		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE * radius).rgb * WEIGHT[i];
 	}
 	return color;
 }
@@ -694,7 +732,7 @@ float3 HighPassFilter(vs2ps o) : COLOR
 //Downsample
 float3 BloomDownS1(vs2ps o) : COLOR
 {
-	return HQDownSample(spBloomTex0, o.texcoord.xy);
+	return HQDownSampleKA(spBloomTex0, o.texcoord.xy);
 }
 float3 BloomDownS2(vs2ps o) : COLOR
 {
@@ -727,35 +765,35 @@ float3 BloomDownS8(vs2ps o) : COLOR
 //Upsample
 float3 BloomUpS7(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex8, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex8, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS6(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex7, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex7, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS5(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex6, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex6, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS4(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex5, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex5, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS3(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex4, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex4, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS2(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex3, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex3, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS1(vs2ps o) : COLOR
 {
-	return BloomRadius * HQUpSample(spBloomTex2, o.texcoord.xy);
+	return BloomRadius * HQUpSample(spBloomTex2, o.texcoord.xy, BloomRadius);
 }
 float3 BloomUpS0(vs2ps o) : COLOR
 {
-	float3 color = BloomRadius * HQUpSample(spBloomTex1, o.texcoord.xy);
+	float3 color = BloomRadius * HQUpSample(spBloomTex1, o.texcoord.xy, BloomRadius);
 	color = RedoTonemap(color);
 
 	if (BloomGamma != 1.0)
