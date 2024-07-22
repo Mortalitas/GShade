@@ -58,7 +58,7 @@ uniform int bKeepUIForceType <
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
 #endif
     ui_min = 0; ui_max = 2;
-    ui_items = "Disabled\0Alpha\0Depth\0";
+    ui_items = "Disabled\0Alpha\0Dedicated Depth\0Shared Depth\0";
     ui_bind = "KeepUIType";
 > = 0;
 #endif
@@ -129,6 +129,8 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
     color = tex2D(ReShade::BackBuffer, texcoord);
 #if KeepUIType == 2
     color.a = step(1.0, 1.0 - GShade::GetLinearizedDepthII(texcoord));
+#elif KeepUIType == 3
+    color.a = step(1.0, 1.0 - GShade::GetLinearizedDepth(texcoord));
 #endif
 }
 
