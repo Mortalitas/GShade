@@ -32,7 +32,7 @@
 #endif
 
 #ifndef KeepUIType
-    #define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Final Fantasy XIV's UI saving mode | 2 - Phantasy Star Online 2's UI saving mode.
+    #define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Alpha-based/Final Fantasy XIV's UI saving mode | 2 - Shared depth buffer UI saving. | 3 - Dedicated depth buffer/Phantasy Star Online 2's UI saving mode.
 
     #ifndef __GSHADE__
     // KeepUI is disabled and the option to manually enable it is provided if running under ReShade with the UIBind addon made by cot6.
@@ -41,9 +41,9 @@
         #undef KeepUIType
         #define KeepUIType 1
     // Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
-    #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online
+    #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online 2
         #undef KeepUIType
-        #define KeepUIType 2
+        #define KeepUIType 3
     #endif
 #endif
 
@@ -58,7 +58,7 @@ uniform int bKeepUIForceType <
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
 #endif
     ui_min = 0; ui_max = 2;
-    ui_items = "Disabled\0Alpha\0Dedicated Depth\0Shared Depth\0";
+    ui_items = "Disabled\0Alpha\0Shared Depth\0Dedicated Depth\0";
     ui_bind = "KeepUIType";
 > = 0;
 #endif
@@ -115,7 +115,7 @@ uniform int iBlendSource <
 #endif
 
 #include "ReShade.fxh"
-#if KeepUIType == 2
+#if KeepUIType == 3
 #include "GShade.fxh"
 #endif
 #endif
@@ -128,9 +128,9 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
 {
     color = tex2D(ReShade::BackBuffer, texcoord);
 #if KeepUIType == 2
-    color.a = step(1.0, 1.0 - GShade::GetLinearizedDepthII(texcoord));
-#elif KeepUIType == 3
     color.a = step(1.0, 1.0 - GShade::GetLinearizedDepth(texcoord));
+#elif KeepUIType == 3
+    color.a = step(1.0, 1.0 - GShade::GetLinearizedDepthII(texcoord));
 #endif
 }
 
