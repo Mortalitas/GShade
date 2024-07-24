@@ -40,7 +40,7 @@
     #elif (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
         #undef KeepUIType
         #define KeepUIType 1
-    // Old PSO 2 settings. Will be adjusted for NGS in a future GShade feature update.
+    // PSO 2 depth saving via GShade's Depth II addon.
     #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online 2
         #undef KeepUIType
         #define KeepUIType 3
@@ -57,8 +57,11 @@ uniform int bKeepUIForceType <
 #else
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
 #endif
-    ui_min = 0; ui_max = 2;
+#ifndef __GSHADE__
+    ui_items = "Disabled\0Alpha\0Shared Depth\0";
+#else
     ui_items = "Disabled\0Alpha\0Shared Depth\0Dedicated Depth\0";
+#endif
     ui_bind = "KeepUIType";
 > = 0;
 #endif
