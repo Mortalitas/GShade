@@ -47,24 +47,19 @@
     #endif
 #endif
 
-#if KeepUIType == 0 // Unsupported game.
 uniform int bKeepUIForceType <
     ui_type = "combo";
     ui_category = "Options";
     ui_label = "UI Detection Type Override";
 #ifndef __GSHADE__
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIType";
-#else
-    ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
-#endif
-#ifndef __GSHADE__
     ui_items = "Disabled\0Alpha\0Shared Depth\0";
 #else
+    ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
     ui_items = "Disabled\0Alpha\0Shared Depth\0Dedicated Depth\0";
 #endif
     ui_bind = "KeepUIType";
 > = 0;
-#endif
 
 #if KeepUIType != 0 // Supported game.
 uniform bool bKeepUIOcclude <
