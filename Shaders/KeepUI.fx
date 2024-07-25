@@ -126,7 +126,7 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
 {
     color = tex2D(ReShade::BackBuffer, texcoord);
 #if KeepUIType == 2
-    color.a = step(1.0, 1.0 - GShade::GetLinearizedDepth(texcoord));
+    color.a = step(1.0, 1.0 - ReShade::GetLinearizedDepth(texcoord));
 #elif KeepUIType == 3
     color.a = step(1.0, 1.0 - GShade::GetLinearizedDepthII(texcoord));
 #endif
