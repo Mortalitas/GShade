@@ -40,10 +40,12 @@
     #elif (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
         #undef KeepUIType
         #define KeepUIType 1
+        #define KeepUIOverride 1
     // PSO 2 depth saving via GShade's Depth II addon.
     #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online 2
         #undef KeepUIType
         #define KeepUIType 3
+        #define KeepUIOverride 3
     #endif
 #endif
 
@@ -59,7 +61,15 @@ uniform int bKeepUIForceType <
     ui_items = "Disabled\0Alpha\0Shared Depth\0Dedicated Depth\0";
 #endif
     ui_bind = "KeepUIType";
+#if KeepUIOverride == 1 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
+> = 1;
+#elif KeepUIOverride == 2
+> = 2;
+#elif KeepUIOverride == 3 // Phantasy Star Online 2
+> = 3;
+#else
 > = 0;
+#endif
 
 #if KeepUIType != 0 // Supported game.
 uniform bool bKeepUIOcclude <
