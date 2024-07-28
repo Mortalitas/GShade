@@ -81,8 +81,8 @@ float rand(float2 uv, float t) {
 
 float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-	float t = Timer * 0.001 * Speed;
-	float2 scale = Spread;
+	const float t = Timer * 0.001 * Speed;
+	const float2 scale = Spread;
 	float2 offset = float2(rand(uv, t), rand(uv.yx, t));
 	offset = min(max(offset * scale - scale * 0.5, 7), -8);
 

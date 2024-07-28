@@ -307,7 +307,7 @@ float4 GetSmallPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 	float adapt = dot(tex2D(BackBuffer_Linear, uv).rgb, LumaWeights);
 	adapt *= AdaptSensitivity;
 
-	float last = tex2Dfetch(LastAdapt, 0).x;
+	const float last = tex2Dfetch(LastAdapt, 0).x;
 
 	if (AdaptTime > 0.0)
 		adapt = lerp(last, adapt, saturate((FrameTime * 0.001) / AdaptTime));

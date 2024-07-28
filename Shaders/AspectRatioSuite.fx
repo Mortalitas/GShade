@@ -217,7 +217,7 @@ Mask calc_mask(float ar)
 	Mask mask;
 	mask.is_horizontal = step(ReShade::AspectRatio, ar);
 	
-	float ratio = lerp(
+	const float ratio = lerp(
 		ar / ReShade::AspectRatio,
 		ReShade::AspectRatio / ar,
 		mask.is_horizontal
@@ -236,7 +236,7 @@ float calc_border(float2 uv, Mask mask)
 {
 	// The uv component to use (mask.y tells whether the mask is vertical or
 	// horizontal).
-	float pos = lerp(uv.x, uv.y, mask.is_horizontal);
+	const float pos = lerp(uv.x, uv.y, mask.is_horizontal);
 
 	return step(mask.value, pos) * step(pos, 1.0 - mask.value);
 }
@@ -280,8 +280,8 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 	{
 		case 0: // Border
 		{
-			Mask mask = calc_mask(ARSAspectRatio.x / ARSAspectRatio.y);
-			float border = calc_border(uv, mask);
+			const Mask mask = calc_mask(ARSAspectRatio.x / ARSAspectRatio.y);
+			const float border = calc_border(uv, mask);
 
 			color.rgb = lerp(
 				LetterBoxColor.rgb,
@@ -293,7 +293,7 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 		{
 			color.rgb = lerp(color.rgb, BackgroundColor.rgb, BackgroundColor.a);
 
-			Mask mask = calc_mask(ARSAspectRatio.x / ARSAspectRatio.y);
+			const Mask mask = calc_mask(ARSAspectRatio.x / ARSAspectRatio.y);
 			
 			float box = calc_box(uv, mask, TestBoxSize);
 			box *= TestBoxColor.a;
@@ -306,9 +306,9 @@ float4 MainPS(float4 p : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
 			for (int i = 0; ASPECT_RATIOS[i] != 0.0; ++i)
 			{
-				float3 ratio_color = hsv_to_rgb(float3(i / 10.0, 1.0, 1.0));
+				const float3 ratio_color = hsv_to_rgb(float3(i / 10.0, 1.0, 1.0));
 				
-				Mask mask = calc_mask(ASPECT_RATIOS[i]);
+				const Mask mask = calc_mask(ASPECT_RATIOS[i]);
 				
 				float box = calc_box(uv, mask, TestBoxSize);
 				box *= TestBoxColor.a;

@@ -29,8 +29,8 @@ static const float3x3 ACESOutputMat = float3x3
 
 float3 RRTAndODTFit(float3 v)
 {
-	float3 a = v * (v + 0.0245786f) - 0.000090537f;
-	float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+	const float3 a = v * (v + 0.0245786f) - 0.000090537f;
+	const float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
 	return a / b;
 }
 
