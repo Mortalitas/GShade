@@ -9,6 +9,8 @@
 // Get more here : https://alucarddh.github.io
 // Join my Discord server for news, request, bug reports or help : https://discord.gg/V9HgyBRgMW
 //
+// License: GNU GPL-2.0
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #include "ReShade.fxh"
 

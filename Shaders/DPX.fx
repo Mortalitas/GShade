@@ -1,7 +1,7 @@
 /**
  * DPX/Cineon shader by Loadus
+ * Lightly optimized by Marot Satil for the GShade project.
  */
- // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float3 RGB_Curve <
 	ui_type = "slider";

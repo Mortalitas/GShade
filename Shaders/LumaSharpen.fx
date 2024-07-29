@@ -1,4 +1,4 @@
-/*
+/**
    LumaSharpen version 1.5.0
    by Christian Cann Schuldt Jensen ~ CeeJay.dk
    License: MIT

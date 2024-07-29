@@ -1,3 +1,17 @@
+////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// DH_Undither
+//
+// This shader is free, if you paid for it, you have been ripped and should ask for a refund.
+//
+// This shader is developed by AlucardDH (Damien Hembert)
+//
+// Get more here : https://alucarddh.github.io
+// Join my Discord server for news, request, bug reports or help : https://discord.gg/V9HgyBRgMW
+//
+// License: GNU GPL-2.0
+//
+////////////////////////////////////////////////////////////////////////////////////////////////
 #include "ReShade.fxh"
 
 #define getColor(s,c) tex2Dlod(s,float4(c,0,0))
