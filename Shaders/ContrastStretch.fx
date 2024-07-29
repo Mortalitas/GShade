@@ -1,7 +1,12 @@
-/*
-ContrastStretch
-By: Lord Of Lunacy
+////////////////////////////////////////////////////////
+// Contrast Stretch
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
 
+/*
 A histogram based contrast stretching shader that adaptively adjusts the contrast of the image
 based on its contents.
 

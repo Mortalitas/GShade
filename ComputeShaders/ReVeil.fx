@@ -1,7 +1,12 @@
-#include "ReShade.fxh"
+////////////////////////////////////////////////////////
+// ReVeil
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
-ReVeil for Reshade
-By: Lord of Lunacy
 This shader attempts to remove fog using a dark channel prior technique that has been
 refined using 2 passes over an iterative guided Wiener filter ran on the image dark channel.
 The purpose of the Wiener filters is to minimize the root mean square error between
@@ -15,6 +20,9 @@ This method was adapted from the following paper:
 Gibson, Kristofor & Nguyen, Truong. (2013). Fast single image fog removal using the adaptive Wiener filter.
 2013 IEEE International Conference on Image Processing, ICIP 2013 - Proceedings. 714-718. 10.1109/ICIP.2013.6738147. 
 */
+
+#include "ReShade.fxh"
+
 #undef REVEIL_RES_DENOMINATOR
 #define REVEIL_RES_DENOMINATOR 4
 

@@ -1,6 +1,12 @@
+////////////////////////////////////////////////////////
+// Halftone Conversion
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /**
-Halftone Conversion for ReShade
-By: Lord Of Lunacy
 This shader attempts to emulate an amplitude based CMYK halftoning similar to that of offset printing.
 https://en.wikipedia.org/wiki/Halftone
 */

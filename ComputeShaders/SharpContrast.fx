@@ -1,3 +1,11 @@
+////////////////////////////////////////////////////////
+// Sharp Contrast
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
 	This sharpen filter uses a kuwahara filter to create an unsharp mask, and was originally developed from the anisotropic
 	kuwahara technique that was used by my Oilify shader. Changes to this Kuwahara include, the removal of the anisotropy

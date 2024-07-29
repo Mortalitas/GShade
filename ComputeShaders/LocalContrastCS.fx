@@ -1,8 +1,14 @@
+////////////////////////////////////////////////////////
+// Local Contrast CS
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
 This shader makes use of the scatter capabilities of a compute shader to perform an adaptive IIR filter rather than
 the traditional FIR filters normally used in image processing.
-
-LocalContrastCS
 
 Arici, Tarik, and Yucel Altunbasak. “Image Local Contrast Enhancement Using Adaptive Non-Linear Filters.” 
 2006 International Conference on Image Processing, 2006, https://doi.org/10.1109/icip.2006.313031. 

@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////
+// CMAA 2.0
+// Author: Lord of Lunacy
+// License: Apache License 2.0
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
 This is an implementation of Intel's CMAA 2.0 ported to ReShade. This port while keeping the underlying AA the same
 uses a significantly different codebase to achieve the effect due to ReShade's lack of support for atomic texture

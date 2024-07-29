@@ -1,7 +1,12 @@
-/*
-	Gaussian Blur Compute Shader for ReShade
-	By: Lord Of Lunacy
-	
+////////////////////////////////////////////////////////
+// Gaussian Blur Compute Shader
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
+/*	
 	A heavily optimized gaussian blur with 3 different kernel sizes, and wrote in a way that it could
 	easily be adapted to perform other seperable convolutions.
 	

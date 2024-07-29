@@ -1,5 +1,10 @@
-// VRS_Map.fxh
-//
+////////////////////////////////////////////////////////
+// VRS Map
+// Author: Lord of Lunacy
+// License: MIT
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 // Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

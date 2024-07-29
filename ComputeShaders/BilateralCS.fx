@@ -1,3 +1,11 @@
+////////////////////////////////////////////////////////
+// BilateralCS
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
 This shader makes use of the scatter capabilities of a compute shader to perform an adaptive IIR filter rather than
 the traditional FIR filters normally used in image processing.

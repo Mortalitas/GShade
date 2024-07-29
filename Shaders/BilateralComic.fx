@@ -1,7 +1,10 @@
-/*
-	Bilateral Comic for ReShade
-	By: Lord of Lunacy
-*/
+////////////////////////////////////////////////////////
+// Bilateral Comic
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
 
 #include "ReShade.fxh"
 

@@ -1,7 +1,11 @@
-/*
-Bessel_Bloom
-By: Lord of Lunacy
+////////////////////////////////////////////////////////
+// Bessel Bloom
+// Author: Lord of Lunacy
+// License: MIT
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
 
+/*
 Instead of using the typical Gaussian filter used by bloom, an approximate is implemented instead
 using a 2nd order Bessel IIR filter.
 

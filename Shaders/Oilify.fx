@@ -1,8 +1,12 @@
+////////////////////////////////////////////////////////
+// Oilify
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
-	Oilify Shader for ReShade
-	
-	By: Lord of Lunacy
-	
 	This shader applies a Kuwahara filter using an optimized method for extracting the image mean and variance.
 	
 	Kuwahara filter. (2020, May 01). Retrieved October 17, 2020, from https://en.wikipedia.org/wiki/Kuwahara_filter

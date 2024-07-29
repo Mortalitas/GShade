@@ -1,3 +1,11 @@
+////////////////////////////////////////////////////////
+// Deep Fry
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
 A simple shader that uses JPEG DCT quantization and turns up the reds in the image to create a deep fried meme effect.
 */
@@ -70,9 +78,9 @@ void PostProcessVS(in uint id : SV_VertexID, out float4 position : SV_Position, 
 
 float3 DCT_Horizontal(sampler sTexture, float2 texcoord, bool isInverse)
 {
-	uint2 coord = uint2(texcoord * float2(IMAGE_WIDTH, IMAGE_HEIGHT));
-	uint index = coord.x % 8;
-	uint offset = coord.x - index;
+	const uint2 coord = uint2(texcoord * float2(IMAGE_WIDTH, IMAGE_HEIGHT));
+	const uint index = coord.x % 8;
+	const uint offset = coord.x - index;
 	
 	float3 output = 0;
 	
@@ -108,9 +116,9 @@ float3 DCT_Horizontal(sampler sTexture, float2 texcoord, bool isInverse)
 
 float3 DCT_Vertical(sampler sTexture, float2 texcoord, bool isInverse)
 {
-	uint2 coord = uint2(texcoord * float2(IMAGE_WIDTH, IMAGE_HEIGHT));
-	uint index = coord.y % 8;
-	uint offset = coord.y - index;
+	const uint2 coord = uint2(texcoord * float2(IMAGE_WIDTH, IMAGE_HEIGHT));
+	const uint index = coord.y % 8;
+	const uint offset = coord.y - index;
 	
 	float3 output = 0;
 	
@@ -146,7 +154,7 @@ float3 DCT_Vertical(sampler sTexture, float2 texcoord, bool isInverse)
 
 void ycbcrPS(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out float3 output : SV_Target0)
 {
-	float3 color = tex2D(sBackBuffer, texcoord).rgb;
+	const float3 color = tex2D(sBackBuffer, texcoord).rgb;
 	output.x = dot(color, float3(0.299, 0.587, 0.114));
 	output.y = dot(color, float3(-0.168736, -0.331264, 0.5)) + 0.5 - Reds;
 	output.z = dot(color, float3(0.5, -0.418688, -0.081312)) + 0.5 + Reds;
@@ -164,9 +172,9 @@ void VerticalPS0(float4 vpos : SV_Position, float2 texcoord : TEXCOORD, out floa
 	output.w = 1;
 	output *= 255;
 	output += -128;
-	uint2 coord = uint2(texcoord * float2(IMAGE_WIDTH, IMAGE_HEIGHT));
-	uint index = (coord.y % 8) * 8 + coord.x % 8;
-	float3 quantization = float3(LuminanceQuantization[index], ChrominanceQuantization[index].xx) * Quality;
+	const uint2 coord = uint2(texcoord * float2(IMAGE_WIDTH, IMAGE_HEIGHT));
+	const uint index = (coord.y % 8) * 8 + coord.x % 8;
+	const float3 quantization = float3(LuminanceQuantization[index], ChrominanceQuantization[index].xx) * Quality;
 	output.xyz = round(output.xyz * rcp(quantization));
 	output *= quantization;
 	output /= 255;

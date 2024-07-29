@@ -1,8 +1,12 @@
+////////////////////////////////////////////////////////
+// DeHaze
+// Author: Lord of Lunacy
+// License: CC0 1.0 Universal
+// https://creativecommons.org/publicdomain/zero/1.0/
+// Repository: https://github.com/LordOfLunacy/Insane-Shaders
+////////////////////////////////////////////////////////
+
 /*
-DeHaze for Reshade
-By: Lord of Lunacy
-
-
 This shader attempts to remove fog using a dark channel prior technique that has been
 refined using 2 passes over an iterative guided Wiener filter ran on the image dark channel.
 
