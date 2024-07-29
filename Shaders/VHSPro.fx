@@ -12,14 +12,14 @@
     #include "TriDither.fxh"
 #endif
 
-uniform float screenLinesNum <
+uniform int screenLinesNum <
 	ui_type = "slider";
-	ui_min = 1.0;
-	ui_max = (float)BUFFER_HEIGHT;
-	ui_step = 1.0;
+	ui_min = 1;
+	ui_max = BUFFER_HEIGHT;
+	ui_step = 1;
 	ui_label = "Screen Resolution [VHSPro]";
-	ui_tooltip = "Screen Resolution (in lines).\nChange screenLinesRes in Preprocessor Definitions to have the same value as this.";
-> = (float)BUFFER_HEIGHT;
+	ui_tooltip = "Screen Resolution (in lines).";
+> = BUFFER_HEIGHT;
 
 uniform bool VHS_Bleed <
 	ui_label = "Bleeding [VHSPro]";
@@ -86,7 +86,7 @@ uniform float cutoffFadeX <
 uniform float cutoffFadeY <
 	ui_type = "slider";
 	ui_min = 0.0;
-	ui_max = 0.0;
+	ui_max = 50.0;
 	ui_label = "Fisheye Cutoff Fade Y [VHSPro]";
 	ui_tooltip = "Size of the Vertical gradient cutoff.";
 > = 25.0;
@@ -113,13 +113,18 @@ uniform float vignetteSpeed <
 	ui_tooltip = "Speed of the vignette pulsing. (Setting it to 0 makes it stop pulsing)";
 > = 1.0;
 
-uniform float noiseLinesNum <
+uniform int noiseLinesNum <
 	ui_type = "slider";
-	ui_min = 1.0;
-	ui_max = (float)BUFFER_HEIGHT;
+	ui_min = 1;
+	ui_max = BUFFER_HEIGHT;
 	ui_label = "Vertical Resolution [VHSPro]";
 	ui_tooltip = "Noise Resolution (in lines).";
-> = 240.0;
+	ui_bind = "noiseLinesRes";
+> = 240;
+
+#ifndef noiseLinesRes
+    #define noiseLinesRes 240    //Vertical Resolution (to use in _TapeTex, has to be the same as noiseLinesNum)
+#endif
 
 uniform float noiseQuantizeX <
 	ui_type = "slider";
@@ -412,20 +417,19 @@ uniform bool feedbackDebug <
 	ui_tooltip = "Enables the visualization of the phosphor-trails only.";
 > = false;
 
-uniform int VHS_Filter <
-	ui_type = "slider";
-	ui_min = 0.0;
-	ui_max = 0.0;
+uniform bool VHS_Filter <
+	ui_type = "bool";
 	ui_label = "Linear Filtering [VHSPro]";
-	ui_tooltip = "Filters the image linearly, increasing quality.\nDefine VHSLINEARFILTER in Preprocessor Definitions to take effect, this is only here as a reminder.";
-> = 0.0;
+	ui_tooltip = "Filters the image linearly, increasing quality.";
+	ui_bind = "VHSLINEARFILTER";
+> = false;
 
-//textures and samplers
-#ifndef screenLinesRes
-	#define screenLinesRes (float)BUFFER_HEIGHT	//Screen Resolution (to use in _TapeTex, has to be the same as screenLinesNum)
+#ifndef VHSLINEARFILTER
+	#define VHSLINEARFILTER 0
 #endif
 
-#ifdef VHSLINEARFILTER
+//textures and samplers
+#if VHSLINEARFILTER
 	#define VHSFILTERMODE LINEAR
 #else
 	#define VHSFILTERMODE POINT
@@ -441,7 +445,7 @@ uniform float  Timer < source = "timer"; >;
 
 static const float Pi2 = 6.283185307;
 
-#define TEXHEIGHT   screenLinesRes
+#define TEXHEIGHT   noiseLinesRes
 #define TEXWIDTH 	int(((float)TEXHEIGHT*(float)BUFFER_WIDTH/(float)BUFFER_HEIGHT))
 
 texture2D VHS_InputTexA    { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
@@ -548,7 +552,7 @@ float scanLines(float2 p, float t)
 
 	//cheap (maybe make an option later)
 	// float scanLineWidth = 0.26;
-	// float scans = 0.5*(cos((p.y*screenLinesNum+t+.5)*2.0*PI) + 1.0);
+	// float scans = 0.5*(cos((p.y*float(screenLinesNum)+t+.5)*2.0*PI) + 1.0);
 	// if(scans>scanLineWidth) scans = 1.; else scans = 0.;
 
 		float t_sl = 0.0;
@@ -558,7 +562,7 @@ float scanLines(float2 p, float t)
 		}
 
 		//expensive but better
-		float scans = 0.5*(cos( (p.y*screenLinesNum+0.5+t_sl)*2.0*PI) + 1.0);
+		float scans = 0.5*(cos( (p.y*float(screenLinesNum)+0.5+t_sl)*2.0*PI) + 1.0);
 		scans = pow(scans, scanLineWidth); 
 		return 1.0 - scans; 
 }
@@ -574,7 +578,7 @@ float gcos(float2 uv, float s, float p)
 //lf phase = line float phase = .0
 float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
    
-	const float SLN = screenLinesNum + 0.5; //TODO use only SLN
+	const float SLN = float(screenLinesNum) + 0.5; //TODO use only SLN
 	//width change
 	const float tt = t*wcs; //widthChangeSpeed
 	const float t2 = tt-fmod(tt, 0.5);
@@ -585,7 +589,7 @@ float2 stretch(float2 uv, float t, float mw, float wcs, float lfs, float lfp){
 	w = floor(w*mw)/mw;
 	w *= mw;
 	//get descreete line number
-	float ln = (1.0-frac(t*lfs + lfp)) *(screenLinesNum + 0.5); 
+	float ln = (1.0-frac(t*lfs + lfp)) *(float(screenLinesNum) + 0.5); 
 	ln = ln - frac(ln); 
 	// float ln = (1.-fmod(t*lfs + lfp, 1.))*SLN; 
 	// ln = ln - fmod(ln, 1.); //descreete line number
@@ -840,15 +844,15 @@ float4 PS_VHS1(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 	const float t = Timer.x * 0.001;//_Time.y;
 	float2 p = txcoord.xy;
 	
-	float SLN = screenLinesNum + 0.5; //TODO use only SLN
-	float SLN_Noise = noiseLinesNum + 0.5; //TODO only SLN_Noise
+	float SLN = float(screenLinesNum) + 0.5; //TODO use only SLN
+	float SLN_Noise = float(noiseLinesNum) + 0.5; //TODO only SLN_Noise
 	float ONE_X = 0.0;
 	float ONE_Y = 0.0;
 
 	//basically if its 0 -> set it to fullscreen
 	//TODO calc it before shader / already float done
-	SLN = screenLinesNum + 0.5; //TODO use only SLN
-	SLN_Noise = noiseLinesNum + 0.5; //TODO only SLN_Noise
+	SLN = float(screenLinesNum) + 0.5; //TODO use only SLN
+	SLN_Noise = float(noiseLinesNum) + 0.5; //TODO only SLN_Noise
 	if(SLN==0.0) SLN = _ScreenParams.y;
 
 	if(SLN_Noise==0 || SLN_Noise>SLN) SLN_Noise = SLN;
@@ -1089,14 +1093,14 @@ float4 PS_VHS2(float4 pos : SV_Position, float2 txcoord : TEXCOORD) : SV_Target
 {
 	const float t = Timer.x * 0.001;//_Time.y;
 	float2 p = txcoord.xy;
-	float SLN = screenLinesNum + 0.5; //TODO use only SLN
+	float SLN = float(screenLinesNum) + 0.5; //TODO use only SLN
 
 	//basically if its 0 -> set it to fullscreen
 	if(SLN==0.0) SLN = _ScreenParams.y;
 
 	 //TODO maybe make it based on num of lines? and height ? 
 	//TODO make switch between real pixels and pixelated pixels!
-    // ONE_X = 1.0 / screenLinesNum + 0.5;
+    // ONE_X = 1.0 / float(screenLinesNum) + 0.5;
 
 	float ONE_X = 1.0 / _ScreenParams.x;  // 1px
     ONE_X *= bleedAmount; // longer tails, more bleeding, default 1.
