@@ -1,6 +1,7 @@
-/**
+/*
    LumaSharpen version 1.5.0
    by Christian Cann Schuldt Jensen ~ CeeJay.dk
+   License: MIT
   
    It blurs the original pixel with the surrounding pixels and then subtracts this blur to sharpen the image.
    It does this in luma to avoid color artifacts and allows limiting the maximum sharpning to avoid or lessen halo artifacts.
@@ -8,8 +9,34 @@
 
    Version 1.5.1
   - UI improvements for Reshade 3.x
+
+   Version 1.5.2
+  - Inversed attribution added by Bapho - https://github.com/Bapho https://www.shadertoy.com/user/Bapho
+  - Lightly optimized by Marot Satil for the GShade project.
+
+
+   The MIT License (MIT)
+
+   Copyright (c) 2014 CeeJayDK
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
  */
- // Lightly optimized by Marot Satil for the GShade project.
 
 uniform float sharp_strength <
 	ui_type = "slider";
@@ -18,6 +45,10 @@ uniform float sharp_strength <
 	ui_tooltip = "Strength of the sharpening";
 
 > = 0.65;
+uniform bool inversedAttribution <
+	ui_label = "Inverse Attribution";
+	ui_tooltip = "Activate inverse attribution so that already sharp areas will get less sharpness";
+> = false;
 uniform float sharp_clamp <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0; ui_step = 0.005;
@@ -168,6 +199,13 @@ float3 LumaSharpenPass(float4 position : SV_Position, float2 tex : TEXCOORD) : S
 	sharp_luma = clamp(sharp_luma, -sharp_clamp, sharp_clamp);  //TODO Try a curve function instead of a clamp
 
 #else //new code
+
+	if (inversedAttribution)
+	{
+		const float3 revert_sharp_strength = (1.01 / (abs(sharp) + 0.01)) / 30.0;
+		sharp_strength_luma *= revert_sharp_strength;
+	}
+
 	// -- Adjust strength of the sharpening and clamp it--
 	const float4 sharp_strength_luma_clamp = float4(sharp_strength_luma * (0.5 / sharp_clamp),0.5); //Roll part of the clamp into the dot
 
