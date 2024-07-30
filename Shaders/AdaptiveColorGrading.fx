@@ -2,7 +2,8 @@
  * Adaptive Color Grading
  * Runs two LUTs simultaneously, smoothly lerping between them based on luma.
  * By moriz1
- * Original LUT shader by Marty McFly
+ * Based on Marty's LUT shader 1.0 for ReShade 3.0
+ * Copyright © 2008-2016 Marty McFly
  */
 
 #ifndef fLUT_TextureDay
