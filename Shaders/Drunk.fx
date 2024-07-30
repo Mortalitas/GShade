@@ -1,3 +1,5 @@
+// License: GNU GPL V2.0
+//
 // Copyright 2021 Michael Fabian Dirks <info@xaymar.com>
 // Modified use with ReShade by Radegast Stravinsky <radegast.ffxiv@gmail.com>
 //
