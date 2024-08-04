@@ -149,7 +149,7 @@ uniform bool toggle_blue <source="key"; keycode=UIMASK_TOGGLEKEY_BLUE; toggle=tr
 #endif
 
 texture tUIMask_Backup { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-texture tUIMask_Mask <source="UIMask.png";> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
+texture tUIMask_Mask <source=UIMASK_TEXTURE;> { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format=TEXFORMAT; };
 
 sampler sUIMask_Mask { Texture = tUIMask_Mask; };
 sampler sUIMask_Backup { Texture = tUIMask_Backup; };
