@@ -45,7 +45,7 @@
 #endif
 
 #ifndef _P_OKLAB_VERSION
-	#define _P_OKLAB_VERSION 102
+	#define _P_OKLAB_VERSION 103
 #endif
 
 #if _P_OKLAB_VERSION < P_OKLAB_VERSION_REQUIRE
@@ -62,7 +62,7 @@ namespace Oklab
 	static const float PI = pUtils::PI;
 	static const float EPSILON = pUtils::EPSILON;
 
-	static const float SDR_WHITEPOINT = 80.0; //Set HDR sRGB equivalent whitelevel to 80 to match 0-1 SDR
+	static const float SDR_WHITEPOINT = 100.0; //Set HDR sRGB equivalent whitelevel to 100 to match 0-1 SDR
 
 
 	//Handle unknown color space
@@ -97,7 +97,7 @@ namespace Oklab
 	#else
 		static const bool IS_HDR = false;
 		#undef HDR_PAPER_WHITE_NITS
-		#define HDR_PAPER_WHITE_NITS 50.0
+		#define HDR_PAPER_WHITE_NITS 80.0
 	#endif
 	static const float HDR_PAPER_WHITE = HDR_PAPER_WHITE_NITS / SDR_WHITEPOINT;
 
