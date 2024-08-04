@@ -240,19 +240,22 @@ uniform float BloomGamma <
 #else
 	static const float LFLARE_CURVE_DEFAULT = 1.0;
 #endif
-uniform float LensFlareCurve < __UNIFORM_SLIDER_FLOAT1
+uniform float LensFlareCurve <
+	ui_type = "slider";
 	ui_min = 0.0; ui_max = 2.0;
 	ui_label = "Lens flare curve";
 	ui_tooltip = "What parts of the image produce lens flares";
 	ui_category = "Lens Flare";
 > = LFLARE_CURVE_DEFAULT;
-uniform float GlareStrength < __UNIFORM_SLIDER_FLOAT1
+uniform float GlareStrength <
+	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Glare amount";
 	ui_tooltip = "Amount of glare to apply";
 	ui_category = "Lens Flare";
 > = 0.5;
-uniform int GlareQuality < __UNIFORM_RADIO_INT1
+uniform int GlareQuality <
+	ui_type = "radio";
 	ui_label = "Glare size";
 	ui_tooltip = "Quality and size of glare";
 	ui_items = "Large\0Medium\0Small\0";
