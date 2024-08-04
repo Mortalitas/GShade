@@ -107,18 +107,6 @@ SOFTWARE.
     #define UIMASK_MULTICHANNEL 0
 #endif
 
-#ifndef UIMASK_TOGGLEKEY_RED
-    #define UIMASK_TOGGLEKEY_RED 0x67 //Numpad 7
-#endif
-
-#ifndef UIMASK_TOGGLEKEY_GREEN
-    #define UIMASK_TOGGLEKEY_GREEN 0x68 //Numpad 8
-#endif
-
-#ifndef UIMASK_TOGGLEKEY_BLUE
-    #define UIMASK_TOGGLEKEY_BLUE 0x69 //Numpad 9
-#endif
-
 #if !UIMASK_MULTICHANNEL
     #define TEXFORMAT R8
 #else
@@ -143,9 +131,27 @@ uniform bool bDisplayMask <
 > = false;
 
 #if UIMASK_MULTICHANNEL
-uniform bool toggle_red <source="key"; keycode=UIMASK_TOGGLEKEY_RED; toggle=true;>;
-uniform bool toggle_green <source="key"; keycode=UIMASK_TOGGLEKEY_GREEN; toggle=true;>;
-uniform bool toggle_blue <source="key"; keycode=UIMASK_TOGGLEKEY_BLUE; toggle=true;>;
+uniform bool bToggleRed <
+    ui_label = "Toggle Red Channel";
+    ui_tooltip = "Toggle UI masking for the red channel.\n"
+                 "Right click to assign a hotkey.";
+> = true;
+
+uniform bool bToggleGreen <
+    ui_label = "Toggle Green Channel";
+    ui_tooltip = "Toggle UI masking for the green channel.\n"
+                 "Right click to assign a hotkey.";
+> = true;
+
+uniform bool bToggleBlue <
+    ui_label = "Toggle Blue Channel";
+    ui_tooltip = "Toggle UI masking for the blue channel.\n"
+                 "Right click to assign a hotkey.";
+> = true;
+#endif
+
+#ifndef UIMASK_TEXTURE
+    #define UIMASK_TEXTURE "UIMask.png"
 #endif
 
 texture tUIMask_Backup { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
@@ -165,8 +171,7 @@ float4 PS_ApplyMask(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target 
     float mask = tex2D(sUIMask_Mask, uv).r;
     #else
     //This just works, it basically adds masking with each channel that has been toggled.
-    //'toggle_red' is inverted so it defaults to 'true' upon start.
-    float mask = saturate(1.0 - dot(1.0 - tex2D(sUIMask_Mask, uv).rgb, float3(!toggle_red, toggle_green, toggle_blue)));
+    float mask = saturate(1.0 - dot(1.0 - tex2D(sUIMask_Mask, uv).rgb, float3(bToggleRed, bToggleGreen, bToggleBlue)));
     #endif
 
     mask = lerp(1.0, mask, fMask_Intensity);
