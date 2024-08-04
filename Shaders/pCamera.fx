@@ -119,7 +119,7 @@ uniform float DOFManualFocusDist <
 uniform int BokehQuality <
 	ui_type = "radio";
 	ui_label = "Blur quality";
-	ui_tooltip = "Quality and size of gaussian blur";
+	ui_tooltip = "Quality and size of bokeh blur";
 	ui_items = "High quality\0Medium quality\0Fast\0";
 	ui_category = "DOF";
 > = 2;
@@ -233,6 +233,31 @@ uniform float BloomGamma <
 	ui_tooltip = "Controls shape of bloom";
 	ui_category = "Bloom";
 > = BLOOM_GAMMA_DEFAULT;
+
+//Lens flare
+#if BUFFER_COLOR_SPACE > 1
+	static const float LFLARE_CURVE_DEFAULT = 0.8;
+#else
+	static const float LFLARE_CURVE_DEFAULT = 1.0;
+#endif
+uniform float LensFlareCurve < __UNIFORM_SLIDER_FLOAT1
+	ui_min = 0.0; ui_max = 2.0;
+	ui_label = "Lens flare curve";
+	ui_tooltip = "Determines which parts should produce lens flares";
+	ui_category = "Lens Flare";
+> = LFLARE_CURVE_DEFAULT;
+uniform float GlareStrength < __UNIFORM_SLIDER_FLOAT1
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Glare amount";
+	ui_tooltip = "Amount of glare to apply";
+	ui_category = "Lens Flare";
+> = 0.5;
+uniform int GlareQuality < __UNIFORM_RADIO_INT1
+	ui_label = "Glare size";
+	ui_tooltip = "Quality and size of glare";
+	ui_items = "Large\0Medium\0Small\0";
+	ui_category = "Lens Flare";
+> = 1;
 
 //Vignette
 uniform float VignetteStrength <
@@ -372,6 +397,9 @@ sampler spBokehBlurTex { Texture = pBokehBlurTex; AddressU = MIRROR; AddressV = 
 texture pGaussianBlurTex < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spGaussianBlurTex { Texture = pGaussianBlurTex; AddressU = MIRROR; AddressV = MIRROR; };
 
+texture pGlareTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
+sampler spGlareTex { Texture = pGlareTex; };
+
 texture pBloomTex0 < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spBloomTex0 { Texture = pBloomTex0; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex1 < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
@@ -426,19 +454,19 @@ float3 ClipBlacks(float3 c)
     return float3(max(c.r, 0.0), max(c.g, 0.0), max(c.b, 0.0));
 }
 
-float3 KarisAverage(float3 c)
+float4 KarisAverage(float4 c)
 {
-	return 1.0 / (1.0 + Oklab::get_Luminance_RGB(c) * 0.25);
+	return 1.0 / (1.0 + Oklab::get_Luminance_RGB(c.rgb) * 0.25);
 }
 
-float3 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bool sample_linear)
+float4 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bool sample_linear, int quality)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 	float2 step_length = TEXEL_SIZE * size;
 
 	int start;
 	int end;
-	switch (GaussianQuality)
+	switch (quality)
 	{
 		case 0: //High quality 31 samples
 		{
@@ -464,26 +492,26 @@ float3 GaussianBlur(sampler s, float2 texcoord, float size, float2 direction, bo
 	                                  0.0832, 0.1577, 0.1274, 0.0868, 0.0497, 0.0239, 0.0096, 0.0032, 
 	                                  0.0356, 0.0706, 0.0678, 0.0632, 0.0571, 0.0500, 0.0424, 0.0348, 0.0277, 0.0214, 0.0160, 0.0116, 0.0081, 0.0055, 0.0036, 0.0023 };
     
-	float3 color;
+	float4 color;
 	[branch]
 	if (sample_linear)
 	{
-		color = SampleLinear(texcoord, true) * WEIGHT[start];
+		color.rgb = SampleLinear(texcoord, true) * WEIGHT[start];
 		[unroll]
 		for (int i = start + 1; i < end; ++i)
 		{
-			color += SampleLinear(texcoord + direction * OFFSET[i] * step_length, true) * WEIGHT[i];
-			color += SampleLinear(texcoord - direction * OFFSET[i] * step_length, true) * WEIGHT[i];
+			color.rgb += SampleLinear(texcoord + direction * OFFSET[i] * step_length, true) * WEIGHT[i];
+			color.rgb += SampleLinear(texcoord - direction * OFFSET[i] * step_length, true) * WEIGHT[i];
 		}
 	}
 	else
 	{
-		color = tex2D(s, texcoord).rgb * WEIGHT[start];
+		color = tex2D(s, texcoord) * WEIGHT[start];
 		[unroll]
 		for (int i = start + 1; i < end; ++i)
 		{
-			color += tex2D(s, texcoord + direction * OFFSET[i] * step_length).rgb * WEIGHT[i];
-			color += tex2D(s, texcoord - direction * OFFSET[i] * step_length).rgb * WEIGHT[i];
+			color += tex2D(s, texcoord + direction * OFFSET[i] * step_length) * WEIGHT[i];
+			color += tex2D(s, texcoord - direction * OFFSET[i] * step_length) * WEIGHT[i];
 		}
 	}
 
@@ -552,16 +580,16 @@ float3 BokehBlur(sampler s, float2 texcoord, float size, bool sample_linear)
 	return color * brightness_compensation;
 }
 
-float3 BoxSample(sampler s, float2 texcoord, float d)
+float4 BoxSample(sampler s, float2 texcoord, float d)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 	float4 o = TEXEL_SIZE.xyxy * float2(-d, d).xxyy;
 
-	float3 color = tex2D(s, texcoord + o.xy).rgb + tex2D(s, texcoord + o.zy).rgb + tex2D(s, texcoord + o.xw).rgb + tex2D(s, texcoord + o.zw).rgb;
+	float4 color = tex2D(s, texcoord + o.xy) + tex2D(s, texcoord + o.zy) + tex2D(s, texcoord + o.xw) + tex2D(s, texcoord + o.zw);
 	return color * 0.25;
 }
 
-float3 HQDownSample(sampler s, float2 texcoord)
+float4 HQDownSample(sampler s, float2 texcoord)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 
@@ -574,15 +602,15 @@ float3 HQDownSample(sampler s, float2 texcoord)
 									  0.0625, 0.125, 0.0625,
 									  0.03125, 0.0625, 0.03125 };
 
-	float3 color = float3(0.0, 0.0, 0.0);
+	float4 color;
 	[unroll]
 	for (int i = 0; i < 13; ++i)
 	{
-		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE).rgb * WEIGHT[i];
+		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE) * WEIGHT[i];
 	}
 	return color;
 }
-float3 HQDownSampleKA(sampler s, float2 texcoord)
+float4 HQDownSampleKA(sampler s, float2 texcoord)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 	
@@ -591,15 +619,15 @@ float3 HQDownSampleKA(sampler s, float2 texcoord)
 									   float2(-2.0, 0.0), float2(0.0, 0.0), float2(2.0, 0.0),
 									   float2(-2.0, -2.0), float2(0.0, -2.0), float2(2.0, -1.0) };
 
-	float3 samplecolor[13];
+	float4 samplecolor[13];
 	[unroll]
 	for (int i = 0; i < 13; ++i)
 	{
-		samplecolor[i] = tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE).rgb;
+		samplecolor[i] = tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE);
 	}
 
 	//Groups
-	float3 groups[5];
+	float4 groups[5];
 	groups[0] = 0.125 * (samplecolor[0] + samplecolor[1] + samplecolor[2] + samplecolor[3]);
 	groups[1] = 0.03125 * (samplecolor[4] + samplecolor[5] + samplecolor[7] + samplecolor[8]);
 	groups[2] = 0.03125 * (samplecolor[5] + samplecolor[6] + samplecolor[8] + samplecolor[9]);
@@ -616,7 +644,7 @@ float3 HQDownSampleKA(sampler s, float2 texcoord)
 	return groups[0] + groups[1] + groups[2] + groups[3] + groups[4];
 }
 
-float3 HQUpSample(sampler s, float2 texcoord, float radius)
+float4 HQUpSample(sampler s, float2 texcoord, float radius)
 {
 	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
 
@@ -627,11 +655,11 @@ float3 HQUpSample(sampler s, float2 texcoord, float radius)
 	                                 0.125, 0.25, 0.125,
 									 0.0625, 0.125, 0.0625 };
 
-	float3 color = float3(0.0, 0.0, 0.0);
+	float4 color;
 	[unroll]
 	for (int i = 0; i < 9; ++i)
 	{
-		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE * radius).rgb * WEIGHT[i];
+		color += tex2D(s, texcoord + OFFSET[i] * TEXEL_SIZE * radius) * WEIGHT[i];
 	}
 	return color;
 }
@@ -704,6 +732,16 @@ vs2ps VS_Bloom(uint id : SV_VertexID)
 	return o;
 }
 
+vs2ps VS_Glare(uint id : SV_VertexID)
+{   
+	vs2ps o = vs_basic(id);
+	if (GlareStrength == 0.0)
+	{
+		o.vpos.xy = 0.0;
+	}
+	return o;
+}
+
 
 ////Passes
 float2 StoragePass(vs2ps o) : COLOR
@@ -724,11 +762,11 @@ float2 StoragePassC(float4 vpos : SV_Position, float2 texcoord : TexCoord) : COL
 //Blur
 float3 GaussianBlurPass1(vs2ps o) : COLOR
 {
-	return GaussianBlur(spBumpTex, o.texcoord.xy, BlurStrength, float2(1.0, 0.0), true);
+	return GaussianBlur(spBumpTex, o.texcoord.xy, BlurStrength, float2(1.0, 0.0), true, GaussianQuality).rgb;
 }
 float3 GaussianBlurPass2(vs2ps o) : COLOR
 {
-	return GaussianBlur(spBokehBlurTex, o.texcoord.xy, BlurStrength, float2(0.0, 1.0), false);
+	return GaussianBlur(spBokehBlurTex, o.texcoord.xy, BlurStrength, float2(0.0, 1.0), false, GaussianQuality).rgb;
 }
 
 //DOF
@@ -743,86 +781,105 @@ float4 BokehBlurPass(vs2ps o) : COLOR
 }
 
 //Bloom
-float3 HighPassFilter(vs2ps o) : COLOR
+float4 HighPassFilter(vs2ps o) : COLOR
 {
 	float3 color = (UseDOF) ? tex2D(spBokehBlurTex, o.texcoord.xy).rgb : (BlurStrength == 0.0) ? SampleLinear(o.texcoord.xy, true).rgb : tex2D(spGaussianBlurTex, o.texcoord.xy).rgb;
 	float adapted_luminance = Oklab::get_Adapted_Luminance_RGB(RedoTonemap(color), 1.0);
 
+	float mask = pow(Oklab::get_Adapted_Luminance_RGB(color, Oklab::INVNORM_FACTOR) / (1.0 + Oklab::INVNORM_FACTOR), LensFlareCurve*LensFlareCurve + EPSILON);
+
 	color *= pow(abs(adapted_luminance), BloomCurve*BloomCurve);
-	return color;
+	return float4(color, mask);
 }
 //Downsample
-float3 BloomDownS1(vs2ps o) : COLOR
+float4 BloomDownS1(vs2ps o) : COLOR
 {
 	return HQDownSampleKA(spBloomTex0, o.texcoord.xy);
 }
-float3 BloomDownS2(vs2ps o) : COLOR
+float4 BloomDownS2(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex1, o.texcoord.xy);
 }
-float3 BloomDownS3(vs2ps o) : COLOR
+float4 BloomDownS3(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex2, o.texcoord.xy);
 }
-float3 BloomDownS4(vs2ps o) : COLOR
+float4 BloomDownS4(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex3, o.texcoord.xy);
 }
-float3 BloomDownS5(vs2ps o) : COLOR
+float4 BloomDownS5(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex4, o.texcoord.xy);
 }
-float3 BloomDownS6(vs2ps o) : COLOR
+float4 BloomDownS6(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex5, o.texcoord.xy);
 }
-float3 BloomDownS7(vs2ps o) : COLOR
+float4 BloomDownS7(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex6, o.texcoord.xy);
 }
-float3 BloomDownS8(vs2ps o) : COLOR
+float4 BloomDownS8(vs2ps o) : COLOR
 {
 	return HQDownSample(spBloomTex7, o.texcoord.xy);
 }
 //Upsample
-float3 BloomUpS7(vs2ps o) : COLOR
+float4 BloomUpS7(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex8, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS6(vs2ps o) : COLOR
+float4 BloomUpS6(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex7, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS5(vs2ps o) : COLOR
+float4 BloomUpS5(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex6, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS4(vs2ps o) : COLOR
+float4 BloomUpS4(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex5, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS3(vs2ps o) : COLOR
+float4 BloomUpS3(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex4, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS2(vs2ps o) : COLOR
+float4 BloomUpS2(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex3, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS1(vs2ps o) : COLOR
+float4 BloomUpS1(vs2ps o) : COLOR
 {
 	return BloomRadius * HQUpSample(spBloomTex2, o.texcoord.xy, BloomRadius);
 }
-float3 BloomUpS0(vs2ps o) : COLOR
+float4 BloomUpS0(vs2ps o) : COLOR
 {
-	float3 color = BloomRadius * HQUpSample(spBloomTex1, o.texcoord.xy, BloomRadius);
-	color = RedoTonemap(color);
+	float4 color = BloomRadius * HQUpSample(spBloomTex1, o.texcoord.xy, BloomRadius);
+	color.rgb = RedoTonemap(color.rgb);
 
 	if (BloomGamma != 1.0)
 	{
-		color *= pow(abs(Oklab::get_Luminance_RGB(color / Oklab::INVNORM_FACTOR)), BloomGamma);
+		color.rgb *= pow(abs(Oklab::get_Luminance_RGB(color.rgb / Oklab::INVNORM_FACTOR)), BloomGamma);
 	}
 	return color;
+}
+
+//Lens Flare
+float3 GlarePass(vs2ps o) : COLOR
+{
+	//Do each blade in seperate pass? Use shitton of verts? - watch how they did it https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/
+	float2 radiant_vector = o.texcoord.xy - 0.5;
+
+	float2 d_vertical = float2(0.1, 1.0) - 0.5 * radiant_vector;
+	float2 d_horizontal = float2(1.0, -0.3) + 0.5 * radiant_vector;
+	d_vertical /= length(d_vertical);
+	d_horizontal /= length(d_horizontal);
+
+	float4 s_vertical = GaussianBlur(spBloomTex1, o.texcoord.xy, 4.0 * GlareStrength, d_vertical, false, GlareQuality);
+	float4 s_horizontal = GaussianBlur(spBloomTex1, o.texcoord.xy, 4.0 * GlareStrength, d_horizontal, false, GlareQuality);
+
+	return s_vertical.rgb * s_vertical.a + s_horizontal.rgb * s_horizontal.a;
 }
 
 float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
@@ -909,6 +966,12 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	if (BloomStrength != 0.0)
 	{
 		color += (BloomStrength * BloomStrength) * tex2D(spBloomTex0, texcoord).rgb;
+	}
+
+	//Lens flare
+	if (GlareStrength != 0.0)
+	{
+		color += (GlareStrength * GlareStrength) / (0.5 * GlareQuality + 1.0) * tex2D(spGlareTex, texcoord).rgb;
 	}
 
 	//Vignette
@@ -1017,6 +1080,10 @@ technique Camera <ui_tooltip =
 	#define BLOOM_UP_PASS(i) pass { VertexShader = VS_Bloom; PixelShader = BloomUpS##i; RenderTarget = pBloomTex##i; ClearRenderTargets = FALSE; BlendEnable = TRUE; BlendOp = 1; SrcBlend = 1; DestBlend = 9; }
 
 	BLOOM_DOWN_PASS(1)
+	pass
+	{
+		VertexShader = VS_Glare; PixelShader = GlarePass; RenderTarget = pGlareTex;
+	}
 	BLOOM_DOWN_PASS(2)
 	BLOOM_DOWN_PASS(3)
 	BLOOM_DOWN_PASS(4)
