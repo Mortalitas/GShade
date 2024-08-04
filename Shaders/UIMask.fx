@@ -69,7 +69,10 @@
 		This avoids possible artifacts and makes the mask blend more easily on the eyes.
 		You may not need this if your mask is accurate enough and/or the HUD is simple enough.
 
-	  8-Now save the final image as "UIMask.png" in your textures folder and you're done!
+	  8-Now save the final image with a unique name such as "MyUIMask.png" in your textures folder.
+
+	  9-Set the preprocessor definition UIMASK_TEXTURE to the unique name of your image, with quotes.
+	    You're done!
 
 
 	MIT Licensed:
@@ -131,6 +134,7 @@ uniform int _Help
 		"  UIMASK_MULTICHANNEL:\n"
 		"    If set to 1, each of the RGB color channels in the texture is "
 		"treated as a separate mask.\n"
+		"\n"
 		"How to create a mask:\n"
 		"\n"
 		"1. Take a screenshot with the game's UI appearing.\n"
@@ -232,16 +236,16 @@ float4 BackupPS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
 
 float4 MainPS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target {
 	float4 color = tex2D(ReShade::BackBuffer, uv);
-	float4 backup = tex2D(Backup, uv);
+	const float4 backup = tex2D(Backup, uv);
 
 	#if !UIMASK_MULTICHANNEL
-		float mask = tex2D(Mask, uv).r;
+		const float mask = tex2D(Mask, uv).r;
 	#else
-		float3 mask_rgb = tex2D(Mask, uv).rgb;
+		const float3 mask_rgb = tex2D(Mask, uv).rgb;
 
 		// This just works, it basically adds masking with each channel that has
 		// been toggled.
-		float mask = saturate(
+		const float mask = saturate(
 			1.0 - dot(1.0 - mask_rgb,
 				float3(bToggleRed, bToggleGreen, bToggleBlue)));
 	#endif
