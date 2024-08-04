@@ -236,14 +236,14 @@ uniform float BloomGamma <
 
 //Lens flare
 #if BUFFER_COLOR_SPACE > 1
-	static const float LFLARE_CURVE_DEFAULT = 0.8;
+	static const float LFLARE_CURVE_DEFAULT = 0.4;
 #else
 	static const float LFLARE_CURVE_DEFAULT = 1.0;
 #endif
 uniform float LensFlareCurve < __UNIFORM_SLIDER_FLOAT1
 	ui_min = 0.0; ui_max = 2.0;
 	ui_label = "Lens flare curve";
-	ui_tooltip = "Determines which parts should produce lens flares";
+	ui_tooltip = "What parts of the image produce lens flares";
 	ui_category = "Lens Flare";
 > = LFLARE_CURVE_DEFAULT;
 uniform float GlareStrength < __UNIFORM_SLIDER_FLOAT1
@@ -739,6 +739,10 @@ vs2ps VS_Glare(uint id : SV_VertexID)
 	{
 		o.vpos.xy = 0.0;
 	}
+	else
+	{
+		o.texcoord.z = 4.0 * GlareStrength * (0.4 * GlareQuality + 1.0);
+	}
 	return o;
 }
 
@@ -868,7 +872,6 @@ float4 BloomUpS0(vs2ps o) : COLOR
 //Lens Flare
 float3 GlarePass(vs2ps o) : COLOR
 {
-	//Do each blade in seperate pass? Use shitton of verts? - watch how they did it https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/
 	float2 radiant_vector = o.texcoord.xy - 0.5;
 
 	float2 d_vertical = float2(0.1, 1.0) - 0.5 * radiant_vector;
@@ -876,8 +879,8 @@ float3 GlarePass(vs2ps o) : COLOR
 	d_vertical /= length(d_vertical);
 	d_horizontal /= length(d_horizontal);
 
-	float4 s_vertical = GaussianBlur(spBloomTex1, o.texcoord.xy, 4.0 * GlareStrength, d_vertical, false, GlareQuality);
-	float4 s_horizontal = GaussianBlur(spBloomTex1, o.texcoord.xy, 4.0 * GlareStrength, d_horizontal, false, GlareQuality);
+	float4 s_vertical = GaussianBlur(spBloomTex1, o.texcoord.xy, o.texcoord.z, d_vertical, false, GlareQuality);
+	float4 s_horizontal = GaussianBlur(spBloomTex1, o.texcoord.xy, o.texcoord.z, d_horizontal, false, GlareQuality);
 
 	return s_vertical.rgb * s_vertical.a + s_horizontal.rgb * s_horizontal.a;
 }
