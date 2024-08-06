@@ -240,13 +240,48 @@ uniform float BloomGamma <
 #else
 	static const float LFLARE_CURVE_DEFAULT = 1.0;
 #endif
-uniform float LensFlareCurve <
+uniform float GhostStrength <
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 2.0;
-	ui_label = "Lens flare curve";
-	ui_tooltip = "What parts of the image produce lens flares";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Ghosting amount";
+	ui_tooltip = "Amount of ghosting to apply";
 	ui_category = "Lens Flare";
-> = LFLARE_CURVE_DEFAULT;
+> = 0.5;
+uniform float GhostDispersal <
+	ui_type = "slider";
+	ui_min = 0.3; ui_max = 3.0;
+	ui_label = "Ghost dispersal";
+	ui_tooltip = "Controls distribution of ghosts";
+	ui_category = "Lens Flare";
+> = 0.8;
+uniform int GhostNumber <
+	ui_type = "slider";
+	ui_min = 2; ui_max = 16;
+	ui_label = "Ghost number";
+	ui_tooltip = "Number of ghosts to render";
+	ui_category = "Lens Flare";
+> = 8;
+uniform float HaloStrength <
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Halo amount";
+	ui_tooltip = "Amount of haloing to apply";
+	ui_category = "Lens Flare";
+> = 0.5;
+uniform float HaloRadius <
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 0.8;
+	ui_label = "Halo radius";
+	ui_tooltip = "Radius of the halo";
+	ui_category = "Lens Flare";
+> = 0.5;
+uniform float HaloWidth <
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "Halo width";
+	ui_tooltip = "Width of the halo";
+	ui_category = "Lens Flare";
+> = 0.5;
 uniform float GlareStrength <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
@@ -261,6 +296,20 @@ uniform int GlareQuality <
 	ui_items = "Large\0Medium\0Small\0";
 	ui_category = "Lens Flare";
 > = 1;
+uniform float LensFlareCurve <
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 2.0;
+	ui_label = "Lens flare curve";
+	ui_tooltip = "What parts of the image produce lens flares";
+	ui_category = "Lens Flare";
+> = LFLARE_CURVE_DEFAULT;
+uniform float LensFlareCA <
+	ui_type = "slider";
+	ui_min = 0.0; ui_max = 2.0;
+	ui_label = "Lens flare CA";
+	ui_tooltip = "Lens flare chromatic aberration";
+	ui_category = "Lens Flare";
+> = 1.0;
 
 //Vignette
 uniform float VignetteStrength <
@@ -379,6 +428,13 @@ uniform bool UseApproximateTransforms <
 	#define _DIRT_MAP_SOURCE "pDirtTex.png"
 #endif
 
+#ifndef _LENS_COLOR_MAP_RESOLUTION
+	#define _LENS_COLOR_MAP_RESOLUTION 16
+#endif
+#ifndef _LENS_COLOR_MAP_SOURCE
+	#define _LENS_COLOR_MAP_SOURCE "pLensColorTex.png"
+#endif
+
 #ifndef _STORAGE_TEX_RESOLUTION
 	#define _STORAGE_TEX_RESOLUTION 32
 #endif
@@ -395,18 +451,25 @@ sampler spBumpTex { Texture = pBumpTex; AddressU = REPEAT; AddressV = REPEAT; };
 texture pDirtTex < source = _DIRT_MAP_SOURCE; pooled = true; > { Width = _DIRT_MAP_RESOLUTION; Height = _DIRT_MAP_RESOLUTION; Format = RGBA8; };
 sampler spDirtTex { Texture = pDirtTex; AddressU = REPEAT; AddressV = REPEAT; };
 
+texture pFlareColorTex < source = _LENS_COLOR_MAP_SOURCE; pooled = true; > { Width = _LENS_COLOR_MAP_RESOLUTION; Height = 1; Format = RGBA8; };
+sampler spFlareColorTex { Texture = pFlareColorTex; };
+
 texture pBokehBlurTex < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spBokehBlurTex { Texture = pBokehBlurTex; AddressU = MIRROR; AddressV = MIRROR; };
 texture pGaussianBlurTex < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spGaussianBlurTex { Texture = pGaussianBlurTex; AddressU = MIRROR; AddressV = MIRROR; };
 
-texture pGlareTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
-sampler spGlareTex { Texture = pGlareTex; };
+texture pFlareTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
+sampler spFlareTex { Texture = pFlareTex; };
 
 texture pBloomTex0 < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spBloomTex0 { Texture = pBloomTex0; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex1 < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
 sampler spBloomTex1 { Texture = pBloomTex1; AddressU = MIRROR; AddressV = MIRROR; };
+
+texture pFlareSrcTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
+sampler spFlareSrcTex { Texture = pFlareSrcTex; AddressU = BORDER; AddressV = BORDER; };
+
 texture pBloomTex2 < pooled = true; > { Width = BUFFER_WIDTH/8; Height = BUFFER_HEIGHT/8; Format = RGBA16F; };
 sampler spBloomTex2 { Texture = pBloomTex2; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex3 < pooled = true; > { Width = BUFFER_WIDTH/16; Height = BUFFER_HEIGHT/16; Format = RGBA16F; };
@@ -424,6 +487,36 @@ sampler spBloomTex8 { Texture = pBloomTex8; AddressU = MIRROR; AddressV = MIRROR
 
 
 //Functions
+float2 FishEye(float2 texcoord, float FEFoV, float FECrop)
+{
+	float2 radiant_vector = texcoord - 0.5;
+	float diagonal_length = length(pUtils::ASPECT_RATIO);
+		
+	float fov_factor = PI * float(FEFoV)/360.0;
+	if (FEVFOV)
+	{
+		fov_factor = atan(tan(fov_factor) * BUFFER_ASPECT_RATIO);
+	}
+
+	float fit_fov = sin(atan(tan(fov_factor) * diagonal_length));
+	float crop_value = lerp(1.0 + (diagonal_length - 1.0) * cos(fov_factor), diagonal_length, FECrop * pow(sin(fov_factor), 6.0));//This is stupid and there is a better way.
+		
+	//Circularize radiant vector and apply cropping
+	float2 cn_radiant_vector = 2.0 * radiant_vector * pUtils::ASPECT_RATIO / crop_value * fit_fov;
+
+	if (length(cn_radiant_vector) < 1.0)
+	{
+		//Calculate z-coordinate and angle
+		float z = sqrt(1.0 - cn_radiant_vector.x*cn_radiant_vector.x - cn_radiant_vector.y*cn_radiant_vector.y);
+		float theta = acos(z) / fov_factor;
+
+		float2 d = normalize(cn_radiant_vector);
+		texcoord = (theta * d) / (2.0 * pUtils::ASPECT_RATIO) + 0.5;
+	} 
+
+	return texcoord;
+}
+
 float3 SampleLinear(float2 texcoord)
 {
 	float3 color = tex2D(ReShade::BackBuffer, texcoord).rgb;
@@ -444,6 +537,20 @@ float3 SampleLinear(float2 texcoord, bool use_tonemap)
 		color = Oklab::TonemapInv(color);
 	}
     
+	return color;
+}
+
+float4 SampleCA(sampler s, float2 texcoord, float strength)
+{
+	float3 influence = float3(0.04, 0.0, 0.03);
+	float2 CAr = (texcoord - 0.5) * (1.0 - strength * influence.r) + 0.5;
+	float2 CAb = (texcoord - 0.5) * (1.0 + strength * influence.b) + 0.5;
+
+	float4 color;
+	color.r = tex2D(s, CAr).r;
+	color.ga = tex2D(s, texcoord).ga;
+	color.b = tex2D(s, CAb).b;
+
 	return color;
 }
 
@@ -735,6 +842,16 @@ vs2ps VS_Bloom(uint id : SV_VertexID)
 	return o;
 }
 
+vs2ps VS_Ghosts(uint id : SV_VertexID)
+{   
+	vs2ps o = vs_basic(id);
+	if (GhostStrength == 0.0 && HaloStrength == 0.0 && GlareStrength == 0.0)
+	{
+		o.vpos.xy = 0.0;
+	}
+	return o;
+}
+
 vs2ps VS_Glare(uint id : SV_VertexID)
 {   
 	vs2ps o = vs_basic(id);
@@ -873,6 +990,67 @@ float4 BloomUpS0(vs2ps o) : COLOR
 }
 
 //Lens Flare
+float4 CAPass(vs2ps o) : COLOR
+{
+	return SampleCA(spBloomTex1, o.texcoord.xy, LensFlareCA);
+}
+float3 GhostsPass(vs2ps o) : COLOR
+{
+	float weight;
+	float4 s = 0.0;
+	float3 color = 0.0;
+
+	float2 texcoord_clean = o.texcoord.xy;
+	o.texcoord.xy = FishEye(texcoord_clean, FEFoV, FECrop); //Apply fisheye Warp - Maybe bad idea to apply to ghosting as well?
+	float2 radiant_vector = o.texcoord.xy - 0.5;
+
+	//Ghosts
+	[branch]
+	if (GhostStrength != 0.0)
+	{
+		//Taken from https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/
+    	for(int i = 0; i < GhostNumber; i++) //TODO: Perfect texture, with proper transparency, brightness and colors - Should probably just hardcode values?, see cyberpunk talk abt lf - if hardcoded, remove (s)pFlareColorTex and unused settings
+    	{
+			//pFlareColorTex coordinates
+			float position = float(i) / GhostNumber;
+			float2 flare_texcoord = float2(position, 0.5);
+			float4 ghost_color = tex2D(spFlareColorTex, flare_texcoord);
+			float ghost_scale = 1.0 - 2.0 / GhostNumber * i; //idk what to calculate - this is incorrect ------------------------------ just hardcode it, bro - also being able to change number of flares is prob unnessecary
+
+        	if(abs(ghost_color.a * ghost_scale) > 0.0001)
+        	{
+            	float2 ghost_vector = radiant_vector * ghost_scale;
+
+            	//Local mask - shapes flare
+            	float distance_mask = 1.0 - length(ghost_vector);
+            	float mask1 = smoothstep(0.5, 0.9, distance_mask);
+            	float mask2 = smoothstep(0.75, 1.0, distance_mask) * 0.95 + 0.05;
+
+				float4 s = tex2D(spFlareSrcTex, ghost_vector + 0.5);
+            	color += s.rgb * s.a * ghost_color.rgb * ghost_color.a * mask1 * mask2;
+        	}
+    	}
+
+		//Screen border mask
+		static const float SBMASK_SIZE = 0.9;
+		float sb_mask = clamp(length(float2(abs(SBMASK_SIZE * texcoord_clean.x - 0.5), abs(SBMASK_SIZE * texcoord_clean.y - 0.5))), 0.0, 1.0);
+
+    	color *= sb_mask * (GhostStrength*GhostStrength);
+	}
+
+	//Halo
+	if (HaloStrength != 0.0)
+	{
+		float2 halo_vector = o.texcoord.xy - normalize(radiant_vector) * HaloRadius;
+		weight = 1.0 - min(rcp(HaloWidth + EPSILON) * length(0.5 - halo_vector), 1.0);
+		weight = pow(abs(weight), 5.0);
+
+		s = tex2D(spFlareSrcTex, halo_vector); //SampleCA(spFlareSrcTex, halo_vector, 10.0 * LensFlareCA); //Less realistic and more expensive?
+		color += s.rgb * s.a * weight * (HaloStrength*HaloStrength);
+	}
+
+	return color;
+}
 float3 GlarePass(vs2ps o) : COLOR
 {
 	float2 radiant_vector = o.texcoord.xy - 0.5;
@@ -885,7 +1063,7 @@ float3 GlarePass(vs2ps o) : COLOR
 	float4 s_vertical = GaussianBlur(spBloomTex1, o.texcoord.xy, o.texcoord.z, d_vertical, false, GlareQuality);
 	float4 s_horizontal = GaussianBlur(spBloomTex1, o.texcoord.xy, o.texcoord.z, d_horizontal, false, GlareQuality);
 
-	return s_vertical.rgb * s_vertical.a + s_horizontal.rgb * s_horizontal.a;
+	return (s_vertical.rgb * s_vertical.a + s_horizontal.rgb * s_horizontal.a) * (GlareStrength * GlareStrength) / (0.5 * GlareQuality + 1.0);
 }
 
 float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
@@ -899,28 +1077,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	//Fisheye
 	if (UseFE)
 	{
-		float diagonal_length = length(pUtils::ASPECT_RATIO);
-		
-		float fov_factor = PI * float(FEFoV)/360.0;
-		if (FEVFOV)
-		{
-			fov_factor = atan(tan(fov_factor) * BUFFER_ASPECT_RATIO);
-		}
-		float fit_fov = sin(atan(tan(fov_factor) * diagonal_length));
-		float crop_value = lerp(1.0 + (diagonal_length - 1.0) * cos(fov_factor), diagonal_length, FECrop * pow(sin(fov_factor), 6.0));//This is stupid and there is a better way.
-		
-		//Circularize radiant vector and apply cropping
-		float2 cn_radiant_vector = 2.0 * radiant_vector * pUtils::ASPECT_RATIO / crop_value * fit_fov;
-
-		if (length(cn_radiant_vector) < 1.0)
-		{
-			//Calculate z-coordinate and angle
-			float z = sqrt(1.0 - cn_radiant_vector.x*cn_radiant_vector.x - cn_radiant_vector.y*cn_radiant_vector.y);
-			float theta = acos(z) / fov_factor;
-
-			float2 d = normalize(cn_radiant_vector);
-			texcoord = (theta * d) / (2.0 * pUtils::ASPECT_RATIO) + 0.5;
-		} 
+		texcoord.xy = FishEye(texcoord_clean, FEFoV, FECrop);
 	}
 
 	//Glass imperfections
@@ -975,9 +1132,9 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	}
 
 	//Lens flare
-	if (GlareStrength != 0.0)
+	if (GlareStrength != 0.0 || GhostStrength != 0.0 || HaloStrength != 0.0)
 	{
-		color += (GlareStrength * GlareStrength) / (0.5 * GlareQuality + 1.0) * tex2D(spGlareTex, texcoord).rgb;
+		color += tex2D(spFlareTex, texcoord).rgb;
 	}
 
 	//Vignette
@@ -1088,7 +1245,15 @@ technique Camera <ui_tooltip =
 	BLOOM_DOWN_PASS(1)
 	pass
 	{
-		VertexShader = VS_Glare; PixelShader = GlarePass; RenderTarget = pGlareTex;
+		VertexShader = VS_Ghosts; PixelShader = CAPass; RenderTarget = pFlareSrcTex;
+	}
+	pass //Ghosts
+	{
+		VertexShader = VS_Ghosts; PixelShader = GhostsPass; RenderTarget = pFlareTex;
+	}
+	pass //Glare
+	{
+		VertexShader = VS_Glare; PixelShader = GlarePass; RenderTarget = pFlareTex; ClearRenderTargets = FALSE; BlendEnable = TRUE; BlendOp = 1; SrcBlend = 1; DestBlend = 9;
 	}
 	BLOOM_DOWN_PASS(2)
 	BLOOM_DOWN_PASS(3)
