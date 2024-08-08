@@ -240,34 +240,143 @@ uniform float BloomGamma <
 #else
 	static const float LFLARE_CURVE_DEFAULT = 1.0;
 #endif
+uniform bool GLocalMask <
+	ui_type = "bool";
+	ui_label = "Non-intrusive lens flares";
+	ui_tooltip = "Only apply flaring when looking right at light sources";
+	ui_category = "Lens Flare";
+> = false;
 uniform float GhostStrength <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Ghosting amount";
 	ui_tooltip = "Amount of ghosting to apply";
 	ui_category = "Lens Flare";
-> = 0.5;
-uniform float GhostDispersal <
-	ui_type = "slider";
-	ui_min = 0.3; ui_max = 3.0;
-	ui_label = "Ghost dispersal";
-	ui_tooltip = "Controls distribution of ghosts";
-	ui_category = "Lens Flare";
-> = 0.8;
-uniform int GhostNumber <
-	ui_type = "slider";
-	ui_min = 2; ui_max = 16;
-	ui_label = "Ghost number";
-	ui_tooltip = "Number of ghosts to render";
-	ui_category = "Lens Flare";
-> = 8;
+> = 0.15;
+#ifndef ENABLE_ADVANCED_LENS_FLARE_SETTINGS
+	#define ENABLE_ADVANCED_LENS_FLARE_SETTINGS 0
+#endif
+#if ENABLE_ADVANCED_LENS_FLARE_SETTINGS
+	//Ghost 1
+	uniform float4 GColor1 <
+		ui_type = "color";
+		ui_label = "Color 1";
+		ui_tooltip = "Tint of ghost 1";
+		ui_category = "Lens Flare";
+	> = float4(1.0, 0.8, 0.4, 1.0);
+	uniform float GSize1 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 1";
+		ui_tooltip = "Size of ghost 1";
+		ui_category = "Lens Flare";
+	> = -1.5;
+	//Ghost 2
+	uniform float4 GColor2 <
+		ui_type = "color";
+		ui_label = "Color 2";
+		ui_tooltip = "Tint of ghost 2";
+		ui_category = "Lens Flare";
+	> = float4(1.0, 1.0, 0.6, 1.0);
+	uniform float GSize2 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 2";
+		ui_tooltip = "Size of ghost 2";
+		ui_category = "Lens Flare";
+	> = 2.5;
+	//Ghost 3
+	uniform float4 GColor3 <
+		ui_type = "color";
+		ui_label = "Color 3";
+		ui_tooltip = "Tint of ghost 3";
+		ui_category = "Lens Flare";
+	> = float4(0.8, 0.8, 1.0, 1.0);
+	uniform float GSize3 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 3";
+		ui_tooltip = "Size of ghost 3";
+		ui_category = "Lens Flare";
+	> = -5.0;
+	//Ghost 4
+	uniform float4 GColor4 <
+		ui_type = "color";
+		ui_label = "Color 4";
+		ui_tooltip = "Tint of ghost 4";
+		ui_category = "Lens Flare";
+	> = float4(0.5, 1.0, 0.4, 1.0);
+	uniform float GSize4 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 4";
+		ui_tooltip = "Size of ghost 4";
+		ui_category = "Lens Flare";
+	> = 10.0;
+	//Ghost 5
+	uniform float4 GColor5 <
+		ui_type = "color";
+		ui_label = "Color 5";
+		ui_tooltip = "Tint of ghost 5";
+		ui_category = "Lens Flare";
+	> = float4(0.5, 0.8, 1.0, 1.0);
+	uniform float GSize5 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 5";
+		ui_tooltip = "Size of ghost 5";
+		ui_category = "Lens Flare";
+	> = 0.7;
+	//Ghost 6
+	uniform float4 GColor6 <
+		ui_type = "color";
+		ui_label = "Color 6";
+		ui_tooltip = "Tint of ghost 6";
+		ui_category = "Lens Flare";
+	> = float4(0.9, 1.0, 0.8, 1.0);
+	uniform float GSize6 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 6";
+		ui_tooltip = "Size of ghost 6";
+		ui_category = "Lens Flare";
+	> = -0.4;
+	//Ghost 7
+	uniform float4 GColor7 <
+		ui_type = "color";
+		ui_label = "Color 7";
+		ui_tooltip = "Tint of ghost 7";
+		ui_category = "Lens Flare";
+	> = float4(1.0, 0.8, 0.4, 1.0);
+	uniform float GSize7 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 7";
+		ui_tooltip = "Size of ghost 7";
+		ui_category = "Lens Flare";
+	> = -0.2;
+	//Ghost 8
+	uniform float4 GColor8 <
+		ui_type = "color";
+		ui_label = "Color 8";
+		ui_tooltip = "Tint of ghost 8";
+		ui_category = "Lens Flare";
+	> = float4(0.9, 0.7, 0.7, 1.0);
+	uniform float GSize8 <
+		ui_type = "slider";
+		ui_min = -10.0; ui_max = 10.0;
+		ui_label = "Size 8";
+		ui_tooltip = "Size of ghost 8";
+		ui_category = "Lens Flare";
+	> = -0.1;
+#endif
 uniform float HaloStrength <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "Halo amount";
 	ui_tooltip = "Amount of haloing to apply";
 	ui_category = "Lens Flare";
-> = 0.5;
+> = 0.1;
 uniform float HaloRadius <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 0.8;
@@ -431,9 +540,6 @@ uniform bool UseApproximateTransforms <
 #ifndef _LENS_COLOR_MAP_RESOLUTION
 	#define _LENS_COLOR_MAP_RESOLUTION 16
 #endif
-#ifndef _LENS_COLOR_MAP_SOURCE
-	#define _LENS_COLOR_MAP_SOURCE "pLensColorTex.png"
-#endif
 
 #ifndef _STORAGE_TEX_RESOLUTION
 	#define _STORAGE_TEX_RESOLUTION 32
@@ -450,9 +556,6 @@ sampler spBumpTex { Texture = pBumpTex; AddressU = REPEAT; AddressV = REPEAT; };
 
 texture pDirtTex < source = _DIRT_MAP_SOURCE; pooled = true; > { Width = _DIRT_MAP_RESOLUTION; Height = _DIRT_MAP_RESOLUTION; Format = RGBA8; };
 sampler spDirtTex { Texture = pDirtTex; AddressU = REPEAT; AddressV = REPEAT; };
-
-texture pFlareColorTex < source = _LENS_COLOR_MAP_SOURCE; pooled = true; > { Width = _LENS_COLOR_MAP_RESOLUTION; Height = 1; Format = RGBA8; };
-sampler spFlareColorTex { Texture = pFlareColorTex; };
 
 texture pBokehBlurTex < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spBokehBlurTex { Texture = pBokehBlurTex; AddressU = MIRROR; AddressV = MIRROR; };
@@ -499,7 +602,7 @@ float2 FishEye(float2 texcoord, float FEFoV, float FECrop)
 	}
 
 	float fit_fov = sin(atan(tan(fov_factor) * diagonal_length));
-	float crop_value = lerp(1.0 + (diagonal_length - 1.0) * cos(fov_factor), diagonal_length, FECrop * pow(sin(fov_factor), 6.0));//This is stupid and there is a better way.
+	float crop_value = lerp(1.0 + (diagonal_length - 1.0) * cos(fov_factor), diagonal_length, FECrop * pow(abs(sin(fov_factor)), 6.0));//This is stupid and there is a better way.
 		
 	//Circularize radiant vector and apply cropping
 	float2 cn_radiant_vector = 2.0 * radiant_vector * pUtils::ASPECT_RATIO / crop_value * fit_fov;
@@ -690,13 +793,48 @@ float3 BokehBlur(sampler s, float2 texcoord, float size, bool sample_linear)
 	return color * brightness_compensation;
 }
 
-float4 BoxSample(sampler s, float2 texcoord, float d)
+float4 KawaseBlurDownSample(sampler s, float2 texcoord)
 {
-	float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
-	float4 o = TEXEL_SIZE.xyxy * float2(-d, d).xxyy;
+    float2 HALF_TEXEL = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) * 0.5;
 
-	float4 color = tex2D(s, texcoord + o.xy) + tex2D(s, texcoord + o.zy) + tex2D(s, texcoord + o.xw) + tex2D(s, texcoord + o.zw);
-	return color * 0.25;
+    float2 DirDiag1 = float2(-HALF_TEXEL.x,  HALF_TEXEL.y); // Top left
+    float2 DirDiag2 = float2( HALF_TEXEL.x,  HALF_TEXEL.y); // Top right
+    float2 DirDiag3 = float2( HALF_TEXEL.x, -HALF_TEXEL.y); // Bottom right
+    float2 DirDiag4 = float2(-HALF_TEXEL.x, -HALF_TEXEL.y); // Bottom left
+
+    float4 color = tex2D(s, texcoord) * 4.0;
+    color += tex2D(s, texcoord + DirDiag1);
+    color += tex2D(s, texcoord + DirDiag2);
+    color += tex2D(s, texcoord + DirDiag3);
+    color += tex2D(s, texcoord + DirDiag4);
+
+    return color * 0.125;
+}
+float4 KawaseBlurUpSample(sampler s, float2 texcoord)
+{
+    float2 HALF_TEXEL = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) * 0.5;
+
+    float2 DirDiag1 = float2(-HALF_TEXEL.x,  HALF_TEXEL.y); // Top left
+    float2 DirDiag2 = float2( HALF_TEXEL.x,  HALF_TEXEL.y); // Top right
+    float2 DirDiag3 = float2( HALF_TEXEL.x, -HALF_TEXEL.y); // Bottom right
+    float2 DirDiag4 = float2(-HALF_TEXEL.x, -HALF_TEXEL.y); // Bottom left
+    float2 DirAxis1 = float2(-HALF_TEXEL.x,  0.0);          // Left
+    float2 DirAxis2 = float2( HALF_TEXEL.x,  0.0);          // Right
+    float2 DirAxis3 = float2(0.0,  HALF_TEXEL.y);           // Top
+    float2 DirAxis4 = float2(0.0, -HALF_TEXEL.y);           // Bottom
+
+    float4 color = 0.0;
+    color += tex2D(s, texcoord + DirDiag1);
+    color += tex2D(s, texcoord + DirDiag2);
+    color += tex2D(s, texcoord + DirDiag3);
+    color += tex2D(s, texcoord + DirDiag4);
+
+    color += tex2D(s, texcoord + DirAxis1) * 2.0;
+    color += tex2D(s, texcoord + DirAxis2) * 2.0;
+    color += tex2D(s, texcoord + DirAxis3) * 2.0;
+    color += tex2D(s, texcoord + DirAxis4) * 2.0;
+
+    return color / 12.0;
 }
 
 float4 HQDownSample(sampler s, float2 texcoord)
@@ -842,6 +980,16 @@ vs2ps VS_Bloom(uint id : SV_VertexID)
 	return o;
 }
 
+vs2ps VS_BloomLF(uint id : SV_VertexID)
+{   
+	vs2ps o = vs_basic(id);
+	if (BloomStrength == 0.0 && DirtStrength == 0.0 && GhostStrength == 0.0 && HaloStrength == 0.0 && GlareStrength == 0.0)
+	{
+		o.vpos.xy = 0.0;
+	}
+	return o;
+}
+
 vs2ps VS_Ghosts(uint id : SV_VertexID)
 {   
 	vs2ps o = vs_basic(id);
@@ -910,7 +1058,7 @@ float4 HighPassFilter(vs2ps o) : COLOR
 	float3 color = (UseDOF) ? tex2D(spBokehBlurTex, o.texcoord.xy).rgb : (BlurStrength == 0.0) ? SampleLinear(o.texcoord.xy, true).rgb : tex2D(spGaussianBlurTex, o.texcoord.xy).rgb;
 	float adapted_luminance = Oklab::get_Adapted_Luminance_RGB(RedoTonemap(color), 1.0);
 
-	float mask = pow(Oklab::get_Adapted_Luminance_RGB(color, Oklab::INVNORM_FACTOR) / (1.0 + Oklab::INVNORM_FACTOR), LensFlareCurve*LensFlareCurve + EPSILON);
+	float mask = pow(abs(Oklab::get_Adapted_Luminance_RGB(color, Oklab::INVNORM_FACTOR) / (1.0 + Oklab::INVNORM_FACTOR)), LensFlareCurve*LensFlareCurve + EPSILON);
 
 	color *= pow(abs(adapted_luminance), BloomCurve*BloomCurve);
 	return float4(color, mask);
@@ -990,6 +1138,41 @@ float4 BloomUpS0(vs2ps o) : COLOR
 }
 
 //Lens Flare
+//Downsample
+float4 FlareDownS2(vs2ps o) : COLOR
+{
+	return KawaseBlurDownSample(spFlareTex, o.texcoord.xy);
+}
+float4 FlareDownS3(vs2ps o) : COLOR
+{
+	return KawaseBlurDownSample(spBloomTex2, o.texcoord.xy);
+}
+float4 FlareDownS4(vs2ps o) : COLOR
+{
+	return KawaseBlurDownSample(spBloomTex3, o.texcoord.xy);
+}
+float4 FlareDownS5(vs2ps o) : COLOR
+{
+	return KawaseBlurDownSample(spBloomTex4, o.texcoord.xy);
+}
+//Upsample
+float4 FlareUpS4(vs2ps o) : COLOR
+{
+	return KawaseBlurUpSample(spBloomTex5, o.texcoord.xy);
+}
+float4 FlareUpS3(vs2ps o) : COLOR
+{
+	return KawaseBlurUpSample(spBloomTex4, o.texcoord.xy);
+}
+float4 FlareUpS2(vs2ps o) : COLOR
+{
+	return KawaseBlurUpSample(spBloomTex3, o.texcoord.xy);
+}
+float4 FlareUpS1(vs2ps o) : COLOR
+{
+	return KawaseBlurUpSample(spBloomTex2, o.texcoord.xy);
+}
+
 float4 CAPass(vs2ps o) : COLOR
 {
 	return SampleCA(spBloomTex1, o.texcoord.xy, LensFlareCA);
@@ -1001,33 +1184,58 @@ float3 GhostsPass(vs2ps o) : COLOR
 	float3 color = 0.0;
 
 	float2 texcoord_clean = o.texcoord.xy;
-	o.texcoord.xy = FishEye(texcoord_clean, FEFoV, FECrop); //Apply fisheye Warp - Maybe bad idea to apply to ghosting as well?
-	float2 radiant_vector = o.texcoord.xy - 0.5;
+	o.texcoord.xy = FishEye(texcoord_clean, FEFoV, FECrop);
+	
+	//Fisheye
+	float2 radiant_vector;
+	float2 halo_vector;
+	if (UseFE)
+	{
+		radiant_vector = o.texcoord.xy - 0.5;
+		halo_vector = texcoord_clean;
+	}
+	else
+	{
+		radiant_vector = texcoord_clean - 0.5;
+		halo_vector = o.texcoord.xy;
+	}
 
 	//Ghosts
 	[branch]
 	if (GhostStrength != 0.0)
 	{
 		//Taken from https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/
-    	for(int i = 0; i < GhostNumber; i++) //TODO: Perfect texture, with proper transparency, brightness and colors - Should probably just hardcode values?, see cyberpunk talk abt lf - if hardcoded, remove (s)pFlareColorTex and unused settings
+    	for(int i = 0; i < 8; i++)
     	{
-			//pFlareColorTex coordinates
-			float position = float(i) / GhostNumber;
-			float2 flare_texcoord = float2(position, 0.5);
-			float4 ghost_color = tex2D(spFlareColorTex, flare_texcoord);
-			float ghost_scale = 1.0 - 2.0 / GhostNumber * i; //idk what to calculate - this is incorrect ------------------------------ just hardcode it, bro - also being able to change number of flares is prob unnessecary
+			//Ghost settings
+			#if ENABLE_ADVANCED_LENS_FLARE_SETTINGS
+				static const float4 GHOST_COLORS[8] = { GColor1, GColor2, GColor3, GColor4, GColor5, GColor6, GColor7, GColor8 };
+				static const float GHOST_SCALES[8] = { GSize1, GSize2, GSize3, GSize4, GSize5, GSize6, GSize7, GSize8 };
+			#else
+				static const float4 GHOST_COLORS[8] = { float4(1.0, 0.8, 0.4, 1.0), float4(1.0, 1.0, 0.6, 1.0), float4(0.8, 0.8, 1.0, 1.0), float4(0.5, 1.0, 0.4, 1.0), float4(0.5, 0.8, 1.0, 1.0), float4(0.9, 1.0, 0.8, 1.0), float4(1.0, 0.8, 0.4, 1.0), float4(0.9, 0.7, 0.7, 1.0) };
+				static const float GHOST_SCALES[8] = { -1.5, 2.5, -5.0, 10.0, 0.7, -0.4, -0.2, -0.1 };
+			#endif
 
-        	if(abs(ghost_color.a * ghost_scale) > 0.0001)
+			//Apply ghosts
+        	if(abs(GHOST_COLORS[i].a * GHOST_SCALES[i]) > 0.0001)
         	{
-            	float2 ghost_vector = radiant_vector * ghost_scale;
+            	float2 ghost_vector = radiant_vector * GHOST_SCALES[i];
 
-            	//Local mask - shapes flare
-            	float distance_mask = 1.0 - length(ghost_vector);
-            	float mask1 = smoothstep(0.5, 0.9, distance_mask);
-            	float mask2 = smoothstep(0.75, 1.0, distance_mask) * 0.95 + 0.05;
+            	//Local mask
+				float distance_mask = 1.0 - length(ghost_vector);
+				if (GLocalMask)
+				{
+            		float mask1 = smoothstep(0.5, 0.9, distance_mask);
+            		float mask2 = smoothstep(0.75, 1.0, distance_mask) * 0.95 + 0.05;
+					weight = mask1 * mask2;
+				}
+				else
+				{
+					weight = distance_mask;
+				}
 
 				float4 s = tex2D(spFlareSrcTex, ghost_vector + 0.5);
-            	color += s.rgb * s.a * ghost_color.rgb * ghost_color.a * mask1 * mask2;
+            	color += s.rgb * ((Oklab::IS_HDR) ? s.a : s.a*s.a) * GHOST_COLORS[i].rgb * GHOST_COLORS[i].a * weight;
         	}
     	}
 
@@ -1041,12 +1249,12 @@ float3 GhostsPass(vs2ps o) : COLOR
 	//Halo
 	if (HaloStrength != 0.0)
 	{
-		float2 halo_vector = o.texcoord.xy - normalize(radiant_vector) * HaloRadius;
+		halo_vector -= normalize(radiant_vector) * HaloRadius;
 		weight = 1.0 - min(rcp(HaloWidth + EPSILON) * length(0.5 - halo_vector), 1.0);
 		weight = pow(abs(weight), 5.0);
 
-		s = tex2D(spFlareSrcTex, halo_vector); //SampleCA(spFlareSrcTex, halo_vector, 10.0 * LensFlareCA); //Less realistic and more expensive?
-		color += s.rgb * s.a * weight * (HaloStrength*HaloStrength);
+		s = tex2D(spFlareSrcTex, halo_vector);
+		color += s.rgb * ((Oklab::IS_HDR) ? s.a : s.a*s.a) * weight * (HaloStrength*HaloStrength);
 	}
 
 	return color;
@@ -1178,7 +1386,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	//DEBUG stuff
 	if (DOFDebug)
 	{
-		if (pow((texcoord_clean.x - DOFFocusPx) * BUFFER_ASPECT_RATIO, 2.0) + pow(texcoord_clean.y - DOFFocusPy, 2.0) < 0.0001)
+		if (pow(abs(texcoord_clean.x - DOFFocusPx) * BUFFER_ASPECT_RATIO, 2.0) + pow(abs(texcoord_clean.y - DOFFocusPy), 2.0) < 0.0001)
 		{
 			color.rgb = float3(1.0, 0.0, 0.0) * INVNORM_FACTOR;
 		}
@@ -1235,25 +1443,25 @@ technique Camera <ui_tooltip =
 
 	pass
 	{
-		VertexShader = VS_Bloom; PixelShader = HighPassFilter; RenderTarget = pBloomTex0;
+		VertexShader = VS_BloomLF; PixelShader = HighPassFilter; RenderTarget = pBloomTex0;
 	}
     
 	//Bloom downsample and upsample passes
 	#define BLOOM_DOWN_PASS(i) pass { VertexShader = VS_Bloom; PixelShader = BloomDownS##i; RenderTarget = pBloomTex##i; }
 	#define BLOOM_UP_PASS(i) pass { VertexShader = VS_Bloom; PixelShader = BloomUpS##i; RenderTarget = pBloomTex##i; ClearRenderTargets = FALSE; BlendEnable = TRUE; BlendOp = 1; SrcBlend = 1; DestBlend = 9; }
 
-	BLOOM_DOWN_PASS(1)
+	pass
+	{
+		VertexShader = VS_BloomLF; PixelShader = BloomDownS1; RenderTarget = pBloomTex1; 
+	}
+	//Lens flare
 	pass
 	{
 		VertexShader = VS_Ghosts; PixelShader = CAPass; RenderTarget = pFlareSrcTex;
 	}
-	pass //Ghosts
+	pass
 	{
 		VertexShader = VS_Ghosts; PixelShader = GhostsPass; RenderTarget = pFlareTex;
-	}
-	pass //Glare
-	{
-		VertexShader = VS_Glare; PixelShader = GlarePass; RenderTarget = pFlareTex; ClearRenderTargets = FALSE; BlendEnable = TRUE; BlendOp = 1; SrcBlend = 1; DestBlend = 9;
 	}
 	BLOOM_DOWN_PASS(2)
 	BLOOM_DOWN_PASS(3)
@@ -1271,6 +1479,33 @@ technique Camera <ui_tooltip =
 	BLOOM_UP_PASS(2)
 	BLOOM_UP_PASS(1)
 	BLOOM_UP_PASS(0)
+
+	//Blur lens flare
+	#define FLARE_DOWN_PASS(i) pass { VertexShader = VS_Ghosts; PixelShader = FlareDownS##i; RenderTarget = pBloomTex##i; }
+	#define FLARE_UP_PASS(i) pass { VertexShader = VS_Ghosts; PixelShader = FlareUpS##i; RenderTarget = pBloomTex##i; }
+	#define FLARE_UP_PASS_FINAL(i) pass { VertexShader = VS_Ghosts; PixelShader = FlareUpS##i; RenderTarget = pFlareTex; }
+
+	//Number of blurs dependent on resolution
+	FLARE_DOWN_PASS(2)
+	#if BUFFER_HEIGHT > 1024
+	FLARE_DOWN_PASS(3)
+	#if BUFFER_HEIGHT > 2048
+	FLARE_DOWN_PASS(4)
+	#if BUFFER_HEIGHT > 4096
+	FLARE_DOWN_PASS(5)
+
+	FLARE_UP_PASS(4)
+	#endif
+	FLARE_UP_PASS(3)
+	#endif
+	FLARE_UP_PASS(2)
+	#endif
+	FLARE_UP_PASS_FINAL(1)
+	
+	pass //Glare
+	{
+		VertexShader = VS_Glare; PixelShader = GlarePass; RenderTarget = pFlareTex; ClearRenderTargets = FALSE; BlendEnable = TRUE; BlendOp = 1; SrcBlend = 1; DestBlend = 9;
+	}
 
     
 	pass
