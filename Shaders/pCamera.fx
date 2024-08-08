@@ -240,6 +240,12 @@ uniform float BloomGamma <
 #else
 	static const float LFLARE_CURVE_DEFAULT = 1.0;
 #endif
+uniform bool UseLF <
+	ui_type = "bool";
+	ui_label = "Lens flare";
+	ui_tooltip = "Apply ghosting, haloing and glare from light sources";
+	ui_category = "Lens Flare";
+> = true;
 uniform bool GLocalMask <
 	ui_type = "bool";
 	ui_label = "Non-intrusive lens flares";
@@ -564,15 +570,13 @@ sampler spGaussianBlurTex { Texture = pGaussianBlurTex; AddressU = MIRROR; Addre
 
 texture pFlareTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
 sampler spFlareTex { Texture = pFlareTex; };
+texture pFlareSrcTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
+sampler spFlareSrcTex { Texture = pFlareSrcTex; AddressU = BORDER; AddressV = BORDER; };
 
 texture pBloomTex0 < pooled = true; > { Width = BUFFER_WIDTH/2; Height = BUFFER_HEIGHT/2; Format = RGBA16F; };
 sampler spBloomTex0 { Texture = pBloomTex0; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex1 < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
 sampler spBloomTex1 { Texture = pBloomTex1; AddressU = MIRROR; AddressV = MIRROR; };
-
-texture pFlareSrcTex < pooled = true; > { Width = BUFFER_WIDTH/4; Height = BUFFER_HEIGHT/4; Format = RGBA16F; };
-sampler spFlareSrcTex { Texture = pFlareSrcTex; AddressU = BORDER; AddressV = BORDER; };
-
 texture pBloomTex2 < pooled = true; > { Width = BUFFER_WIDTH/8; Height = BUFFER_HEIGHT/8; Format = RGBA16F; };
 sampler spBloomTex2 { Texture = pBloomTex2; AddressU = MIRROR; AddressV = MIRROR; };
 texture pBloomTex3 < pooled = true; > { Width = BUFFER_WIDTH/16; Height = BUFFER_HEIGHT/16; Format = RGBA16F; };
@@ -983,7 +987,7 @@ vs2ps VS_Bloom(uint id : SV_VertexID)
 vs2ps VS_BloomLF(uint id : SV_VertexID)
 {   
 	vs2ps o = vs_basic(id);
-	if (BloomStrength == 0.0 && DirtStrength == 0.0 && GhostStrength == 0.0 && HaloStrength == 0.0 && GlareStrength == 0.0)
+	if (BloomStrength == 0.0 && DirtStrength == 0.0 && (!UseLF || (GhostStrength == 0.0 && HaloStrength == 0.0 && GlareStrength == 0.0)))
 	{
 		o.vpos.xy = 0.0;
 	}
@@ -993,7 +997,7 @@ vs2ps VS_BloomLF(uint id : SV_VertexID)
 vs2ps VS_Ghosts(uint id : SV_VertexID)
 {   
 	vs2ps o = vs_basic(id);
-	if (GhostStrength == 0.0 && HaloStrength == 0.0 && GlareStrength == 0.0)
+	if (!UseLF || (GhostStrength == 0.0 && HaloStrength == 0.0 && GlareStrength == 0.0))
 	{
 		o.vpos.xy = 0.0;
 	}
@@ -1003,7 +1007,7 @@ vs2ps VS_Ghosts(uint id : SV_VertexID)
 vs2ps VS_Glare(uint id : SV_VertexID)
 {   
 	vs2ps o = vs_basic(id);
-	if (GlareStrength == 0.0)
+	if (!UseLF || GlareStrength == 0.0)
 	{
 		o.vpos.xy = 0.0;
 	}
@@ -1235,7 +1239,7 @@ float3 GhostsPass(vs2ps o) : COLOR
 				}
 
 				float4 s = tex2D(spFlareSrcTex, ghost_vector + 0.5);
-            	color += s.rgb * ((Oklab::IS_HDR) ? s.a : s.a*s.a) * GHOST_COLORS[i].rgb * GHOST_COLORS[i].a * weight;
+            	color += s.rgb * s.a * GHOST_COLORS[i].rgb * GHOST_COLORS[i].a * weight;
         	}
     	}
 
@@ -1254,7 +1258,7 @@ float3 GhostsPass(vs2ps o) : COLOR
 		weight = pow(abs(weight), 5.0);
 
 		s = tex2D(spFlareSrcTex, halo_vector);
-		color += s.rgb * ((Oklab::IS_HDR) ? s.a : s.a*s.a) * weight * (HaloStrength*HaloStrength);
+		color += s.rgb * s.a * weight * (HaloStrength*HaloStrength);
 	}
 
 	return color;
@@ -1340,7 +1344,7 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	}
 
 	//Lens flare
-	if (GlareStrength != 0.0 || GhostStrength != 0.0 || HaloStrength != 0.0)
+	if (UseLF && (GlareStrength != 0.0 || GhostStrength != 0.0 || HaloStrength != 0.0))
 	{
 		color += tex2D(spFlareTex, texcoord).rgb;
 	}
@@ -1454,6 +1458,7 @@ technique Camera <ui_tooltip =
 	{
 		VertexShader = VS_BloomLF; PixelShader = BloomDownS1; RenderTarget = pBloomTex1; 
 	}
+	
 	//Lens flare
 	pass
 	{
@@ -1463,22 +1468,6 @@ technique Camera <ui_tooltip =
 	{
 		VertexShader = VS_Ghosts; PixelShader = GhostsPass; RenderTarget = pFlareTex;
 	}
-	BLOOM_DOWN_PASS(2)
-	BLOOM_DOWN_PASS(3)
-	BLOOM_DOWN_PASS(4)
-	BLOOM_DOWN_PASS(5)
-	BLOOM_DOWN_PASS(6)
-	BLOOM_DOWN_PASS(7)
-	BLOOM_DOWN_PASS(8)
-
-	BLOOM_UP_PASS(7)
-	BLOOM_UP_PASS(6)
-	BLOOM_UP_PASS(5)
-	BLOOM_UP_PASS(4)
-	BLOOM_UP_PASS(3)
-	BLOOM_UP_PASS(2)
-	BLOOM_UP_PASS(1)
-	BLOOM_UP_PASS(0)
 
 	//Blur lens flare
 	#define FLARE_DOWN_PASS(i) pass { VertexShader = VS_Ghosts; PixelShader = FlareDownS##i; RenderTarget = pBloomTex##i; }
@@ -1506,6 +1495,23 @@ technique Camera <ui_tooltip =
 	{
 		VertexShader = VS_Glare; PixelShader = GlarePass; RenderTarget = pFlareTex; ClearRenderTargets = FALSE; BlendEnable = TRUE; BlendOp = 1; SrcBlend = 1; DestBlend = 9;
 	}
+
+	BLOOM_DOWN_PASS(2)
+	BLOOM_DOWN_PASS(3)
+	BLOOM_DOWN_PASS(4)
+	BLOOM_DOWN_PASS(5)
+	BLOOM_DOWN_PASS(6)
+	BLOOM_DOWN_PASS(7)
+	BLOOM_DOWN_PASS(8)
+
+	BLOOM_UP_PASS(7)
+	BLOOM_UP_PASS(6)
+	BLOOM_UP_PASS(5)
+	BLOOM_UP_PASS(4)
+	BLOOM_UP_PASS(3)
+	BLOOM_UP_PASS(2)
+	BLOOM_UP_PASS(1)
+	BLOOM_UP_PASS(0)
 
     
 	pass
