@@ -1,7 +1,7 @@
 /*
    Deblur shader
    
-   Copyright (C) 2006 - 2019 guest(r) - guest.r@gmail.com
+   Copyright (C) 2006 - 2019 guest(r)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
