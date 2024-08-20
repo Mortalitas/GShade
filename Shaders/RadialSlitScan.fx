@@ -84,11 +84,6 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
     float dist = distance(tc, center);
 
     float slice_to_fill = (anim_rate.x * max_radius);
-     
-
-    float4 cols = tex2Dfetch(ssTarget, texcoord);
-    float4 col_to_write = tex2Dfetch(ssTarget, texcoord);
-
 
     if (dist > slice_to_fill)
         color = base;
