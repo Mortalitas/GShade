@@ -236,11 +236,13 @@ uniform float BloomGamma <
 
 //Lens flare
 #if BUFFER_COLOR_SPACE > 1
+	static const float LFLARE_GLOCALMASK_DEFAULT = false;
 	static const float LFLARE_CURVE_DEFAULT = 0.4;
 	static const float LFLARE_STRENGTH_DEFAULT = 0.5;
 #else
+	static const float LFLARE_GLOCALMASK_DEFAULT = true;
 	static const float LFLARE_CURVE_DEFAULT = 1.0;
-	static const float LFLARE_STRENGTH_DEFAULT = 0.2;
+	static const float LFLARE_STRENGTH_DEFAULT = 0.25;
 #endif
 uniform bool UseLF <
 	ui_type = "bool";
@@ -253,7 +255,7 @@ uniform bool GLocalMask <
 	ui_label = "Non-intrusive lens flares";
 	ui_tooltip = "Only apply flaring when looking right at light sources";
 	ui_category = "Lens Flare";
-> = false;
+> = LFLARE_GLOCALMASK_DEFAULT;
 uniform float LFStrength <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
