@@ -1061,7 +1061,7 @@ vs2ps VS_Camera(uint id : SV_VertexID)
 		case 0: //Matrix metering
 		{
 			float s;
-			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.2, 0.2), float2(0.35, 0.5), float2(0.2, 0.8), float2(0.5, 0.35), float2(0.5, 0.65), float2(0.8, 0.2), float2(0.65, 0.5), float2(0.8, 0.8) };
+			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.2, 0.2), float2(0.3, 0.5), float2(0.2, 0.8), float2(0.5, 0.3), float2(0.5, 0.7), float2(0.8, 0.2), float2(0.7, 0.5), float2(0.8, 0.8) };
 			float WEIGHT[9] = { 0.25, 0.0625, 0.125, 0.0625, 0.125, 0.125, 0.0625, 0.125, 0.0625 };
 
 			[unroll]
