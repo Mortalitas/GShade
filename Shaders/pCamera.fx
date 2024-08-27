@@ -512,6 +512,12 @@ uniform bool UseAE <
 	ui_tooltip = "Enable auto exposure";
 	ui_category = "Auto Exposure";
 > = false;
+uniform bool AEProtectHighlights <
+	ui_type = "bool";
+	ui_label = "Only underexpose";
+	ui_tooltip = "Only changes exposure to recover blown-out highlights";
+	ui_category = "Auto Exposure";
+> = false;
 uniform float AESpeed <
 	ui_type = "slider";
 	ui_min = 0.0; ui_max = 10.0;
@@ -534,6 +540,13 @@ uniform float AETarget <
 	ui_tooltip = "Exposure target";
 	ui_category = "Auto Exposure";
 > = 0.5;
+uniform int AEMetering <
+	ui_type = "radio";
+	ui_label = "Metering mode";
+	ui_tooltip = "What metering mode is used:\nMatrix metering considers the whole screen\nSpot metering only considers the center of the screen";
+	ui_items = "Matrix\0Spot\0";
+	ui_category = "Auto Exposure";
+> = 0;
 static const float AEPx = 0.5;
 static const float AEPy = 0.5;
 
@@ -1039,6 +1052,35 @@ vs2ps VS_Glare(uint id : SV_VertexID)
 	return o;
 }
 
+vs2ps VS_Camera(uint id : SV_VertexID)
+{
+	vs2ps o = vs_basic(id);
+	float exposure;
+	switch (AEMetering)
+	{
+		case 0: //Matrix metering
+		{
+			float s;
+			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.25, 0.25), float2(0.25, 0.5), float2(0.25, 0.75), float2(0.5, 0.25), float2(0.5, 0.75), float2(0.75, 0.25), float2(0.75, 0.5), float2(0.75, 0.75) };
+			float WEIGHT[9] = { 0.25, 0.0625, 0.125, 0.0625, 0.125, 0.125, 0.0625, 0.125, 0.0625 };
+
+			[unroll]
+			for (int i = 1; i < 9; ++i)
+			{
+				s = tex2Dlod(spStorageTex, float4(OFFSET[i], 0.0, STORAGE_TEX_MIPLEVELS - 1)).y;
+
+				exposure += ((s > AETarget) ? 10.0 * (s - AETarget) : s) * WEIGHT[i];
+			}
+		} break;
+		case 1: //Spot metering
+		{
+			exposure = tex2Dlod(spStorageTex, float4(AEPx, AEPy, 0.0, STORAGE_TEX_MIPLEVELS - 1)).y;
+		} break;
+	}
+	o.texcoord.z = exposure;
+	return o;
+}
+
 
 ////Passes
 float2 StoragePass(vs2ps o) : COLOR
@@ -1299,10 +1341,11 @@ float3 GlarePass(vs2ps o) : COLOR
 	return (s_vertical.rgb * s_vertical.a + s_horizontal.rgb * s_horizontal.a) * (GlareStrength * GlareStrength) / (0.5 * GlareQuality + 1.0);
 }
 
-float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Target
+float3 CameraPass(vs2ps o) : SV_Target
 {
 	static const float INVNORM_FACTOR = Oklab::INVNORM_FACTOR;
 	static const float2 TEXEL_SIZE = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+	float2 texcoord = o.texcoord.xy; //TODO: Replace texcoord with o.texcoord
 	float2 radiant_vector = texcoord.xy - 0.5;
 	float2 texcoord_clean = texcoord.xy;
 	
@@ -1403,9 +1446,9 @@ float3 CameraPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Ta
 	}
 
 	//Auto exposure
-	if (UseAE)
+	if (UseAE && ((AEProtectHighlights && o.texcoord.z > AETarget) || !AEProtectHighlights))
 	{
-		color *= lerp(1.0, AETarget / tex2Dlod(spStorageTex, float4(AEPx, AEPy, 0.0, STORAGE_TEX_MIPLEVELS - 1)).y, AEGain);
+		color *= lerp(1.0, AETarget / o.texcoord.z, AEGain);
 	}
     
 	//DEBUG stuff
@@ -1537,6 +1580,6 @@ technique Camera <ui_tooltip =
     
 	pass
 	{
-		VertexShader = PostProcessVS; PixelShader = CameraPass;
+		VertexShader = VS_Camera; PixelShader = CameraPass;
 	}
 }
