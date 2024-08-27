@@ -1275,7 +1275,7 @@ float3 GhostsPass(vs2ps o) : COLOR
 		weight = 1.0 - min(rcp(HaloWidth + EPSILON) * length(0.5 - halo_vector), 1.0);
 		weight = pow(abs(weight), 5.0);
 
-		s = tex2D(spFlareSrcTex, halo_vector);
+		s = SampleCA(spFlareSrcTex, halo_vector, 8.0 * LensFlareCA);
 		color += s.rgb * s.a * weight * (HaloStrength*HaloStrength);
 	}
 
