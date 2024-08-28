@@ -389,21 +389,21 @@ uniform float LFStrength <
 	> = -0.1;
 
 	uniform float HaloStrength <
-		ui_type = "slider;
+		ui_type = "slider";
 		ui_min = 0.0; ui_max = 1.0;
 		ui_label = "Halo amount";
 		ui_tooltip = "Amount of haloing to apply";
 		ui_category = "Lens Flare";
 	> = 0.2;
 	uniform float HaloRadius <
-		ui_type = "slider;
+		ui_type = "slider";
 		ui_min = 0.0; ui_max = 0.8;
 		ui_label = "Halo radius";
 		ui_tooltip = "Radius of the halo";
 		ui_category = "Lens Flare";
 	> = 0.5;
 	uniform float HaloWidth <
-		ui_type = "slider;
+		ui_type = "slider";
 		ui_min = 0.0; ui_max = 1.0;
 		ui_label = "Halo width";
 		ui_tooltip = "Width of the halo";
