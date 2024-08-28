@@ -1062,7 +1062,7 @@ vs2ps VS_Camera(uint id : SV_VertexID)
 		{
 			static const float AEHighlightSensitivity = 10.0;
 			float s;
-			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.2, 0.2), float2(0.3, 0.5), float2(0.2, 0.8), float2(0.5, 0.3), float2(0.5, 0.7), float2(0.8, 0.2), float2(0.7, 0.5), float2(0.8, 0.8) };
+			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.15, 0.15), float2(0.25, 0.5), float2(0.15, 0.85), float2(0.5, 0.25), float2(0.5, 0.75), float2(0.85, 0.15), float2(0.75, 0.5), float2(0.85, 0.85) };
 			float WEIGHT[9] = { 0.25, 0.0625, 0.125, 0.0625, 0.125, 0.125, 0.0625, 0.125, 0.0625 };
 
 			[unroll]
