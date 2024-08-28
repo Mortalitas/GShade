@@ -1060,16 +1060,17 @@ vs2ps VS_Camera(uint id : SV_VertexID)
 	{
 		case 0: //Matrix metering
 		{
+			static const float AEHighlightSensitivity = 10.0;
 			float s;
 			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.2, 0.2), float2(0.3, 0.5), float2(0.2, 0.8), float2(0.5, 0.3), float2(0.5, 0.7), float2(0.8, 0.2), float2(0.7, 0.5), float2(0.8, 0.8) };
 			float WEIGHT[9] = { 0.25, 0.0625, 0.125, 0.0625, 0.125, 0.125, 0.0625, 0.125, 0.0625 };
 
 			[unroll]
-			for (int i = 1; i < 9; ++i)
+			for (int i = 0; i < 9; ++i)
 			{
 				s = tex2Dlod(spStorageTex, float4(OFFSET[i], 0.0, STORAGE_TEX_MIPLEVELS - 1)).y;
 
-				exposure += ((s > AETarget) ? 10.0 * (s - AETarget) : s) * WEIGHT[i];
+				exposure += ((s > AETarget) ? AEHighlightSensitivity * (s - AETarget * (1.0 - rcp(AEHighlightSensitivity))) : s) * WEIGHT[i];
 			}
 		} break;
 		case 1: //Spot metering
