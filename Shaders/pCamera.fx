@@ -547,8 +547,30 @@ uniform int AEMetering <
 	ui_items = "Matrix\0Spot\0";
 	ui_category = "Auto Exposure";
 > = 0;
-static const float AEPx = 0.5;
-static const float AEPy = 0.5;
+uniform float AEHighlightSensitivity < __UNIFORM_SLIDER_FLOAT1
+	ui_min = 1.0; ui_max = 40.0;
+	ui_label = "Highlight sensitivity";
+	ui_tooltip = "Matrix metering: How sensitive metering is to overexposing highlights";
+	ui_category = "Auto Exposure";
+> = 10.0;
+uniform float AEPx < __UNIFORM_SLIDER_FLOAT1
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "AE point X";
+	ui_tooltip = "Spot metering: Metering point X position (width)\nLeft side = 0\nRight side = 1";
+	ui_category = "Auto Exposure";
+> = 0.5;
+uniform float AEPy < __UNIFORM_SLIDER_FLOAT1
+	ui_min = 0.0; ui_max = 1.0;
+	ui_label = "AE point Y";
+	ui_tooltip = "Spot metering: Metering point Y position (height)\nTop side = 0\nBottom side = 1";
+	ui_category = "Auto Exposure";
+> = 0.5;
+uniform bool AEDebug <
+	ui_type = "bool";
+	ui_label = "AE debug";
+	ui_tooltip = "Spot metering: Display metering point";
+	ui_category = "Auto Exposure";
+> = false;
 
 
 //Performance
@@ -1060,7 +1082,6 @@ vs2ps VS_Camera(uint id : SV_VertexID)
 	{
 		case 0: //Matrix metering
 		{
-			static const float AEHighlightSensitivity = 10.0;
 			float s;
 			float2 OFFSET[9] = { float2(0.5, 0.5), float2(0.15, 0.15), float2(0.25, 0.5), float2(0.15, 0.85), float2(0.5, 0.25), float2(0.5, 0.75), float2(0.85, 0.15), float2(0.75, 0.5), float2(0.85, 0.85) };
 			float WEIGHT[9] = { 0.25, 0.0625, 0.125, 0.0625, 0.125, 0.125, 0.0625, 0.125, 0.0625 };
@@ -1453,6 +1474,13 @@ float3 CameraPass(vs2ps o) : SV_Target
 	}
     
 	//DEBUG stuff
+	if (AEDebug)
+	{
+		if (pow(abs(texcoord_clean.x - AEPx) * BUFFER_ASPECT_RATIO, 2.0) + pow(abs(texcoord_clean.y - AEPy), 2.0) < 0.001)
+		{
+			color.rgb = float3(0.0, 0.0, 1.0) * INVNORM_FACTOR;
+		}
+	}
 	if (DOFDebug)
 	{
 		if (pow(abs(texcoord_clean.x - DOFFocusPx) * BUFFER_ASPECT_RATIO, 2.0) + pow(abs(texcoord_clean.y - DOFFocusPy), 2.0) < 0.0001)
