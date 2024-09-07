@@ -165,7 +165,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 1550.0, 100.0
 #elif _Copyright_TextureNGS_Source == 17 // -------------------------------------------border line---------------------------------------------
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 18 // Gill Sans
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_gill_sans.png"
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 150.0
@@ -180,7 +180,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 500.0
 #elif _Copyright_TextureNGS_Source == 22 // -------------------------------------------border line---------------------------------------------
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 23 // Frutiger XCn
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_frutiger_xcn.png"
 #define _SOURCE_COPYRIGHT_SIZE 1000.0, 300.0
@@ -219,7 +219,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 680.0, 300.0
 #elif _Copyright_TextureNGS_Source == 35 // -------------------------------------------border line---------------------------------------------
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 36 // Futura
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_futura.png"
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 250.0
@@ -234,7 +234,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 700.0, 500.0
 #elif _Copyright_TextureNGS_Source == 40 // -------------------------------------------border line---------------------------------------------
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 41 // Basker Ville
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_baskerville.png"
 #define _SOURCE_COPYRIGHT_SIZE 830.0, 300.0
@@ -255,7 +255,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 900.0, 550.0
 #elif _Copyright_TextureNGS_Source == 47 // -------------------------------------------border line---------------------------------------------
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 48 // Futura 2
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_futura_2.png"
 #define _SOURCE_COPYRIGHT_SIZE 400.0, 300.0
@@ -300,7 +300,7 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 250.0, 1200.0
 #elif _Copyright_TextureNGS_Source == 62 // -------------------------------------------border line---------------------------------------------
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 63 // Gill Sans Framed
 #define _SOURCE_COPYRIGHT_FILE "copyright_ffxiv_gill_sans_nova_framed.png"
 #define _SOURCE_COPYRIGHT_SIZE 600.0, 300.0
@@ -309,5 +309,5 @@ uniform int variable \
 #define _SOURCE_COPYRIGHT_SIZE 500.0, 500.0
 #else // Default
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1400.0, 80.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 80.0
 #endif
