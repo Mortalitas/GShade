@@ -114,7 +114,7 @@ uniform int variable \
 
 #if   _Copyright_Texture_Source == 0 // FFXIV Vanilla
 #define _SOURCE_COPYRIGHT_FILE "Copyright4kH.png"
-#define _SOURCE_COPYRIGHT_SIZE 1450.0, 100.0
+#define _SOURCE_COPYRIGHT_SIZE 800.0, 100.0
 #elif _Copyright_Texture_Source == 1 // Nalukai
 #define _SOURCE_COPYRIGHT_FILE "CopyrightF4kH.png"
 #define _SOURCE_COPYRIGHT_SIZE 1250.0, 200.0
