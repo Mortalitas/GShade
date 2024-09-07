@@ -547,19 +547,22 @@ uniform int AEMetering <
 	ui_items = "Matrix\0Spot\0";
 	ui_category = "Auto Exposure";
 > = 0;
-uniform float AEHighlightSensitivity < __UNIFORM_SLIDER_FLOAT1
+uniform float AEHighlightSensitivity <
+	ui_type = "slider";
 	ui_min = 1.0; ui_max = 40.0;
 	ui_label = "Highlight sensitivity";
 	ui_tooltip = "Matrix metering: How sensitive metering is to overexposing highlights";
 	ui_category = "Auto Exposure";
 > = 10.0;
-uniform float AEPx < __UNIFORM_SLIDER_FLOAT1
+uniform float AEPx <
+	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "AE point X";
 	ui_tooltip = "Spot metering: Metering point X position (width)\nLeft side = 0\nRight side = 1";
 	ui_category = "Auto Exposure";
 > = 0.5;
-uniform float AEPy < __UNIFORM_SLIDER_FLOAT1
+uniform float AEPy <
+	ui_type = "slider";
 	ui_min = 0.0; ui_max = 1.0;
 	ui_label = "AE point Y";
 	ui_tooltip = "Spot metering: Metering point Y position (height)\nTop side = 0\nBottom side = 1";
