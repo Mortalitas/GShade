@@ -93,8 +93,8 @@ void SlitScan(float4 pos : SV_Position, float2 texcoord : TEXCOORD0, out float4 
             break;
     }
 
-    float4 cols = tex2Dfetch(ssTarget, texcoord);
-    float4 col_to_write = tex2Dfetch(ssTarget, texcoord);
+    float4 cols = tex2Dfetch(samplerColor, texcoord);
+    float4 col_to_write = tex2Dfetch(samplerColor, texcoord);
     switch(direction) {
         case 0:
         case 1:
