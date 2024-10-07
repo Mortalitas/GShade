@@ -4,7 +4,7 @@
   * EGGameplayLut.png
   * FFXIVLUTAtlas.png
 
-* Fairy (instagram.com/fairyqueen.xiv) & Ravenking (twitter.com/RealRavenking)
+* Fairy (instagram.com/fairyqueen.xiv)
   * Fairy PROJECT.jpg
   * FairyAbandoned.png
   * FairyArdenvaldDark.png
