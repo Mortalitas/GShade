@@ -35,6 +35,9 @@
 #if !defined(__RESHADE__) || __RESHADE__ < 50900
 	#error "Outdated ReShade installation - ReShade 5.9+ is required"
 #endif
+#if __RENDERER__ == 0x9000
+	#error "This effects file is not compatible with DirectX 9"
+#endif
 
 
 static const float PI = pUtils::PI;
