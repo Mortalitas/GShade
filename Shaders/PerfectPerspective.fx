@@ -371,7 +371,11 @@ texture2D BackBufferMipTarget_Tex
 	Height = BUFFER_HEIGHT;
 
 	// Storing linear gamma picture in higher bit depth
+#if (BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_SRGB) || (BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_BT2020_PQ)
 	Format = RGB10A2;
+#else // BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_SCRGB // Fall back on a higher quality in any other case, for future compatibility
+	Format = RGBA16F;
+#endif
 
 	// Maximum MIP map level
 	#if MIPMAPPING_LEVEL>0 && MIPMAPPING_LEVEL<=4
@@ -892,8 +896,14 @@ float3 PerfectPerspective_PS(
 
 	// Manually correct gamma
 	display = GammaConvert::to_display(display);
-	// Dither final 8/10-bit result
+	
+#if BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_SRGB
+	// Dither final 8/10-bit result in SDR
 	return BlueNoise::dither(display, uint2(pixelPos.xy));
+#else
+	// Don't dither in HDR modes, it shouldn't be necessary due to the higher quality of input, and the display
+    return display;
+#endif
 }
 
 /* >> Output << */

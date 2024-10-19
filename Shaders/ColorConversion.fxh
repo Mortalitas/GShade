@@ -21,10 +21,28 @@ https://creativecommons.org/publicdomain/mark/1.0/
 | :: Macros :: |
 '-------------*/
 
+// These are from the "color_space" enum in ReShade.
+// They can be compared against "BUFFER_COLOR_SPACE", which is defined by ReShade shaders.
+#ifndef RESHADE_COLOR_SPACE_UNKNOWN
+#define RESHADE_COLOR_SPACE_UNKNOWN     0
+#endif
+#ifndef RESHADE_COLOR_SPACE_SRGB
+#define RESHADE_COLOR_SPACE_SRGB        1
+#endif
+#ifndef RESHADE_COLOR_SPACE_SCRGB
+#define RESHADE_COLOR_SPACE_SCRGB       2
+#endif
+#ifndef RESHADE_COLOR_SPACE_BT2020_PQ
+#define RESHADE_COLOR_SPACE_BT2020_PQ   3
+#endif
+
 #ifndef ITU_REC
-	#define ITU_REC 601
-	// #define ITU_REC 709
-	// #define ITU_REC 2020
+#if BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_BT2020_PQ
+	#define ITU_REC 2020
+#else
+	#define ITU_REC 709
+	//#define ITU_REC 601
+#endif
 #endif
 
 /*----------------.
