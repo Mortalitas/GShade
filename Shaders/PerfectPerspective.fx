@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.10.2)
+/* Perfect Perspective PS (version 5.11.0)
 
 Copyright:
 This code © 2018-2024 Jakub Maksymilian Fober
@@ -896,7 +896,7 @@ float3 PerfectPerspective_PS(
 
 	// Manually correct gamma
 	display = GammaConvert::to_display(display);
-	
+
 #if BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_SRGB
 	// Dither final 8/10-bit result in SDR
 	return BlueNoise::dither(display, uint2(pixelPos.xy));

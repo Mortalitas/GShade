@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Linear Gamma Workflow Library (version 1.4.3)
+Linear Gamma Workflow Library (version 1.5.0)
 
 Author:
 Jakub Maksymilian Fober

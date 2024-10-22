@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Color conversion library (version 1.4.1)
+Color conversion library (version 1.5.0)
 
 Author:
 Jakub Maksymilian Fober
