@@ -114,7 +114,7 @@ uniform int Layer_Quantity <
 	#define LAYER_QUANTITY 0
 #endif
 
-LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFORMAT, Layer_Sampler, "Layer 1", Layer_BlendMode, Layer_Blend, Layer_Scale, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, Layer)
+LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFORMAT, Layer_Sampler, "Layer 1", Layer_Saturation, Layer_Brightness, Layer_BlendMode, Layer_Blend, Layer_Scale, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, Layer)
 
 #if LAYER_QUANTITY > 0
 	#ifndef Layer2Tex
@@ -130,7 +130,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER2_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer2_Texture, Layer2Tex, LAYER2_SIZE_X, LAYER2_SIZE_Y, LAYER2_TEXFORMAT, Layer2_Sampler, "Layer 2", Layer2_BlendMode, Layer2_Blend, Layer2_Scale, Layer2_ScaleX, Layer2_ScaleY, Layer2_PosX, Layer2_PosY, Layer2_SnapRotate, Layer2_Rotate, PS_Layer2, Layer2)
+	LAYER_SUMMONING(Layer2_Texture, Layer2Tex, LAYER2_SIZE_X, LAYER2_SIZE_Y, LAYER2_TEXFORMAT, Layer2_Sampler, "Layer 2", Layer2_Saturation, Layer2_Brightness, Layer2_BlendMode, Layer2_Blend, Layer2_Scale, Layer2_ScaleX, Layer2_ScaleY, Layer2_PosX, Layer2_PosY, Layer2_SnapRotate, Layer2_Rotate, PS_Layer2, Layer2)
 #endif
 
 #if LAYER_QUANTITY > 1
@@ -147,7 +147,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER3_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer3_Texture, Layer3Tex, LAYER3_SIZE_X, LAYER3_SIZE_Y, LAYER3_TEXFORMAT, Layer3_Sampler, "Layer 3", Layer3_BlendMode, Layer3_Blend, Layer3_Scale, Layer3_ScaleX, Layer3_ScaleY, Layer3_PosX, Layer3_PosY, Layer3_SnapRotate, Layer3_Rotate, PS_Layer3, Layer3)
+	LAYER_SUMMONING(Layer3_Texture, Layer3Tex, LAYER3_SIZE_X, LAYER3_SIZE_Y, LAYER3_TEXFORMAT, Layer3_Sampler, "Layer 3", Layer3_Saturation, Layer3_Brightness, Layer3_BlendMode, Layer3_Blend, Layer3_Scale, Layer3_ScaleX, Layer3_ScaleY, Layer3_PosX, Layer3_PosY, Layer3_SnapRotate, Layer3_Rotate, PS_Layer3, Layer3)
 #endif
 
 #if LAYER_QUANTITY > 2
@@ -164,7 +164,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER4_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer4_Texture, Layer4Tex, LAYER4_SIZE_X, LAYER4_SIZE_Y, LAYER4_TEXFORMAT, Layer4_Sampler, "Layer 4", Layer4_BlendMode, Layer4_Blend, Layer4_Scale, Layer4_ScaleX, Layer4_ScaleY, Layer4_PosX, Layer4_PosY, Layer4_SnapRotate, Layer4_Rotate, PS_Layer4, Layer4)
+	LAYER_SUMMONING(Layer4_Texture, Layer4Tex, LAYER4_SIZE_X, LAYER4_SIZE_Y, LAYER4_TEXFORMAT, Layer4_Sampler, "Layer 4", Layer4_Saturation, Layer4_Brightness, Layer4_BlendMode, Layer4_Blend, Layer4_Scale, Layer4_ScaleX, Layer4_ScaleY, Layer4_PosX, Layer4_PosY, Layer4_SnapRotate, Layer4_Rotate, PS_Layer4, Layer4)
 #endif
 
 #if LAYER_QUANTITY > 3
@@ -181,7 +181,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER5_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer5_Texture, Layer5Tex, LAYER5_SIZE_X, LAYER5_SIZE_Y, LAYER5_TEXFORMAT, Layer5_Sampler, "Layer 5", Layer5_BlendMode, Layer5_Blend, Layer5_Scale, Layer5_ScaleX, Layer5_ScaleY, Layer5_PosX, Layer5_PosY, Layer5_SnapRotate, Layer5_Rotate, PS_Layer5, Layer5)
+	LAYER_SUMMONING(Layer5_Texture, Layer5Tex, LAYER5_SIZE_X, LAYER5_SIZE_Y, LAYER5_TEXFORMAT, Layer5_Sampler, "Layer 5", Layer5_Saturation, Layer5_Brightness, Layer5_BlendMode, Layer5_Blend, Layer5_Scale, Layer5_ScaleX, Layer5_ScaleY, Layer5_PosX, Layer5_PosY, Layer5_SnapRotate, Layer5_Rotate, PS_Layer5, Layer5)
 #endif
 
 #if LAYER_QUANTITY > 4
@@ -198,7 +198,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER6_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer6_Texture, Layer6Tex, LAYER6_SIZE_X, LAYER6_SIZE_Y, LAYER6_TEXFORMAT, Layer6_Sampler, "Layer 6", Layer6_BlendMode, Layer6_Blend, Layer6_Scale, Layer6_ScaleX, Layer6_ScaleY, Layer6_PosX, Layer6_PosY, Layer6_SnapRotate, Layer6_Rotate, PS_Layer6, Layer6)
+	LAYER_SUMMONING(Layer6_Texture, Layer6Tex, LAYER6_SIZE_X, LAYER6_SIZE_Y, LAYER6_TEXFORMAT, Layer6_Sampler, "Layer 6", Layer6_Saturation, Layer6_Brightness, Layer6_BlendMode, Layer6_Blend, Layer6_Scale, Layer6_ScaleX, Layer6_ScaleY, Layer6_PosX, Layer6_PosY, Layer6_SnapRotate, Layer6_Rotate, PS_Layer6, Layer6)
 #endif
 
 #if LAYER_QUANTITY > 5
@@ -215,7 +215,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER7_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer7_Texture, Layer7Tex, LAYER7_SIZE_X, LAYER7_SIZE_Y, LAYER7_TEXFORMAT, Layer7_Sampler, "Layer 7", Layer7_BlendMode, Layer7_Blend, Layer7_Scale, Layer7_ScaleX, Layer7_ScaleY, Layer7_PosX, Layer7_PosY, Layer7_SnapRotate, Layer7_Rotate, PS_Layer7, Layer7)
+	LAYER_SUMMONING(Layer7_Texture, Layer7Tex, LAYER7_SIZE_X, LAYER7_SIZE_Y, LAYER7_TEXFORMAT, Layer7_Sampler, "Layer 7", Layer7_Saturation, Layer7_Brightness, Layer7_BlendMode, Layer7_Blend, Layer7_Scale, Layer7_ScaleX, Layer7_ScaleY, Layer7_PosX, Layer7_PosY, Layer7_SnapRotate, Layer7_Rotate, PS_Layer7, Layer7)
 #endif
 
 #if LAYER_QUANTITY > 6
@@ -232,7 +232,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER8_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer8_Texture, Layer8Tex, LAYER8_SIZE_X, LAYER8_SIZE_Y, LAYER8_TEXFORMAT, Layer8_Sampler, "Layer 8", Layer8_BlendMode, Layer8_Blend, Layer8_Scale, Layer8_ScaleX, Layer8_ScaleY, Layer8_PosX, Layer8_PosY, Layer8_SnapRotate, Layer8_Rotate, PS_Layer8, Layer8)
+	LAYER_SUMMONING(Layer8_Texture, Layer8Tex, LAYER8_SIZE_X, LAYER8_SIZE_Y, LAYER8_TEXFORMAT, Layer8_Sampler, "Layer 8", Layer8_Saturation, Layer8_Brightness, Layer8_BlendMode, Layer8_Blend, Layer8_Scale, Layer8_ScaleX, Layer8_ScaleY, Layer8_PosX, Layer8_PosY, Layer8_SnapRotate, Layer8_Rotate, PS_Layer8, Layer8)
 #endif
 
 #if LAYER_QUANTITY > 7
@@ -249,7 +249,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER9_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer9_Texture, Layer9Tex, LAYER9_SIZE_X, LAYER9_SIZE_Y, LAYER9_TEXFORMAT, Layer9_Sampler, "Layer 9", Layer9_BlendMode, Layer9_Blend, Layer9_Scale, Layer9_ScaleX, Layer9_ScaleY, Layer9_PosX, Layer9_PosY, Layer9_SnapRotate, Layer9_Rotate, PS_Layer9, Layer9)
+	LAYER_SUMMONING(Layer9_Texture, Layer9Tex, LAYER9_SIZE_X, LAYER9_SIZE_Y, LAYER9_TEXFORMAT, Layer9_Sampler, "Layer 9", Layer9_Saturation, Layer9_Brightness, Layer9_BlendMode, Layer9_Blend, Layer9_Scale, Layer9_ScaleX, Layer9_ScaleY, Layer9_PosX, Layer9_PosY, Layer9_SnapRotate, Layer9_Rotate, PS_Layer9, Layer9)
 #endif
 
 #if LAYER_QUANTITY > 8
@@ -266,7 +266,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER10_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer10_Texture, Layer10Tex, LAYER10_SIZE_X, LAYER10_SIZE_Y, LAYER10_TEXFORMAT, Layer10_Sampler, "Layer 10", Layer10_BlendMode, Layer10_Blend, Layer10_Scale, Layer10_ScaleX, Layer10_ScaleY, Layer10_PosX, Layer10_PosY, Layer10_SnapRotate, Layer10_Rotate, PS_Layer10, Layer10)
+	LAYER_SUMMONING(Layer10_Texture, Layer10Tex, LAYER10_SIZE_X, LAYER10_SIZE_Y, LAYER10_TEXFORMAT, Layer10_Sampler, "Layer 10", Layer10_Saturation, Layer10_Brightness, Layer10_BlendMode, Layer10_Blend, Layer10_Scale, Layer10_ScaleX, Layer10_ScaleY, Layer10_PosX, Layer10_PosY, Layer10_SnapRotate, Layer10_Rotate, PS_Layer10, Layer10)
 #endif
 
 #if LAYER_QUANTITY > 9
@@ -283,7 +283,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER11_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer11_Texture, Layer11Tex, LAYER11_SIZE_X, LAYER11_SIZE_Y, LAYER11_TEXFORMAT, Layer11_Sampler, "Layer 11", Layer11_BlendMode, Layer11_Blend, Layer11_Scale, Layer11_ScaleX, Layer11_ScaleY, Layer11_PosX, Layer11_PosY, Layer11_SnapRotate, Layer11_Rotate, PS_Layer11, Layer11)
+	LAYER_SUMMONING(Layer11_Texture, Layer11Tex, LAYER11_SIZE_X, LAYER11_SIZE_Y, LAYER11_TEXFORMAT, Layer11_Sampler, "Layer 11", Layer11_Saturation, Layer11_Brightness, Layer11_BlendMode, Layer11_Blend, Layer11_Scale, Layer11_ScaleX, Layer11_ScaleY, Layer11_PosX, Layer11_PosY, Layer11_SnapRotate, Layer11_Rotate, PS_Layer11, Layer11)
 #endif
 
 #if LAYER_QUANTITY > 10
@@ -300,7 +300,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER12_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer12_Texture, Layer12Tex, LAYER12_SIZE_X, LAYER12_SIZE_Y, LAYER12_TEXFORMAT, Layer12_Sampler, "Layer 12", Layer12_BlendMode, Layer12_Blend, Layer12_Scale, Layer12_ScaleX, Layer12_ScaleY, Layer12_PosX, Layer12_PosY, Layer12_SnapRotate, Layer12_Rotate, PS_Layer12, Layer12)
+	LAYER_SUMMONING(Layer12_Texture, Layer12Tex, LAYER12_SIZE_X, LAYER12_SIZE_Y, LAYER12_TEXFORMAT, Layer12_Sampler, "Layer 12", Layer12_Saturation, Layer12_Brightness, Layer12_BlendMode, Layer12_Blend, Layer12_Scale, Layer12_ScaleX, Layer12_ScaleY, Layer12_PosX, Layer12_PosY, Layer12_SnapRotate, Layer12_Rotate, PS_Layer12, Layer12)
 #endif
 
 #if LAYER_QUANTITY > 11
@@ -317,7 +317,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER13_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer13_Texture, Layer13Tex, LAYER13_SIZE_X, LAYER13_SIZE_Y, LAYER13_TEXFORMAT, Layer13_Sampler, "Layer 13", Layer13_BlendMode, Layer13_Blend, Layer13_Scale, Layer13_ScaleX, Layer13_ScaleY, Layer13_PosX, Layer13_PosY, Layer13_SnapRotate, Layer13_Rotate, PS_Layer13, Layer13)
+	LAYER_SUMMONING(Layer13_Texture, Layer13Tex, LAYER13_SIZE_X, LAYER13_SIZE_Y, LAYER13_TEXFORMAT, Layer13_Sampler, "Layer 13", Layer13_Saturation, Layer13_Brightness, Layer13_BlendMode, Layer13_Blend, Layer13_Scale, Layer13_ScaleX, Layer13_ScaleY, Layer13_PosX, Layer13_PosY, Layer13_SnapRotate, Layer13_Rotate, PS_Layer13, Layer13)
 #endif
 
 #if LAYER_QUANTITY > 12
@@ -334,7 +334,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER14_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer14_Texture, Layer14Tex, LAYER14_SIZE_X, LAYER14_SIZE_Y, LAYER14_TEXFORMAT, Layer14_Sampler, "Layer 14", Layer14_BlendMode, Layer14_Blend, Layer14_Scale, Layer14_ScaleX, Layer14_ScaleY, Layer14_PosX, Layer14_PosY, Layer14_SnapRotate, Layer14_Rotate, PS_Layer14, Layer14)
+	LAYER_SUMMONING(Layer14_Texture, Layer14Tex, LAYER14_SIZE_X, LAYER14_SIZE_Y, LAYER14_TEXFORMAT, Layer14_Sampler, "Layer 14", Layer14_Saturation, Layer14_Brightness, Layer14_BlendMode, Layer14_Blend, Layer14_Scale, Layer14_ScaleX, Layer14_ScaleY, Layer14_PosX, Layer14_PosY, Layer14_SnapRotate, Layer14_Rotate, PS_Layer14, Layer14)
 #endif
 
 #if LAYER_QUANTITY > 13
@@ -351,7 +351,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER15_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer15_Texture, Layer15Tex, LAYER15_SIZE_X, LAYER15_SIZE_Y, LAYER15_TEXFORMAT, Layer15_Sampler, "Layer 15", Layer15_BlendMode, Layer15_Blend, Layer15_Scale, Layer15_ScaleX, Layer15_ScaleY, Layer15_PosX, Layer15_PosY, Layer15_SnapRotate, Layer15_Rotate, PS_Layer15, Layer15)
+	LAYER_SUMMONING(Layer15_Texture, Layer15Tex, LAYER15_SIZE_X, LAYER15_SIZE_Y, LAYER15_TEXFORMAT, Layer15_Sampler, "Layer 15", Layer15_Saturation, Layer15_Brightness, Layer15_BlendMode, Layer15_Blend, Layer15_Scale, Layer15_ScaleX, Layer15_ScaleY, Layer15_PosX, Layer15_PosY, Layer15_SnapRotate, Layer15_Rotate, PS_Layer15, Layer15)
 #endif
 
 #if LAYER_QUANTITY > 14
@@ -368,7 +368,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER16_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer16_Texture, Layer16Tex, LAYER16_SIZE_X, LAYER16_SIZE_Y, LAYER16_TEXFORMAT, Layer16_Sampler, "Layer 16", Layer16_BlendMode, Layer16_Blend, Layer16_Scale, Layer16_ScaleX, Layer16_ScaleY, Layer16_PosX, Layer16_PosY, Layer16_SnapRotate, Layer16_Rotate, PS_Layer16, Layer16)
+	LAYER_SUMMONING(Layer16_Texture, Layer16Tex, LAYER16_SIZE_X, LAYER16_SIZE_Y, LAYER16_TEXFORMAT, Layer16_Sampler, "Layer 16", Layer16_Saturation, Layer16_Brightness, Layer16_BlendMode, Layer16_Blend, Layer16_Scale, Layer16_ScaleX, Layer16_ScaleY, Layer16_PosX, Layer16_PosY, Layer16_SnapRotate, Layer16_Rotate, PS_Layer16, Layer16)
 #endif
 
 #if LAYER_QUANTITY > 15
@@ -385,7 +385,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER17_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer17_Texture, Layer17Tex, LAYER17_SIZE_X, LAYER17_SIZE_Y, LAYER17_TEXFORMAT, Layer17_Sampler, "Layer 17", Layer17_BlendMode, Layer17_Blend, Layer17_Scale, Layer17_ScaleX, Layer17_ScaleY, Layer17_PosX, Layer17_PosY, Layer17_SnapRotate, Layer17_Rotate, PS_Layer17, Layer17)
+	LAYER_SUMMONING(Layer17_Texture, Layer17Tex, LAYER17_SIZE_X, LAYER17_SIZE_Y, LAYER17_TEXFORMAT, Layer17_Sampler, "Layer 17", Layer17_Saturation, Layer17_Brightness, Layer17_BlendMode, Layer17_Blend, Layer17_Scale, Layer17_ScaleX, Layer17_ScaleY, Layer17_PosX, Layer17_PosY, Layer17_SnapRotate, Layer17_Rotate, PS_Layer17, Layer17)
 #endif
 
 #if LAYER_QUANTITY > 16
@@ -402,7 +402,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER18_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer18_Texture, Layer18Tex, LAYER18_SIZE_X, LAYER18_SIZE_Y, LAYER18_TEXFORMAT, Layer18_Sampler, "Layer 18", Layer18_BlendMode, Layer18_Blend, Layer18_Scale, Layer18_ScaleX, Layer18_ScaleY, Layer18_PosX, Layer18_PosY, Layer18_SnapRotate, Layer18_Rotate, PS_Layer18, Layer18)
+	LAYER_SUMMONING(Layer18_Texture, Layer18Tex, LAYER18_SIZE_X, LAYER18_SIZE_Y, LAYER18_TEXFORMAT, Layer18_Sampler, "Layer 18", Layer18_Saturation, Layer18_Brightness, Layer18_BlendMode, Layer18_Blend, Layer18_Scale, Layer18_ScaleX, Layer18_ScaleY, Layer18_PosX, Layer18_PosY, Layer18_SnapRotate, Layer18_Rotate, PS_Layer18, Layer18)
 #endif
 
 #if LAYER_QUANTITY > 17
@@ -419,7 +419,7 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER19_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer19_Texture, Layer19Tex, LAYER19_SIZE_X, LAYER19_SIZE_Y, LAYER19_TEXFORMAT, Layer19_Sampler, "Layer 19", Layer19_BlendMode, Layer19_Blend, Layer19_Scale, Layer19_ScaleX, Layer19_ScaleY, Layer19_PosX, Layer19_PosY, Layer19_SnapRotate, Layer19_Rotate, PS_Layer19, Layer19)
+	LAYER_SUMMONING(Layer19_Texture, Layer19Tex, LAYER19_SIZE_X, LAYER19_SIZE_Y, LAYER19_TEXFORMAT, Layer19_Sampler, "Layer 19", Layer19_Saturation, Layer19_Brightness, Layer19_BlendMode, Layer19_Blend, Layer19_Scale, Layer19_ScaleX, Layer19_ScaleY, Layer19_PosX, Layer19_PosY, Layer19_SnapRotate, Layer19_Rotate, PS_Layer19, Layer19)
 #endif
 
 #if LAYER_QUANTITY > 18
@@ -436,5 +436,5 @@ LAYER_SUMMONING(Layer_Texture, LayerTex, LAYER_SIZE_X, LAYER_SIZE_Y, LAYER_TEXFO
 		#define LAYER20_TEXFORMAT RGBA8
 	#endif
 
-	LAYER_SUMMONING(Layer20_Texture, Layer20Tex, LAYER19_SIZE_X, LAYER19_SIZE_Y, LAYER19_TEXFORMAT, Layer20_Sampler, "Layer 20", Layer20_BlendMode, Layer20_Blend, Layer20_Scale, Layer20_ScaleX, Layer20_ScaleY, Layer20_PosX, Layer20_PosY, Layer20_SnapRotate, Layer20_Rotate, PS_Layer20, Layer20)
+	LAYER_SUMMONING(Layer20_Texture, Layer20Tex, LAYER19_SIZE_X, LAYER19_SIZE_Y, LAYER19_TEXFORMAT, Layer20_Sampler, "Layer 20", Layer20_Saturation, Layer20_Brightness, Layer20_BlendMode, Layer20_Blend, Layer20_Scale, Layer20_ScaleX, Layer20_ScaleY, Layer20_PosX, Layer20_PosY, Layer20_SnapRotate, Layer20_Rotate, PS_Layer20, Layer20)
 #endif

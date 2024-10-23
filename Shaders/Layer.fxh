@@ -33,7 +33,7 @@
 	SOFTWARE.
 */
 
-#define LAYER_SUMMONING(Layer_Texture, LayerTex, Layer_Size_X, Layer_Size_Y, Layer_Texformat, Layer_Sampler, Layer_Category, LAYER_BLEND_MODE, Layer_Blend, LAYER_SCALE, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, LAYER_NAME) \
+#define LAYER_SUMMONING(Layer_Texture, LayerTex, Layer_Size_X, Layer_Size_Y, Layer_Texformat, Layer_Sampler, Layer_Category, Layer_Saturation, Layer_Brightness, LAYER_BLEND_MODE, Layer_Blend, LAYER_SCALE, Layer_ScaleX, Layer_ScaleY, Layer_PosX, Layer_PosY, Layer_SnapRotate, Layer_Rotate, PS_Layer, LAYER_NAME) \
 texture Layer_Texture <source = LayerTex;> { Width = Layer_Size_X; Height = Layer_Size_Y; Format=Layer_Texformat; }; \
 sampler Layer_Sampler { \
 	Texture = Layer_Texture; \
@@ -41,6 +41,24 @@ sampler Layer_Sampler { \
 	AddressV = CLAMP; \
 }; \
 \
+\
+uniform float Layer_Saturation < \
+	ui_category = Layer_Category; \
+	ui_type = "slider"; \
+	ui_label = "Saturation"; \
+	ui_tooltip = "The amount of saturation applied to the layer."; \
+	ui_min = 0.0; \
+	ui_max = 2.0; \
+> = 1.0; \
+\
+uniform float Layer_Brightness < \
+	ui_category = Layer_Category; \
+	ui_type = "slider"; \
+	ui_label = "Brightness"; \
+	ui_tooltip = "The amount of brightness applied to the layer."; \
+	ui_min = -2.0; \
+	ui_max = 2.0; \
+> = 0.0; \
 \
 BLENDING_COMBO(LAYER_BLEND_MODE, "Blending Mode", "Select the blending mode applied to the layer.", Layer_Category, true, 0, 0) \
 \
@@ -117,6 +135,7 @@ uniform float Layer_Rotate < \
 \
 \
 void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float4 passColor : SV_Target) { \
+	const float4 backColor = tex2D(ReShade::BackBuffer, texCoord); \
 	const float3 pivot = float3(0.5, 0.5, 0.0); \
 	const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT)); \
 	const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH)); \
@@ -161,8 +180,11 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
 	); \
 \
 	const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix); \
-	const float4 backColor = tex2D(ReShade::BackBuffer, texCoord); \
 	passColor = tex2D(Layer_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
+\
+	passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * Layer_Saturation + dot(passColor.rgb, 0.333); \
+\
+	passColor.rgb = passColor.rgb + Layer_Brightness; \
 \
 	passColor = float4(ComHeaders::Blending::Blend(LAYER_BLEND_MODE, backColor.rgb, passColor.rgb, passColor.a * Layer_Blend), backColor.a); \
 } \

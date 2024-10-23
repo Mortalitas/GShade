@@ -60,6 +60,22 @@ uniform int Tex_Select <
 #define MultiStageDepthTexture_Source 0
 #endif
 
+uniform float StageDepth_Saturation <
+	ui_type = "slider";
+	ui_label = "Saturation";
+	ui_tooltip = "The amount of saturation applied to the image.";
+	ui_min = 0.0;
+	ui_max = 2.0;
+> = 1.0;
+
+uniform float StageDepth_Brightness <
+	ui_type = "slider";
+	ui_label = "Brightness";
+	ui_tooltip = "The amount of brightness applied to the image.";
+	ui_min = -2.0;
+	ui_max = 2.0;
+> = 0.0;
+
 BLENDING_COMBO(Stage_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", "", false, 0, 0)
 
 uniform float Stage_Opacity <
@@ -215,6 +231,10 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
 
         const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
         passColor = tex2D(MultiStage_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
+
+		passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * StageDepth_Saturation + dot(passColor.rgb, 0.333);
+
+		passColor.rgb = passColor.rgb + StageDepth_Brightness;
 
         passColor.rgb = ComHeaders::Blending::Blend(Stage_BlendMode, backColor, passColor.rgb, passColor.a * Stage_Opacity);
     }

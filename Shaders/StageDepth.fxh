@@ -27,10 +27,28 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-#define STAGEDEPTH_SUMMONING(StageDepth_Texture, StageDepthTex, StageDepth_Size_X, StageDepth_Size_Y, StageDepth_Texformat, StageDepth_Sampler, StageDepth_BlendMode, StageDepth_Category, StageDepth_Opacity, StageDepth_Depth, STAGEDEPTH_SCALE, StageDepth_ScaleX, StageDepth_ScaleY, StageDepth_PosX, StageDepth_PosY, StageDepth_SnapRotate, StageDepth_Rotate, StageDepth_InvertDepth, PS_StageDepth, STAGEDEPTH_NAME) \
+#define STAGEDEPTH_SUMMONING(StageDepth_Texture, StageDepthTex, StageDepth_Size_X, StageDepth_Size_Y, StageDepth_Texformat, StageDepth_Sampler, StageDepth_Saturation, StageDepth_Brightness, StageDepth_BlendMode, StageDepth_Category, StageDepth_Opacity, StageDepth_Depth, STAGEDEPTH_SCALE, StageDepth_ScaleX, StageDepth_ScaleY, StageDepth_PosX, StageDepth_PosY, StageDepth_SnapRotate, StageDepth_Rotate, StageDepth_InvertDepth, PS_StageDepth, STAGEDEPTH_NAME) \
 texture StageDepth_Texture <source=StageDepthTex;> { Width = StageDepth_Size_X; Height = StageDepth_Size_Y; Format=StageDepth_Texformat; }; \
-\
 sampler StageDepth_Sampler { Texture = StageDepth_Texture; }; \
+\
+\
+uniform float StageDepth_Saturation < \
+	ui_category = StageDepth_Category; \
+	ui_type = "slider"; \
+	ui_label = "Saturation"; \
+	ui_tooltip = "The amount of saturation applied to the image."; \
+	ui_min = 0.0; \
+	ui_max = 2.0; \
+> = 1.0; \
+\
+uniform float StageDepth_Brightness < \
+	ui_category = StageDepth_Category; \
+	ui_type = "slider"; \
+	ui_label = "Brightness"; \
+	ui_tooltip = "The amount of brightness applied to the image."; \
+	ui_min = -2.0; \
+	ui_max = 2.0; \
+> = 0.0; \
 \
 BLENDING_COMBO(StageDepth_BlendMode, "Blending Mode", "Select the blending mode applied to the layer.", StageDepth_Category, true, 0, 0) \
 \
@@ -172,6 +190,10 @@ void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 \
 		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix); \
 		passColor = tex2D(StageDepth_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
+\
+		passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * StageDepth_Saturation + dot(passColor.rgb, 0.333); \
+\
+		passColor.rgb = passColor.rgb + StageDepth_Brightness; \
 \
 		passColor.rgb = ComHeaders::Blending::Blend(StageDepth_BlendMode, backColor, passColor.rgb, passColor.a * StageDepth_Opacity); \
 	} \
