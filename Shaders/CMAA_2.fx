@@ -1000,8 +1000,7 @@ void LongEdgePS(float4 position : SV_Position, float2 texcoord : TEXCOORD0, floa
 	float lerpK = (lerpStep * i + lerpFromK) * srcOffset + secondPart;
 	lerpK *= dampenEffect;
 
-	output.rgb = tex2D(sBackBuffer, (position.xy + blendDir * float(srcOffset).xx * lerpK) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)).rgb;
-	output = output * 2.25;
+	output = float4(tex2D(sBackBuffer, (position.xy + blendDir * float(srcOffset).xx) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)).rgb, lerpK);
 }
 
 
@@ -1016,10 +1015,8 @@ void ApplyPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 		output = float4( lerp( edges.xyz, 0.5.xxx, edges.a * 0.2 ), saturate(edges.x + edges.y + edges.z + edges.w) );
 	}
 
-	output.rgb /= output.a;
-
-	//output =  tex2Dfetch(sBackBuffer, coord); 
-	if(output.a <= 0.5)
+	//output =  tex2Dfetch(sBackBuffer, coord);
+	if(output.a <= 0.22)
 		discard;
 }
 
@@ -1120,16 +1117,6 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 #endif
 		ClearRenderTargets = false;
 
-		BlendEnable = true;
-
-		BlendOp = ADD;
-		BlendOpAlpha = ADD;
-
-		SrcBlend = ONE;
-		SrcBlendAlpha = ONE;
-		DestBlend = ONE;
-		DestBlendAlpha = ONE;
-
 		RenderTarget = ProcessedCandidates;
 	}
 
@@ -1141,10 +1128,9 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 		BlendEnable = true;
 
 		BlendOp = ADD;
-		BlendOpAlpha = ADD;
 
 		SrcBlend = SRCALPHA;
-		DestBlend = INVSRCALPHA;	
+		DestBlend = INVSRCALPHA;
 	}	
 }
 }
