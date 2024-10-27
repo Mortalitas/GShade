@@ -205,6 +205,10 @@ uniform bool bDebugEdges <
     ui_bind = "g_CMAA2_DebugEdges";
 > = false;
 
+#ifndef g_CMAA2_DebugEdges
+    #define g_CMAA2_DebugEdges 0
+#endif
+
 namespace CMAA_2
 {
 texture ZShapes <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
@@ -1009,11 +1013,10 @@ void ApplyPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 	float2 coord = position.xy;
 	output = tex2Dfetch(sProcessedCandidates, coord);
 
-	if(DebugEdges)
-	{
-		float4 edges = UnpackEdges(tex2Dfetch(sEdges, coord).x * 255.5);
-		output = float4( lerp( edges.xyz, 0.5.xxx, edges.a * 0.2 ), saturate(edges.x + edges.y + edges.z + edges.w) );
-	}
+#if g_CMAA2_DebugEdges
+	float4 edges = UnpackEdges(tex2Dfetch(sEdges, coord).x * 255.5);
+	output = float4( lerp( edges.xyz, 0.5.xxx, edges.a * 0.2 ), saturate(edges.x + edges.y + edges.z + edges.w) );
+#endif
 
 	//output =  tex2Dfetch(sBackBuffer, coord);
 	if(output.a <= 0.22)
