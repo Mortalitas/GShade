@@ -98,7 +98,7 @@ uniform int variable \
 
 #if _Copyright_Texture_Source == 0 // PSO2
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2.png"
-#define _SOURCE_COPYRIGHT_SIZE 500.0, 60.0
+#define _SOURCE_COPYRIGHT_SIZE 650.0, 60.0
 #elif _Copyright_Texture_Source == 1 // Century
 #define _SOURCE_COPYRIGHT_FILE "copyright_pso2_century.png"
 #define _SOURCE_COPYRIGHT_SIZE 750.0, 60.0
