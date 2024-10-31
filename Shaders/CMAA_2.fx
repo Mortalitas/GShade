@@ -85,7 +85,7 @@ Ported to ReShade by: Lord Of Lunacy
 static const uint c_maxLineLength = 128;
 //
 #ifndef CMAA2_EXTRA_SHARPNESS
-    #define CMAA2_EXTRA_SHARPNESS                   0     // Set to 1 to preserve even more text and shape clarity at the expense of less AA
+	#define CMAA2_EXTRA_SHARPNESS                   0     // Set to 1 to preserve even more text and shape clarity at the expense of less AA
 #endif
 //
 // It makes sense to slightly drop edge detection thresholds with increase in MSAA sample count, as with the higher
@@ -94,7 +94,7 @@ static const uint c_maxLineLength = 128;
 //
 //
 #ifndef CMAA2_STATIC_QUALITY_PRESET
-    #define CMAA2_STATIC_QUALITY_PRESET 2  // 0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER
+	#define CMAA2_STATIC_QUALITY_PRESET 2  // 0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER
 #endif
 
 #if COMPUTE == 0
@@ -106,19 +106,19 @@ static const uint c_maxLineLength = 128;
 // presets (for HDR color buffer maybe use higher values)
 //The VERTEX_COUNT_DENOMINATOR is actually set somewhat conservatively so performance could likely be improved by increasing this setting
 #if CMAA2_STATIC_QUALITY_PRESET == 0   // LOW
-    #define g_CMAA2_EdgeThreshold                   float(0.15)
+	#define g_CMAA2_EdgeThreshold                   float(0.15)
 	#define VERTEX_COUNT_DENOMINATOR 100
 #elif CMAA2_STATIC_QUALITY_PRESET == 1 // MEDIUM
-    #define g_CMAA2_EdgeThreshold                   float(0.10)
+	#define g_CMAA2_EdgeThreshold                   float(0.10)
 	#define VERTEX_COUNT_DENOMINATOR 64
 #elif CMAA2_STATIC_QUALITY_PRESET == 2 // HIGH (default)
-    #define g_CMAA2_EdgeThreshold                   float(0.07)
+	#define g_CMAA2_EdgeThreshold                   float(0.07)
 	#define VERTEX_COUNT_DENOMINATOR 48
 #elif CMAA2_STATIC_QUALITY_PRESET == 3 // ULTRA
-    #define g_CMAA2_EdgeThreshold                   float(0.05)
+	#define g_CMAA2_EdgeThreshold                   float(0.05)
 	#define VERTEX_COUNT_DENOMINATOR 32
 #else
-	#define g_CMAA2_EdgeThreshold               float(0.03)
+	#define g_CMAA2_EdgeThreshold                   float(0.03)
 	#define VERTEX_COUNT_DENOMINATOR 16
     //#error CMAA2_STATIC_QUALITY_PRESET not set?
 #endif
@@ -143,10 +143,10 @@ static const float c_dampeningEffect          = float( 0.15 );
 
 #if COMPUTE
 uniform int UIHELP <
-    ui_type = "radio";
+	ui_type = "radio";
 	ui_category = "Help";
 	ui_label = "    ";
-    ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
+	ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
 			   "Can be either 0 or 1. (0 (off) by default) \n\n"
 			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
 		   	   "of the edge detection, higher settings come at a performance cost \n"
@@ -154,10 +154,10 @@ uniform int UIHELP <
 >;
 #else
 uniform int UIHELP <
-    ui_type = "radio";
+	ui_type = "radio";
 	ui_category = "Help";
 	ui_label = "    ";
-    ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
+	ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
 			   "Can be either 0 or 1. (0 (off) by default) \n\n"
 			   "CMAA2_PERFORMANCE_HACK - This setting enables a performance hack that greatly improves "
 			   "the performance of the AA at a slight quality cost.\n"
@@ -211,15 +211,15 @@ uniform bool bDebugEdges <
 
 namespace CMAA_2
 {
-texture ZShapes <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
-texture BackBuffer : COLOR;
-texture Edges <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-texture ProcessedCandidates <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
+texture2D ZShapes <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
+texture2D BackBuffer : COLOR;
+texture2D Edges <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
+texture2D ProcessedCandidates <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
 
-sampler sZShapes {Texture = ZShapes;};
-sampler sBackBuffer {Texture = BackBuffer;};
-sampler sEdges {Texture = Edges;};
-sampler sProcessedCandidates{Texture = ProcessedCandidates;};
+sampler2D sZShapes {Texture = ZShapes;};
+sampler2D sBackBuffer {Texture = BackBuffer;};
+sampler2D sEdges {Texture = Edges;};
+sampler2D sProcessedCandidates{Texture = ProcessedCandidates;};
 
 #if COMPUTE
 #define EDGE_GROUP_SIZE uint2(16, 16)
@@ -270,8 +270,9 @@ storage wProcessedCandidates {Texture = ProcessedCandidates;};
 //Hopefully this won't always be neccessary and ReShade will get support for atomic operations on textures to do it properly
 float PackEdges( float4 edges, bool isCandidate )   // input edges are binary 0 or 1
 {
-    return (dot( edges, float4( 1, 2, 4, 8 )) + 16 * isCandidate)  / 255;
+	return (dot( edges, float4( 1, 2, 4, 8 )) + 16 * isCandidate)  / 255;
 }
+
 uint4 UnpackEdges( uint value )
 {
 	uint4 ret;
@@ -286,7 +287,7 @@ uint4 UnpackEdges( uint value )
 	ret.z = (value & 0x4) != 0;
 	ret.w = (value & 0x8) != 0;
 #endif
-    return uint4(ret);
+	return ret;
 }
 
 float4 UnpackEdgesFlt( uint value )
@@ -297,11 +298,11 @@ float4 UnpackEdgesFlt( uint value )
 float4 packZ(bool horizontal, bool invertedZ, float shapeQualityScore, float lineLengthLeft, float lineLengthRight)
 {
 	//return //(uint(horizontal) << 19) | (uint(invertedZ) << 18) | (uint(shapeQualityScore) << 16) | (uint(lineLengthLeft) << 8) | (uint(lineLengthRight));
-	float4 temp;
-	temp.x = lineLengthLeft;
-	temp.y = lineLengthRight;
-	temp.z = shapeQualityScore;
-	temp.w = horizontal * 2 + invertedZ + 4;//The plus 4 helps with the compute
+	float4 temp = float4(
+		lineLengthLeft,
+		lineLengthRight,
+		shapeQualityScore,
+		horizontal * 2 + invertedZ + 4);//The plus 4 helps with the compute
 	return temp / 255;
 }
 
@@ -346,13 +347,6 @@ float3 LoadSourceColor( uint2 pixelPos, int2 offset )
 // Edge detection and local contrast adaptation helpers
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-float GetActualEdgeThreshold( )
-{
-	float retVal = g_CMAA2_EdgeThreshold;
-	return retVal;
-}
-
-//
 float EdgeDetectColorCalcDiff( float3 colorA, float3 colorB )
 {
 	const float3 LumWeights = float3( 0.299, 0.587, 0.114 );
@@ -360,53 +354,15 @@ float EdgeDetectColorCalcDiff( float3 colorA, float3 colorB )
 	return dot( diff.rgb, LumWeights.rgb );
 }
 
-//
-// apply custom curve / processing to put input color (linear) in the format required by ComputeEdge
-float3 ProcessColorForEdgeDetect( float3 color )
-{
-	//pixelColors[i] = LINEAR_to_SRGB( pixelColors[i] );            // correct reference
-	//pixelColors[i] = pow( max( 0, pixelColors[i], 1.0 / 2.4 ) );  // approximate sRGB curve
-	return sqrt( color ); // just very roughly approximate RGB curve
-}
-
-							  
-//
-
-// color -> log luma-for-edges conversion
-float RGBToLumaForEdges( float3 linearRGB )
-{
-#if 0
-	// this matches Miniengine luma path
-	float Luma = dot( linearRGB, float3(0.212671, 0.715160, 0.072169) );
-	return log2(1 + Luma * 15) / 4;
-#else
-	// this is what original FXAA (and consequently CMAA2) use by default - these coefficients correspond to Rec. 601 and those should be
-	// used on gamma-compressed components (see https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients),
-	float luma = dot( sqrt( linearRGB.rgb ), float3( 0.299, 0.587, 0.114 ) );  // http://en.wikipedia.org/wiki/CCIR_601
-	// using sqrt luma for now but log luma like in miniengine provides a nicer curve on the low-end
-	return luma;
-#endif
-}
-
 //In the pixel shader all 4 edges need to be computed locally
 float4 PSComputeEdge(float3 pixelColor,float3 pixelColorRight,float3 pixelColorBottom, float3 pixelColorLeft, float3 pixelColorTop)
 {
-	const float3 LumWeights = float3( 0.299, 0.587, 0.114 );
-	float4 temp;
-	temp.x = EdgeDetectColorCalcDiff(pixelColor, pixelColorRight);
-	temp.y = EdgeDetectColorCalcDiff(pixelColor, pixelColorBottom);
-	temp.z = EdgeDetectColorCalcDiff(pixelColor, pixelColorLeft);
-	temp.w = EdgeDetectColorCalcDiff(pixelColor, pixelColorTop);
+	float4 temp = float4(
+		EdgeDetectColorCalcDiff(pixelColor, pixelColorRight),
+		EdgeDetectColorCalcDiff(pixelColor, pixelColorBottom),
+		EdgeDetectColorCalcDiff(pixelColor, pixelColorLeft),
+		EdgeDetectColorCalcDiff(pixelColor, pixelColorTop));
 	return temp;    // for HDR edge detection it might be good to premultiply both of these by some factor - otherwise clamping to 1 might prevent some local contrast adaptation. It's a very minor nitpick though, unlikely to significantly affect things.
-}
-
-
-float2 PSComputeEdgeLuma(float pixelLuma, float pixelLumaRight, float pixelLumaBottom)
-{
-	float2 temp;
-	temp.x = abs(pixelLuma - pixelLumaRight);
-	temp.y = abs(pixelLuma - pixelLumaBottom);
-	return temp;
 }
 
 //Same function can be used for both vertical and horizontal in the pixel shader
@@ -421,10 +377,10 @@ float4 ComputeSimpleShapeBlendValues( float4 edges, float4 edgesLeft, float4 edg
 {
 	// a 3x3 kernel for higher quality handling of L-based shapes (still rather basic and conservative)
 
-	float fromRight   = edges.r;
-	float fromBelow   = edges.g;
-	float fromLeft    = edges.b;
-	float fromAbove   = edges.a;
+	float fromRight = edges.r;
+	float fromBelow = edges.g;
+	float fromLeft  = edges.b;
+	float fromAbove = edges.a;
 
 	float blurCoeff = float( g_CMAA2_SimpleShapeBlurinessAmount );
 
@@ -451,10 +407,10 @@ float4 ComputeSimpleShapeBlendValues( float4 edges, float4 edgesLeft, float4 edg
 		blurCoeff *= 0.75;
 
 		float k = 0.9f;
-		fromRight   += k * (edges.g * edgesTop.r     * (1.0-edgesLeft.g)   +     edges.a * edgesBottom.r   * (1.0-edgesLeft.a)      );
-		fromBelow   += k * (edges.b * edgesRight.g   * (1.0-edgesTop.b)    +     edges.r * edgesLeft.g     * (1.0-edgesTop.r)       );
-		fromLeft    += k * (edges.a * edgesBottom.b  * (1.0-edgesRight.a)  +     edges.g * edgesTop.b      * (1.0-edgesRight.g)     );
-		fromAbove   += k * (edges.r * edgesLeft.a    * (1.0-edgesBottom.r) +     edges.b * edgesRight.a   *  (1.0-edgesBottom.b)    );
+		fromRight += k * (edges.g * edgesTop.r     * (1.0-edgesLeft.g)   + edges.a * edgesBottom.r * (1.0-edgesLeft.a)  );
+		fromBelow += k * (edges.b * edgesRight.g   * (1.0-edgesTop.b)    + edges.r * edgesLeft.g   * (1.0-edgesTop.r)   );
+		fromLeft  += k * (edges.a * edgesBottom.b  * (1.0-edgesRight.a)  + edges.g * edgesTop.b    * (1.0-edgesRight.g) );
+		fromAbove += k * (edges.r * edgesLeft.a    * (1.0-edgesBottom.r) + edges.b * edgesRight.a  * (1.0-edgesBottom.b));
 	}
 
 	// if( numberOfEdges == 3 )
@@ -472,13 +428,7 @@ float4 ComputeSimpleShapeBlendValues( float4 edges, float4 edgesLeft, float4 edg
 
 uint LoadEdge( int2 pixelPos, int2 offset)
 {
-#if CMAA_PACK_SINGLE_SAMPLE_EDGE_TO_HALF_WIDTH
-	uint a      = uint(pixelPos.x+offset.x) % 2;
-	uint edge   = (uint)(tex2Dfetch(sEdges, uint2( uint(pixelPos.x+offset.x)/2, pixelPos.y + offset.y )).x * 255.5);
-	edge = (edge >> (a*4)) & 0xF;
-#else
 	uint edge   = (uint)(tex2Dfetch(sEdges, pixelPos + offset).x * 255.5);
-#endif
 	return edge;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -498,16 +448,16 @@ void PostProcessVS(in uint id : SV_VertexID, out float4 position : SV_Position, 
 
 void EdgesPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out float output : SV_TARGET0)
 {
-	float2 coord = position.xy;
-	float3 a = tex2Dfetch(sBackBuffer, coord + float2(-1, -1)).rgb;
-	float3 b = tex2Dfetch(sBackBuffer, coord + float2(0, -1)).rgb;
-	float3 c = tex2Dfetch(sBackBuffer, coord + float2(1, -1)).rgb;
-	float3 d = tex2Dfetch(sBackBuffer, coord + float2(-1, 0)).rgb;
-	float3 e = tex2Dfetch(sBackBuffer, coord + float2(0, 0)).rgb;
-	float3 f = tex2Dfetch(sBackBuffer, coord + float2(1, 0)).rgb;
-	float3 g = tex2Dfetch(sBackBuffer, coord + float2(-1, 1)).rgb;
-	float3 h = tex2Dfetch(sBackBuffer, coord + float2(0, 1)).rgb;
-	float3 i = tex2Dfetch(sBackBuffer, coord + float2(1, 1)).rgb;
+	int2 coord = position.xy;
+	float4 a = tex2Dfetch(sBackBuffer, coord + int2(-1, -1));
+	float4 b = tex2Dfetch(sBackBuffer, coord + int2( 0, -1));
+	float4 c = tex2Dfetch(sBackBuffer, coord + int2( 1, -1));
+	float4 d = tex2Dfetch(sBackBuffer, coord + int2(-1,  0));
+	float4 e = tex2Dfetch(sBackBuffer, coord + int2( 0,  0));
+	float4 f = tex2Dfetch(sBackBuffer, coord + int2( 1,  0));
+	float4 g = tex2Dfetch(sBackBuffer, coord + int2(-1,  1));
+	float4 h = tex2Dfetch(sBackBuffer, coord + int2( 0,  1));
+	float4 i = tex2Dfetch(sBackBuffer, coord + int2( 1,  1));
 
 	float4 edges = PSComputeEdge(e, f, h, d, b);
 
@@ -529,13 +479,12 @@ void EdgesPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 	float cf = EdgeDetectColorCalcDiff(c, f);
 	float fi = EdgeDetectColorCalcDiff(f, i);
 
-
 	localContrast.y = PSComputeLocalContrast(be, cf, edges.x, fi);
 	localContrast.w = PSComputeLocalContrast(ad, be, dg, edges.x);
 	edges -= localContrast;
 
 	//Use a ternary operator to evaluate each vector component individually
-	edges = (edges > GetActualEdgeThreshold()) ? float4(1, 1, 1, 1) : float4(0, 0, 0, 0);
+	edges = (edges > g_CMAA2_EdgeThreshold) ? float4(1, 1, 1, 1) : float4(0, 0, 0, 0);
 
 	// if there's at least one two edge corner, this is a candidate for simple or complex shape processing...
 	bool isCandidate = ( edges.x * edges.y + edges.y * edges.z + edges.z * edges.w + edges.w * edges.x ) != 0;
@@ -604,26 +553,24 @@ void FindZLineLengths( out float lineLengthLeft, out float lineLengthRight, uint
 	[loop]
 	while(true)
 	{
-		uint edgeLeft =     LoadEdge( screenPos.xy - stepRight * float(lineLengthLeft)          , int2( 0, 0 ));
-		uint edgeRight =    LoadEdge( screenPos.xy + stepRight * ( float(lineLengthRight) + 1 ) , int2( 0, 0 ));
+		uint edgeLeft   = LoadEdge( screenPos.xy - stepRight * float(lineLengthLeft)          , int2( 0, 0 ));
+		uint edgeRight  = LoadEdge( screenPos.xy + stepRight * ( float(lineLengthRight) + 1 ) , int2( 0, 0 ));
 
 		// stop on encountering 'stopping' edge (as defined by masks)
 #if D3D9
-		continueLeft = continueLeft && (edgeLeft / maskLeft % 2);
-		continueRight = continueRight && (edgeRight / maskRight % 2);
+		continueLeft   *= (edgeLeft / maskLeft % 2);
+		continueRight  *= (edgeRight / maskRight % 2);
 #else
 		continueLeft    = continueLeft  && ( edgeLeft & maskLeft );
 		continueRight   = continueRight && ( edgeRight & maskRight );
 #endif
 
-		lineLengthLeft += continueLeft;
+		lineLengthLeft  += continueLeft;
 		lineLengthRight += continueRight;
 
-		maxLR = max( lineLengthRight, lineLengthLeft );
-
 		// both stopped? cause the search end by setting maxLR to max length.
-		if( !continueLeft && !continueRight )
-			maxLR = (float)c_maxLineLength;
+		maxLR = ( !continueLeft && !continueRight ) ?
+			(float)c_maxLineLength : max( lineLengthRight, lineLengthLeft );
 
 		// either the longer one is ahead of the smaller (already stopped) one by more than a factor of x, or both
 		// are stopped - end the search.
@@ -633,7 +580,7 @@ void FindZLineLengths( out float lineLengthLeft, out float lineLengthRight, uint
 		if( maxLR >= min( (float)c_maxLineLength, (1.25 * min( lineLengthRight, lineLengthLeft ) - 0.25) ) )
 #endif
 			break;
-    }
+	}
 }
 
 void DetectZsHorizontal( in float4 edges, in float4 edgesM1P0, in float4 edgesP1P0, in float4 edgesP2P0, out float invertedZScore, out float normalZScore )
@@ -644,7 +591,7 @@ void DetectZsHorizontal( in float4 edges, in float4 edgesM1P0, in float4 edgesP1
 	// --
 	{
 		invertedZScore  = edges.r * edges.g *                edgesP1P0.a;
-		invertedZScore  *= 2.0 + ((edgesM1P0.g + edgesP2P0.a) ) - (edges.a + edgesP1P0.g) - 0.7 * (edgesP2P0.g + edgesM1P0.a + edges.b + edgesP1P0.r);
+		invertedZScore  *= 2.0 + (edgesM1P0.g + edgesP2P0.a) - (edges.a + edgesP1P0.g) - 0.7 * (edgesP2P0.g + edgesM1P0.a + edges.b + edgesP1P0.r);
 	}
 
 	// Normal Z case:
@@ -653,7 +600,7 @@ void DetectZsHorizontal( in float4 edges, in float4 edgesM1P0, in float4 edgesP1
 	//   --
 	{
 		normalZScore    = edges.r * edges.a *                edgesP1P0.g;
-		normalZScore    *= 2.0 + ((edgesM1P0.a + edgesP2P0.g) ) - (edges.g + edgesP1P0.a) - 0.7 * (edgesP2P0.a + edgesM1P0.g + edges.b + edgesP1P0.r);
+		normalZScore    *= 2.0 + (edgesM1P0.a + edgesP2P0.g) - (edges.g + edgesP1P0.a) - 0.7 * (edgesP2P0.a + edgesM1P0.g + edges.b + edgesP1P0.r);
 	}
 }
 
@@ -753,7 +700,6 @@ float4 DetectComplexShapes(uint2 coord, float4 edges, float4 edgesLeft, float4 e
 
 		lineLengthLeft  -= shapeQualityScore;
 		lineLengthRight -= shapeQualityScore;
-		bool isZShape = ( lineLengthLeft + lineLengthRight ) >= (5.0);
 		if( ( lineLengthLeft + lineLengthRight ) >= (5.0) )
 		{
 			return packZ(horizontal, invertedZ, shapeQualityScore, lineLengthLeft, lineLengthRight);//((uint(horizontal) << 19) | (uint(invertedZ) << 18) | (uint(shapeQualityScore) << 16) | (uint(lineLengthLeft) << 8) | (uint(lineLengthRight)));
@@ -917,10 +863,10 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 	uint packedCoord = asuint(tex2Dfetch(sZShapeCoords, uint2((id / 2) % BUFFER_WIDTH, (id / 2) / BUFFER_WIDTH))).x;
 	uint2 coord = uint2((packedCoord >> 16), (packedCoord & 0xFFFF));
 #else
-	uint2 coord = int2((id / 2) % BUFFER_WIDTH, (id / 2) / BUFFER_WIDTH);
+	uint2 coord = uint2((id / 2) % BUFFER_WIDTH, (id / 2) / BUFFER_WIDTH);
 #endif
 #if CMAA2_PERFORMANCE_HACK
-	coord = int2((id / 2) % (BUFFER_WIDTH / 2), (id / 2) / (BUFFER_WIDTH / 2)) * 2;
+	coord = uint2((id / 2) % (BUFFER_WIDTH / 2), (id / 2) / (BUFFER_WIDTH / 2)) * 2;
 	float4 sampA = tex2Dfetch(sZShapes, coord + int2(0, 0));
 	float4 sampB = tex2Dfetch(sZShapes, coord + int2(1, 0));
 	float4 sampC = tex2Dfetch(sZShapes, coord + int2(0, 1));
@@ -935,11 +881,11 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 
 	data = (sampA.z == q) ? sampA :
 	       (sampB.z == q) ? sampB :
-	       (sampC.z == q) ? sampC : sampD;
-		   
-	coord = (sampA.z == q) ? coord + int2(0, 0) :
-	        (sampB.z == q) ? coord + int2(1, 0) :
-	        (sampC.z == q) ? coord + int2(0, 1) : coord + int2(1, 1);
+	       (sampC.z == q) ? sampC : sampD;	   
+
+	coord += (sampA.z == q) ? int2(0, 0) :
+	         (sampB.z == q) ? int2(1, 0) :
+	         (sampC.z == q) ? int2(0, 1) : int2(1, 1);
 #else
 	data = tex2Dfetch(sZShapes, coord);
 #endif
@@ -948,7 +894,6 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 	{
 		position = -10;
 		texcoord = -10;
-		return;
 	}
 	else
 	{
@@ -960,9 +905,9 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 		unpackZ(data, horizontal, invertedZ, shapeQualityScore, lineLengthLeft, lineLengthRight);
 		float loopFrom = -floor( ( lineLengthLeft + 1 ) / 2 ) + 1.0;
 		float loopTo = floor( ( lineLengthRight + 1 ) / 2 );
-		const float2 stepRight = ( horizontal ) ? ( float2( 1, 0 ) ) : ( float2( 0, -1 ) );
+		const float2 stepRight = ( horizontal ) ? float2( 1, 0 ) : float2( 0, -1 );
 		float2 offset = (id % 2) ? stepRight * loopTo : stepRight * loopFrom;
-		texcoord.xy = (float2(coord + offset) + 0.5) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+		texcoord = (float2(coord + offset) + 0.5) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 		position = float4(texcoord.xy * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 		texcoord = (id % 2) ? loopTo : loopFrom;
 	}
@@ -978,8 +923,8 @@ void LongEdgePS(float4 position : SV_Position, float2 texcoord : TEXCOORD0, floa
 	float lineLengthLeft;// = info.x;
 	float lineLengthRight;// = info.y;
 	unpackZ(info, horizontal, invertedZShape, shapeQualityScore, lineLengthLeft, lineLengthRight);
-	float2 blendDir = ( horizontal ) ? ( float2( 0, -1 ) ) : ( float2( -1, 0 ) );
-	float i = (horizontal) ? texcoord.x : texcoord.y;
+	float2 blendDir = ( horizontal ) ? float2( 0, -1 ) : float2( -1, 0 );
+	float i = ( horizontal ) ? texcoord.x : texcoord.y;
 	if( invertedZShape )
 		blendDir = -blendDir;
 
@@ -996,15 +941,15 @@ void LongEdgePS(float4 position : SV_Position, float2 texcoord : TEXCOORD0, floa
 
 	float lerpFromK = (0.5 - leftOdd - loopFrom) * lerpStep;
 
-	float lerpVal = lerpStep * (i) + lerpFromK;
+	float lerpVal = mad(lerpStep, i, lerpFromK);
 
-	float secondPart = (i > 0);
+	bool  secondPart = (i > 0);
 	float srcOffset = 1.0 - (secondPart * 2.0);
-	
-	float lerpK = (lerpStep * i + lerpFromK) * srcOffset + secondPart;
+
+	float lerpK = lerpVal * srcOffset + secondPart;
 	lerpK *= dampenEffect;
 
-	output = float4(tex2D(sBackBuffer, (position.xy + blendDir * float(srcOffset).xx) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)).rgb, lerpK);
+	output = float4(tex2Dfetch(sBackBuffer, position.xy + blendDir * float(srcOffset).xx).rgb, lerpK);
 }
 
 
@@ -1019,7 +964,7 @@ void ApplyPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 #endif
 
 	//output =  tex2Dfetch(sBackBuffer, coord);
-	if(output.a <= 0.22)
+	if(output.a <= 1.0 / c_maxLineLength)
 		discard;
 }
 
