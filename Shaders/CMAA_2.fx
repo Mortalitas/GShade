@@ -214,7 +214,7 @@ namespace CMAA_2
 texture2D ZShapes <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
 texture2D BackBuffer : COLOR;
 texture2D Edges <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R8;};
-texture2D ProcessedCandidates <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8;};
+texture2D ProcessedCandidates <pooled = true;>{Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16f;};
 
 sampler2D sZShapes {Texture = ZShapes;};
 sampler2D sBackBuffer {Texture = BackBuffer;};
