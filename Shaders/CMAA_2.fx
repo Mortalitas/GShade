@@ -881,7 +881,7 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 
 	data = (sampA.z == q) ? sampA :
 	       (sampB.z == q) ? sampB :
-	       (sampC.z == q) ? sampC : sampD;	   
+	       (sampC.z == q) ? sampC : sampD;
 
 	coord += (sampA.z == q) ? int2(0, 0) :
 	         (sampB.z == q) ? int2(1, 0) :
