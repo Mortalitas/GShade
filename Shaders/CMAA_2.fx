@@ -1060,7 +1060,7 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 		PixelShader = LongEdgePS;
 		PrimitiveTopology = LINELIST;
 #if COMPUTE
-		VertexCount = (BUFFER_WIDTH *  DIVIDE_ROUNDING_UP(BUFFER_HEIGHT, VERTEX_COUNT_DENOMINATOR) * 2);
+		VertexCount = (BUFFER_WIDTH * DIVIDE_ROUNDING_UP(BUFFER_HEIGHT, VERTEX_COUNT_DENOMINATOR) * 2);
 #elif CMAA2_PERFORMANCE_HACK
 		VertexCount = (BUFFER_WIDTH * BUFFER_HEIGHT) / 2;
 #else
@@ -1093,7 +1093,7 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 		
 		SrcBlend = SRCALPHA;
 		DestBlend = INVSRCALPHA;
-	}	
+	}
 }
 }
 
