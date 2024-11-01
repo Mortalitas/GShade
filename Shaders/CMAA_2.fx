@@ -1087,7 +1087,7 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 		PixelShader = ApplyPS;
 
 		BlendEnable = true;
-		
+
 		BlendOp = ADD;
 		BlendOpAlpha = ADD;
 		
