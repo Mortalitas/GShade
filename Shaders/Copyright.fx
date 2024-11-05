@@ -575,19 +575,17 @@ sampler Copyright_Sampler_CAb_B
 #define PIXEL_SIZE float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)
 
 #define pivot float3(0.5, 0.5, 0.0)
-#define AspectX float(1.0 - (BUFFER_WIDTH) * (1.0 / BUFFER_HEIGHT))
-#define AspectY float(1.0 - (BUFFER_HEIGHT) * (1.0 / BUFFER_WIDTH))
 #define mulUV float3(texCoord.x, texCoord.y, 1)
-#define ScaleSize float2(float2(_SOURCE_COPYRIGHT_SIZE) * cLayer_Scale / BUFFER_SCREEN_SIZE)
-#define ScaleX float(ScaleSize.x * AspectX * cLayer_ScaleX)
-#define ScaleY float(ScaleSize.y * AspectY * cLayer_ScaleY)
+#define ScaleSize float2(float2(_SOURCE_COPYRIGHT_SIZE) * cLayer_Scale)
+#define ScaleX float(ScaleSize.x * cLayer_ScaleX)
+#define ScaleY float(ScaleSize.y * cLayer_ScaleY)
 #define PosX float(cLayer_Mouse && RightMouseDown? MouseCoords.x * BUFFER_PIXEL_SIZE.x : cLayer_PosX)
 #define PosY float(cLayer_Mouse && RightMouseDown? MouseCoords.y * BUFFER_PIXEL_SIZE.y : cLayer_PosY)
 #define PosX_Gauss float(cLayer_PosX_Gauss * 0.1)
 #define PosY_Gauss float(cLayer_PosY_Gauss * 0.1)
-#define ScaleSize_Gauss float2(float2(_SOURCE_COPYRIGHT_SIZE) * ((cLayer_Scale) + (-1 + cLayer_Scale_Gauss)) / BUFFER_SCREEN_SIZE)
-#define ScaleX_Gauss float(AspectX * ScaleSize_Gauss.x)
-#define ScaleY_Gauss float(AspectY * ScaleSize_Gauss.y)
+#define ScaleSize_Gauss float2(float2(_SOURCE_COPYRIGHT_SIZE) * ((cLayer_Scale) + (-1 + cLayer_Scale_Gauss)))
+#define ScaleX_Gauss float(ScaleSize_Gauss.x)
+#define ScaleY_Gauss float(ScaleSize_Gauss.y)
 
 
 float3x3 positionMatrix (in float coord_X, in float coord_Y) {
@@ -624,16 +622,16 @@ float3x3 rotateMatrix (in float angle) {
     }
     
     return float3x3 (
-    (cos(Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
-    (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+    cos(Rotate), sin(Rotate), 0,
+    -sin(Rotate), cos(Rotate), 0,
     0, 0, 1
     );
 }
  
 float3x3 rotateMatrix_Alt (in float angle) {
     return float3x3 (
-    (cos(angle) * AspectX), (sin(angle) * AspectX), 0,
-    (-sin(angle) * AspectY), (cos(angle) * AspectY), 0,
+    cos(angle), sin(angle), 0,
+    -sin(angle), cos(angle), 0,
     0, 0, 1
     );
 }
@@ -691,7 +689,7 @@ float4 PS_cLayer_Gauss_H(in float4 pos : SV_Position, in float2 texCoord : TEXCO
 
 float4 PS_cLayer_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(0.5 + PosX_Gauss, 0.5 + PosY_Gauss)), rotateMatrix_Alt(0)), scaleMatrix(ScaleX_Gauss, ScaleY_Gauss));
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(0.5 + PosX_Gauss, 0.5 + PosY_Gauss)), rotateMatrix_Alt(0)) * float3(BUFFER_SCREEN_SIZE, 1.0f), scaleMatrix(ScaleX_Gauss, ScaleY_Gauss));
         float4 color = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg);
         switch(GaussianBlurRadius)
         {
@@ -756,7 +754,7 @@ float4 PS_cLayer_CAb_Gauss_H(in float4 pos : SV_Position, in float2 texCoord : T
 
 float4 PS_cLayer_CAb_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(0.5, 0.5)), rotateMatrix_Alt(0)), scaleMatrix(ScaleX, ScaleY));
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(0.5, 0.5)) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix_Alt(0)), scaleMatrix(ScaleX, ScaleY));
         float4 color = tex2D(Copyright_Sampler, SumUV.rg + float2(0.5, 0.5));
         const float sampleOffsets[6] = { 0.0, 1.4584295168, 3.40398480678, 5.3518057801, 7.302940716, 9.2581597095 };
         const float sampleWeights[6] = { 0.13298, 0.23227575, 0.1353261595, 0.0511557427, 0.01253922, 0.0019913644 };
@@ -772,7 +770,7 @@ float4 PS_cLayer_CAb_Gauss_V(in float4 pos : SV_Position, in float2 texCoord : T
 float4 PS_cLayer_CAb_A(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
         const float2 CAb_Shift = cLayer_CAb_Shift * 0.05;
-        const float3 SumUV = mul (mul (mulUV, positionMatrix(0.5 + CAb_Shift.x, 0.5 + CAb_Shift.y)), scaleMatrix(1, 1));
+        const float3 SumUV = mul (mul (mulUV, positionMatrix(0.5 + CAb_Shift.x, 0.5 + CAb_Shift.y * BUFFER_WIDTH / BUFFER_HEIGHT)), scaleMatrix(1, 1));
         float4 color = tex2D(Copyright_Sampler_CAb_Gauss_H, SumUV.rg + pivot.rg) * all(SumUV.rg + pivot.rg == saturate(SumUV.rg + pivot.rg));
         color = float4(cLayer_CAb_Color_A.r, cLayer_CAb_Color_A.g, cLayer_CAb_Color_A.b, color.a * cLayer_CAb_Color_A.a);
         return color;
@@ -781,7 +779,7 @@ float4 PS_cLayer_CAb_A(in float4 pos : SV_Position, in float2 texCoord : TEXCOOR
 float4 PS_cLayer_CAb_B(in float4 pos : SV_Position, in float2 texCoord : TEXCOORD) : COLOR  {
 
         const float2 CAb_Shift = cLayer_CAb_Shift * 0.05;
-        const float3 SumUV = mul (mul (mulUV, positionMatrix(0.5 - CAb_Shift.x, 0.5 - CAb_Shift.y)), scaleMatrix(1, 1));
+        const float3 SumUV = mul (mul (mulUV, positionMatrix(0.5 - CAb_Shift.x, 0.5 - CAb_Shift.y * BUFFER_WIDTH / BUFFER_HEIGHT)), scaleMatrix(1, 1));
         float4 color = tex2D(Copyright_Sampler_CAb_Gauss_H, SumUV.rg + pivot.rg) * all(SumUV.rg + pivot.rg == saturate(SumUV.rg + pivot.rg));
         color = float4(cLayer_CAb_Color_B.r, cLayer_CAb_Color_B.g, cLayer_CAb_Color_B.b, color.a * cLayer_CAb_Color_B.a);
         return color;
@@ -793,10 +791,10 @@ void PS_cLayer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out floa
     float4 backColorOrig = tex2D(ReShade::BackBuffer, texCoord);
     if (Depth < cLayer_Depth)
     {
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(ScaleX, ScaleY));
-        const float3 SumUV_Gauss = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(AspectX, AspectY));
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix(cLayer_Rotate)), scaleMatrix(ScaleX, ScaleY));
+        const float3 SumUV_Gauss = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix(cLayer_Rotate)), scaleMatrix(BUFFER_WIDTH, BUFFER_HEIGHT));
         float4 GaussOut = tex2D(Copyright_Sampler_Gauss_H, SumUV_Gauss.rg + pivot.rg);       
-        const float3 SumUV_CAb = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)), rotateMatrix(cLayer_Rotate)), scaleMatrix(AspectX, AspectY));
+        const float3 SumUV_CAb = mul (mul (mul (mulUV, positionMatrix(PosX, PosY)) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix(cLayer_Rotate)), scaleMatrix(BUFFER_WIDTH, BUFFER_HEIGHT));
         float4 CAb_A = tex2D(Copyright_Sampler_CAb_A, SumUV_CAb.rg + pivot.rg);
         float4 CAb_B = tex2D(Copyright_Sampler_CAb_B, SumUV_CAb.rg + pivot.rg);
         float4 DrawTex = tex2D(Copyright_Sampler, SumUV.rg + pivot.rg) * all(SumUV.rg + pivot.rg == saturate(SumUV.rg + pivot.rg));

@@ -187,12 +187,10 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
     {
         const float3 backColor = tex2D(ReShade::BackBuffer, texCoord).rgb;
         const float3 pivot = float3(0.5, 0.5, 0.0);
-        const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT));
-        const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
         const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
-        const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * Stage_Scale / BUFFER_SCREEN_SIZE);
-        const float ScaleX =  ScaleSize.x * AspectX * Stage_ScaleX;
-        const float ScaleY =  ScaleSize.y * AspectY * Stage_ScaleY;
+		const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * Stage_Scale);
+		const float ScaleX =  ScaleSize.x * Stage_ScaleX;
+		const float ScaleY =  ScaleSize.y * Stage_ScaleY;
         float Rotate = Stage_Rotate * (3.1415926 / 180.0);
 
         switch(Stage_SnapRotate)
@@ -224,12 +222,11 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
             0, 0, 1
         );
         const float3x3 rotateMatrix = float3x3 (
-            (cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
-            (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+            cos (Rotate), sin(Rotate), 0,
+            -sin(Rotate), cos(Rotate), 0,
             0, 0, 1
         );
-
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix);
         passColor = tex2D(MultiStage_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
 		passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * StageDepth_Saturation + dot(passColor.rgb, 0.333);

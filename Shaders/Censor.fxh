@@ -134,12 +134,10 @@ void PS_Censor(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, 
     { \
         const float3 backColor = tex2D(ReShade::BackBuffer, texCoord).rgb; \
         const float3 pivot = float3(0.5, 0.5, 0.0); \
-        const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT)); \
-        const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH)); \
         const float3 mulUV = float3(texCoord.x, texCoord.y, 1); \
-        const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * CENSOR_SCALE / BUFFER_SCREEN_SIZE); \
-        const float ScaleX =  ScaleSize.x * AspectX * Censor_ScaleX; \
-        const float ScaleY =  ScaleSize.y * AspectY * Censor_ScaleY; \
+		const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * CENSOR_SCALE); \
+		const float ScaleX =  ScaleSize.x * Censor_ScaleX; \
+		const float ScaleY =  ScaleSize.y * Censor_ScaleY; \
         float Rotate = Censor_Rotate * (3.1415926 / 180.0); \
 		const int2 pixcoord = floor((BUFFER_SCREEN_SIZE * texCoord) / Censor_Cell_Size) * Censor_Cell_Size; \
 \
@@ -189,12 +187,12 @@ void PS_Censor(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, 
             0, 0, 1 \
         ); \
         const float3x3 rotateMatrix = float3x3 ( \
-            (cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0, \
-            (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0, \
+            cos (Rotate), sin(Rotate), 0, \
+            -sin(Rotate), cos(Rotate), 0, \
             0, 0, 1 \
         ); \
 \
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix); \
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix); \
 \
 		passColor *= all(SumUV + pivot == saturate(SumUV + pivot)); \
 \

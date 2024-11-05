@@ -168,12 +168,10 @@ void PS_DropShadow(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out 
 	texCoord.y >= fCutoffMinY) \
 	{ \
 		const float3 pivot = float3(0.5, 0.5, 0.0); \
-		const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT)); \
-		const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH)); \
 		const float3 mulUV = float3(texCoord.x, texCoord.y, 1); \
-		const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * DROPSHADOW_SCALE / BUFFER_SCREEN_SIZE); \
-		const float ScaleX =  ScaleSize.x * AspectX * fScaleX; \
-		const float ScaleY =  ScaleSize.y * AspectY * fScaleY; \
+		const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * DROPSHADOW_SCALE); \
+		const float ScaleX =  ScaleSize.x * fScaleX; \
+		const float ScaleY =  ScaleSize.y * fScaleY; \
 		float Rotate = iRotate * (3.1415926 / 180.0); \
 \
 		switch(iSnapRotate) \
@@ -205,12 +203,12 @@ void PS_DropShadow(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out 
 			0, 0, 1 \
 		); \
 		const float3x3 rotateMatrix = float3x3 ( \
-		   (cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0, \
-			(-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0, \
+			cos (Rotate), sin(Rotate), 0, \
+			-sin(Rotate), cos(Rotate), 0, \
 			0, 0, 1 \
 		); \
 \
-		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix); \
+		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix); \
 		const float4 backColor = tex2D(ReShade::BackBuffer, texCoord); \
 		passColor = tex2D(DropShadow_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
 		 \
