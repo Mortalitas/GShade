@@ -187,8 +187,8 @@ void PS_Censor(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, 
             0, 0, 1 \
         ); \
         const float3x3 rotateMatrix = float3x3 ( \
-            cos (Rotate), sin(Rotate), 0, \
-            -sin(Rotate), cos(Rotate), 0, \
+            cos (Rotate), -sin(Rotate), 0, \
+            sin(Rotate), cos(Rotate), 0, \
             0, 0, 1 \
         ); \
 \

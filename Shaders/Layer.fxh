@@ -172,8 +172,8 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
 		0, 0, 1 \
 	); \
 	const float3x3 rotateMatrix = float3x3 ( \
-		cos (Rotate), sin(Rotate), 0, \
-		-sin(Rotate), cos(Rotate), 0, \
+		cos (Rotate), -sin(Rotate), 0, \
+		sin(Rotate), cos(Rotate), 0, \
 		0, 0, 1 \
 	); \
 	const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0), rotateMatrix), scaleMatrix); \
