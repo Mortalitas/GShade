@@ -658,11 +658,9 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
     else {
     const float3 pivot = float3(0.5, 0.5, 0.0);
     const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
-    const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * cLayerVPre_Scale / BUFFER_SCREEN_SIZE);
-    const float AspectX = 1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT);
-    const float AspectY = 1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH);
-    const float ScaleX =  ScaleSize.x * AspectX * cLayerVPre_Scale;
-    const float ScaleY =  ScaleSize.y * AspectY * cLayerVPre_Scale;
+    const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * cLayerVPre_Scale);
+    const float ScaleX =  ScaleSize.x * cLayerVPre_Scale;
+    const float ScaleY =  ScaleSize.y * cLayerVPre_Scale;
 
     float Rotate = 0;
         switch(cLayerVPre_Angle)
@@ -698,12 +696,12 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
     );
 
     const float3x3 rotateMatrix = float3x3 (
-       (cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
-       (-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+        cos (Rotate), sin(Rotate), 0,
+        -sin(Rotate), cos(Rotate), 0,
         0, 0, 1
     );
 
-    float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
+    float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix);
     float4 backColor = tex2D(samplerDrawARatio, texCoord);
         switch (cLayerVPre_Angle) {
             default:

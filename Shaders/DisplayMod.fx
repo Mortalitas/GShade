@@ -82,12 +82,10 @@ uniform float Display_Rotate <
 void PS_DisplayMod(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, out float4 passColor : SV_Target)
 {
 	const float3 pivot = float3(0.5, 0.5, 0.0);
-	const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT));
-	const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH));
 	const float3 mulUV = float3(texCoord.x, texCoord.y, 1);
-	const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * Display_Scale / BUFFER_SCREEN_SIZE);
-	const float ScaleX =  ScaleSize.x * AspectX * Display_ScaleX;
-	const float ScaleY =  ScaleSize.y * AspectY * Display_ScaleY;
+	const float2 ScaleSize = (float2(BUFFER_WIDTH, BUFFER_HEIGHT) * Display_Scale);
+	const float ScaleX =  ScaleSize.x * Display_ScaleX;
+	const float ScaleY =  ScaleSize.y * Display_ScaleY;
 	float Rotate = Display_Rotate * (3.1415926 / 180.0);
 
 	switch(Display_SnapRotate)
@@ -122,12 +120,12 @@ void PS_DisplayMod(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 		0, 0, 1
 	);
 	const float3x3 rotateMatrix = float3x3 (
-		(cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0,
-		(-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0,
+		cos (Rotate), sin(Rotate), 0,
+		-sin(Rotate), cos(Rotate), 0,
 		0, 0, 1
 	);
 
-	const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix);
+	const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix);
 	passColor = tex2D(ReShade::BackBuffer, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 }
 

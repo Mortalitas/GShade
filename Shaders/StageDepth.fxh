@@ -146,12 +146,10 @@ void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 	{ \
 		const float3 backColor = tex2D(ReShade::BackBuffer, texCoord).rgb; \
 		const float3 pivot = float3(0.5, 0.5, 0.0); \
-		const float AspectX = (1.0 - BUFFER_WIDTH * (1.0 / BUFFER_HEIGHT)); \
-		const float AspectY = (1.0 - BUFFER_HEIGHT * (1.0 / BUFFER_WIDTH)); \
 		const float3 mulUV = float3(texCoord.x, texCoord.y, 1); \
-		const float2 ScaleSize = (float2(StageDepth_Size_X, StageDepth_Size_Y) * STAGEDEPTH_SCALE / BUFFER_SCREEN_SIZE); \
-		const float ScaleX =  ScaleSize.x * AspectX * StageDepth_ScaleX; \
-		const float ScaleY =  ScaleSize.y * AspectY * StageDepth_ScaleY; \
+		const float2 ScaleSize = (float2(StageDepth_Size_X, StageDepth_Size_Y) * STAGEDEPTH_SCALE); \
+		const float ScaleX =  ScaleSize.x * StageDepth_ScaleX; \
+		const float ScaleY =  ScaleSize.y * StageDepth_ScaleY; \
 		float Rotate = StageDepth_Rotate * (3.1415926 / 180.0); \
 \
 		switch(StageDepth_SnapRotate) \
@@ -183,17 +181,12 @@ void PS_StageDepth(in float4 position : SV_Position, in float2 texCoord : TEXCOO
 			0, 0, 1 \
 		); \
 		const float3x3 rotateMatrix = float3x3 ( \
-			(cos (Rotate) * AspectX), (sin(Rotate) * AspectX), 0, \
-			(-sin(Rotate) * AspectY), (cos(Rotate) * AspectY), 0, \
+			cos (Rotate), sin(Rotate), 0, \
+			-sin(Rotate), cos(Rotate), 0, \
 			0, 0, 1 \
 		); \
-\
-		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix), rotateMatrix), scaleMatrix); \
+		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix); \
 		passColor = tex2D(StageDepth_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
-\
-		passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * StageDepth_Saturation + dot(passColor.rgb, 0.333); \
-\
-		passColor.rgb = passColor.rgb + StageDepth_Brightness; \
 \
 		passColor.rgb = ComHeaders::Blending::Blend(StageDepth_BlendMode, backColor, passColor.rgb, passColor.a * StageDepth_Opacity); \
 	} \
