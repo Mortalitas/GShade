@@ -459,25 +459,25 @@ void EdgesPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out floa
 	float4 h = tex2Dfetch(sBackBuffer, coord + int2( 0,  1));
 	float4 i = tex2Dfetch(sBackBuffer, coord + int2( 1,  1));
 
-	float4 edges = PSComputeEdge(e, f, h, d, b);
+	float4 edges = PSComputeEdge(e.rgb, f.rgb, h.rgb, d.rgb, b.rgb);
 
 	//Calculate vertical edges for local contrast adaptation
-	float ab = EdgeDetectColorCalcDiff(a, b);
-	float bc = EdgeDetectColorCalcDiff(b, c);
-	float de = EdgeDetectColorCalcDiff(d, e);
-	float gh = EdgeDetectColorCalcDiff(g, h);
-	float hi = EdgeDetectColorCalcDiff(h, i);
+	float ab = EdgeDetectColorCalcDiff(a.rgb, b.rgb);
+	float bc = EdgeDetectColorCalcDiff(b.rgb, c.rgb);
+	float de = EdgeDetectColorCalcDiff(d.rgb, e.rgb);
+	float gh = EdgeDetectColorCalcDiff(g.rgb, h.rgb);
+	float hi = EdgeDetectColorCalcDiff(h.rgb, i.rgb);
 
 	float4 localContrast;
 	localContrast.x = PSComputeLocalContrast(de, edges.y, gh, hi);
 	localContrast.z = PSComputeLocalContrast(ab, bc, de, edges.y);
 
 	//Calculate horizontal edges for local contrast adaptation
-	float ad = EdgeDetectColorCalcDiff(a, d);
-	float be = EdgeDetectColorCalcDiff(b, e);
-	float dg = EdgeDetectColorCalcDiff(d, g);
-	float cf = EdgeDetectColorCalcDiff(c, f);
-	float fi = EdgeDetectColorCalcDiff(f, i);
+	float ad = EdgeDetectColorCalcDiff(a.rgb, d.rgb);
+	float be = EdgeDetectColorCalcDiff(b.rgb, e.rgb);
+	float dg = EdgeDetectColorCalcDiff(d.rgb, g.rgb);
+	float cf = EdgeDetectColorCalcDiff(c.rgb, f.rgb);
+	float fi = EdgeDetectColorCalcDiff(f.rgb, i.rgb);
 
 	localContrast.y = PSComputeLocalContrast(be, cf, edges.x, fi);
 	localContrast.w = PSComputeLocalContrast(ad, be, dg, edges.x);
