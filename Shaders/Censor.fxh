@@ -192,7 +192,7 @@ void PS_Censor(in float4 position : SV_Position, in float2 texCoord : TEXCOORD, 
             0, 0, 1 \
         ); \
 \
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix); \
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0), rotateMatrix), scaleMatrix); \
 \
 		passColor *= all(SumUV + pivot == saturate(SumUV + pivot)); \
 \

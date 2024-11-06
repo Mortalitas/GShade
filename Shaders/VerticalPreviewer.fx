@@ -644,9 +644,9 @@ void PS_DrawLineARatio(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, 
 float3 bri(float3 backColor, float x)
 {
     //screen
-    const float3 c = 1.0f - ( 1.0f - backColor.rgb ) * ( 1.0f - backColor.rgb );
-    if (x < 0.0f) {
-        x = x * 0.5f;
+    const float3 c = 1.0 - ( 1.0 - backColor.rgb ) * ( 1.0 - backColor.rgb );
+    if (x < 0.0) {
+        x = x * 0.5;
     }
     return saturate( lerp( backColor.rgb, c.rgb, x ));   
 }
@@ -701,14 +701,14 @@ void PS_VPreOut(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out flo
         0, 0, 1
     );
 
-    float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix);
+    float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0), rotateMatrix), scaleMatrix);
     float4 backColor = tex2D(samplerDrawARatio, texCoord);
         switch (cLayerVPre_Angle) {
             default:
                 const float4 Void = float4(0.0, 0.0, 0.0, 1.0) * all(SumUV + pivot == saturate(SumUV + pivot));
                 const float4 VPreOut = tex2D(samplerDrawARatio, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
                 const float FillValue = cLayer_Blend_BGFill + 0.5;
-                if (cLayer_Blend_BGFill != 0.0f) {
+                if (cLayer_Blend_BGFill != 0.0) {
                     backColor.rgb = lerp(2 * backColor.rgb * FillValue, 1.0 - 2 * (1.0 - backColor.rgb) * (1.0 - FillValue), step(0.5, FillValue));
                 }
                 passColor = VPreOut + lerp(backColor, Void, Void.a);

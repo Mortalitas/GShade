@@ -208,7 +208,7 @@ void PS_DropShadow(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out 
 			0, 0, 1 \
 		); \
 \
-		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix); \
+		const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0), rotateMatrix), scaleMatrix); \
 		const float4 backColor = tex2D(ReShade::BackBuffer, texCoord); \
 		passColor = tex2D(DropShadow_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot)); \
 		 \

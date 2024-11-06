@@ -226,7 +226,7 @@ void PS_MultiStageDepth(in float4 position : SV_Position, in float2 texCoord : T
             -sin(Rotate), cos(Rotate), 0,
             0, 0, 1
         );
-        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0f), rotateMatrix), scaleMatrix);
+        const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(BUFFER_SCREEN_SIZE, 1.0), rotateMatrix), scaleMatrix);
         passColor = tex2D(MultiStage_sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
 		passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * StageDepth_Saturation + dot(passColor.rgb, 0.333);

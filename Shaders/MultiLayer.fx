@@ -236,7 +236,7 @@ void PS_Layer(in float4 pos : SV_Position, float2 texCoord : TEXCOORD, out float
         0, 0, 1
     );
 
-    const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(MULTILAYER_SIZE_X, MULTILAYER_SIZE_Y, 1.0f), rotateMatrix), scaleMatrix);
+    const float3 SumUV = mul (mul (mul (mulUV, positionMatrix) * float3(MULTILAYER_SIZE_X, MULTILAYER_SIZE_Y, 1.0), rotateMatrix), scaleMatrix);
     passColor = tex2D(MultiLayer_Sampler, SumUV.rg + pivot.rg) * all(SumUV + pivot == saturate(SumUV + pivot));
 
 	passColor.rgb = (passColor.rgb - dot(passColor.rgb, 0.333)) * Layer_Saturation + dot(passColor.rgb, 0.333);
