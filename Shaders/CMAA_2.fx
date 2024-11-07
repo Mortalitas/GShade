@@ -226,11 +226,12 @@ sampler2D sEdges {Texture = Edges;};
 sampler2D sProcessedCandidates{Texture = ProcessedCandidates;};
 
 #if !COMPUTE
+// See end of file for texture generation code
 texture2D ZShapeScores <source = "CMAA2ZShapeScores.png";>{Width = 256; Height = 256; Format = RGBA8;};
-texture2D SimpleShapeBlandVal <source = "CMAA2SimpleShapeBlandVal.png";>{Width = 4096; Height = 256; Format = RGBA8;};
+texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendVal.png";>{Width = 4096; Height = 256; Format = RGBA8;};
 
 sampler2D sZShapeScores {Texture = ZShapeScores;};
-sampler2D sSimpleShapeBlandVal {Texture = SimpleShapeBlandVal;};
+sampler2D sSimpleShapeBlendVal {Texture = SimpleShapeBlendVal;};
 #else
 #define EDGE_GROUP_SIZE uint2(16, 16)
 #define EDGE_PIXELS_PER_THREAD uint2(1, 2)
@@ -698,7 +699,7 @@ float4 BlendSimpleShape(uint2 coord, uint edges, uint edgesLeft, uint edgesRight
 	uint2 blendValPos = uint2(
 		dot(uint3(256, 16, 1), uint3(edges, edgesLeft, edgesRight)),
 		dot(uint2(16, 1), uint2(edgesTop, edgesBottom)));
-	float4 blendVal = tex2Dfetch(sSimpleShapeBlandVal, blendValPos);
+	float4 blendVal = tex2Dfetch(sSimpleShapeBlendVal, blendValPos);
 
 	const float fourWeightSum = dot(blendVal, 1);
 	const float centerWeight = 1 - fourWeightSum;
@@ -803,14 +804,7 @@ float4 DetectComplexShapes(uint2 coord, float4 edges, float4 edgesLeft, float4 e
 
 float4 DetectComplexShapes(uint2 coord, uint edges, uint edgesLeft, uint edgesRight, uint edgesBottom, uint edgesTop)
 {
-	float invertedZScore = 0;
-	float normalZScore = 0;
-	float maxScore = 0;
-	bool horizontal = true;
-	bool invertedZ = false;
-	float2 horzScore;
-	float2 vertScore;
-	// float shapeQualityScore;    // 0 - best quality, 1 - some edges missing but ok, 2 & 3 - dubious but better than nothing
+	float4 scores;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// horizontal
@@ -818,7 +812,7 @@ float4 DetectComplexShapes(uint2 coord, uint edges, uint edgesLeft, uint edgesRi
 		uint2 horzPos = uint2(
 			dot(uint2(16, 1), uint2(edges, edgesLeft)),
 			dot(uint2(16, 1), uint2(edgesRight, LoadEdge(coord, int2( 2, 0 )) % 16)));
-		horzScore = tex2Dfetch(sZShapeScores, horzPos).xy;
+		scores.xy = tex2Dfetch(sZShapeScores, horzPos).xy;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -828,21 +822,23 @@ float4 DetectComplexShapes(uint2 coord, uint edges, uint edgesLeft, uint edgesRi
 		uint2 vertPos = uint2(
 			dot(uint2(16, 1), uint2(edges, edgesBottom)),
 			dot(uint2(16, 1), uint2(edgesTop, LoadEdge(coord, int2( 0, -2 )) % 16)));
-		vertScore = tex2Dfetch(sZShapeScores, vertPos).zw;
+		scores.zw = tex2Dfetch(sZShapeScores, vertPos).zw;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if( vertScore.x > horzScore.x )
+	float maxScore;
+	bool  invertedZ;
+	bool  horizontal = scores.x > scores.z;
+
+	if( horizontal )
 	{
-		maxScore = vertScore.x * 4.0;
-		horizontal = false;
-		invertedZ = vertScore.y;
+		maxScore   = scores.x * 4.0;
+		invertedZ  = scores.y != 0.0;
 	}
 	else
 	{
-		maxScore = horzScore.x * 4.0;
-		horizontal = true;
-		invertedZ = horzScore.y;
+		maxScore   = scores.z * 4.0;
+		invertedZ  = scores.w != 0.0;
 	}
 
 	if( maxScore > 0 )
@@ -1257,3 +1253,84 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 }
 
 #endif //SUPPORTED
+
+/*
+
+// Code used to generate LUT textures
+
+texture2D ZShapeScores <pooled = true;>{Width = 256; Height = 256; Format = RGBA8;};
+sampler2D sZShapeScores {Texture = ZShapeScores;};
+texture2D SimpleShapeBlendVal <pooled = true;>{Width = 4096; Height = 256; Format = RGBA8;};
+sampler2D sSimpleShapeBlendVal {Texture = SimpleShapeBlendVal;};
+
+void SimpleShapeBlendValPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out float4 output : SV_TARGET0)
+{
+	uint2 coord = position.xy;
+
+	float4 edges       = UnpackEdgesFlt(coord.x / 256);
+	float4 edgesLeft   = UnpackEdgesFlt((coord.x / 16) % 16);
+	float4 edgesRight  = UnpackEdgesFlt(coord.x % 16);
+	float4 edgesTop    = UnpackEdgesFlt(coord.y / 16);
+	float4 edgesBottom = UnpackEdgesFlt(coord.y % 16);
+
+	output = ComputeSimpleShapeBlendValues(edges, edgesLeft, edgesRight, edgesTop, edgesBottom, true);
+}
+
+void ZShapeScoresPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out float4 output : SV_TARGET0)
+{
+	uint2 coord = position.xy;
+
+	float4 edges     = UnpackEdgesFlt(coord.x / 16);
+	float4 edgesM1P0 = UnpackEdgesFlt(coord.x % 16);
+	float4 edgesP1P0 = UnpackEdgesFlt(coord.y / 16);
+	float4 edgesP2P0 = UnpackEdgesFlt(coord.y % 16);
+
+	float invertedZScore, normalZScore;
+
+//	uint2 horzPos = uint2(
+//		16 * center + left,
+//		16 * right + rightTwice);
+	DetectZsHorizontal( edges, edgesM1P0, edgesP1P0, edgesP2P0, invertedZScore, normalZScore );
+	if( invertedZScore > normalZScore )
+	{
+		output.x = invertedZScore / 4.0;
+		output.y = 1.0;
+	}
+	else
+	{
+		output.x = normalZScore / 4.0;
+		output.y = 0.0;
+	}
+
+//	uint2 vertPos = uint2(
+//		16 * center + bottom,
+//		16 * top + topTwice);
+	DetectZsHorizontal( edges.argb, edgesM1P0.argb, edgesP1P0.argb, edgesP2P0.argb, invertedZScore, normalZScore );
+	if( invertedZScore > normalZScore )
+	{
+		output.z = invertedZScore / 4.0;
+		output.w = 1.0;
+	}
+	else
+	{
+		output.z = normalZScore / 4.0;
+		output.w = 0.0;
+	}
+}
+
+technique CMAA2_LUT_gen
+{
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = SimpleShapeBlendValPS;
+		RenderTarget0 = SimpleShapeBlendVal;
+	}
+	pass
+	{
+		VertexShader = PostProcessVS;
+		PixelShader = ZShapeScoresPS;
+		RenderTarget0 = ZShapeScores;
+	}
+}
+*/
