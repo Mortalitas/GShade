@@ -228,7 +228,11 @@ sampler2D sProcessedCandidates{Texture = ProcessedCandidates;};
 #if !COMPUTE
 // See end of file for texture generation code
 texture2D ZShapeScores <source = "CMAA2ZShapeScores.png";>{Width = 256; Height = 256; Format = RGBA8;};
+#if CMAA2_EXTRA_SHARPNESS
+texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendValSharp.png";>{Width = 4096; Height = 256; Format = RGBA8;};
+#else
 texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendVal.png";>{Width = 4096; Height = 256; Format = RGBA8;};
+#endif
 
 sampler2D sZShapeScores {Texture = ZShapeScores;};
 sampler2D sSimpleShapeBlendVal {Texture = SimpleShapeBlendVal;};
@@ -1293,12 +1297,12 @@ void ZShapeScoresPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, o
 	DetectZsHorizontal( edges, edgesM1P0, edgesP1P0, edgesP2P0, invertedZScore, normalZScore );
 	if( invertedZScore > normalZScore )
 	{
-		output.x = invertedZScore / 4.0;
+		output.x = saturate(invertedZScore / 4.0);
 		output.y = 1.0;
 	}
 	else
 	{
-		output.x = normalZScore / 4.0;
+		output.x = saturate(normalZScore / 4.0);
 		output.y = 0.0;
 	}
 
@@ -1308,12 +1312,12 @@ void ZShapeScoresPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, o
 	DetectZsHorizontal( edges.argb, edgesM1P0.argb, edgesP1P0.argb, edgesP2P0.argb, invertedZScore, normalZScore );
 	if( invertedZScore > normalZScore )
 	{
-		output.z = invertedZScore / 4.0;
+		output.z = saturate(invertedZScore / 4.0);
 		output.w = 1.0;
 	}
 	else
 	{
-		output.z = normalZScore / 4.0;
+		output.z = saturate(normalZScore / 4.0);
 		output.w = 0.0;
 	}
 }
