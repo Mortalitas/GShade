@@ -80,7 +80,7 @@ Ported to ReShade by: Lord Of Lunacy
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIOUS QUALITY SETTINGS
 //
-// Longest line search distance; must be even number; for high perf low quality start from ~32 - the bigger the number, 
+// Longest line search distance; must be even number; for high perf low quality start from ~32 - the bigger the number,
 // the nicer the gradients but more costly. Max supported is 128!
 static const uint c_maxLineLength = 128;
 //
@@ -500,7 +500,7 @@ void PostProcessVS(in uint id : SV_VertexID, out float4 position : SV_Position, 
  * contrast in a direction, that will hide contrast in the other
  * neighbors.
  * This is done after the discard intentionally as this situation doesn't
- * happen too frequently (but it's important to do as it prevents some 
+ * happen too frequently (but it's important to do as it prevents some
  * edges from going undetected).
  */
 static const float g_CMAA2_MLAAMaxLumaSurround = 0.5;
@@ -617,16 +617,16 @@ void FindZLineLengths( out float lineLengthLeft, out float lineLengthRight, uint
 	[loop]
 	while(true)
 	{
-		uint edgeLeft   = LoadEdge( screenPos.xy, -stepRight *   lineLengthLeft       );
-		uint edgeRight  = LoadEdge( screenPos.xy,  stepRight * ( lineLengthRight + 1 ));
+		uint edgeLeft  = LoadEdge( screenPos.xy, -stepRight *   lineLengthLeft       );
+		uint edgeRight = LoadEdge( screenPos.xy,  stepRight * ( lineLengthRight + 1 ));
 
 		// stop on encountering 'stopping' edge (as defined by masks)
 #if D3D9
-		continueLeft  = continueLeft  && (edgeLeft / maskLeft % 2);
-		continueRight = continueRight && (edgeRight / maskRight % 2);
+		continueLeft   = continueLeft  && (edgeLeft / maskLeft % 2);
+		continueRight  = continueRight && (edgeRight / maskRight % 2);
 #else
-		continueLeft  = continueLeft  && ( edgeLeft & maskLeft );
-		continueRight = continueRight && ( edgeRight & maskRight );
+		continueLeft   = continueLeft  && ( edgeLeft & maskLeft );
+		continueRight  = continueRight && ( edgeRight & maskRight );
 #endif
 
 		lineLengthLeft  += continueLeft;
@@ -694,39 +694,6 @@ float4 BlendSimpleShape(uint2 coord, float4 edges, float4 edgesLeft, float4 edge
 	//below
 	pixel = LoadSourceColor(coord, int2(0, 1)).rgb;
 	outColor.rgb += (blendVal.w > 0) ? blendVal.w * pixel : 0;
-
-	return float4(outColor.rgb, 1);
-}
-
-float4 BlendSimpleShape(uint2 coord, uint edges, uint edgesLeft, uint edgesRight, uint edgesBottom, uint edgesTop)
-{
-	uint2 blendValPos = uint2(
-		dot(uint3(256, 16, 1), uint3(edges, edgesLeft, edgesRight)),
-		dot(uint2(16, 1), uint2(edgesTop, edgesBottom)));
-	float4 blendVal = tex2Dfetch(sSimpleShapeBlendVal, blendValPos);
-
-	const float fourWeightSum = dot(blendVal, 1);
-	const float centerWeight = 1 - fourWeightSum;
-
-	float3 outColor = LoadSourceColor(coord).rgb * centerWeight;
-
-	float3 pixel;
-
-	//left
-	pixel = LoadSourceColor(coord, int2(-1, 0)).rgb;
-	outColor.rgb += blendVal.x * pixel;
-
-	//above
-	pixel = LoadSourceColor(coord, int2(0, -1)).rgb;
-	outColor.rgb += blendVal.y * pixel;
-
-	//right
-	pixel = LoadSourceColor(coord, int2(1, 0)).rgb;
-	outColor.rgb += blendVal.z * pixel;
-
-	//below
-	pixel = LoadSourceColor(coord, int2(0, 1)).rgb;
-	outColor.rgb += blendVal.w * pixel;
 
 	return float4(outColor.rgb, 1);
 }
@@ -806,90 +773,123 @@ float4 DetectComplexShapes(uint2 coord, float4 edges, float4 edgesLeft, float4 e
 
 }
 
-float4 DetectComplexShapes(uint2 coord, uint edges, uint edgesLeft, uint edgesRight, uint edgesBottom, uint edgesTop)
-{
-	float4 scores;
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// horizontal
+#if !COMPUTE
+	float4 BlendSimpleShape(uint2 coord, uint edges, uint edgesLeft, uint edgesRight, uint edgesBottom, uint edgesTop)
 	{
-		uint2 horzPos = uint2(
-			dot(uint2(16, 1), uint2(edges, edgesLeft)),
-			dot(uint2(16, 1), uint2(edgesRight, LoadEdge(coord, int2( 2, 0 )) % 16)));
-		scores.xy = tex2Dfetch(sZShapeScores, horzPos).xy;
-	}
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		uint2 blendValPos = uint2(
+			dot(uint3(256, 16, 1), uint3(edges, edgesLeft, edgesRight)),
+			dot(uint2(16, 1), uint2(edgesTop, edgesBottom)));
+		float4 blendVal = tex2Dfetch(sSimpleShapeBlendVal, blendValPos);
 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// vertical
-	{
-		uint2 vertPos = uint2(
-			dot(uint2(16, 1), uint2(edges, edgesBottom)),
-			dot(uint2(16, 1), uint2(edgesTop, LoadEdge(coord, int2( 0, -2 )) % 16)));
-		scores.zw = tex2Dfetch(sZShapeScores, vertPos).zw;
-	}
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		const float fourWeightSum = dot(blendVal, 1);
+		const float centerWeight = 1 - fourWeightSum;
 
-	float maxScore;
-	bool  invertedZ;
-	bool  horizontal = scores.x > scores.z;
+		float3 outColor = LoadSourceColor(coord).rgb * centerWeight;
 
-	if( horizontal )
-	{
-		maxScore   = scores.x * 4.0;
-		invertedZ  = scores.y != 0.0;
-	}
-	else
-	{
-		maxScore   = scores.z * 4.0;
-		invertedZ  = scores.w != 0.0;
+		float3 pixel;
+
+		//left
+		pixel = LoadSourceColor(coord, int2(-1, 0)).rgb;
+		outColor.rgb += blendVal.x * pixel;
+
+		//above
+		pixel = LoadSourceColor(coord, int2(0, -1)).rgb;
+		outColor.rgb += blendVal.y * pixel;
+
+		//right
+		pixel = LoadSourceColor(coord, int2(1, 0)).rgb;
+		outColor.rgb += blendVal.z * pixel;
+
+		//below
+		pixel = LoadSourceColor(coord, int2(0, 1)).rgb;
+		outColor.rgb += blendVal.w * pixel;
+
+		return float4(outColor.rgb, 1);
 	}
 
-	if( maxScore > 0 )
+	float4 DetectComplexShapes(uint2 coord, uint edges, uint edgesLeft, uint edgesRight, uint edgesBottom, uint edgesTop)
 	{
-#if CMAA2_EXTRA_SHARPNESS
-		float shapeQualityScore = round( clamp(4.0 - maxScore, 0.0, 3.0) );    // 0 - best quality, 1 - some edges missing but ok, 2 & 3 - dubious but better than nothing
-#else
-		float shapeQualityScore = floor( clamp(4.0 - maxScore, 0.0, 3.0) );    // 0 - best quality, 1 - some edges missing but ok, 2 & 3 - dubious but better than nothing
-#endif
+		float4 scores;
 
-		const float2 stepRight = ( horizontal ) ? ( float2( 1, 0 ) ) : ( float2( 0, -1 ) );
-		float lineLengthLeft, lineLengthRight;
-		FindZLineLengths( lineLengthLeft, lineLengthRight, coord, horizontal, invertedZ, stepRight);
-
-		lineLengthLeft  -= shapeQualityScore;
-		lineLengthRight -= shapeQualityScore;
-		if( ( lineLengthLeft + lineLengthRight ) >= (5.0) )
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// horizontal
 		{
-			return packZ(horizontal, invertedZ, shapeQualityScore, lineLengthLeft, lineLengthRight);//((uint(horizontal) << 19) | (uint(invertedZ) << 18) | (uint(shapeQualityScore) << 16) | (uint(lineLengthLeft) << 8) | (uint(lineLengthRight)));
+			uint2 horzPos = uint2(
+				dot(uint2(16, 1), uint2(edges, edgesLeft)),
+				dot(uint2(16, 1), uint2(edgesRight, LoadEdge(coord, int2( 2, 0 )) % 16)));
+			scores.xy = tex2Dfetch(sZShapeScores, horzPos).xy;
 		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// vertical
+		{
+			uint2 vertPos = uint2(
+				dot(uint2(16, 1), uint2(edges, edgesBottom)),
+				dot(uint2(16, 1), uint2(edgesTop, LoadEdge(coord, int2( 0, -2 )) % 16)));
+			scores.zw = tex2Dfetch(sZShapeScores, vertPos).zw;
+		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		float maxScore;
+		bool  invertedZ;
+		bool  horizontal = scores.x > scores.z;
+
+		if( horizontal )
+		{
+			maxScore   = scores.x * 4.0;
+			invertedZ  = scores.y != 0.0;
+		}
+		else
+		{
+			maxScore   = scores.z * 4.0;
+			invertedZ  = scores.w != 0.0;
+		}
+
+		if( maxScore > 0 )
+		{
+	#if CMAA2_EXTRA_SHARPNESS
+			float shapeQualityScore = round( clamp(4.0 - maxScore, 0.0, 3.0) );    // 0 - best quality, 1 - some edges missing but ok, 2 & 3 - dubious but better than nothing
+	#else
+			float shapeQualityScore = floor( clamp(4.0 - maxScore, 0.0, 3.0) );    // 0 - best quality, 1 - some edges missing but ok, 2 & 3 - dubious but better than nothing
+	#endif
+
+			const float2 stepRight = ( horizontal ) ? ( float2( 1, 0 ) ) : ( float2( 0, -1 ) );
+			float lineLengthLeft, lineLengthRight;
+			FindZLineLengths( lineLengthLeft, lineLengthRight, coord, horizontal, invertedZ, stepRight);
+
+			lineLengthLeft  -= shapeQualityScore;
+			lineLengthRight -= shapeQualityScore;
+			if( ( lineLengthLeft + lineLengthRight ) >= (5.0) )
+			{
+				return packZ(horizontal, invertedZ, shapeQualityScore, lineLengthLeft, lineLengthRight);//((uint(horizontal) << 19) | (uint(invertedZ) << 18) | (uint(shapeQualityScore) << 16) | (uint(lineLengthLeft) << 8) | (uint(lineLengthRight)));
+			}
+		}
+		return 0;
 	}
-	return 0;
-}
 
-void ProcessEdgesPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out float4 output : SV_TARGET0, out float4 ZShapes : SV_TARGET1)
-{
-	int2 coord = position.xy;
-	uint4 edgesBottomRight = GatherEdge(texcoord);
-
-	if(edgesBottomRight.w > 16)
+	void ProcessEdgesPS(float4 position : SV_Position, float2 texcoord : TEXCOORD, out float4 output : SV_TARGET0, out float4 ZShapes : SV_TARGET1)
 	{
-		uint4 edgesTopLeft = GatherEdge(texcoord, int2(-1, -1));
+		int2 coord = position.xy;
+		uint4 edgesBottomRight = GatherEdge(texcoord);
 
-		uint edges       = edgesBottomRight.w % 16;
-		uint edgesLeft   = edgesTopLeft.x     % 16;
-		uint edgesRight  = edgesBottomRight.z % 16;
-		uint edgesBottom = edgesBottomRight.x % 16;
-		uint edgesTop    = edgesTopLeft.z     % 16;
-		output = BlendSimpleShape(coord, edges, edgesLeft, edgesRight, edgesBottom, edgesTop);
+		if(edgesBottomRight.w > 16)
+		{
+			uint4 edgesTopLeft = GatherEdge(texcoord, int2(-1, -1));
 
-		ZShapes = DetectComplexShapes(coord, edges, edgesLeft, edgesRight, edgesBottom, edgesTop);
+			uint edges       = edgesBottomRight.w % 16;
+			uint edgesLeft   = edgesTopLeft.x     % 16;
+			uint edgesRight  = edgesBottomRight.z % 16;
+			uint edgesBottom = edgesBottomRight.x % 16;
+			uint edgesTop    = edgesTopLeft.z     % 16;
+			output = BlendSimpleShape(coord, edges, edgesLeft, edgesRight, edgesBottom, edgesTop);
+
+			ZShapes = DetectComplexShapes(coord, edges, edgesLeft, edgesRight, edgesBottom, edgesTop);
+		}
+		else
+			discard;
 	}
-	else
-		discard;
-}
-
-#if COMPUTE
+#else
 	groupshared uint g_count;
 	groupshared uint g_work[EDGE_PIXELS_PER_GROUP.x * EDGE_PIXELS_PER_GROUP.y];
 	groupshared uint count;
@@ -1249,7 +1249,7 @@ technique CMAA_2 < ui_tooltip = "A port of Intel's CMAA 2.0 (Conservative Morpho
 
 		BlendOp = ADD;
 		BlendOpAlpha = ADD;
-		
+
 		SrcBlend = SRCALPHA;
 		DestBlend = INVSRCALPHA;
 	}
