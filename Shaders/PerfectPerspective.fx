@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.11.0)
+/* Perfect Perspective PS (version 5.11.1)
 
 Copyright:
 This code © 2018-2024 Jakub Maksymilian Fober
@@ -758,8 +758,10 @@ float3 PerfectPerspective_PS(
 			display *= 1f+VignetteOffset;
 			// Manually correct gamma
 			display = GammaConvert::to_display(display);
+#if BUFFER_COLOR_SPACE == RESHADE_COLOR_SPACE_SRGB
 			// Dither final 8/10-bit result
 			display = BlueNoise::dither(display, uint2(pixelPos.xy));
+#endif
 		}
 		else display = GammaConvert::to_display(display);
 
