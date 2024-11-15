@@ -62,10 +62,14 @@ Ported to ReShade by: Lord Of Lunacy
 	#define SUPPORTED 0
 #endif
 
+// In D3D9 texel centers and pixel centers were a half unit apart unlike all the others including opengl and vulkan
+// https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-d3d9-to-d3d10-considerations#mapping-texels-to-pixels-in-direct3d-10
 #if __RENDERER__ < 0xA000
 	#define D3D9 1
+	#define CENTER_OFFSET float2(0.5, 0.5)
 #else
 	#define D3D9 0
+	#define CENTER_OFFSET float2(0.0, 0.0)
 #endif
 
 //Not currently supported by the code, as it did not improve performance, but kept incase this functionality is added back
@@ -124,7 +128,7 @@ static const uint c_maxLineLength = 128;
 #else
 	#define g_CMAA2_EdgeThreshold                   float(0.03)
 	#define VERTEX_COUNT_DENOMINATOR 16
-    //#error CMAA2_STATIC_QUALITY_PRESET not set?
+	//#error CMAA2_STATIC_QUALITY_PRESET not set?
 #endif
 //
 
@@ -153,7 +157,7 @@ uniform int UIHELP <
 	ui_text =  "CMAA2_EXTRA_SHARPNESS - This settings makes the effect of the AA more sharp overall \n"
 			   "Can be either 0 or 1. (0 (off) by default) \n\n"
 			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
-		   	   "of the edge detection, higher settings come at a performance cost \n"
+			   "of the edge detection, higher settings come at a performance cost \n"
 			   "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";
 >;
 #else
@@ -167,7 +171,7 @@ uniform int UIHELP <
 			   "the performance of the AA at a slight quality cost.\n"
 			   "Can be either 0 or 1. (1 (on) by default) \n\n"
 			   "CMAA2_STATIC_QUALITY_PRESET - This setting ranges from 0 to 4, and adjusts the strength "
-		   	   "of the edge detection, higher settings come at a performance cost \n"
+			   "of the edge detection, higher settings come at a performance cost \n"
 			   "0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA, 4 - SUFFER (default of 2)";
 >;
 #endif
@@ -1066,7 +1070,7 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 		float loopTo = floor( ( lineLengthRight + 1 ) / 2 );
 		const float2 stepRight = ( horizontal ) ? float2( 1, 0 ) : float2( 0, -1 );
 		float2 offset = (id % 2) ? stepRight * loopTo : stepRight * loopFrom;
-		texcoord = (float2(coord + offset) + 0.5) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+		texcoord = (float2(coord + offset) + CENTER_OFFSET) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 		position = float4(texcoord.xy * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 		texcoord = (id % 2) ? loopTo : loopFrom;
 	}
@@ -1108,7 +1112,7 @@ void LongEdgePS(float4 position : SV_Position, float2 texcoord : TEXCOORD0, floa
 	float lerpK = lerpVal * srcOffset + secondPart;
 	lerpK *= dampenEffect;
 
-	output.rgb = tex2D(sBackBuffer, ((position.xy + blendDir * float(srcOffset).xx * lerpK) + .5) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)).rgb;
+	output.rgb = tex2D(sBackBuffer, (position.xy + CENTER_OFFSET + blendDir * float(srcOffset).xx * lerpK) * float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT)).rgb;
 	output = output * 2.25;
 }
 
