@@ -233,9 +233,9 @@ sampler2D sProcessedCandidates{Texture = ProcessedCandidates;};
 // See end of file for texture generation code
 texture2D ZShapeScores <source = "CMAA2ZShapeScores.png";>{Width = 256; Height = 256; Format = RGBA8;};
 #if CMAA2_EXTRA_SHARPNESS
-texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendValSharp.png";>{Width = 4096; Height = 256; Format = RGBA8;};
+texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendValSharp.png";>{Width = 256; Height = 256; Format = RGBA8;};
 #else
-texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendVal.png";>{Width = 4096; Height = 256; Format = RGBA8;};
+texture2D SimpleShapeBlendVal <source = "CMAA2SimpleShapeBlendVal.png";>{Width = 256; Height = 256; Format = RGBA8;};
 #endif
 
 sampler2D sZShapeScores {Texture = ZShapeScores;};
@@ -781,8 +781,8 @@ float4 DetectComplexShapes(uint2 coord, float4 edges, float4 edgesLeft, float4 e
 	float4 BlendSimpleShape(uint2 coord, uint edges, uint edgesLeft, uint edgesRight, uint edgesBottom, uint edgesTop)
 	{
 		uint2 blendValPos = uint2(
-			dot(uint3(256, 16, 1), uint3(edges, edgesLeft, edgesRight)),
-			dot(uint2(16, 1), uint2(edgesTop, edgesBottom)));
+			dot(uint2(16, 1), uint2(             edges           ,   edgesTop % 2 +   edgesLeft / 2)),
+			dot(uint2(16, 1), uint2(edgesRight % 4 + edgesTop / 4, edgesRight / 8 + edgesBottom % 8)));
 		float4 blendVal = tex2Dfetch(sSimpleShapeBlendVal, blendValPos);
 
 		const float fourWeightSum = dot(blendVal, 1);
@@ -1275,11 +1275,16 @@ void SimpleShapeBlendValPS(float4 position : SV_Position, float2 texcoord : TEXC
 {
 	uint2 coord = position.xy;
 
-	float4 edges       = UnpackEdgesFlt(coord.x / 256);
-	float4 edgesLeft   = UnpackEdgesFlt((coord.x / 16) % 16);
-	float4 edgesRight  = UnpackEdgesFlt(coord.x % 16);
-	float4 edgesTop    = UnpackEdgesFlt(coord.y / 16);
-	float4 edgesBottom = UnpackEdgesFlt(coord.y % 16);
+	float4 x = UnpackEdgesFlt(coord.x / 16);
+	float4 y = UnpackEdgesFlt(coord.x % 16);
+	float4 z = UnpackEdgesFlt(coord.y / 16);
+	float4 w = UnpackEdgesFlt(coord.y % 16);
+
+	float4 edges       = float4(x.x, x.y, x.z, x.w);
+	float4 edgesLeft   = float4(0.0, y.y, y.z, y.w); // edgesLeft.bga
+	float4 edgesTop    = float4(y.x, 0.0, z.z, z.w); // edgesTop.rba
+	float4 edgesRight  = float4(z.x, z.y, 0.0, w.w); // edgesRight.rga
+	float4 edgesBottom = float4(w.x, w.y, w.z, 0.0); // edgesBottom.rgb
 
 	output = ComputeSimpleShapeBlendValues(edges, edgesLeft, edgesRight, edgesTop, edgesBottom, true);
 }
