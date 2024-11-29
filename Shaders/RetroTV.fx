@@ -10,7 +10,7 @@ texture target0
     Width = RENDER_SIZE_X;
     Height = RENDER_SIZE_Y;
     MipLevels = 1;
-	Format = RGBA8;
+	Format = RGBA32F;
 };
 sampler samplerTarget0 { Texture = target0; };
 
@@ -19,7 +19,7 @@ texture target1
     Width = RENDER_SIZE_X;
     Height = RENDER_SIZE_Y;
     MipLevels = 1;
-	Format = RGBA8;
+	Format = RGBA32F;
 };
 sampler samplerTarget1 { Texture = target1; };
 
