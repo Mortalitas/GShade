@@ -14,38 +14,81 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #include "ReShade.fxh"
 
-#define NOISE_SIZE 16
+#define NOISE_SIZE 32
 #define BUFFER_SIZE int2(BUFFER_WIDTH,BUFFER_HEIGHT)
 #define getColor(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
 #define getBlur(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
 #define getDepth(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
 #define diff3t(v1,v2,t) (abs(v1.x-v2.x)>t || abs(v1.y-v2.y)>t || abs(v1.z-v2.z)>t)
+#define maxOf3(a) max(max(a.x,a.y),a.z)
 
-namespace DHAnime {
+namespace DHAnime11 {
 
-	texture blueNoiseTex < source ="dh_bluenoise.png" ; > { Width = NOISE_SIZE; Height = NOISE_SIZE; MipLevels = 1; Format = RGBA8; };
+	texture blueNoiseTex < source ="dh_rt_noise.png" ; > { Width = NOISE_SIZE; Height = NOISE_SIZE; MipLevels = 1; Format = RGBA8; };
     sampler blueNoiseSampler { Texture = blueNoiseTex;  AddressU = REPEAT;	AddressV = REPEAT;	AddressW = REPEAT;};
 
 
 //// uniform
-
-	uniform int iBlackLineThickness <
+/*
+uniform bool bTest = false;
+uniform bool bTest2 = false;
+uniform float fTest <
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 1.0;
+	    ui_step = 0.001;
+	> = 0.5;
+uniform float fTest2 <
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 1.0;
+	    ui_step = 0.001;
+	> = 0.5;
+*/
+	
+	
+	uniform bool bDepthBlackLine <
 	    ui_category = "Black lines";
-		ui_label = "Thickness";
+		ui_label = "Depth based";
+	> = true;
+	uniform int iDepthBlackLineThickness <
+	    ui_category = "Black lines";
+		ui_label = "Thickness (depth)";
 		ui_type = "slider";
 	    ui_min = 0;
 	    ui_max = 16;
 	    ui_step = 1;
 	> = 3;
-	uniform float fBlackLineThreshold <
+	uniform float fDepthBlackLineThreshold <
 	    ui_category = "Black lines";
-		ui_label = "Threshold";
+		ui_label = "Threshold (depth)";
 		ui_type = "slider";
 	    ui_min = 0.0;
 	    ui_max = 1.0;
 	    ui_step = 0.001;
 	> = 0.995;
 
+	uniform bool bColorBlackLine <
+	    ui_category = "Black lines";
+		ui_label = "Color based";
+	> = true;
+	uniform int iColorBlackLineThickness <
+	    ui_category = "Black lines";
+		ui_label = "Thickness (color)";
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 16;
+	    ui_step = 1;
+	> = 3;
+	uniform float fColorBlackLineThreshold <
+	    ui_category = "Black lines";
+		ui_label = "Threshold (color)";
+		ui_type = "slider";
+	    ui_min = 0.0;
+	    ui_max = 1.0;
+	    ui_step = 0.001;
+	> = 0.935;
+	
 	uniform float iSurfaceBlur <
 		ui_category = "Colors";
 		ui_label = "Surface blur";
@@ -62,7 +105,7 @@ namespace DHAnime {
 	    ui_min = 0.0;
 	    ui_max = 5.0;
 	    ui_step = 0.01;
-	> = 2.5;
+	> = 2.0;
 
 	uniform float iShadingSteps <
 		ui_category = "Colors";
@@ -73,15 +116,49 @@ namespace DHAnime {
 	    ui_step = 1;
 	> = 16;
 	
+	uniform float iShadingRamp <
+		ui_category = "Colors";
+		ui_label = "Shading Ramp";
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 3;
+	    ui_step = 1;
+	> = 0;
+	
 	uniform bool bDithering <
 	    ui_category = "Colors";
 		ui_label = "Dithering";
 	> = false;
+	
+	uniform bool bHueFilter <
+	    ui_category = "Hue filter";
+		ui_label = "Enabled";
+	> = false;
+	uniform float fHueFilter <
+	    ui_category = "Hue filter";
+		ui_label = "Selected hue";
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 1.0;
+	    ui_step = 0.001;
+	> = 0.0;
+	uniform float fHueFilterRange <
+	    ui_category = "Hue filter";
+		ui_label = "Range";
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 1.0;
+	    ui_step = 0.001;
+	> = 0.150;
+	
 
 //// textures
 
 	texture normalTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 	sampler normalSampler { Texture = normalTex; };
+	
+	texture linesTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+	sampler linesSampler { Texture = linesTex; };
 
 	texture blurTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 	sampler blurSampler { Texture = blurTex; };
@@ -192,63 +269,137 @@ namespace DHAnime {
 			outBlur = getColor(coords);
 		}
 	}
+	
+	void PS_LinePass(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target) {
+		if(!bColorBlackLine || iDepthBlackLineThickness<1) discard;
+    
+    	float refDepth = getDepth(coords);
+        float3 refColor = getColor(coords).rgb;
+        
+        float roughness = 0.0;
+        float ws = 0;
+            
+        float3 previousX = refColor;
+        float3 previousY = refColor;
+        
+        float threshold = 1.0-saturate(fColorBlackLineThreshold);
+        [loop]
+        for(int d = 1;d<=iColorBlackLineThickness;d++) {
+            float w = 1.0/pow(d,0.5);
+            
+            float3 color = getColor(float2(coords.x+ReShade::PixelSize.x*d,coords.y)).rgb;
+            float3 diff = abs(previousX-color);
+            roughness += maxOf3(diff)*w>threshold ? 1 : 0;
+            ws += w;
+            previousX = color;
+            
+            color = getColor(float2(coords.x,coords.y+ReShade::PixelSize.y*d)).rgb;
+            diff = abs(previousY-color);
+            roughness += maxOf3(diff)*w>threshold ? 1 : 0;
+            ws += w;
+            previousY = color;
+        }
+        
+        previousX = refColor;
+        previousY = refColor;
+        
+        [loop]
+        for(int d = 1;d<=iColorBlackLineThickness;d++) {
+            float w = 1.0/pow(d,0.5);
+            
+            float3 color = getColor(float2(coords.x-ReShade::PixelSize.x*d,coords.y)).rgb;
+            float3 diff = abs(previousX-color);
+            roughness += maxOf3(diff)*w>threshold ? 1 : 0;
+            ws += w;
+            previousX = color;
+            
+            color = getColor(float2(coords.x,coords.y-ReShade::PixelSize.y*d)).rgb;
+            diff = abs(previousY-color);
+            roughness += maxOf3(diff)*w>threshold ? 1 : 0;
+            ws += w;
+            previousY = color;
+        }
+        
+        float refB = maxOf3(refColor);      
+        roughness *= pow(refB,0.5);
+        roughness *= pow(1.0-refB,2.0);
+        
+        //roughness *= 0.5+refDepth*2;
+        float3 r = 1.0-roughness;
+        outPixel = float4(r,1);
+    }
 
-	void PS_Manga(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target)
+	void PS_Result(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target)
 	{
-		// black line
-		if(iBlackLineThickness>0) {
-			int maxDistance = iBlackLineThickness*iBlackLineThickness;
+		float3 color = getBlur(coords).rgb;
+		float3 hsl = RGBtoHSL(color);
+		
+		// black lines depth
+		if(bDepthBlackLine && iDepthBlackLineThickness>0) {
+			float depthLineMul = 1;
+			int maxDistance = iDepthBlackLineThickness*iDepthBlackLineThickness;
 			float depth = getDepth(coords);
 			float3 normal = loadNormal(coords);
 			
 			int2 delta;
-			for(delta.x=-iBlackLineThickness;delta.x<=iBlackLineThickness;delta.x++) {
-				for(delta.y=-iBlackLineThickness;delta.y<=iBlackLineThickness;delta.y++) {
+			for(delta.x=-iDepthBlackLineThickness;depthLineMul>0 && delta.x<=iDepthBlackLineThickness;delta.x++) {
+				for(delta.y=-iDepthBlackLineThickness;depthLineMul>0 && delta.y<=iDepthBlackLineThickness;delta.y++) {
 					int d = dot(delta,delta);
 					if(d<=maxDistance) {
 						float2 searchCoords = coords+ReShade::PixelSize*delta;
 						float searchDepth = getDepth(searchCoords);
 						float3 searchNormal = loadNormal(searchCoords);
 
-						if(depth/searchDepth<=fBlackLineThreshold && diff3t(normal,searchNormal,0.1)) {
-							outPixel = float4(0.0,0.0,0.0,1.0);
-							return;
+						if(depth/searchDepth<=fDepthBlackLineThreshold && diff3t(normal,searchNormal,0.1)) {
+							depthLineMul = 0;
 						}
 					}
 				}
 			}
+			hsl.z *= depthLineMul;
 		}
 
-		float3 color = getBlur(coords).rgb;
-		float3 hsl = RGBtoHSL(color);
+		// black lines color
+		if(bColorBlackLine && iDepthBlackLineThickness>0) { 
+			float lines = tex2D(linesSampler,coords).r;
+			hsl.z *= pow(lines,iDepthBlackLineThickness);
+		}
+		
+		if(iShadingRamp==1) {
+			hsl.z = smoothstep(0,1,hsl.z);
+		} else if(iShadingRamp==2) {
+			hsl.z = sqrt(hsl.z);
+		} else if(iShadingRamp==3) {
+			hsl.z *= hsl.z;
+		}
+		
+		
 		
 		// shading steps
 		float stepSize = 1.0/iShadingSteps;
 		if(bDithering) {
 			int2 coordsNoise = int2(coords*BUFFER_SIZE)%NOISE_SIZE;
 			float noise = tex2Dfetch(blueNoiseSampler,coordsNoise).r;
-			
-			float exact = (hsl.z/stepSize)/iShadingSteps;
-			float ceiled = ceil(hsl.z/stepSize)/iShadingSteps;
-			float rounded = round(hsl.z/stepSize)/iShadingSteps;
-			float floored = floor(hsl.z/stepSize)/iShadingSteps;
-			
-			float ditherRatio = min(ceiled-exact,exact-floored)/stepSize;
-			float dithered = ceiled-exact<exact-floored 
-				? ceiled
-				: floored;
-				
-			if(noise>0.7) {
-				hsl.z = dithered;
-			} else {
-				hsl.z = exact;
-			}
+
+			hsl.z = round(((noise-0.7)*0.75+hsl.z)/stepSize)/iShadingSteps;
 		} else {
 			hsl.z = round(hsl.z/stepSize)/iShadingSteps;
 		}
 
 		// saturation
-		hsl.y = clamp(hsl.y*fSaturation,0,1);
+		hsl.y = saturate(hsl.y*fSaturation);
+		if(bHueFilter) {
+			// fHueFilter
+			float hueDist = (fHueFilter<hsl.x
+				? min(hsl.x-fHueFilter,1+fHueFilter-hsl.x)
+				: min(fHueFilter-hsl.x,1-fHueFilter+hsl.x)
+				)*16;
+			
+			hueDist = smoothstep(0,1,saturate(hueDist));
+			
+			hsl.y *= 1.0-saturate(hueDist*(1.0-fHueFilterRange));
+		} 
+		
 
 		color = HSLtoRGB(hsl);
 
@@ -257,7 +408,8 @@ namespace DHAnime {
 
 //// Techniques
 
-	technique DH_Anime <
+	technique DH_Anime_11 <
+        ui_label = "DH_Anime 1.1";
 	>
 	{
 		pass
@@ -270,7 +422,13 @@ namespace DHAnime {
 		pass
 		{
 			VertexShader = PostProcessVS;
-			PixelShader = PS_Manga;
+			PixelShader = PS_LinePass;
+			RenderTarget = linesTex;
+		}
+		pass
+		{
+			VertexShader = PostProcessVS;
+			PixelShader = PS_Result;
 		}
 	}
 
