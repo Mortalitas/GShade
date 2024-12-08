@@ -14,6 +14,9 @@
 #ifndef RESHADE_DEPTH_INPUT_IS_REVERSED
 	#define RESHADE_DEPTH_INPUT_IS_REVERSED 0
 #endif
+#ifndef RESHADE_DEPTH_INPUT_IS_MIRRORED
+        #define RESHADE_DEPTH_INPUT_IS_MIRRORED 0
+#endif
 #ifndef RESHADE_DEPTH_INPUT_IS_LOGARITHMIC
 	#define RESHADE_DEPTH_INPUT_IS_LOGARITHMIC 0
 #endif
@@ -72,6 +75,9 @@ namespace ReShade
 	{
 #if RESHADE_DEPTH_INPUT_IS_UPSIDE_DOWN
 		texcoord.y = 1.0 - texcoord.y;
+#endif
+#if RESHADE_DEPTH_INPUT_IS_MIRRORED
+                texcoord.x = 1.0 - texcoord.x;
 #endif
 		texcoord.x /= RESHADE_DEPTH_INPUT_X_SCALE;
 		texcoord.y /= RESHADE_DEPTH_INPUT_Y_SCALE;
