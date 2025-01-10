@@ -12,7 +12,7 @@ namespace DH_Canvas_020 {
 
 // Textures
 	// R = height map, G = reflexivity, B = Ambient Occlusion
-    texture canvasPBRTex < source = "dh_canvas.png" ; > { Width = TEX_WIDTH; Height = TEX_HEIGHT; MipLevels = 1; Format = RGBA8; };
+    texture canvasPBRTex < source = "dh_canvas2.png" ; > { Width = TEX_WIDTH; Height = TEX_HEIGHT; MipLevels = 1; Format = RGBA8; };
     sampler canvasPBRSampler { Texture = canvasPBRTex; TREP};
 
 	texture canvasNormalTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
