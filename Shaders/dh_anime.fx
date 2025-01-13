@@ -14,50 +14,64 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #include "ReShade.fxh"
 
-#define NOISE_SIZE 64
+#ifndef DH_ANIME_RENDER_SCALE
+ #define DH_ANIME_RENDER_SCALE 2
+#endif
+
+#define NOISE_SIZE 512
 #define BUFFER_SIZE int2(BUFFER_WIDTH,BUFFER_HEIGHT)
 #define getColor(c) tex2Dlod(ReShade::BackBuffer,float4(c,0.0,0.0))
 #define getColorSampler(s,c) tex2Dlod(s,float4((c).xy,0,0))
+#define getColorSamplerLod(s,c,l) tex2Dlod(s,float4((c).xy,0,l))
 #define getBlur(c) tex2Dlod(blurSampler,float4(c,0.0,0.0))
 #define getDepth(c) ReShade::GetLinearizedDepth(c)*RESHADE_DEPTH_LINEARIZATION_FAR_PLANE
 #define diff3t(v1,v2,t) (abs(v1.x-v2.x)>t || abs(v1.y-v2.y)>t || abs(v1.z-v2.z)>t)
 #define maxOf3(a) max(max(a.x,a.y),a.z)
 
-namespace DHAnime12 {
-
-	texture blueNoiseTex < source ="dh_rt_noise.png" ; > { Width = NOISE_SIZE; Height = NOISE_SIZE; MipLevels = 1; Format = RGBA8; };
-    sampler blueNoiseSampler { Texture = blueNoiseTex;  AddressU = REPEAT;	AddressV = REPEAT;	AddressW = REPEAT;};
-
+namespace DHAnime13 {
 
 //// uniform
+    uniform int framecount < source = "framecount"; >;
+
 /*
-uniform bool bTest = false;
-uniform bool bTest2 = false;
-uniform float fTest <
+	uniform bool bTest = false;
+	uniform bool bTest2 = false;
+	uniform bool bTest3 = false;
+	uniform bool bTest4 = false;
+	uniform float fTest <
+			ui_type = "slider";
+		    ui_min = 0;
+		    ui_max = 1.0;
+		    ui_step = 0.001;
+		> = 0.5;
+	uniform float fTest2 <
+			ui_type = "slider";
+		    ui_min = 0;
+		    ui_max = 1.0;
+		    ui_step = 0.001;
+		> = 0.5;
+	uniform float fTest3 <
 		ui_type = "slider";
 	    ui_min = 0;
 	    ui_max = 1.0;
 	    ui_step = 0.001;
 	> = 0.5;
-uniform float fTest2 <
-		ui_type = "slider";
-	    ui_min = 0;
-	    ui_max = 1.0;
-	    ui_step = 0.001;
-	> = 0.5;
-uniform float fTest3 <
-		ui_type = "slider";
-	    ui_min = 0;
-	    ui_max = 1.0;
-	    ui_step = 0.001;
-	> = 0.5;
-*/	
+*/
 	
+
 	uniform float3 cBlackLineColor <
 	    ui_category = "Black lines";
 		ui_label = "Color";
 		ui_type = "color";
-	> = 0;
+	> = 0;    
+    uniform float fBlackLineMultiply <
+        ui_category= "Black lines";
+        ui_label = "Color intensity";
+		ui_type = "slider";
+	    ui_min = 0.0;
+	    ui_max = 1.0;
+	    ui_step = 0.001;
+	> = 1.0;
 	
 	uniform bool bDepthBlackLine <
 	    ui_category = "Black lines";
@@ -128,14 +142,14 @@ uniform float fTest3 <
 	    ui_step = 1;
 	> = 16;
 	
-	uniform float iShadingRamp <
+	uniform float fShadingRamp <
 		ui_category = "Colors";
 		ui_label = "Shading Ramp";
 		ui_type = "slider";
 	    ui_min = 0;
-	    ui_max = 3;
-	    ui_step = 1;
-	> = 0;
+	    ui_max = 6;
+	    ui_step = 0.1;
+	> = 1.0;
 	
 	uniform bool bDithering <
 	    ui_category = "Colors";
@@ -162,50 +176,66 @@ uniform float fTest3 <
 	    ui_max = 1.0;
 	    ui_step = 0.001;
 	> = 0.0;
-	
+    
+    uniform int iToneMode <
+        ui_category= "Half-tone";
+        ui_type = "combo";
+        ui_label = "Half-tone mode";
+        ui_items = "Disable\0Greyscale\0Full color\0RGB dots (CRT Shadow mask)\0CMY dots (substractive print)\0";
+    > = 0;
+    
+    uniform int iToneEffect <
+        ui_category= "Half-tone";
+        ui_type = "combo";
+        ui_label = "Effect";
+        ui_items = "Size\0Brightness\0";
+    > = 0;
+    
+    uniform bool bToneRotateColors <
+        ui_category= "Half-tone";
+        ui_label = "RGB/CMY rotate colors (DLP rainbow effect)";
+    > = false;
+    
+	uniform float fToneDotSpacing <
+        ui_category = "Half-tone";
+    	ui_label = "Dot spacing";
+    	ui_type = "slider";
+        ui_min = 1;
+        ui_max = 32;
+        ui_step = 1;
+    > = 5;
+    
+	uniform float fToneDotRamp <
+		ui_category = "Half-tone";
+		ui_label = "Shading Ramp";
+		ui_type = "slider";
+	    ui_min = 0;
+	    ui_max = 6;
+	    ui_step = 0.1;
+	> = 1.5;
 
 //// textures
+	texture blueNoiseTex < source ="dh_rt_noise.png" ; > { Width = NOISE_SIZE; Height = NOISE_SIZE; MipLevels = 1; Format = RGBA8; };
+    sampler blueNoiseSampler { Texture = blueNoiseTex;  AddressU = REPEAT;	AddressV = REPEAT;	AddressW = REPEAT;};
 
 	texture normalTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 	sampler normalSampler { Texture = normalTex; };
 	
-	texture linesTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
-	sampler linesSampler { Texture = linesTex; };
-
 	texture blurTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 	sampler blurSampler { Texture = blurTex; };
 	
-	texture halftonesTex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
+
+	texture linesTex { Width = BUFFER_WIDTH*DH_ANIME_RENDER_SCALE; Height = BUFFER_HEIGHT*DH_ANIME_RENDER_SCALE; };
+	sampler linesSampler { Texture = linesTex; };
+
+	
+	texture halftonesTex { Width = BUFFER_WIDTH*DH_ANIME_RENDER_SCALE; Height = BUFFER_HEIGHT*DH_ANIME_RENDER_SCALE; };
 	sampler halftonesSampler { Texture = halftonesTex; };
 
-
+    texture scaledTex { Width = BUFFER_WIDTH*DH_ANIME_RENDER_SCALE; Height = BUFFER_HEIGHT*DH_ANIME_RENDER_SCALE; Format = RGBA8; MipLevels = 6; };
+    sampler scaledSampler { Texture = scaledTex; MinLOD = 0.0f; MaxLOD = 5.0f;};
+	
 //// Functions
-
-	// Normals
-
-	float3 normal(float2 texcoord)
-	{
-		float3 offset = float3(ReShade::PixelSize.xy, 0.0);
-		float2 posCenter = texcoord.xy;
-		float2 posNorth  = posCenter - offset.zy;
-		float2 posEast   = posCenter + offset.xz;
-	
-		float3 vertCenter = float3(posCenter - 0.5, 1) * getDepth(posCenter);
-		float3 vertNorth  = float3(posNorth - 0.5,  1) * getDepth(posNorth);
-		float3 vertEast   = float3(posEast - 0.5,   1) * getDepth(posEast);
-	
-		return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast));
-	}
-
-	
-	void saveNormal(in float3 normal, out float4 outNormal) 
-	{
-		outNormal = float4(normal*0.5+0.5,1.0);
-	}
-	
-	float3 loadNormal(in float2 coords) {
-		return (tex2Dlod(normalSampler,float4(coords,0,0)).xyz-0.5)*2.0;
-	}
 
 	// Color space
 	
@@ -234,37 +264,46 @@ uniform float fTest3 <
 	      H = max(Delta.r, max(Delta.g, Delta.b));
 	      return frac(H / 6);
 	}
-/*
-	float3 RGBtoHSL(in float3 RGB) {
-	    float3 HSL = 0;
-	    float U, V;
-	    U = -min(RGB.r, min(RGB.g, RGB.b));
-	    V = max(RGB.r, max(RGB.g, RGB.b));
-	    HSL.z = ((V - U) * 0.5);
-	    float C = V + U;
-	    if (C != 0)
-	    {
-	    	HSL.x = RGBCVtoHUE(RGB, C, V);
-	    	HSL.y = C / (1 - abs(2 * HSL.z - 1));
-	    }
-	    return HSL;
-	}
-	  
-	float3 HUEtoRGB(in float H) 
+
+	// Normals
+
+	float3 normal(float2 texcoord)
 	{
-	    float R = abs(H * 6 - 3) - 1;
-	    float G = 2 - abs(H * 6 - 2);
-	    float B = 2 - abs(H * 6 - 4);
-	    return saturate(float3(R,G,B));
+		float3 offset = float3(ReShade::PixelSize.xy, 0.0);
+		float2 posCenter = texcoord.xy;
+		float2 posNorth  = posCenter - offset.zy;
+		float2 posEast   = posCenter + offset.xz;
+	
+		float3 vertCenter = float3(posCenter - 0.5, 1) * getDepth(posCenter);
+		float3 vertNorth  = float3(posNorth - 0.5,  1) * getDepth(posNorth);
+		float3 vertEast   = float3(posEast - 0.5,   1) * getDepth(posEast);
+	
+		return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast));
 	}
-	  
-	float3 HSLtoRGB(in float3 HSL)
+	
+	float mirrorSmoothstep(float v,float coef) {
+		if(v<0.5) {
+			return pow(v*2,1.0/coef)*0.5;
+		} else {
+			return pow((v-0.5)*2,coef)*0.5+0.5;
+		}
+	}
+	
+    bool inScreen(float2 coords) {
+        return coords.x>=0.0 && coords.x<=1.0
+            && coords.y>=0.0 && coords.y<=1.0;
+    }
+
+	
+	void saveNormal(in float3 normal, out float4 outNormal) 
 	{
-	    float3 RGB = HUEtoRGB(HSL.x);
-	    float C = (1 - abs(2 * HSL.z - 1)) * HSL.y;
-	    return (RGB - 0.5) * C + HSL.z;
+		outNormal = float4(normal*0.5+0.5,1.0);
 	}
-*/
+	
+	float3 loadNormal(in float2 coords) {
+		return (getColorSampler(normalSampler,coords).xyz-0.5)*2.0;
+	}
+
 
 //// PS
 
@@ -292,7 +331,11 @@ uniform float fTest3 <
 						float dRatio = depth/searchDepth;
 						
 						if(dRatio>=0.95 && dRatio<=1.05) {
-							sum += getColor(searchCoords).rgb;
+							float3 c = getColor(searchCoords).rgb;
+							float3 cHsv = RGBtoHSV(c);
+							cHsv.z = mirrorSmoothstep(cHsv.z,fShadingRamp);
+							c = HSVtoRGB(cHsv);
+							sum += c;
 							count++;
 						}
 					}
@@ -301,19 +344,12 @@ uniform float fTest3 <
 			color = sum/count;
 		} else {
 			color = getColor(coords).rgb;
+			float3 cHsv = RGBtoHSV(color);
+			cHsv.z = mirrorSmoothstep(cHsv.z,fShadingRamp);
+			color = HSVtoRGB(cHsv);
 		}
 		
-		float3 hsl = RGBtoHSV(color);//RGBtoHSL(color);
-		
-		if(iShadingRamp==1) {
-			hsl.z = smoothstep(0,1,hsl.z);
-		} else if(iShadingRamp==2) {
-			hsl.z = sqrt(hsl.z);
-		} else if(iShadingRamp==3) {
-			hsl.z *= hsl.z;
-		}
-		
-		
+		float3 hsv = RGBtoHSV(color);
 		
 		// shading steps
 		float stepSize = 1.0/iShadingSteps;
@@ -321,27 +357,27 @@ uniform float fTest3 <
 			int2 coordsNoise = int2(coords*BUFFER_SIZE)%NOISE_SIZE;
 			float noise = tex2Dfetch(blueNoiseSampler,coordsNoise).r;
 
-			hsl.z = round(((noise-0.7)*0.75+hsl.z)/stepSize)/iShadingSteps;
+			hsv.z = round((0.5*(noise-0.5)/iShadingSteps+hsv.z)/stepSize)/iShadingSteps;
 		} else {
-			hsl.z = round(hsl.z/stepSize)/iShadingSteps;
+			hsv.z = round(hsv.z/stepSize)/iShadingSteps;
 		}
 
 		// saturation
-		hsl.y = saturate(hsl.y*fSaturation);
+		hsv.y = saturate(hsv.y*fSaturation);
 		if(bHueFilter) {
 			// fHueFilter
-			float hueDist = (fHueFilter<hsl.x
-				? min(hsl.x-fHueFilter,1+fHueFilter-hsl.x)
-				: min(fHueFilter-hsl.x,1-fHueFilter+hsl.x)
+			float hueDist = (fHueFilter<hsv.x
+				? min(hsv.x-fHueFilter,1+fHueFilter-hsv.x)
+				: min(fHueFilter-hsv.x,1-fHueFilter+hsv.x)
 				)*16;
 			
 			hueDist = smoothstep(0,1,saturate(hueDist));
 			
-			hsl.y *= 1.0-saturate(hueDist*(1.0-fHueFilterRange));
+			hsv.y *= 1.0-saturate(hueDist*(1.0-fHueFilterRange));
 		} 
 		
 
-		color = HSVtoRGB(hsl);//HSLtoRGB(hsl);
+		color = HSVtoRGB(hsv);//HSLtoRGB(hsl);
 		
 		outBlur = float4(color,1);
 	}
@@ -405,28 +441,45 @@ uniform float fTest3 <
         outPixel = float4(r,1);
     }
 
-    uniform bool bToneDot <
-        ui_category = "Half-tone";
-    	ui_label = "Use half-tones";
-    > = false;
-    
-	uniform float fToneDotSpacing <
-        ui_category = "Half-tone";
-    	ui_label = "Dot spacing";
-    	ui_type = "slider";
-        ui_min = 1;
-        ui_max = 32;
-        ui_step = 1;
-    > = 6;
-    
-    uniform bool bToneDotColor <
-        ui_category = "Half-tone";
-    	ui_label = "Color dots";
-    > = false;
     
     float getDotSpacing(float b) {
     	float result = fToneDotSpacing;
     	return ceil(result);
+    }
+    
+    bool isEvenLine(float2 coordsInt,float toneDotSpacing) {
+    	float lineHeight = toneDotSpacing-1;//*sqrt(3)/2;
+    	float topLine = floor(coordsInt.y/lineHeight);
+    	float bottomLine = ceil(coordsInt.y/lineHeight);
+
+    	float dTop = coordsInt.y-topLine*lineHeight;
+    	float dBottom = bottomLine*lineHeight-coordsInt.y;
+
+    	return (dTop<=dBottom && topLine%2==0) || (dTop>=dBottom && bottomLine%2==0);    	
+    }
+    
+    int2 getLineColumn(float2 coordsInt,float toneDotSpacing) {
+    	float lineHeight = toneDotSpacing-1;//*sqrt(3)/2;
+    	float topLine = floor(coordsInt.y/lineHeight);
+    	float bottomLine = ceil(coordsInt.y/lineHeight);
+
+    	float dTop = coordsInt.y-topLine*lineHeight;
+    	float dBottom = bottomLine*lineHeight-coordsInt.y;
+
+    	int2 result = 0;
+
+
+		result.y = dTop<=dBottom ? topLine : bottomLine;
+		
+		float leftLine = floor(coordsInt.x/toneDotSpacing);
+    	float rightLine = ceil(coordsInt.x/toneDotSpacing);
+    	
+    	float dLeft = abs(coordsInt.x-leftLine*toneDotSpacing);
+	    float dRight = abs(coordsInt.x-rightLine*toneDotSpacing);
+	    
+	    result.x = dLeft<=dRight ? leftLine : rightLine;
+	    
+	    return result;
     }
 
     float2 getDotCenter(float2 coordsInt,float toneDotSpacing) {
@@ -437,7 +490,7 @@ uniform float fTest3 <
     	float dTop = coordsInt.y-topLine*lineHeight;
     	float dBottom = bottomLine*lineHeight-coordsInt.y;
 
-    	float evenLine = (dTop<=dBottom && topLine%2==0) || (dTop>=dBottom && bottomLine%2==0);
+    	bool evenLine = (dTop<=dBottom && topLine%2==0) || (dTop>=dBottom && bottomLine%2==0);
     	
     	float leftLine = floor(coordsInt.x/toneDotSpacing);
     	float rightLine = ceil(coordsInt.x/toneDotSpacing);
@@ -477,21 +530,46 @@ uniform float fTest3 <
     	return result;
     }
     
+    bool isComponents() {
+    	return iToneMode==3 || iToneMode==4;
+    }
+    
     float3 getDotBrightness(float brightness,float3 color, float2 coordsInt,float2 dotInt,float toneDotSpacing) {
 
 		float dotMaxRadius = toneDotSpacing/2;
 		
-		float3 dotRadius = dotMaxRadius*(bToneDotColor? brightness : 1.0-brightness);
+		float3 dotColor;
+		
+		if(iToneEffect==0) { // SIZE
+			float3 dotRadius = (dotMaxRadius-1)*(iToneMode!=1 ? brightness : 1.0-brightness);
+	
+			float3 dotCenterDistance = distance(dotInt,coordsInt);
+			
+			dotColor = lerp(0,1,saturate(dotCenterDistance-dotRadius));
+			
+			if(iToneMode>1) {
+				float3 hsv = RGBtoHSV(color);
+				hsv.z = saturate(mirrorSmoothstep(hsv.z,fToneDotRamp)*2);
+				color = HSVtoRGB(hsv);
+				dotColor = (1.0-dotColor)*color;
+			}
+		} else if(iToneEffect==1) { // BRIGHTNESS
+			float3 dotRadius = max(1,dotMaxRadius-1);
+	
+			float3 dotCenterDistance = distance(dotInt,coordsInt);
 
-		float3 dotCenterDistance = distance(dotInt,coordsInt);
-		
-		float3 dotColor = lerp(0,1,saturate(dotCenterDistance-dotRadius));
-		
-		if(bToneDotColor) {
+			dotColor = lerp(0,1,saturate(dotCenterDistance-dotRadius));
+			
 			float3 hsv = RGBtoHSV(color);
-			hsv.z = saturate(hsv.z*2);
-			color = HSVtoRGB(hsv);
-			dotColor = (1.0-dotColor)*color;
+			hsv.z = saturate(mirrorSmoothstep(hsv.z,fToneDotRamp)*2);
+			if(iToneMode==1) {
+				color = hsv.z;
+				dotColor = hsv.z+dotColor-0.5;//(1.0-dotColor)*color;
+			} else {
+				color = HSVtoRGB(hsv);
+				dotColor = (1.0-dotColor)*color;
+				dotColor *= hsv.z;
+			} 
 		}
 
 		return dotColor;
@@ -499,28 +577,18 @@ uniform float fTest3 <
 
 
 	void PS_Halftone(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target) {
-		if(!bToneDot) discard;
+		if(iToneMode==0) discard;
 
     	float2 coordsInt = coords*BUFFER_SIZE;
     	float3 color = getColorSampler(blurSampler,coords).rgb;
-		float brightness = RGBtoHSV(color).z;
-		
-		if(iShadingRamp==1) {
-			brightness = smoothstep(0,1,brightness);
-		} else if(iShadingRamp==2) {
-			brightness = sqrt(brightness);
-		} else if(iShadingRamp==3) {
-			brightness *= brightness;
-		}
+		float brightness = mirrorSmoothstep(RGBtoHSV(color).z,fToneDotRamp);
 		
 		float depth = getDepth(coords);
-    	float toneDotSpacing = getDotSpacing(maxOf3(color));
+    	float toneDotSpacing = getDotSpacing(brightness);
 		float2 dotCenter = getDotCenter(coordsInt,toneDotSpacing);
 		
 
 		float3 finalColor = getDotBrightness(brightness,color,coordsInt,dotCenter,toneDotSpacing);
-		
-		
 		
 		for(int i=0;i<6;i++) {
 			float2 delta = 0;
@@ -540,8 +608,34 @@ uniform float fTest3 <
 				delta.y += toneDotSpacing-1;
 			}
 			
-			if(bToneDotColor) {
+			if(iToneMode>1) {
 				finalColor = max(finalColor,getDotBrightness(brightness,color,coordsInt,dotCenter+delta,toneDotSpacing));
+				
+				int2 lc = getLineColumn(dotCenter,toneDotSpacing);
+				int yOffset = isEvenLine(coordsInt,toneDotSpacing);
+				int dotIndex = (lc.y*1.5+lc.x)%3;
+				if(bToneRotateColors) dotIndex = (dotIndex+framecount%3)%3;
+					
+				if(iToneMode==3) {
+					if(dotIndex==0) {
+						finalColor *= float3(1,0,0);
+					} else if(dotIndex==1) {
+						finalColor *= float3(0,1,0);
+					} else if(dotIndex==2) {
+						finalColor *= float3(0,0,1);
+					}
+					
+				} else if(iToneMode==4) {
+					if(dotIndex==0) {
+						finalColor *= float3(0,1,1);
+					} else if(dotIndex==1) {
+						finalColor *= float3(1,0,1);
+					} else if(dotIndex==2) {
+						finalColor *= float3(1,1,0);
+					}
+				}
+						
+				
 			} else {
 				finalColor = min(finalColor,getDotBrightness(brightness,color,coordsInt,dotCenter+delta,toneDotSpacing));
 			}
@@ -553,8 +647,8 @@ uniform float fTest3 <
 
 	void PS_Result(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target)
 	{
-		float3 color = bToneDot ? getColorSampler(halftonesSampler,coords).rgb : getBlur(coords).rgb;
-		
+		float3 color = iToneMode>0 ? getColorSampler(halftonesSampler,coords).rgb : getBlur(coords).rgb;
+		float3 refColor = color;
 		// black lines depth
 		if(bDepthBlackLine && iDepthBlackLineThickness>0) {
 			float depthLineMul = 1;
@@ -589,15 +683,45 @@ uniform float fTest3 <
 		}
 		
 
+		if(fBlackLineMultiply<1) {
+			color = lerp(refColor,color,fBlackLineMultiply);
+		}
 
 		outPixel = float4(color,1.0);
 		//outPixel = getColorSampler(halftonesSampler,coords);
 	}
+	
+	void PS_Rescale(float4 vpos : SV_Position, in float2 coords : TEXCOORD0, out float4 outPixel : SV_Target)
+	{
+		if(DH_ANIME_RENDER_SCALE<=1) {
+			outPixel = getColorSampler(scaledSampler,coords);
+		} else {
+			float2 delta;
+			float radius = ceil(DH_ANIME_RENDER_SCALE*0.5);
+			float2 pixelSize = ReShade::PixelSize/DH_ANIME_RENDER_SCALE;
+			
+			float3 sum = 0;
+			float3 maxC = 0;
+			float count = 0;
+			
+			for(delta.x=-DH_ANIME_RENDER_SCALE;delta.x<=DH_ANIME_RENDER_SCALE;delta.x++) {
+				for(delta.x=-DH_ANIME_RENDER_SCALE;delta.x<=DH_ANIME_RENDER_SCALE;delta.x++) {
+					float2 currentCoords = coords+delta*pixelSize;
+					if(!inScreen(currentCoords)) continue;
+					float3 c = getColorSampler(scaledSampler,currentCoords).rgb;
+					count += 1;
+					sum += c;
+					maxC = max(maxC,c);
+				}
+			}
+			outPixel = float4(sum/count,1.0);
+		}
+	}
 
 //// Techniques
 
-	technique DH_Anime_12 <
-        ui_label = "DH_Anime 1.2";
+	technique DH_Anime_13 <
+        ui_label = "DH_Anime 1.3";
 	>
 	{
 		pass
@@ -623,6 +747,12 @@ uniform float fTest3 <
 		{
 			VertexShader = PostProcessVS;
 			PixelShader = PS_Result;
+			RenderTarget = scaledTex;
+		}
+		pass
+		{
+			VertexShader = PostProcessVS;
+			PixelShader = PS_Rescale;
 		}
 	}
 
