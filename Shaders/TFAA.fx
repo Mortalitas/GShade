@@ -1,5 +1,5 @@
 /*=============================================================================
-    TFAA (2.0)
+    TFAA (1.0)
     Temporal Filter Anti-Aliasing Shader
     First published 2025 - Copyright, Jakob Wapenhensch
     License: CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/)
@@ -62,16 +62,37 @@ sampler smpDepthIn {
 
 // Texture and sampler for the current frame's color.
 texture texInCur : COLOR;
-texture texInCurBackup < pooled = false; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA8; };
+sampler smpInCur { 
+    Texture   = texInCur; 
+    AddressU  = Clamp; 
+    AddressV  = Clamp; 
+    MipFilter = Linear; 
+    MinFilter = Linear; 
+    MagFilter = Linear; 
+};
 
-texture texExpColor < pooled = false; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
-texture texExpColorBackup < pooled = false; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+// Backup texture for the current frame's color.
+texture texInCurBackup < pooled = true; > { 
+    Width   = BUFFER_WIDTH; 
+    Height  = BUFFER_HEIGHT; 
+    Format  = RGBA8; 
+};
 
-texture texDepthBackup < pooled = false; > { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16f; };
+sampler smpInCurBackup { 
+    Texture   = texInCurBackup; 
+    AddressU  = Clamp; 
+    AddressV  = Clamp; 
+    MipFilter = Linear; 
+    MinFilter = Linear; 
+    MagFilter = Linear; 
+};
 
-//Samplers
-sampler smpInCur { Texture = texInCur; AddressU = Clamp; AddressV = Clamp; MipFilter = Linear; MinFilter = Linear; MagFilter = Linear; };
-sampler smpInCurBackup { Texture = texInCurBackup; AddressU = Clamp; AddressV = Clamp; MipFilter = Linear; MinFilter = Linear; MagFilter = Linear; };
+// Texture for storing the exponential frame buffer.
+texture texExpColor < pooled = true; > { 
+    Width   = BUFFER_WIDTH; 
+    Height  = BUFFER_HEIGHT; 
+    Format  = RGBA16F; 
+};
 
 sampler smpExpColor { 
     Texture   = texExpColor; 
@@ -184,19 +205,20 @@ float3 cvtRgb2whatever(float3 rgb)
  */
 float3 cvtWhatever2Rgb(float3 whatever)
 {
-	switch(UI_COLOR_FORMAT)
-	{
-		case 1:
-			return cvtYCgCo2Rgb(whatever);
-		case 2:
-			return cvtYCbCr2Rgb(whatever);
-		default:
-			return whatever;
-	}
+    return cvtYCbCr2Rgb(whatever);
 }
 
-// History resampling
-float4 sampleBicubic(sampler2D source, float2 texcoord)
+/**
+ * @brief Performs bicubic interpolation using 5 sample points.
+ *
+ * Inspired by techniques from Marty, this function computes the filtered
+ * value by calculating sample weights and positions.
+ *
+ * @param source    Sampler reference of the texture.
+ * @param texcoord  Texture coordinate to be sampled.
+ * @return          Interpolated color as float4.
+ */
+float4 bicubic_5(sampler source, float2 texcoord)
 {
     // Compute the texture size.
     float2 texsize = tex2Dsize(source);
