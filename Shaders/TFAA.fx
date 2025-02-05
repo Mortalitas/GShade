@@ -493,7 +493,7 @@ void SavePost(float4 position : SV_Position, float2 texcoord : TEXCOORD, out flo
  */
 float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_Target
 {
-    // ---------- Sample Center and Neighboring Pixels ----------
+    // Sample the center and neighboring pixels.
     float4 center     = tex2Dlod(smpExpColor, texcoord, 0);
     float4 top        = tex2Dlod(smpExpColor, texcoord + (float2(0, -1) * ReShade::PixelSize), 0);
     float4 bottom     = tex2Dlod(smpExpColor, texcoord + (float2(0,  1) * ReShade::PixelSize), 0);
