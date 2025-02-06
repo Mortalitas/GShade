@@ -456,7 +456,7 @@ float4 TemporalFilter(float4 position : SV_Position, float2 texcoord : TEXCOORD)
 
 
 
-    // Compute temporal factors.
+    // Compute temporal factors.<
     float fpsFix       = frametime / fpsConst;
     float localContrast= saturate(pow(abs(maximumCvt.r - minimumCvt.r), 0.75));
     float speed        = length(motion);
@@ -475,22 +475,19 @@ float4 TemporalFilter(float4 position : SV_Position, float2 texcoord : TEXCOORD)
     weight = lerp(weight, weight * (0.6 + localContrast * 2), 0.5);
     weight = clamp(weight * speedFactor * depthMask, 0.0, 0.99);
 
-    // New approach: blend first, then clamp.
-    const static float correctionFactor = 4;
-    float4 blendedColor_unclamped = saturate(pow(lerp(pow(sampleCur, correctionFactor), pow(sampleExp, correctionFactor), weight), (1.0 / correctionFactor)));
+    // This factor is used to weight bright pixels more during blending, preserving highlights.
+    const static float correctionFactor = 2;
+    // The actual blending of the old exponential color with the new one.
+    float4 blendedColor_unclamped = saturate(pow(lerp(pow(sampleCur, correctionFactor), pow(sampleExp, correctionFactor), weight), (1.0 / correctionFactor)));  
+
+    // This clamps the blended color to the local neighborhood bounds.
     float4 blendedColor = float4(cvtWhatever2Rgb(clamp(cvtRgb2whatever(blendedColor_unclamped.rgb), minimumCvt.rgb, maximumCvt.rgb)), blendedColor_unclamped.a);
 
-    // Sharpening is influenced by local contrast and motion speed.
-    
+    //Calulate Sharpeninbg factor. 
     float sharp = pow(speed, 0.5) * localContrast * filter_weight_root * UI_POST_SHARPEN * depthMask;
-    sharp = saturate(sharp * 100);
-
-
-
+    sharp = saturate(sharp * 500);
 
     float3 return_value = blendedColor.rgb;
-
-
     switch (UI_DEBUG_MODE)
     {
         case 1:
@@ -505,7 +502,6 @@ float4 TemporalFilter(float4 position : SV_Position, float2 texcoord : TEXCOORD)
         default:
             break;
     }
-
 
     // Return the final blended color and sharpening factor.
     return float4(return_value, sharp);
@@ -556,7 +552,7 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_Targ
 
     // Fixed contrast value (tuned for high temporal blur scenarios).
     float contrast   = 0.8;
-    float sharpAmount = saturate(maxBox.a);  // Sharpness factor based on alpha (as a proxy for weight).
+    float sharpAmount = saturate(maxBox.a) * 1;  // Sharpness factor based on alpha (as a proxy for weight).
 
     // Calculate cross weights similarly to AMD CAS.
     float4 crossWeight = -rcp(rsqrt(saturate(min(minBox, 1.0 - maxBox) * rcp(maxBox))) *
