@@ -50,14 +50,28 @@ uniform float UI_POST_SHARPEN <
 > = 0.5;
 
 
+
+uniform int UI_DEBUG_MODE <
+	ui_type = "combo";
+    ui_label = "DEBUG MODE";
+	ui_items = "None\0Weight\0Sharp\0Occlusion\0";
+	ui_tooltip = "";
+    ui_category = "";
+> = 0;
+
+
 /*=============================================================================
     Textures & Samplers
+
 =============================================================================*/
 
 // Texture and sampler for depth input.
 texture texDepthIn : DEPTH;
 sampler smpDepthIn { 
     Texture = texDepthIn; 
+    MipFilter = Linear; 
+    MinFilter = Linear; 
+    MagFilter = Linear; 
 };
 
 // Texture and sampler for the current frame's color.
@@ -407,6 +421,8 @@ float4 TemporalFilter(float4 position : SV_Position, float2 texcoord : TEXCOORD)
 
     // The center of the neighborhood (index 4) is assumed to have the closest depth.
     int closestDepthIndex = 4;
+    float closestDepth = 1.0;
+
 
     // Initialize min/max conversion bounds for local contrast.
     float4 minimumCvt = 2;
@@ -420,6 +436,12 @@ float4 TemporalFilter(float4 position : SV_Position, float2 texcoord : TEXCOORD)
 
         minimumCvt = min(minimumCvt, cvt);
         maximumCvt = max(maximumCvt, cvt);
+
+        if (neighborhood[i].a < closestDepth)
+        {
+            closestDepth = neighborhood[i].a;
+            closestDepthIndex = i;
+        }
     }
 
     // Retrieve dilated motion vector.
@@ -432,34 +454,61 @@ float4 TemporalFilter(float4 position : SV_Position, float2 texcoord : TEXCOORD)
     float lastDepth = tex2Dlod(smpDepthBackup, lastSamplePos, 0).r;
     float4 sampleExp = saturate(sampleHistory(smpExpColorBackup, lastSamplePos));
 
+
+
     // Compute temporal factors.
     float fpsFix       = frametime / fpsConst;
     float localContrast= saturate(pow(abs(maximumCvt.r - minimumCvt.r), 0.75));
     float speed        = length(motion);
     float speedFactor  = 1.0 - pow(saturate(speed * 20.0), 0.5);
 
-    // Calculate the depth difference and construct a mask for depth discontinuities. This is effectively a disocclusion mask.
+    // Calculate the depth difference and construct a disocclusion mask.
     float depthDelta = max(0, saturate(minimumCvt.a - lastDepth)) / sampleCur.a;
     float depthMask  = saturate(1.0 - pow(depthDelta * 4, 4));
 
+    float filter_weight_root = pow(UI_TEMPORAL_FILTER_STRENGTH, 0.5);
+
+
+
     // Compute the blending weight.
-    float weight = lerp(0.50, 0.99, UI_TEMPORAL_FILTER_STRENGTH);
+    float weight = lerp(0.50, 0.99, filter_weight_root);
     weight = lerp(weight, weight * (0.6 + localContrast * 2), 0.5);
-    weight  = clamp(weight * speedFactor * depthMask, 0.0, 0.95);
+    weight = clamp(weight * speedFactor * depthMask, 0.0, 0.99);
 
-    // Clamp the historical sample’s converted color within the computed neighborhood bounds.
-    float4 sampleExpClamped = float4(cvtWhatever2Rgb(clamp(cvtRgb2whatever(sampleExp.rgb), minimumCvt.rgb, maximumCvt.rgb)), sampleExp.a);
-
-    // Use a power-law blend with a correction factor.
-    const static float correctionFactor = 2;
-    float3 blendedColor = saturate(pow(lerp(pow(sampleCur.rgb, correctionFactor), pow(sampleExpClamped.rgb, correctionFactor), weight), (1.0 / correctionFactor)));
+    // New approach: blend first, then clamp.
+    const static float correctionFactor = 4;
+    float4 blendedColor_unclamped = saturate(pow(lerp(pow(sampleCur, correctionFactor), pow(sampleExp, correctionFactor), weight), (1.0 / correctionFactor)));
+    float4 blendedColor = float4(cvtWhatever2Rgb(clamp(cvtRgb2whatever(blendedColor_unclamped.rgb), minimumCvt.rgb, maximumCvt.rgb)), blendedColor_unclamped.a);
 
     // Sharpening is influenced by local contrast and motion speed.
-    float sharp = (0.01 + localContrast) * (pow(speed, 0.3)) * 32;
-    sharp = saturate(((sharp + sampleExpClamped.a) * 0.5) * depthMask * UI_POST_SHARPEN * UI_TEMPORAL_FILTER_STRENGTH);
+    
+    float sharp = pow(speed, 0.5) * localContrast * filter_weight_root * UI_POST_SHARPEN * depthMask;
+    sharp = saturate(sharp * 100);
+
+
+
+
+    float3 return_value = blendedColor.rgb;
+
+
+    switch (UI_DEBUG_MODE)
+    {
+        case 1:
+            return_value = weight;
+            break;
+        case 2:
+            return_value = sharp;
+            break;
+        case 3:
+            return_value = depthMask;
+            break;
+        default:
+            break;
+    }
+
 
     // Return the final blended color and sharpening factor.
-    return float4(blendedColor, sharp);
+    return float4(return_value, sharp);
 }
 
 /**
@@ -499,24 +548,15 @@ float4 Out(float4 position : SV_Position, float2 texcoord : TEXCOORD ) : SV_Targ
     float4 bottom     = tex2Dlod(smpExpColor, texcoord + (float2(0,  1) * ReShade::PixelSize), 0);
     float4 left       = tex2Dlod(smpExpColor, texcoord + (float2(-1, 0) * ReShade::PixelSize), 0);
     float4 right      = tex2Dlod(smpExpColor, texcoord + (float2(1,  0) * ReShade::PixelSize), 0);
-    float4 topLeft    = tex2Dlod(smpExpColor, texcoord + (float2(-0.7, -0.7) * ReShade::PixelSize), 0);
-    float4 topRight   = tex2Dlod(smpExpColor, texcoord + (float2(0.7,  -0.7) * ReShade::PixelSize), 0);
-    float4 bottomLeft = tex2Dlod(smpExpColor, texcoord + (float2(-0.7,  0.7) * ReShade::PixelSize), 0);
-    float4 bottomRight= tex2Dlod(smpExpColor, texcoord + (float2(0.7,   0.7) * ReShade::PixelSize), 0);
 
     // Find the maximum and minimum among the sampled neighbors.
-    float4 maxBox = max(
-                      max(top,    max(bottom, max(left, max(right, center)))),
-                      max(topLeft, max(topRight, max(bottomLeft, bottomRight)))
-                    );
-    float4 minBox = min(
-                      min(top,    min(bottom, min(left, min(right, center)))),
-                      min(topLeft, min(topRight, min(bottomLeft, bottomRight)))
-                    );
+    float4 maxBox = max(top,    max(bottom, max(left, max(right, center))));
+    float4 minBox = min(top,    min(bottom, min(left, min(right, center))));
+
 
     // Fixed contrast value (tuned for high temporal blur scenarios).
-    float contrast   = 0.9;
-    float sharpAmount= saturate(maxBox.a);  // Sharpness factor based on alpha (as a proxy for weight).
+    float contrast   = 0.8;
+    float sharpAmount = saturate(maxBox.a);  // Sharpness factor based on alpha (as a proxy for weight).
 
     // Calculate cross weights similarly to AMD CAS.
     float4 crossWeight = -rcp(rsqrt(saturate(min(minBox, 1.0 - maxBox) * rcp(maxBox))) *
