@@ -1,9 +1,9 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.11.2)
+/* Perfect Perspective PS (version 5.12.0)
 
 Copyright:
-This code © 2018-2024 Jakub Maksymilian Fober
+This code © 2018-2025 Jakub Maksymilian Fober
 
 License:
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
@@ -360,6 +360,52 @@ uniform bool MirrorBorder
 	ui_tooltip = "Choose mirrored or original image on the border.";
 > = false;
 
+// Calibration Options
+
+uniform bool CalibrationModeView
+<
+	ui_type = "input";
+	ui_category = "Calibration mode";
+	ui_category_closed = true;
+	nosave = true;
+	ui_label = "Display calibration mode";
+	ui_tooltip =
+		"Display calibration grid for lens-matching.";
+> = false;
+
+uniform float GridSize
+<
+	ui_type = "slider";
+	ui_category = "Calibration mode";
+	hidden = !ADVANCED_MENU;
+	ui_text = "> Adjust calibration grid look <";
+	ui_label = "Size";
+	ui_tooltip = "Adjust calibration grid size.";
+	ui_min = 2f; ui_max = 32f; ui_step = 0.01;
+> = 16f;
+
+uniform float GridWidth
+<
+	ui_type = "slider";
+	ui_category = "Calibration mode";
+	hidden = !ADVANCED_MENU;
+	ui_units = " pixels";
+	ui_label = "Width";
+	ui_tooltip = "Adjust calibration grid bar width in pixels.";
+	ui_min = 2f; ui_max = 16f; ui_step = 0.01;
+> = 2f;
+
+uniform float GridTilt
+<
+	ui_type = "slider";
+	ui_category = "Calibration mode";
+	hidden = !ADVANCED_MENU;
+	ui_units = "°";
+	ui_label = "Tilt";
+	ui_tooltip = "Adjust calibration grid tilt in degrees.";
+	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
+> = 0f;
+
 /* >> Textures << */
 
 #if MIPMAPPING_LEVEL
@@ -585,6 +631,60 @@ float GetBorderMask(float2 borderCoord)
 		return aastep(glength(0u, borderCoord)-1f);
 }
 
+// Generate lens-match grid
+float3 GridModeViewPass(
+	uint2  pixelCoord,
+	float2 texCoord
+)
+{
+	// Sample background without distortion
+#if MIPMAPPING_LEVEL
+	float3 display = tex2Dfetch(BackBuffer, pixelCoord).rgb;
+#else // manual gamma linearization
+	float3 display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, pixelCoord).rgb);
+#endif
+
+	// Get view coordinates, normalized at the corner
+	texCoord = (texCoord*2f-1f)*normalize(BUFFER_SCREEN_SIZE);
+
+	if (GridTilt!=0f) // tilt view coordinates
+	{
+		// Convert angle to radians
+		const static float tiltRad = radians(GridTilt);
+		// Get rotation matrix components
+		const static float tiltSin = sin(tiltRad);
+		const static float tiltCos = cos(tiltRad);
+		// Rotate coordinates
+		texCoord = mul(
+			// Get rotation matrix
+			float2x2(
+				 tiltCos, tiltSin,
+				-tiltSin, tiltCos
+			),
+			texCoord // rotated coordinates
+		);
+	}
+
+	// Get coordinates pixel size
+	float2 delX = float2(ddx(texCoord.x), ddy(texCoord.x));
+	float2 delY = float2(ddx(texCoord.y), ddy(texCoord.y));
+	// Scale coordinates to grid size and center
+	texCoord = frac(texCoord*GridSize)-0.5;
+	/* Scale coordinates to pixel size for anti-aliasing of grid
+	   using anti-aliasing step function from research paper
+	   arXiv:2010.04077 [cs.GR] (2020) */
+	texCoord *= float2(
+		rsqrt(dot(delX, delX)),
+		rsqrt(dot(delY, delY))
+	)/GridSize; // pixel density
+	// Set grid with
+	texCoord = saturate(GridWidth*0.5-abs(texCoord)); // clamp values
+	// Apply calibration grid colors
+	display = lerp(float3(1f, 1f, 0f), display, (1f-texCoord.x)*(1f-texCoord.y));
+
+	return display; // background picture with grid superimposed over it
+}
+
 #if MIPMAPPING_LEVEL
 void BackBufferMipTarget_VS(
 	in  uint   vertexId : SV_VertexID,
@@ -747,10 +847,15 @@ float3 PerfectPerspective_PS(
 #endif
 	// Bypass perspective mapping
 	{
+		float3 display;
+
+		if (CalibrationModeView) // draw calibration grid
+			display = GridModeViewPass(uint2(pixelPos.xy), texCoord);
+		else // sample the background
 #if MIPMAPPING_LEVEL
-		float3 display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+			display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
 #else // manual gamma linearization
-		float3 display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
+			display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
 #endif
 
 		if (UseVignette && VignetteOffset!=0f) // maintain constant brightness across all FOV values
@@ -848,19 +953,26 @@ float3 PerfectPerspective_PS(
 	texCoord = viewCoord*0.5+0.5;
 
 	// Sample display image
-	float3 display =
-		K!=1f
+	float3 display;
+
+	if (CalibrationModeView) // display calibration grid
+		display = GridModeViewPass(uint2(pixelPos.xy), texCoord);
+	else
+	{
+		display =
+			K!=1f
 #if AXIMORPHIC_MODE==1 // take vertical k factor into account
-		|| Ky!=1f
+			|| Ky!=1f
 #elif AXIMORPHIC_MODE>=2 // take both vertical k factors into account
-		|| Ky!=1f || KyA!=1f
+			|| Ky!=1f || KyA!=1f
 #endif // consider only global k
-		? tex2Dgrad(BackBuffer, texCoord, ddx(texCoord), ddy(texCoord)).rgb // perspective projection lookup with mip-mapping and anisotropic filtering
-		: tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
+			? tex2Dgrad(BackBuffer, texCoord, ddx(texCoord), ddy(texCoord)).rgb // perspective projection lookup with mip-mapping and anisotropic filtering
+			: tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb; // no perspective change
 
 #if !MIPMAPPING_LEVEL
-	display = GammaConvert::to_linear(display); // manual gamma linearization
+		display = GammaConvert::to_linear(display); // manual gamma linearization
 #endif
+	}
 
 	// Display border
 	if (
@@ -918,34 +1030,41 @@ technique PerfectPerspective
 		"\n"
 		"      Fish-eye | AXIMORPHIC_MODE 0\n"
 		"    Anamorphic | AXIMORPHIC_MODE 0\n"
+		"        * Distortion aspect ratio.\n"
 		"    Aximorphic | AXIMORPHIC_MODE 1\n"
+		"        * Separate distortion for X/Y.\n"
 		"  Asymmetrical | AXIMORPHIC_MODE 2\n"
+		"        * Separate distortion for X/top/bottom.\n"
 		"\n"
 		"\n"
 		"Instruction:\n"
 		"\n"
-		"	1. select proper FOV angle and type matching game settings.\n"
-		"	   if FOV type is unknown:\n"
+		"	1. Select proper FOV angle and type matching game settings.\n"
+		"	   If FOV type is unknown:\n"
 		"\n"
-		"	 a. find a round object within the game\n"
-		"	 b. stand upfront\n"
-		"	 c. rotate the camera putting the object at the corner\n"
+		"	 a. Find a round object within the game.\n"
+		"	 b. Stand upfront.\n"
+		"	 c. Rotate the camera putting the object at the corner.\n"
 #if AXIMORPHIC_MODE
-		"	 d. make sure all 'k' parameters are equal to 0.5\n"
+		"	 d. Make sure all 'k' parameters are equal to 0.5.\n"
 #else
-		"	 d. set 'k' to 0.5, change squeeze factor to 1x\n"
+		"	 d. Set 'k' to 0.5, change squeeze factor to 1x.\n"
 #endif
-		"	 e. switch FOV type until object has a round shape, not an egg\n"
+		"	 e. Switch FOV type until object has a round shape, not an egg.\n"
 		"\n"
-		"	2. adjust distortion according to a game-play style\n"
+		"	2. Adjust distortion according to a game-play style.\n"
 		"\n"
-		"	3. adjust visible borders. You can change the cropping, such that\n"
-		"	   no borders will be visible, or that no image area get lost\n"
+		"	 + for other distortion profiles set AXIMORPHIC_MODE to 0, 1, 2.\n"
 		"\n"
-		"	 + use '4lex4nder/ReshadeEffectShaderToggler' add-on, to render\n"
-		"	   under the UI (user interface).\n"
+		"	3. Adjust visible borders. You can change the cropping, such that\n"
+		"	   no borders will be visible, or that no image area get lost.\n"
 		"\n"
-		"	 + use sharpening or run the game at Super-Resolution\n"
+		"	 + use '4lex4nder/ReshadeEffectShaderToggler' add-on,\n"
+		"	   to undistort the UI (user interface).\n"
+		"\n"
+		"	 + use sharpening, or run the game at Super-Resolution.\n"
+		"\n"
+		"	 + for more adjustable parameters set ADVANCED_MENU to 1.\n"
 		"\n"
 		"\n"
 		"The algorithm is part of a scientific article:\n"
@@ -953,7 +1072,7 @@ technique PerfectPerspective
 		"	arXiv:2010.04077 [cs.GR] (2020)\n"
 		"	arXiv:2102.12682 [cs.GR] (2021)\n"
 		"\n"
-		"This effect © 2018-2024 Jakub Maksymilian Fober\n"
+		"This effect © 2018-2025 Jakub Maksymilian Fober\n"
 		"Licensed under CC+ BY-SA 3.0\n"
 		"for additional permissions under the CC+ protocol, see the source code.";
 >
