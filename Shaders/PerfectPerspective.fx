@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.12.0)
+/* Perfect Perspective PS (version 5.12.1)
 
 Copyright:
 This code © 2018-2025 Jakub Maksymilian Fober
@@ -456,15 +456,6 @@ sampler2D BackBuffer
 // Get reciprocal screen aspect ratio (1/x)
 #define BUFFER_RCP_ASPECT_RATIO (BUFFER_HEIGHT*BUFFER_RCP_WIDTH)
 
-/* S curve by JMF
-   Generates smooth half-bell falloff for blur.
-   Input is in [0, 1] range. */
-float s_curve(float gradient)
-{
-	float top = max(gradient, 0.5);
-	float bottom = min(gradient, 0.5);
-	return 2f*((bottom*bottom+top)-(top*top-top))-1.5;
-}
 /* G continuity distance function by Jakub Max Fober.
    Represents derivative level continuity. (G from 0, to 3)
    G=0   Sharp corners
