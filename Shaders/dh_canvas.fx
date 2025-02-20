@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////
+// DH_Canvas
+// Author: AlucardDH (Damien Hembert)
+// License: GNU GPL-2.0
+// Repository: https://github.com/AlucardDH/dh-reshade-shaders
+////////////////////////////////////////////////////////
+
 #include "Reshade.fxh"
 
 #define TEX_WIDTH 1600
