@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.12.1)
+/* Perfect Perspective PS (version 5.13.0)
 
 Copyright:
 This code © 2018-2025 Jakub Maksymilian Fober
@@ -368,17 +368,16 @@ uniform bool CalibrationModeView
 	ui_category = "Calibration mode";
 	ui_category_closed = true;
 	nosave = true;
-	ui_label = "Display calibration mode";
-	ui_tooltip =
-		"Display calibration grid for lens-matching.";
+	ui_label = "Enable display calibration";
+	ui_tooltip = "Display calibration grid for lens-matching.";
 > = false;
 
 uniform float GridSize
 <
 	ui_type = "slider";
+	ui_text = "\n> Grid look <";
 	ui_category = "Calibration mode";
 	hidden = !ADVANCED_MENU;
-	ui_text = "> Adjust calibration grid look <";
 	ui_label = "Size";
 	ui_tooltip = "Adjust calibration grid size.";
 	ui_min = 2f; ui_max = 32f; ui_step = 0.01;
@@ -393,7 +392,7 @@ uniform float GridWidth
 	ui_label = "Width";
 	ui_tooltip = "Adjust calibration grid bar width in pixels.";
 	ui_min = 2f; ui_max = 16f; ui_step = 0.01;
-> = 2f;
+> = 4f;
 
 uniform float GridTilt
 <
@@ -405,6 +404,16 @@ uniform float GridTilt
 	ui_tooltip = "Adjust calibration grid tilt in degrees.";
 	ui_min = -1f; ui_max = 1f; ui_step = 0.01;
 > = 0f;
+
+uniform float BackgroundDim
+<
+	ui_type = "slider";
+	ui_category = "Calibration mode";
+	hidden = !ADVANCED_MENU;
+	ui_label = "Background dimming";
+	ui_tooltip = "Choose the calibration background dimming.";
+	ui_min = 0f; ui_max = 1f; ui_step = 0.01;
+> = 0.5;
 
 /* >> Textures << */
 
@@ -634,6 +643,9 @@ float3 GridModeViewPass(
 #else // manual gamma linearization
 	float3 display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, pixelCoord).rgb);
 #endif
+
+	// Dim calibration background
+	display *= clamp(1f-BackgroundDim, 0f, 1f);
 
 	// Get view coordinates, normalized at the corner
 	texCoord = (texCoord*2f-1f)*normalize(BUFFER_SCREEN_SIZE);
