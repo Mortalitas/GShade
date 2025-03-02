@@ -73,7 +73,7 @@ by Fober, J. M.
    ...
    4 maximum mipmapping lvl, equivalent of x16 anisotropic filtering. */
 #ifndef MIPMAPPING_LEVEL
-	#define MIPMAPPING_LEVEL 2
+	#define MIPMAPPING_LEVEL 0
 #endif
 
 /* >> Commons << */
