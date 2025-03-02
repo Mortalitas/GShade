@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.13.0)
+/* Perfect Perspective PS (version 5.13.1)
 
 Copyright:
 This code © 2018-2025 Jakub Maksymilian Fober
@@ -368,14 +368,14 @@ uniform bool CalibrationModeView
 	ui_category = "Calibration mode";
 	ui_category_closed = true;
 	nosave = true;
-	ui_label = "Enable display calibration";
+	ui_label = "Enable calibration grid";
 	ui_tooltip = "Display calibration grid for lens-matching.";
 > = false;
 
 uniform float GridSize
 <
 	ui_type = "slider";
-	ui_text = "\n> Grid look <";
+	ui_text = "\n";
 	ui_category = "Calibration mode";
 	hidden = !ADVANCED_MENU;
 	ui_label = "Size";
