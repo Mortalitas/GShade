@@ -3,10 +3,30 @@
 // FGFX::Energy-Conservative Film Grain
 // Author  : Alex Tuduran | alex.tuduran@gmail.com | github.com/AlexTuduran
 // Version : 0.1 [ReShade 3.0]
+// License : MIT
+/*
+MIT License
 
-// -------------------------------------------------------------------------- //
+Copyright (c) 2021 AlexTuduran
 
-#include "ReShadeUI.fxh"
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 // -------------------------------------------------------------------------- //
 
@@ -42,21 +62,24 @@ uniform int ___ABOUT <
 		"it after all effects (especially after any form of sharpening).\n";
 >;
 
-uniform float Intensity < __UNIFORM_SLIDER_FLOAT1
+uniform float Intensity <
+	ui_type = "slider";
 	ui_min = 0.0;
 	ui_max = 1.0;
 	ui_label = "Intensity";
 	ui_tooltip = "Film grain global intensity.";
 > = 0.15;
 
-uniform float HighlightIntensity < __UNIFORM_SLIDER_FLOAT1
+uniform float HighlightIntensity <
+	ui_type = "slider";
 	ui_min = 0.0;
 	ui_max = 1.0;
 	ui_label = "Highlight Intensity";
 	ui_tooltip = "Intensity of the grain in highlights.";
 > = 0.25;
 
-uniform float LuminanceExponent < __UNIFORM_SLIDER_FLOAT1
+uniform float LuminanceExponent <
+	ui_type = "slider";
 	ui_min = 0.1;
 	ui_max = 4.0;
 	ui_label = "Luminance Exponent";
