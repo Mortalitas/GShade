@@ -1,4 +1,4 @@
-// KeepUI for FFXIV, Phantasy Star Online, and other games with a UI present as alpha data or a depth of 0.
+// KeepUI for Final Fantasy XIV, Phantasy Star Online, and other games with a UI present as alpha data, a depth of 0, or in a dedicated depth buffer.
 // Authors: seri14 & Marot Satil
 // 
 // This is free and unencumbered software released into the public domain.
@@ -32,7 +32,7 @@
 #endif
 
 #ifndef KeepUIType
-    #define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Alpha-based/Final Fantasy XIV's UI saving mode | 2 - Shared depth buffer UI saving. | 3 - Dedicated depth buffer/Phantasy Star Online 2: New Genesis's UI saving mode.
+    #define KeepUIType 0 // 0 - Default, turns off UI saving for games without automatic detection. | 1 - Alpha-based/Final Fantasy XIV's UI saving mode | 2 - Shared depth buffer UI saving.
 
     #if (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV & The Sims 4 (DirectX 9 Only)
         #undef KeepUIType
@@ -52,7 +52,7 @@ uniform int bKeepUIForceType <
     ui_label = "UI Detection Type Override";
 #ifndef __GSHADE__
 #if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
-    ui_tooltip = "Manually enable a specific UI detection type for unsupported games.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIType";
+    ui_tooltip = "Manually enable a specific UI detection type for games without automatic detection.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIType";
 #else
     ui_tooltip = "KeepUI.fx is currently disabled due to the presence of the ReShade Effect Toggler (REST) Add-on. Changing this setting will have no effect.";
 #endif
