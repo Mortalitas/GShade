@@ -1,5 +1,5 @@
-// KeepUI for FFXIV, Phantasy Star Online, and other games with a UI depth of 0.
-// Author: seri14
+// KeepUI for FFXIV, Phantasy Star Online, and other games with a UI present as alpha data or a depth of 0.
+// Authors: seri14 & Marot Satil
 // 
 // This is free and unencumbered software released into the public domain.
 // 
@@ -51,10 +51,18 @@ uniform int bKeepUIForceType <
     ui_category = "Options";
     ui_label = "UI Detection Type Override";
 #ifndef __GSHADE__
+#if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIType";
+#else
+    ui_tooltip = "KeepUI.fx is currently disabled due to the presence of the ReShade Effect Toggler (REST) Add-on. Changing this setting will have no effect.";
+#endif
     ui_items = "Disabled\0Alpha\0Shared Depth\0";
 #else
+#if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
     ui_tooltip = "Manually enable a specific UI detection type for unsupported games.";
+#else
+    ui_tooltip = "KeepUI.fx is currently disabled due to the presence of the ReShade Effect Toggler (REST) Add-on. Changing this setting will have no effect.";
+#endif
     ui_items = "Disabled\0Alpha\0Shared Depth\0Dedicated Depth\0";
 #endif
     ui_bind = "KeepUIType";
@@ -194,7 +202,7 @@ technique FFKeepUI <
 #endif
 >
 {
-#if KeepUIType != 0 // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game.
     pass
     {
         VertexShader = PostProcessVS;
@@ -223,7 +231,7 @@ technique FFRestoreUI <
 #endif
 >
 {
-#if KeepUIType != 0 // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game.
     pass
     {
         VertexShader = PostProcessVS;
