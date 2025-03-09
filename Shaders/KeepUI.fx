@@ -76,7 +76,7 @@ uniform int bKeepUIForceType <
 > = 0;
 #endif
 
-#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game & REST add-on is not present.
 uniform bool bKeepUIOcclude <
     ui_category = "Options";
     ui_label = "Occlusion Assistance";
@@ -133,7 +133,7 @@ uniform int iBlendSource <
 #endif
 #endif
 
-#if KeepUIType != 0 // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game & REST add-on is not present.
 texture KeepUI_Tex { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; };
 sampler KeepUI_Sampler { Texture = KeepUI_Tex; };
 
@@ -202,7 +202,7 @@ technique FFKeepUI <
 #endif
 >
 {
-#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game & REST add-on is not present.
     pass
     {
         VertexShader = PostProcessVS;
@@ -231,7 +231,7 @@ technique FFRestoreUI <
 #endif
 >
 {
-#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game & REST add-on is not present.
     pass
     {
         VertexShader = PostProcessVS;
