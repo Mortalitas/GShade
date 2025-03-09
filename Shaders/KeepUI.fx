@@ -202,6 +202,7 @@ void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
 #endif
 
 technique FFKeepUI <
+    ui_label = "KeepUI";
 #if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
     ui_tooltip = "Place this at the top of your Technique list to save the UI into a texture for restoration with FFRestoreUI.\n"
                  "To use this Technique, you must also enable \"FFRestoreUI\".\n";
@@ -228,6 +229,7 @@ technique FFKeepUI <
 }
 
 technique FFRestoreUI <
+    ui_label = "RestoreUI";
 #if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
     ui_tooltip = "Place this at the bottom of your Technique list to restore the UI texture saved by FFKeepUI.\n"
                  "To use this Technique, you must also enable \"FFKeepUI\".\n";
