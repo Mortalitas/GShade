@@ -66,7 +66,7 @@ uniform int bKeepUIForceType <
     ui_items = "Disabled\0Alpha\0Shared Depth\0Dedicated Depth\0";
 #endif
     ui_bind = "KeepUIType";
-#if KeepUIOverride == 1 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
+#if KeepUIOverride == 1 // Final Fantasy XIV & The Sims 4 (DirectX 9 Only)
 > = 1;
 #elif KeepUIOverride == 2
 > = 2;
@@ -80,7 +80,11 @@ uniform int bKeepUIForceType <
 uniform bool bKeepUIOcclude <
     ui_category = "Options";
     ui_label = "Occlusion Assistance";
+#ifndef __GSHADE__
+    ui_tooltip = "Enable if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIOccludeAssist";
+#else
     ui_tooltip = "Enable if you notice odd graphical issues with Bloom or similar shaders. May cause problems with SSDO when enabled.";
+#endif
     ui_bind = "KeepUIOccludeAssist";
 > = 0;
 
@@ -101,7 +105,11 @@ uniform float fKeepUIOccludeMinAlpha <
 uniform bool bKeepUIHideInScreenshot <
     ui_category = "Options";
     ui_label = "Hide KeepUI In Screenshots";
+#ifndef __GSHADE__
+    ui_tooltip = "Enable to hide the effects of KeepUI when taking screenshots.\n\nThis is very helpful in games where portions of the screen which are not part of the UI may be detected as such.\n\nIn order to use this setting as shown, please install the \"UIBind\" addon created by cot6.\n\nAlternatively, you may specify the type of UI saving you would like to use in the Preprocessor Definitions below by adjusting KeepUIHideInScreenshots";
+#else
     ui_tooltip = "Enable to hide the effects of KeepUI when taking screenshots.\n\nThis is very helpful in games where portions of the screen which are not part of the UI may be detected as such.";
+#endif
     ui_bind = "KeepUIHideInScreenshots";
 > = 0;
 
