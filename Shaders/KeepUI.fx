@@ -32,17 +32,14 @@
 #endif
 
 #ifndef KeepUIType
-    #define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Alpha-based/Final Fantasy XIV's UI saving mode | 2 - Shared depth buffer UI saving. | 3 - Dedicated depth buffer/Phantasy Star Online 2's UI saving mode.
+    #define KeepUIType 0 // 0 - Default, turns off UI saving for unsupported games only. | 1 - Alpha-based/Final Fantasy XIV's UI saving mode | 2 - Shared depth buffer UI saving. | 3 - Dedicated depth buffer/Phantasy Star Online 2: New Genesis's UI saving mode.
 
-    #ifndef __GSHADE__
-    // KeepUI is disabled and the option to manually enable it is provided if running under ReShade with the UIBind addon made by cot6.
-    // Ipsusu requested this in order to better support REST under ReShade, don't shoot me. - Marot
-    #elif (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV (DirectX 11 Only) & The Sims 4 (DirectX 9 Only)
+    #if (__APPLICATION__ == 0x6f24790f || (__APPLICATION__ == 0xf133c441 && !(__RENDERER__ & 0x20000))) && KeepUIType == 0 // Final Fantasy XIV & The Sims 4 (DirectX 9 Only)
         #undef KeepUIType
         #define KeepUIType 1
         #define KeepUIOverride 1
     // PSO 2 depth saving via GShade's Depth II addon.
-    #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online 2
+    #elif (__APPLICATION__ == 0x21050ce9 || __APPLICATION__ == 0x31d39829 || __APPLICATION__ == 0xfe44e135) && KeepUIType == 0 // Phantasy Star Online 2: New Genesis
         #undef KeepUIType
         #define KeepUIType 3
         #define KeepUIOverride 3
@@ -71,7 +68,7 @@ uniform int bKeepUIForceType <
 > = 0;
 #endif
 
-#if KeepUIType != 0 // Supported game.
+#if KeepUIType != 0 && !ADDON_RESHADE_EFFECT_SHADER_TOGGLER // Supported game.
 uniform bool bKeepUIOcclude <
     ui_category = "Options";
     ui_label = "Occlusion Assistance";
@@ -189,8 +186,12 @@ void PS_RestoreUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out floa
 #endif
 
 technique FFKeepUI <
+#if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
     ui_tooltip = "Place this at the top of your Technique list to save the UI into a texture for restoration with FFRestoreUI.\n"
                  "To use this Technique, you must also enable \"FFRestoreUI\".\n";
+#else
+    ui_tooltip = "KeepUI.fx is currently disabled due to the presence of the ReShade Effect Toggler (REST) Add-on.";
+#endif
 >
 {
 #if KeepUIType != 0 // Supported game.
@@ -211,8 +212,12 @@ technique FFKeepUI <
 }
 
 technique FFRestoreUI <
+#if !ADDON_RESHADE_EFFECT_SHADER_TOGGLER
     ui_tooltip = "Place this at the bottom of your Technique list to restore the UI texture saved by FFKeepUI.\n"
                  "To use this Technique, you must also enable \"FFKeepUI\".\n";
+#else
+    ui_tooltip = "KeepUI.fx is currently disabled due to the presence of the ReShade Effect Toggler (REST) Add-on.";
+#endif
 #if KeepUIHideInScreenshots
     enabled_in_screenshot = false;
 #endif
