@@ -1296,7 +1296,6 @@ float3 GhostsPass(vs2ps o) : COLOR
 	}
 
 	//Ghosts
-	[branch]
 	if (GhostStrength != 0.0)
 	{
 		//Taken from https://www.froyok.fr/blog/2021-09-ue4-custom-lens-flare/
@@ -1385,7 +1384,6 @@ float3 CameraPass(vs2ps o) : SV_Target
 	}
 
 	//Glass imperfections
-	[branch]
 	if (GeoIStrength != 0.0)
 	{
 		float2 bump = 0.6666667 * tex2D(spBumpTex, texcoord * _BUMP_MAP_SCALE).xy + 0.33333334 * tex2D(spBumpTex, texcoord * _BUMP_MAP_SCALE * 3.0).xy;
@@ -1411,7 +1409,6 @@ float3 CameraPass(vs2ps o) : SV_Target
 	}
 
 	//Chromatic aberration
-	[branch]
 	if (CAStrength != 0.0)
 	{
 		float3 influence = float3(-0.04, 0.0, 0.03);
@@ -1422,7 +1419,6 @@ float3 CameraPass(vs2ps o) : SV_Target
 	}
 
 	//Dirt
-	[branch]
 	if (DirtStrength != 0.0)
 	{
 		float3 weight = 0.15 * length(radiant_vector) * tex2D(spBloomTex6, -radiant_vector + 0.5).rgb + 0.25 * tex2D(spBloomTex3, texcoord.xy).rgb;
@@ -1449,7 +1445,6 @@ float3 CameraPass(vs2ps o) : SV_Target
 	}
 
 	//Noise
-	[branch]
 	if (NoiseStrength != 0.0)
 	{
 		static const float NOISE_CURVE = max(INVNORM_FACTOR * 0.025, 1.0);

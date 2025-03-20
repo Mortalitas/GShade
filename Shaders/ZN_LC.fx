@@ -209,7 +209,7 @@ float3 ZN_DUAL(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 {
 	float3 input = tex2D(ReShade::BackBuffer, texcoord).rgb;
 	float3 blur = tex2D(UpSam3, texcoord).rgb;
-	float3 bloom = pow(blur, 2.2) * BLOOM_INTENSITY;
+	float3 bloom = pow(max(blur, 0.0), 2.2) * BLOOM_INTENSITY;
 	float blurLum = blur.r * 0.2126 + blur.g * 0.7152 + blur.b * 0.0722;
 	
 	if(DEBUG) {return INTENSITY * (input - blur) + bloom;}

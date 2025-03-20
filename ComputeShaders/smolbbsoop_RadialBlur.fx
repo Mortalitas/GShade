@@ -91,7 +91,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	    const float2 adjustedCenter = float2(center.x, center.y / aspectRatio);
 		
 	    const float distance = length(adjustedCoords - adjustedCenter);
-	    const float falloffFactor = pow(distance, falloff);
+	    const float falloffFactor = pow(max(distance, 0.0), falloff);
 	
 	    const float taperBase = 1.0 - taperStrength;
 	    const float taperCompensation = lerp(2.0, 1.0, taperStrength);

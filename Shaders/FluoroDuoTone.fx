@@ -100,6 +100,7 @@ namespace FluoroDuoTone
 
 	void PS_DoDuoTone(in float4 position : SV_Position, in float2 texcoord : TEXCOORD0, out float4 fragment : SV_Target)
 	{
+		fragment = 0.0;
 		const float3 currentFragment = tex2D(ReShade::BackBuffer, texcoord).rgb;
 		const float luma = dot(currentFragment, float3(0.3, 0.59, 0.11));
 		

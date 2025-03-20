@@ -246,7 +246,7 @@ namespace DHAnime13 {
     
         float d = q.x - min(q.w, q.y);
         float e = 1.0e-10;
-        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+        return float3(float(abs(q.z + (q.w - q.y))) / (6.0 * d + e), d / (q.x + e), q.x);
     }
     
     float3 HSVtoRGB(float3 c) {
@@ -283,9 +283,9 @@ namespace DHAnime13 {
 	
 	float mirrorSmoothstep(float v,float coef) {
 		if(v<0.5) {
-			return pow(v*2,1.0/coef)*0.5;
+			return pow(max(v*2.0,0.0),1.0/coef)*0.5;
 		} else {
-			return pow((v-0.5)*2,coef)*0.5+0.5;
+			return pow(max((v-0.5)*2,0.0),coef)*0.5+0.5;
 		}
 	}
 	
@@ -397,7 +397,7 @@ namespace DHAnime13 {
         float threshold = 1.0-saturate(fColorBlackLineThreshold);
         [loop]
         for(int d = 1;d<=iColorBlackLineThickness;d++) {
-            float w = 1.0/pow(d,0.5);
+            float w = 1.0/pow(max(d,0.0),0.5);
             
             float3 color = getColor(float2(coords.x+ReShade::PixelSize.x*d,coords.y)).rgb;
             float3 diff = abs(previousX-color);
@@ -417,7 +417,7 @@ namespace DHAnime13 {
         
         [loop]
         for(int d = 1;d<=iColorBlackLineThickness;d++) {
-            float w = 1.0/pow(d,0.5);
+            float w = 1.0/pow(max(d,0.0),0.5);
             
             float3 color = getColor(float2(coords.x-ReShade::PixelSize.x*d,coords.y)).rgb;
             float3 diff = abs(previousX-color);
@@ -433,8 +433,8 @@ namespace DHAnime13 {
         }
         
         float refB = maxOf3(refColor);      
-        roughness *= pow(refB,0.5);
-        roughness *= pow(1.0-refB,2.0);
+        roughness *= pow(max(refB,0.0),0.5);
+        roughness *= pow(max(1.0-refB,0.0),2.0);
         
         //roughness *= 0.5+refDepth*2;
         float3 r = 1.0-roughness;
@@ -678,7 +678,7 @@ namespace DHAnime13 {
 		// black lines color
 		if(bColorBlackLine && iDepthBlackLineThickness>0) { 
 			float lines = tex2D(linesSampler,coords).r;
-			color *= pow(lines,iDepthBlackLineThickness);
+			color *= pow(max(lines,0.0),iDepthBlackLineThickness);
 			color += (1.0-lines)*cBlackLineColor;
 		}
 		
@@ -698,7 +698,7 @@ namespace DHAnime13 {
 		} else {
 			float2 delta;
 			float radius = ceil(DH_ANIME_RENDER_SCALE*0.5);
-			float2 pixelSize = ReShade::PixelSize/DH_ANIME_RENDER_SCALE;
+			float2 pixelSize = ReShade::PixelSize/float(DH_ANIME_RENDER_SCALE);
 			
 			float3 sum = 0;
 			float3 maxC = 0;

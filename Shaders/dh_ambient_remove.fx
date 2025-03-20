@@ -130,7 +130,7 @@ namespace DH_Ambient_Remove {
     
         float d = q.x - min(q.w, q.y);
         float e = 1.0e-10;
-        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+        return float3(float(abs(q.z + (q.w - q.y) / (6.0 * d + e))), d / (q.x + e), q.x);
     }
     
     float3 HSVtoRGB(float3 c) {

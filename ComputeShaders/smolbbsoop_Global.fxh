@@ -46,7 +46,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (x.r < 0.04045)
             return x / 12.92;
         else
-            return pow((x + 0.055) / 1.055, 2.4);
+            return pow(max((x + 0.055) / 1.055, 0.0), 2.4);
 	}
 	
 	// thanks to TreyM for posting this in the ReShade Discord's code chat :3
@@ -55,7 +55,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (x.r < 0.0031308)
             return 12.92 * x;
         else
-            return 1.055 * pow(x, 1.0 / 2.4) - 0.055;
+            return 1.055 * pow(max(x, 0.0), 1.0 / 2.4) - 0.055;
 	}
 
 //============================================================================================
@@ -79,7 +79,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (x.r < 0.0031308)
             return 12.92 * x;
         else
-            return 1.055 * pow(x, 1.0 / 2.4) - 0.055;
+            return 1.055 * pow(max(x, 0.0), 1.0 / 2.4) - 0.055;
 	}
 		
 //==============================================================
@@ -97,7 +97,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (x.r < 0.04045)
             return x / 12.92;
         else
-            return pow((x + 0.055) / 1.055, 2.4);
+            return pow(max((x + 0.055) / 1.055, 0.0), 2.4);
 	}
 	
 //============================================================================================
@@ -127,7 +127,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 	float3 PQToLinear(float3 x)
 	{
-	    const float3 num = max(pow(x, 1.0 / PQ_m2) - PQ_c1, 0.0);
+	    const float3 num = max(pow(max(x, 0.0), 1.0 / PQ_m2) - PQ_c1, 0.0);
 	    const float3 den = PQ_c2 - PQ_c3 * pow(x, 1.0 / PQ_m2);
 	    
 	    const float scalingFactor = 20375.99 * pow(PeakBrightness, -0.995);

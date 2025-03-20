@@ -372,12 +372,12 @@ float3 GetRoughTex(float2 texcoord, float4 normal)
 		roughfac = (1 - roughness);
 		fromrough.x = lerp(0, 0.1, saturate(roughness*10));
 		fromrough.y = 0.8;
-		torough = float2(0, pow(roughness, roughfac));
+		torough = float2(0, pow(max(roughness, 0.0), roughfac));
 		
 		float3 center = toYCC(tex2D(sTexColor, texcoord).rgb);
 		float depth = LDepth(texcoord);
 
-		float Roughness;
+		float Roughness = 0.0;
 		//cross (+)
 		float2 offsets[4] = {float2(p.x,0), float2(-p.x,0),float2( 0,-p.y),float2(0,p.y)};
 		[unroll]for(int x; x < 4; x++)
@@ -392,7 +392,7 @@ float3 GetRoughTex(float2 texcoord, float4 normal)
 			}
 		}
 		
-		Roughness = pow( Roughness, roughfac*0.66);
+		Roughness = pow(max(Roughness, 0.0), roughfac*0.66);
 		Roughness = clamp(Roughness, fromrough.x, fromrough.y);
 		Roughness = (Roughness - fromrough.x) / ( 1 - fromrough.x );
 		Roughness = Roughness / fromrough.y;
@@ -400,7 +400,7 @@ float3 GetRoughTex(float2 texcoord, float4 normal)
 		
 		return saturate(Roughness);
 	} 
-	return 0;//RoughnessTex
+	return float3(0.0, 0.0, 0.0);//RoughnessTex
 }
 
 #define BT 1000
@@ -442,7 +442,7 @@ static const float sRGBGamma = 2.2;
 
 float3 InvTonemapper(float3 color)
 {
-	if(LinearConvert)color = pow(color, LinearGamma);
+	if(LinearConvert)color = pow(max(color, 0.0), LinearGamma);
 	
 	float3 L;
 	if(TM_Mode)L = max(max(color.r, color.g), color.b); //Lottes
@@ -460,7 +460,7 @@ float3 Tonemapper(float3 color)
 	
 	color = color / ((1.0 + max(1-IT_Intensity,0.00001)) + L);
 
-	if(LinearConvert)color = pow(color, sRGBGamma);
+	if(LinearConvert)color = pow(max(color, 0.0), sRGBGamma);
 	
 	return (color);
 }
@@ -685,14 +685,14 @@ void RayMarch(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float4 
 		float3 raydir;
 		float4 reflection;
 		float a;
-		if(!GI)raydir = lerp(raydirG, raydirR, pow(1-(0.5*cos(raybias*PI)+0.5), rsqrt(InvTonemapper((GI)?1:Roughness))));
+		if(!GI)raydir = lerp(raydirG, raydirR, pow(max(1-(0.5*cos(raybias*PI)+0.5), 0.0), rsqrt(InvTonemapper((GI)?1:Roughness))));
 		else raydir = raydirR;
 		
 		DoRayMarch(IGNoise, position, raydir, reflection.rgb, HitDistance, a);
 		
 		FinalColor.rgb = max(ClampLuma(InvTonemapper(reflection.rgb), LUM_MAX),0);
 		
-		float FadeFac = 1-pow(Geometry.w, InvTonemapper(depthfade));
+		float FadeFac = 1-pow(max(Geometry.w, 0.0), InvTonemapper(depthfade));
 		if(!GI)FinalColor.a = a*FadeFac;
 		else
 		{
@@ -976,7 +976,7 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	PostSqr /= shape+1; PreSqr /= shape+1;
 	PostSqr *= PostSqr;
 	float4 Var = sqrt(abs(PostSqr - PreSqr));
-	Var = pow(Var, 0.7);
+	Var = pow(max(Var, 0.0), 0.7);
 	Var.xyz *= CurrToYCC.x;
 #if TEMPORAL_STABILIZER_VARIANCE_CLIPPING
 	chistory = lerp(chistory, clamp(chistory, CurrToYCC - Var, CurrToYCC + Var), 0.15);
@@ -993,7 +993,7 @@ void TemporalStabilizer(float4 vpos : SV_Position, float2 texcoord : TexCoord, o
 	
 	float4 LerpFac = TSIntensity                        //main factor
 					*(1 - outbound.r)                   //0 if the pixel is out of boundary
-					//*max(0.85, pow(GI ? 1 : Roughness, 1.0)) //decrease if roughness is low
+					//*max(0.85, pow(GI ? 1 : max(Roughness, 0.0), 1.0)) //decrease if roughness is low
 					*max(0.5, saturate(1 - diff.rrra*10))                  //decrease if the difference between original and clamped history is high
 					*max(0.7, 1 - 5 * length(MotionVectors))  //decrease if movement is fast
 					;
@@ -1044,7 +1044,7 @@ void Output(float4 vpos : SV_Position, float2 texcoord : TexCoord, out float3 Fi
 			float Div = max(1, max(AO_Radius_Reflection, AO_Radius_Background));
 			AO.g = saturate(GI.a * Div / AO_Radius_Reflection);
 			AO.r = saturate(GI.a * Div / AO_Radius_Background);
-			AO   = saturate(pow(AO, AO_Intensity));
+			AO   = saturate(pow(max(AO, 0.0), AO_Intensity));
 			
 			//modify saturation and exposure
 			GI.rgb *= SatExp.g;

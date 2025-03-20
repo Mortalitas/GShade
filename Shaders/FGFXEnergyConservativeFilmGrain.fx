@@ -123,14 +123,14 @@ float3 MainPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targ
 	float3 grain = Hash32UV(texcoord, 0.6457);
 
 	// apply gamma
-	grain = pow(grain, 2.2);
+	grain = pow(max(grain, 0.0), 2.2);
 
 	// offset to achieve energy-conservative, zero-average noise
 	grain -= 0.5;
 
 	// compute luminance
 	float luminance = dot(color, 0.333333333333); // I believe in channel equality
-	luminance = pow(luminance, LuminanceExponent); // bend it
+	luminance = pow(max(luminance, 0.0), LuminanceExponent); // bend it
 	float luminanceModulator = lerp(1.0, HighlightIntensity, luminance); // modulator is 1 when either luminance is at 0 or HighlightIntensity is at 1
 
 	// luminance-modulate grain

@@ -91,14 +91,14 @@ float3 ZN_Stylize_FXmain(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
 	float3 input = tex2D(ReShade::BackBuffer, 0.5 / uv + floor((texcoord * CCV)) / CCV).rgb; //quantizes input based on Pixel_Size
 	
 	//Linear Gamma Conversion
-	input = pow(input, 2.2) * Pre_Boost;
+	input = pow(max(input, 0.0), 2.2) * Pre_Boost;
 	
 	
 	//Color grading
-	float3 blend = pow(input, Contrast * (1.0 / 2.2));
-	blend.r = ((pow(blend.r, Bright_Scoop) / 1.77) + 1.0) * (0.8 * pow(sin (2.04* blend.r), 1.9) );
-	blend.g = ((pow(blend.g, Bright_Scoop) / 1.77) + 1.0) * (0.8 * pow(sin (2.02* blend.g), 2.0) );
-	blend.b = ((pow(blend.b, Bright_Scoop) / 1.77) + 1.0) * (0.8 * pow(sin (2.02* blend.b), 1.9) );
+	float3 blend = pow(max(input, 0.0), Contrast * (1.0 / 2.2));
+	blend.r = ((pow(max(blend.r, 0.0), Bright_Scoop) / 1.77) + 1.0) * (0.8 * pow(max(sin (2.04* blend.r), 0.0), 1.9) );
+	blend.g = ((pow(max(blend.g, 0.0), Bright_Scoop) / 1.77) + 1.0) * (0.8 * pow(max(sin (2.02* blend.g), 0.0), 2.0) );
+	blend.b = ((pow(max(blend.b, 0.0), Bright_Scoop) / 1.77) + 1.0) * (0.8 * pow(max(sin (2.02* blend.b), 0.0), 1.9) );
 	
 	//ACES tonemapping
 	input = ACESFilm(input);
@@ -110,7 +110,7 @@ float3 ZN_Stylize_FXmain(float4 vpos : SV_Position, float2 texcoord : TexCoord) 
 	input = lerp(input, blend, ToneGrade_Blend);
 	
 	//Contrast adjustment and dither blending
-	input = pow(((1 - Dither_Strength) * input - Dither_Strength * ditherQuant), Contrast);
+	input = pow(max((1 - Dither_Strength) * input - Dither_Strength * ditherQuant, 0.0), Contrast);
 	
 	//Color Quantization
 	input = round((input) * Color_Quantize) / Color_Quantize;

@@ -331,12 +331,12 @@ float4 PASS_SH0(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	
 	float3 color =.25*(t1+t2+(m2*(s00+s22)+m1*(s02+s20))/(m1+m2));
 
-	const float3 scolor1 = plant(pow(color, saturation.xxx), max(max(color.r,color.g),color.b));
+	const float3 scolor1 = plant(pow(max(color, 0.0), saturation.xxx), max(max(color.r,color.g),color.b));
 	const float luma = dot(color, float3(0.299, 0.587, 0.114));
 	const float3 scolor2 = lerp(luma.xxx, color, saturation);
 	color = (saturation > 1.0) ? scolor1 : scolor2;
 
-	return float4 (pow(color, float3(1.0, 1.0, 1.0) * MaskGamma),1.0);
+	return float4 (pow(max(color, 0.0), float3(1.0, 1.0, 1.0) * MaskGamma),1.0);
 }
 
 
@@ -385,7 +385,7 @@ float4 PASS_SH2(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 float3 gc(float3 c)
 {
 	const float mc = max(max(c.r,c.g),c.b);
-	const float mg = pow(mc, 1.0/gamma_c);
+	const float mg = pow(max(mc, 0.0), 1.0/gamma_c);
 	return c * mg/(mc + 1e-8);
 } 
  
@@ -661,7 +661,7 @@ float corner(float2 pos) {
 	pos = clamp(pos, 0.0, 1.0);
 	pos = abs(2.0*(pos - 0.5));
 	float2 res = (bsize1 == 0.0) ? 1.0.xx : lerp(0.0.xx, 1.0.xx, smoothstep(1.0.xx, 1.0.xx-b, sqrt(pos)));
-	res = pow(res, sborder.xx);
+	res = pow(max(res, 0.0), sborder.xx);
 	return sqrt(res.x*res.y);
 } 
 
@@ -715,7 +715,7 @@ float3 WMASK(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 
 	const float3 mcolor = max(max(color0,color),color1);
 	float mx = max(max(mcolor.r, mcolor.g), mcolor.b);
-	mx = pow(mx, 1.4/MaskGamma);
+	mx = pow(max(mx, 0.0), 1.4/MaskGamma);
 	
 	const float2 pos1 = floor(uv/ReShade::PixelSize);
 	
@@ -756,9 +756,9 @@ float3 WMASK(float4 pos : SV_Position, float2 uv : TexCoord) : SV_Target
 	float3 Bloom = b11;
 
 	Bloom = lerp(0.5*(Bloom + Bloom*Bloom), Bloom*Bloom, colmx);
-	color = color + (0.75+maxb)*Bloom*(0.75 + 0.70*pow(colmx,0.33333))*lerp(1.0,w3,0.5*colmx)*lerp(one,cmask,0.35 + 0.4*maxb)*halation;
+	color = color + (0.75+maxb)*Bloom*(0.75 + 0.70*pow(max(colmx, 0.0),0.33333))*lerp(1.0,w3,0.5*colmx)*lerp(one,cmask,0.35 + 0.4*maxb)*halation;
 
-	color = pow(color, float3(1.0,1.0,1.0)/MaskGamma);
+	color = pow(max(color, 0.0), float3(1.0,1.0,1.0)/MaskGamma);
 
 	color = color*corner(coord);
 	

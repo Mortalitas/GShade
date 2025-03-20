@@ -99,7 +99,7 @@ namespace Oklab
 		#undef HDR_PAPER_WHITE_NITS
 		#define HDR_PAPER_WHITE_NITS 80.0
 	#endif
-	static const float HDR_PAPER_WHITE = HDR_PAPER_WHITE_NITS / SDR_WHITEPOINT;
+	static const float HDR_PAPER_WHITE = float(HDR_PAPER_WHITE_NITS) / SDR_WHITEPOINT;
 
 	#ifndef _HDR_TONEMAP
 		#define _HDR_TONEMAP 3.0
@@ -111,7 +111,7 @@ namespace Oklab
 		#ifndef HDR_PEAK_LUMINANCE_NITS
 			#define HDR_PEAK_LUMINANCE_NITS 1000
 		#endif
-		static const float INVNORM_FACTOR = HDR_PEAK_LUMINANCE_NITS / SDR_WHITEPOINT;
+		static const float INVNORM_FACTOR = float(HDR_PEAK_LUMINANCE_NITS) / SDR_WHITEPOINT;
 	#elif BUFFER_COLOR_SPACE == 3   //HDR10 ST2084
 		static const float INVNORM_FACTOR = 10000.0 / SDR_WHITEPOINT;
 	#elif BUFFER_COLOR_SPACE == 4   //HDR10 HLG
