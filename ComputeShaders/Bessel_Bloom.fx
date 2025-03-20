@@ -69,12 +69,6 @@ The blending and prefiltering methods come from kino-bloom.
 	#define COMPUTE 0
 #endif
 
-#if __RESHADE__ < 50000 && __RENDERER__ == 0xc000
-	#warning "Due to a bug in the current version of ReShade, this shader is disabled in DX12 until the release of ReShade 5.0."
-	#undef COMPUTE
-	#define COMPUTE 0
-#endif
-
 #if COMPUTE != 0
 static const float4 coefficients = float4(1, 1.5, -0.8333333, 0.1666667);
 namespace Bessel_Bloom
