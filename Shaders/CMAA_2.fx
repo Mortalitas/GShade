@@ -1070,7 +1070,7 @@ void LongEdgeVS(in uint id : SV_VertexID, out float4 position : SV_Position, out
 		float loopTo = floor( ( lineLengthRight + 1 ) / 2 );
 		const float2 stepRight = ( horizontal ) ? float2( 1, 0 ) : float2( 0, -1 );
 		float2 offset = (id % 2) ? stepRight * loopTo : stepRight * loopFrom;
-		texcoord = (float2(coord + offset) + CENTER_OFFSET) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
+		texcoord = (float2(coord + offset) + 0.5) / float2(BUFFER_WIDTH, BUFFER_HEIGHT);
 		position = float4(texcoord.xy * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 		texcoord = (id % 2) ? loopTo : loopFrom;
 	}
