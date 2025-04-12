@@ -1,24 +1,35 @@
-/*
-Chromakey PS v1.5.2a (c) 2018 Jacob Maximilian Fober
+/*------------------.
+| :: Description :: |
+'-------------------/
 
-This work is licensed under the Creative Commons 
-Attribution-ShareAlike 4.0 International License. 
-To view a copy of this license, visit 
-http://creativecommons.org/licenses/by-sa/4.0/.
+Chromakey PS (version 1.6.1)
+
+Copyright:
+This code © 2018-2023 Jakub Maksymilian Fober
+
+License:
+This work is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License.
+To view a copy of this license, visit
+http://creativecommons.org/licenses/by-sa/4.0/
 */
+
+/*--------------.
+| :: Commons :: |
+'--------------*/
 
 #include "ReShade.fxh"
 
-	  ////////////
-	 /// MENU ///
-	////////////
+/*-----------.
+| :: Menu :: |
+'-----------*/
 
-uniform float Threshold2 <
-	ui_label = "Threshold";
+uniform float Threshold2
+<
 	ui_type = "slider";
-	ui_min = 0.0; ui_max = 0.999; ui_step = 0.001;
+	ui_min = 0f; ui_max = 0.999; ui_step = 0.001;
 	ui_category = "Distance adjustment";
-> = 0.1;
+> = 0.5;
 
 uniform bool RadialX2 <
 	ui_label = "Horizontally radial depth";
@@ -30,18 +41,21 @@ uniform bool RadialY2 <
 	ui_category = "Radial distance";
 > = false;
 
-uniform float FOV2 <
+uniform int FOV2
+<
+	ui_type = "slider";
+	ui_units = "°";
 	ui_label = "FOV (horizontal)";
-  ui_type = "slider";
 	ui_tooltip = "Field of view in degrees";
 	ui_step = .01;
-	ui_min = 0.0; ui_max = 300.0;
+	ui_min = 0; ui_max = 200;
 	ui_category = "Radial distance";
 > = 90;
 
-uniform int CKPass2 <
-	ui_label = "Keying type";
+uniform int CKPass2
+<
 	ui_type = "combo";
+	ui_label = "Keying type";
 	ui_items = "Background key\0Foreground key\0";
 	ui_category = "Direction adjustment";
 > = 0;
@@ -52,31 +66,37 @@ uniform bool Floor2 <
 	ui_category_closed = true;
 > = false;
 
-uniform float FloorAngle2 <
+uniform float FloorAngle2
+<
+	ui_type = "slider";
+	ui_units = "°";
 	ui_label = "Floor angle";
 	ui_type = "slider";
 	ui_category = "Floor masking (experimental)";
-	ui_min = 0.0; ui_max = 1.0;
-> = 1.0;
+	ui_min = 0f; ui_max = 1f;
+> = 1f;
 
-uniform int Precision2 <
-	ui_label = "Floor precision";
+uniform int Precision2
+<
 	ui_type = "slider";
+	ui_label = "Floor precision";
 	ui_category = "Floor masking (experimental)";
 	ui_min = 2; ui_max = 9216;
 > = 4;
 
-uniform int Color2 <
+uniform int Color2
+<
+	ui_type = "radio";
 	ui_label = "Keying color";
 	ui_tooltip = "Ultimatte(tm) Super Blue and Green are industry standard colors for chromakey.\n"
 				 "Ensure that you have the \"Clear Alpha Channel\" option disabled on GShade\'s \"Settings\" tab if you are using \"Alpha Transparency\".";
-	ui_type = "combo";
 	ui_items = "Pure Green (RGB 0,255,0)\0Pure Red (RGB 255,0,255)\0Pure Blue (RGB 0,255,0)\0Super Blue Ultimatte(tm) (RGB 18,46,184)\0Green Ultimatte(tm) (RGB 74,214,92)\0Custom\0Alpha Transparency\0";
 	ui_category = "Color settings";
 	ui_category_closed = false;
 > = 6;
 
-uniform float3 CustomColor2 <
+uniform float3 CustomColor2
+<
 	ui_type = "color";
 	ui_label = "Custom color";
 	ui_category = "Color settings";
@@ -89,16 +109,16 @@ uniform bool AntiAliased2 <
 	ui_category_closed = true;
 > = false;
 
-uniform bool InvertDepth2 <
+uniform bool InvertDepth2
+<
 	ui_label = "Invert Depth";
 	ui_tooltip = "Inverts the depth buffer so that the color is applied to the foreground instead.";
 	ui_category = "Additional settings";
 > = false;
 
-
-	  /////////////////
-	 /// FUNCTIONS ///
-	/////////////////
+/*----------------.
+| :: Functions :: |
+'----------------*/
 
 float MaskAA(float2 texcoord)
 {
@@ -117,7 +137,7 @@ float MaskAA(float2 texcoord)
 	if(RadialY2) Depth *= length(float2((texcoord.y-0.5)*Size.y, 1.0));
 
 	// Return jagged mask
-	if(!AntiAliased2) return step(Threshold2, Depth);
+	if (!AntiAliased2) return step(Threshold2, Depth);
 
 	// Get half-pixel size in depth value
 	float hPixel = fwidth(Depth)*0.5;
@@ -152,13 +172,16 @@ float3 GetNormal(float2 texcoord)
 	return normalize(cross(vertCenter - vertNorth, vertCenter - vertEast)) * 0.5 + 0.5;
 }
 
-	  //////////////
-	 /// SHADER ///
-	//////////////
+/*--------------.
+| :: Shaders :: |
+'--------------*/
 
-float4 Chromakey2PS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
+float4 Chromakey2PS(
+	float4 pos		: SV_Position,
+	float2 texcoord : TEXCOORD
+) : SV_Target
 {
-	// Define chromakey color, Ultimatte(tm) Super Blue, Ultimatte(tm) Green, or user color
+	// Define chromakey color, Ultimatte™ Super Blue, Ultimatte™ Green, or user color
 	float3 Screen;
 	switch(Color2)
 	{
@@ -177,7 +200,7 @@ float4 Chromakey2PS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	if (Floor2)
 	{
 
-		bool FloorMask = (float)round( GetNormal(texcoord).y*Precision2 )/Precision2==(float)round( FloorAngle2*Precision2 )/Precision2;
+		const bool FloorMask = (float)round( GetNormal(texcoord).y*Precision2 )/Precision2==(float)round( FloorAngle2*Precision2 )/Precision2;
 
 		if (FloorMask)
 			DepthMask = 1.0;
@@ -188,12 +211,18 @@ float4 Chromakey2PS(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_T
 	return float4(lerp(tex2D(ReShade::BackBuffer, texcoord).rgb, Screen, DepthMask), DepthMask > Threshold2 && Color2 == 6 ? 0.0 : 1.0);
 }
 
+/*-------------.
+| :: Output :: |
+'-------------*/
 
-	  //////////////
-	 /// OUTPUT ///
-	//////////////
-
-technique Chromakey2 < ui_tooltip = "Generate green-screen wall based of depth"; >
+technique Chromakey2
+<
+	ui_tooltip =
+		"Generate green-screen wall based on depth\n"
+		"\n"
+		"This effect © 2018-2023 Jakub Maksymilian Fober\n"
+		"Licensed under CC BY-SA 4.0";
+>
 {
 	pass
 	{
