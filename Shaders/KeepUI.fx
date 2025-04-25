@@ -84,10 +84,10 @@ uniform bool bKeepUIAlpha <
     ui_label = "Max Alpha Adjustment";
     ui_tooltip = "Enable if you notice transparent UI elements which are not detected by the shader. May lead to false-positives.";
     ui_bind = "KeepUIAlpha";
-> = 0;
+> = 1;
 
 #ifndef KeepUIAlpha
-    #define KeepUIAlpha 0
+    #define KeepUIAlpha 1
 #endif
 
 #if KeepUIAlpha
@@ -96,8 +96,13 @@ uniform float fKeepUIMaxAlpha <
     ui_category = "Options";
     ui_label = "Alpha Threshold";
     ui_tooltip = "Set a maximum opacity threshold for UI detection. If UI opacity is below the threshold, UI saving will be applied.";
-    ui_min = 0; ui_max = 1;
+    ui_min = 0.0; ui_max = 1.0;
+	ui_bind = "KeepUIAlphaMax";
 > = 0.8;
+
+#ifndef KeepUIAlphaMax
+    #define KeepUIAlphaMax 0.8
+#endif
 #endif
 #endif
 
@@ -174,7 +179,7 @@ void PS_KeepUI(float4 pos : SV_Position, float2 texcoord : TEXCOORD, out float4 
 #if KeepUIType == 1 && KeepUIAlpha
     float4 keep = tex2D(ReShade::BackBuffer, texcoord);
     color = keep;
-    keep.a *= step(fKeepUIMaxAlpha, keep.a);
+    keep.a *= step(KeepUIAlphaMax, keep.a);
     color = float4(lerp(color, keep, keep.a).rgb, keep.a);
 #elif KeepUIType == 1
     color = tex2D(ReShade::BackBuffer, texcoord);
