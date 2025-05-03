@@ -103,7 +103,7 @@ coord.x = BUFFER_RCP_WIDTH*i*2;
 for (float j = 2.0f; j < Ganossa_MF_BUFFERY; j=j+ySprint )
 {
 coord.y = BUFFER_RCP_HEIGHT*j*2;
-float3 quadFull = tex2D(Ganossa_MF_QuadFullColor, coord).xyz;
+float3 quadFull = tex2Dlod(Ganossa_MF_QuadFullColor, float4(coord, 0.0, 0.0)).xyz;
 float quadFullPow = quadFull.x+quadFull.y+quadFull.z;
 
 if(i < Ganossa_MF_BUFFERXHalf && j < Ganossa_MF_BUFFERYHalf)
