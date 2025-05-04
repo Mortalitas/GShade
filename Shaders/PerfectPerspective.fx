@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.13.2)
+/* Perfect Perspective PS (version 5.14.0)
 
 Copyright:
 This code © 2018-2025 Jakub Maksymilian Fober
@@ -262,13 +262,22 @@ uniform float S
 > = 1f;
 #endif
 
-uniform bool UseVignette
+uniform float VignetteIntensity
 <
-	ui_type = "input";
+	ui_type = "slider";
 	ui_category = "Distortion";
 	ui_label = "Natural vignette";
-	ui_tooltip = "Apply projection-correct natural vignetting effect.";
-> = true;
+	ui_tooltip =
+		"Apply projection-correct natural vignetting effect.\n"
+		"\n"
+		"	Value | Vignetting Type\n"
+		"	------+-----------------------------------\n"
+		"	  0   | no vignetting\n"
+		"	  1   | cosine law of illumination\n"
+		"	  2   | inverse-square law of illumination\n"
+		"	  3   | both";
+	ui_min = 0f; ui_max = 3f; ui_step = 0.5;
+> = 1f;
 
 // Border
 
@@ -345,7 +354,6 @@ uniform float VignetteOffset
 <
 	ui_type = "slider";
 	ui_category = "Cosmetics";
-	hidden = !ADVANCED_MENU;
 	ui_units = "+";
 	ui_label = "Vignette exposure";
 	ui_tooltip = "Brighten the image with vignette enabled.";
@@ -356,6 +364,7 @@ uniform bool MirrorBorder
 <
 	ui_type = "input";
 	ui_category = "Cosmetics";
+	hidden = !ADVANCED_MENU;
 	ui_label = "Mirror on border";
 	ui_tooltip = "Choose mirrored or original image on the border.";
 > = false;
@@ -842,36 +851,31 @@ float3 PerfectPerspective_PS(
 // begin distortion mapping bypass
 
 #if AXIMORPHIC_MODE==1 // take vertical k factor into account
-	if (FovAngle==0u || (K==1f && Ky==1f && !UseVignette))
+	if (FovAngle==0u || (K==1f && Ky==1f && VignetteIntensity<=0f))
 #elif AXIMORPHIC_MODE>=2 // take both vertical k factors into account
-	if (FovAngle==0u || (K==1f && Ky==1f && KyA==1f && !UseVignette))
+	if (FovAngle==0u || (K==1f && Ky==1f && KyA==1f && VignetteIntensity<=0f))
 #else // consider only global k
-	if (FovAngle==0u || (K==1f && !UseVignette))
+	if (FovAngle==0u || (K==1f && VignetteIntensity<=0f))
 #endif
 	// Bypass perspective mapping
 	{
 		float3 display;
 
 		if (CalibrationModeView) // draw calibration grid
+		{
 			display = GridModeViewPass(uint2(pixelPos.xy), texCoord);
+			display = GammaConvert::to_display(display);
+			display = BlueNoise::dither(display, uint2(pixelPos.xy));
+		}
 		else // sample the background
 #if MIPMAPPING_LEVEL
-			display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
-#else // manual gamma linearization
-			display = GammaConvert::to_linear(tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb);
-#endif
-
-		if (UseVignette && VignetteOffset!=0f) // maintain constant brightness across all FOV values
 		{
-			display *= 1f+VignetteOffset;
-			// Manually correct gamma
+			display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
 			display = GammaConvert::to_display(display);
-#if BUFFER_COLOR_SPACE==RESHADE_COLOR_SPACE_UNKNOWN || BUFFER_COLOR_SPACE==RESHADE_COLOR_SPACE_SRGB
-			// Dither final 8/10-bit result
-			display = BlueNoise::dither(display, uint2(pixelPos.xy));
-#endif
 		}
-		else display = GammaConvert::to_display(display);
+#else // no gamma linearization
+			display = tex2Dfetch(BackBuffer, uint2(pixelPos.xy)).rgb;
+#endif
 
 		return display;
 	}
@@ -913,16 +917,15 @@ float3 PerfectPerspective_PS(
 		get_theta(radius, rcp_focal, viewCoord.y>=0f ? KyA : Ky)
 	#endif
 	);
-	float vignette = UseVignette
-		? dot(phiMtx, float2(
-			get_vignette(theta2.x, radius, rcp_focal),
-			get_vignette(theta2.y, radius, rcp_focal)))+VignetteOffset
-		: 1f;
 	float theta = dot(phiMtx, theta2); // aximorphic incident
+	// Adjust vignette intensity
+	float vignette = VignetteIntensity>0f ?
+		exp(log(get_vignette(theta, radius, rcp_focal))*clamp(VignetteIntensity, 0f, 4f)) : // same as pow(vignette, VignetteIntensity)
+		1f;
 #else // get θ from anamorphic radius
 	float theta = get_theta(radius, rcp_focal, K);
 	float vignette;
-	if (UseVignette)
+	if (VignetteIntensity>0f)
 	{
 		if (S!=1f) // get actual theta and radius
 		{
@@ -931,12 +934,16 @@ float3 PerfectPerspective_PS(
 				(sin(theta)*rcp_radius)*viewCoord,
 				 cos(theta)
 			);
-			vignette = get_vignette(acos(normalize(incident).z), length(viewCoord), rcp_focal)+VignetteOffset;
+			vignette = get_vignette(acos(normalize(incident).z), length(viewCoord), rcp_focal);
 		}
-		else vignette = get_vignette(theta, radius, rcp_focal)+VignetteOffset;
+		else vignette = get_vignette(theta, radius, rcp_focal);
+		// Adjust vignette intensity
+		vignette = exp(log(vignette)*clamp(VignetteIntensity, 0f, 4f)); // same as pow(vignette, VignetteIntensity)
 	}
 	else vignette = 1f; // no vignetting
 #endif
+	// Compensate vignette brightness
+	vignette += VignetteOffset*clamp(VignetteIntensity, 0f, 4f);
 
 	// Rectilinear perspective transformation
 #if AXIMORPHIC_MODE // simple rectilinear transformation
@@ -1008,7 +1015,7 @@ float3 PerfectPerspective_PS(
 			? vignette*lerp(display, border, borderMask)  // vignette on border
 			: lerp(vignette*display, border, borderMask); // vignette only inside
 	}
-	else if (UseVignette) // apply vignette
+	else if (VignetteIntensity>0f) // apply vignette
 		display *= vignette;
 
 	// Manually correct gamma
