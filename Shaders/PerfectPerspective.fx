@@ -1,6 +1,6 @@
 /* >> Description << */
 
-/* Perfect Perspective PS (version 5.14.0)
+/* Perfect Perspective PS (version 5.14.1)
 
 Copyright:
 This code © 2018-2025 Jakub Maksymilian Fober
@@ -271,12 +271,13 @@ uniform float VignetteIntensity
 		"Apply projection-correct natural vignetting effect.\n"
 		"\n"
 		"	Value | Vignetting Type\n"
-		"	------+-----------------------------------\n"
+		"	------+-------------------------------------\n"
 		"	  0   | no vignetting\n"
 		"	  1   | cosine law of illumination\n"
 		"	  2   | inverse-square law of illumination\n"
-		"	  3   | both";
-	ui_min = 0f; ui_max = 3f; ui_step = 0.5;
+		"	  3   | visual sphere stretching (no cosine)\n"
+		"	  4   | radiometric law of illumination";
+	ui_min = 0f; ui_max = 4f; ui_step = 0.5;
 > = 1f;
 
 // Border
