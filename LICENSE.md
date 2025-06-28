@@ -71,14 +71,6 @@
 * Johto (twitter.com/JohtoXIV)
   * MultiLut_Johto.png
 
-* LordCobra (github.com/LordKobra):
-  * Cobra_Mask.fx
-  * ColorSort.fx
-  * computeGravity.fx
-  * Droste.fx
-  * LongExposure.fx
-  * RealLongExposure.fx
-
 * Lufreine (twitter.com/Lufreine)
   * Ice1.jpg
   * Metal1.jpg
