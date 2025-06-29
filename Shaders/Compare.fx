@@ -64,6 +64,7 @@ uniform int ui_instructions
 <
 	ui_category = "Instructions";
 	ui_type = "radio";
+	ui_label = "";
 	ui_text =
 		"1. Enable 'Capture' technique first\n"
 		"2. Enable Effect A\n"
