@@ -32,13 +32,33 @@
 	* Initial version for comparing two effects
 	* Added difference blending with user scaling
 	* Three-technique workflow: Capture -> Restore -> Compare
+
+	The MIT License (MIT)
+
+	Copyright (c) 2014 CeeJayDK
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
 */
 
 /*------------------.
 | :: UI Settings :: |
 '------------------*/
-
-#include "ReShadeUI.fxh"
 
 uniform int ui_instructions 
 <
@@ -117,9 +137,9 @@ float3 PS_Restore(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Tar
 // Compare: Compare the original and two effects
 float3 PS_Compare(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Target
 {
-	float3 original = tex2D(OriginalSampler, texcoord).rgb;  // Original unprocessed
-	float3 effectA = tex2D(EffectASampler, texcoord).rgb;  // Effect A 
-	float3 effectB = tex2D(ReShade::BackBuffer, texcoord).rgb;  // Effect B (current)
+	const float3 original = tex2D(OriginalSampler, texcoord).rgb;  // Original unprocessed
+	const float3 effectA = tex2D(EffectASampler, texcoord).rgb;  // Effect A 
+	const float3 effectB = tex2D(ReShade::BackBuffer, texcoord).rgb;  // Effect B (current)
 	float3 color;
 
 	// -- Vertical 50/50 split --
@@ -175,21 +195,21 @@ float3 PS_Compare(float4 pos : SV_Position, float2 texcoord : TEXCOORD) : SV_Tar
 	// -- Diagonal split --
 	[branch] if (compare_mode == 6)
 	{
-		float dist = (texcoord.x + texcoord.y);
+		const float dist = (texcoord.x + texcoord.y);
 		color = (dist < 1.0) ? effectA : effectB;
 	}
 
 	// -- Difference blend (absolute) --
 	[branch] if (compare_mode == 7)
 	{
-		float3 difference = abs(effectB - effectA);
+		const float3 difference = abs(effectB - effectA);
 		color = difference * difference_scale;
 	}
 
 	// -- Difference blend (signed) --
 	[branch] if (compare_mode == 8)
 	{
-		float3 difference = effectB - effectA;
+		const float3 difference = effectB - effectA;
 		color = (difference * difference_scale) + 0.5;
 	}
 
