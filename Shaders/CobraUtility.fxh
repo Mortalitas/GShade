@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Cobra Utility (CobraUtility.fxh) by SirCobra
-// Version 0.3.0
+// Version 0.3.1
 // You can find info and all my shaders here: https://github.com/LordKobra/CobraFX
 //
 // --------Description---------
@@ -66,7 +66,7 @@
         #define M_E 2.71828183
     #endif
 
-    #define COBRA_UTL_VERSION "0.3.0"
+    #define COBRA_UTL_VERSION "0.3.1"
     #define COBRA_UTL_VERSION_NUMBER 1030
 
     #define COBRA_UTL_UI_GENERAL "\n / General Options /\n"
@@ -575,11 +575,11 @@
 
     float csp_to_luminance(float3 csp)
     {
-        float3 rec709_weight = float3(0.2126729, 0.7151522, 0.0721750);
-        float3 rec2020_weight = float3(0.26270020, 0.67799806,  0.05930171);
 #if COBRA_UTL_CSP_REC2020
+        const float3 rec2020_weight = float3(0.26270020, 0.67799806,  0.05930171);
         return dot(csp, rec2020_weight);
 #else
+        const float3 rec709_weight = float3(0.2126729, 0.7151522, 0.0721750);
         return dot(csp, rec709_weight);
 #endif
     }
@@ -638,7 +638,7 @@
     float3 linear_to_scrgb(float3 c)
     {
         c = rec2020_to_rec709(c);
-        c = c * COBRA_UTL_SDR_WHITEPOINT / 80.0;
+        return c * COBRA_UTL_SDR_WHITEPOINT / 80.0;
     }
 
     float3 pq_eotf(float3 n) // compressed -> linear
@@ -736,7 +736,7 @@
 
     float3 dither_linear_to_srgb(float3 linear_color, float2 pixel)
     {
-        const float QUANT = 1.0 / (exp2(float(BUFFER_COLOR_BIT_DEPTH)) - 1.0);
+        const float QUANT = 1.0 / (float(1 << BUFFER_COLOR_BIT_DEPTH) - 1.0);
         float noise = ign(pixel);
         float3 c0   = floor(lin_to_enc(linear_color) / QUANT) * QUANT;
         float3 c1   = c0 + QUANT;

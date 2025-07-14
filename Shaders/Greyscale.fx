@@ -4,7 +4,7 @@
 // You can find info and all my shaders here: https://github.com/LordKobra/CobraFX
 //
 // --------Description---------
-// Greyscale.fx allows to transform the image into greyscale. You can chose
+// Greyscale.fx allows to transform the color image into greyscale. You can chose
 // from popular metrics whether to preserve lightness or perceived luminance.
 //
 // ----------Credits-----------
@@ -157,7 +157,7 @@ namespace COBRA_GSC
     technique TECH_Greyscale <
         ui_label     = "Greyscale";
         ui_tooltip   = "------About-------\n"
-                       "Greyscale.fx allows to transform the image into greyscale. You can chose\n"
+                       "Greyscale.fx allows to transform the color image into greyscale. You can chose\n"
                        "from popular metrics whether to preserve lightness or perceived luminance.\n\n"
                        "Version:    " COBRA_GSC_VERSION "\nAuthor:     SirCobra\nCollection: CobraFX\n"
                        "            https://github.com/LordKobra/CobraFX";
