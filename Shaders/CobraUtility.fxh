@@ -67,7 +67,7 @@
     #endif
 
     #define COBRA_UTL_VERSION "0.3.1"
-    #define COBRA_UTL_VERSION_NUMBER 1030
+    #define COBRA_UTL_VERSION_NUMBER 1031
 
     #define COBRA_UTL_UI_GENERAL "\n / General Options /\n"
     #define COBRA_UTL_UI_COLOR "\n /  Color Masking  /\n"
