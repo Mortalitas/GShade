@@ -25,7 +25,7 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE                       */
 /* SOFTWARE.                                                                                           */
 /*-----------------------------------------------------------------------------------------------------*/
-#include "RadegastShaders.BlendingModes.fxh"
+#include "WarpFX.BlendingModes.fxh"
 
 uniform float x_col <
     ui_type = "slider";

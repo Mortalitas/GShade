@@ -88,13 +88,16 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
 
     float dist = distance(tc, center);
 
-    float anim_mag = (animate == 1 ? magnitude * sin(radians(anim_rate * 0.05)) : magnitude);
-    float tension_radius = lerp(dist, radius, tension);
-    float percent = (dist)/tension_radius;
+    const float anim_mag = (animate == 1 ? magnitude * sin(radians(anim_rate * 0.05 * anim_rate_multiplier)) : magnitude);
+    const float tension_radius = lerp(dist, radius, tension);
+    const float percent = dist/tension_radius;
+    const float inv_percent = tension_radius/dist;
+
+    // tc = (tc-center) * lerp(pow(abs(percent), 1.0 + anim_mag * 0.75) * tension_radius/dist,  smoothstep(0.0, tension_radius/dist, percent), anim_mag);
     if(anim_mag > 0)
-        tc = (tc-center) * lerp(1.0, smoothstep(0.0, tension_radius/dist, percent), anim_mag * 0.75);
+        tc = (tc-center) * lerp(1.0, smoothstep(0.0, inv_percent, percent), anim_mag * 0.75);
     else
-        tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * tension_radius/dist, 1.0 - percent);
+        tc = (tc-center) * lerp(1.0, pow(abs(percent), 1.0 + anim_mag * 0.75) * inv_percent, 1.0 - percent);
 
     if(use_offset_coords) {
         tc += offset_center;
@@ -104,6 +107,8 @@ float4 PBDistort(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TAR
     tc.x *= ar;
     center.x *= ar;
 
+    // Using the swirl transform to rotate the image and apply the aspect
+    // ratio angle.
     center = mul(swirlTransform(radians(-aspect_ratio_angle)), center);
 
     tc = mul(swirlTransform(radians(-aspect_ratio_angle)), tc - center);

@@ -1,29 +1,6 @@
 /*-----------------------------------------------------------------------------------------------------*/
-/* ZigZag Shader - by Radegast Stravinsky of Ultros.                                                   */
+/* Ripple Shader - by Radegast Stravinsky of Ultros.                                               */
 /* There are plenty of shaders that make your game look amazing. This isn't one of them.               */
-/* License: MIT                                                                                        */
-/*                                                                                                     */
-/* MIT License                                                                                         */
-/*                                                                                                     */
-/* Copyright (c) 2021 Radegast-FFXIV                                                                   */
-/*                                                                                                     */
-/* Permission is hereby granted, free of charge, to any person obtaining a copy                        */
-/* of this software and associated documentation files (the "Software"), to deal                       */
-/* in the Software without restriction, including without limitation the rights                        */
-/* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell                           */
-/* copies of the Software, and to permit persons to whom the Software is                               */
-/* furnished to do so, subject to the following conditions:                                            */
-/*                                                                                                     */
-/* The above copyright notice and this permission notice shall be included in all                      */
-/* copies or substantial portions of the Software.                                                     */
-/*                                                                                                     */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR                          */
-/* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,                            */
-/* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE                         */
-/* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER                              */
-/* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,                       */
-/* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE                       */
-/* SOFTWARE.                                                                                           */
 /*-----------------------------------------------------------------------------------------------------*/
 #include "ReShade.fxh"
 #include "ZigZag.fxh"
@@ -42,7 +19,7 @@ sampler samplerColor
 };
 
 // Pixel Shaders (in order of appearance in the technique)
-float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
+float4 Ripple(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 {
     float2 tc = texcoord;
     const float ar_raw = 1.0 * (float)BUFFER_HEIGHT / (float)BUFFER_WIDTH;
@@ -72,7 +49,7 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
     const float percentSquared = percent * percent;
     const float theta = percentSquared * (animate == 1 ? amplitude * sin(anim_rate * 0.0005 * anim_rate_multiplier) : amplitude) * sin(percentSquared / period * radians(angle) + (phase + (animate == 2 ? 0.00075 * anim_rate * anim_rate_multiplier : 0)));
 
-    tc = mul(swirlTransform(theta), tc-center);
+    tc = mul(zigzagTransform(theta), tc-center);
 
     if(use_offset_coords)
         tc += (offset_center);
@@ -127,12 +104,12 @@ float4 ZigZag(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 }
 
 // Technique
-technique ZigZag <ui_label="Zigzag";>
+technique Ripple <ui_label="Ripple";>
 {
     pass p0
     {
         VertexShader = PostProcessVS;
-        PixelShader = ZigZag;
+        PixelShader = Ripple;
     }
 
 };

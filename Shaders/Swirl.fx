@@ -61,7 +61,6 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         center = mul(swirlTransform(radians(aspect_ratio_angle)), center);
 
         tc = mul(swirlTransform(radians(aspect_ratio_angle)), tc - center);
-        // tc.y /= max(ar_angle_multiplier.x, ar_angle_multiplier.y);
         tc += mul(swirlTransform(radians(aspect_ratio_angle)), center);
     }
 
@@ -91,7 +90,7 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         theta *= radians(angle);
     }
     else {
-        theta *= radians(angle * sin(anim_rate * 0.0005));
+        theta *= radians(angle * sin(anim_rate * 0.0005 * anim_rate_multiplier));
     }
     tc = mul(swirlTransform(theta), tc - center);
 
@@ -108,7 +107,6 @@ float4 Swirl(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
         center = mul(swirlTransform(radians(-aspect_ratio_angle)), center);
 
         tc = mul(swirlTransform(radians(-aspect_ratio_angle)), tc - center);
-        // tc.y *= max(ar_angle_multiplier.x, ar_angle_multiplier.y);
         tc += mul(swirlTransform(radians(-aspect_ratio_angle)), center);
     }
 

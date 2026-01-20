@@ -25,13 +25,16 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE                       */
 /* SOFTWARE.                                                                                           */
 /*-----------------------------------------------------------------------------------------------------*/
-#include "RadegastShaders.Depth.fxh"
-#include "RadegastShaders.Positional.fxh"
-#include "RadegastShaders.Radial.fxh"
-#include "RadegastShaders.AspectRatio.fxh"
-#include "RadegastShaders.Offsets.fxh"
-#include "RadegastShaders.Transforms.fxh"
-#include "RadegastShaders.BlendingModes.fxh"
+#define ANIMATE_NY
+
+#include "WarpFX.Animate.fxh"
+#include "WarpFX.Depth.fxh"
+#include "WarpFX.Positional.fxh"
+#include "WarpFX.Radial.fxh"
+#include "WarpFX.AspectRatio.fxh"
+#include "WarpFX.Offsets.fxh"
+#include "WarpFX.Transforms.fxh"
+#include "WarpFX.BlendingModes.fxh"
 
 uniform float magnitude <
     ui_type = "slider";
@@ -42,14 +45,3 @@ uniform float magnitude <
     ui_category = "Properties";
 > = -0.5;
 
-uniform int animate <
-    ui_type = "combo";
-    ui_label = "Animate";
-    ui_items = "No\0Yes\0";
-    ui_tooltip = "Animates the effect.";
-    ui_category = "Properties";
-> = 0;
-
-uniform float anim_rate <
-    source = "timer";
->;

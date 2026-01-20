@@ -33,9 +33,9 @@
 #define MAX_LINE 5
 #define MAX_PTS 5
 
-#include "RadegastShaders.Depth.fxh"
-#include "RadegastShaders.Transforms.fxh"
-#include "RadegastShaders.BlendingModes.fxh"
+#include "WarpFX.Depth.fxh"
+#include "WarpFX.Transforms.fxh"
+#include "WarpFX.BlendingModes.fxh"
 
 // Shader Parameters
 uniform float2 p_drunk_strength<

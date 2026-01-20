@@ -25,8 +25,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE                       */
 /* SOFTWARE.                                                                                           */
 /*-----------------------------------------------------------------------------------------------------*/
-#include "RadegastShaders.BlendingModes.fxh"
-#include "RadegastShaders.Positional.fxh"
+#include "WarpFX.BlendingModes.fxh"
+#include "WarpFX.Positional.fxh"
 
 uniform int animate <
     ui_type = "combo";

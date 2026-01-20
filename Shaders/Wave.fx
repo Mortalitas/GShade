@@ -69,7 +69,7 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
 
     tc.x /= ar;
 
-    const float theta = radians(animate == 3 ? (anim_rate * 0.01 % 360.0) : angle);
+    const float theta = radians(animate == 3 ? (anim_rate * 0.01 * anim_rate_multiplier % 360.0) : angle);
     float2 sc;
     float2 _sc;
     sincos(theta, sc.y, sc.x);
@@ -82,10 +82,10 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
                 tc.x += amplitude * sin((tc.x * period * 10) + phase);
                 break;
             case 1:
-                tc.x += (sin(anim_rate * 0.001) * amplitude) * sin((tc.x * period * 10) + phase);
+                tc.x += (sin(anim_rate * 0.001 * anim_rate_multiplier) * amplitude) * sin((tc.x * period * 10) + phase);
                 break;
             case 2:
-                tc.x += amplitude * sin((tc.x * period * 10) + (anim_rate * 0.001));
+                tc.x += amplitude * sin((tc.x * period * 10) + (anim_rate * 0.001 * anim_rate_multiplier));
                 break;
         }
     } else {
@@ -94,10 +94,10 @@ float4 Wave(float4 pos : SV_Position, float2 texcoord : TEXCOORD0) : SV_TARGET
                 tc.x +=  amplitude * sin((tc.y * period * 10) + phase);
                 break;
             case 1:
-                tc.x += (sin(anim_rate * 0.001) * amplitude) * sin((tc.y * period * 10) + phase);
+                tc.x += (sin(anim_rate * 0.001 * anim_rate_multiplier) * amplitude) * sin((tc.y * period * 10) + phase);
                 break;
             case 2:
-                tc.x += amplitude * sin((tc.y * period * 10) + (anim_rate * 0.001));
+                tc.x += amplitude * sin((tc.y * period * 10) + (anim_rate * 0.001 * anim_rate_multiplier));
                 break;
         }
     }

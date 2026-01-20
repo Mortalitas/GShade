@@ -25,8 +25,8 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE                       */
 /* SOFTWARE.                                                                                           */
 /*-----------------------------------------------------------------------------------------------------*/
-#include "RadegastShaders.Transforms.fxh"
-#include "RadegastShaders.Positional.fxh"
+#include "WarpFX.Transforms.fxh"
+#include "WarpFX.Positional.fxh"
 
 #define PI 3.141592358
 

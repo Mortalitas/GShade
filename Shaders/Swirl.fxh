@@ -25,13 +25,16 @@
 /* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE                       */
 /* SOFTWARE.                                                                                           */
 /*-----------------------------------------------------------------------------------------------------*/
-#include "RadegastShaders.Depth.fxh"
-#include "RadegastShaders.Positional.fxh"
-#include "RadegastShaders.Radial.fxh"
-#include "RadegastShaders.AspectRatio.fxh"
-#include "RadegastShaders.Offsets.fxh"
-#include "RadegastShaders.Transforms.fxh"
-#include "RadegastShaders.BlendingModes.fxh"
+#define ANIMATE_NY
+
+#include "WarpFX.Animate.fxh"
+#include "WarpFX.Depth.fxh"
+#include "WarpFX.Positional.fxh"
+#include "WarpFX.Radial.fxh"
+#include "WarpFX.AspectRatio.fxh"
+#include "WarpFX.Offsets.fxh"
+#include "WarpFX.Transforms.fxh"
+#include "WarpFX.BlendingModes.fxh"
 
 uniform float inner_radius <
     ui_type = "slider";
@@ -48,7 +51,7 @@ uniform float angle <
     ui_category = "Properties";
     ui_min = -1800.0; 
     ui_max = 1800.0; 
-    ui_step = 1.0;
+    ui_step = 30.0;
 > = 180.0;
 
 uniform int inverse <
@@ -58,15 +61,3 @@ uniform int inverse <
     ui_tooltip = "Inverts the angle of the swirl, making the edges the most distorted.";
     ui_category = "Properties";
 > = 0;
-
-uniform int animate <
-    ui_type = "combo";
-    ui_label = "Animate";
-    ui_items = "No\0Yes\0";
-    ui_tooltip = "Animates the swirl, moving it clockwise and counterclockwise.";
-    ui_category = "Properties";
-> = 0;
-
-uniform float anim_rate <
-    source = "timer";
->;
