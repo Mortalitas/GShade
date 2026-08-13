@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Filmic Anamorph Sharpen PS (version 1.5.0)
+Filmic Anamorph Sharpen PS (version 1.5.1)
 
 Copyright:
 This code © 2018-2023 Jakub Maximilian Fober
@@ -21,7 +21,7 @@ http://creativecommons.org/licenses/by-sa/4.0/
 
 #include "ReShade.fxh"
 #include "ColorConversion.fxh"
-#include "LinearGammaWorkflow.fxh"
+#include "LinearWorkflow.fxh"
 
 /*-----------.
 | :: Menu :: |
@@ -131,7 +131,7 @@ float3 FilmicAnamorphSharpenPS(
 ) : SV_Target
 {
 	// Sample display image
-	float3 Source = GammaConvert::to_linear(tex2D(BackBuffer, UvCoord).rgb);
+	float3 Source = LinearWorkflow::toLinearGamma(tex2D(BackBuffer, UvCoord).rgb);
 
 	// Generate radial mask
 	float Mask;
@@ -141,7 +141,7 @@ float3 FilmicAnamorphSharpenPS(
 		Mask = 1f-length(UvCoord*2f-1f);
 		Mask = Overlay(Mask) * Strength;
 		// Bypass
-		if (Mask<=0) return GammaConvert::to_display(Source);
+		if (Mask<=0) return LinearWorkflow::toDisplayGamma(Source);
 	}
 	else Mask = Strength;
 
@@ -186,7 +186,7 @@ float3 FilmicAnamorphSharpenPS(
 		{
 			HighPassColor +=
 				ColorConvert::RGB_to_Luma(
-					GammaConvert::to_linear(
+					LinearWorkflow::toLinearGamma(
 						tex2D(BackBuffer, NorSouWesEst[s]).rgb
 				));
 			DepthMask +=
@@ -227,14 +227,14 @@ float3 FilmicAnamorphSharpenPS(
 		{
 			float PreviewChannel = lerp(HighPassColor, HighPassColor*DepthMask, 0.5);
 			return
-				GammaConvert::to_display(float3(
+				LinearWorkflow::toDisplayGamma(float3(
 					1f-DepthMask * (1f-HighPassColor),
 					PreviewChannel,
 					PreviewChannel
 				));
 		}
 
-		return GammaConvert::to_display(Sharpen);
+		return LinearWorkflow::toDisplayGamma(Sharpen);
 	}
 	else
 	{
@@ -252,7 +252,7 @@ float3 FilmicAnamorphSharpenPS(
 		[unroll] for(uint s=0u; s<4u; s++)
 			HighPassColor +=
 				ColorConvert::RGB_to_Luma(
-					GammaConvert::to_linear(
+					LinearWorkflow::toLinearGamma(
 						tex2D(BackBuffer, NorSouWesEst[s]).rgb
 				));
 
@@ -284,7 +284,7 @@ float3 FilmicAnamorphSharpenPS(
 			Overlay(Source.b, HighPassColor)
 		);
 
-		return GammaConvert::to_display(
+		return LinearWorkflow::toDisplayGamma(
 			Preview // preview mode ON
 			? HighPassColor
 			: Sharpen

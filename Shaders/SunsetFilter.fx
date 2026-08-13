@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-SunsetFilter PS (version 1.1.0)
+SunsetFilter PS (version 1.1.1)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -19,7 +19,7 @@ http://creativecommons.org/licenses/by-sa/4.0/
 '--------------*/
 
 #include "ReShade.fxh"
-#include "LinearGammaWorkflow.fxh"
+#include "LinearWorkflow.fxh"
 
 /*-----------.
 | :: Menu :: |
@@ -98,7 +98,7 @@ void SunsetFilterPS(
 )
 {
 	// Grab screen texture
-	Image = GammaConvert::to_linear(tex2D(ReShade::BackBuffer, UvCoord).rgb);
+	Image = LinearWorkflow::toLinearGamma(tex2D(ReShade::BackBuffer, UvCoord).rgb);
 	// Correct Aspect Ratio
 	float2 UvCoordAspect = UvCoord;
 	UvCoordAspect.y += BUFFER_ASPECT_RATIO*0.5-0.5;
@@ -119,12 +119,12 @@ void SunsetFilterPS(
 	Image = Screen(
 		Image.rgb,
 		lerp(
-			GammaConvert::to_linear(ColorA),
-			GammaConvert::to_linear(ColorB),
+			LinearWorkflow::toLinearGamma(ColorA),
+			LinearWorkflow::toLinearGamma(ColorB),
 			Flip ? 1f-BlendMask : BlendMask
 		));
 
-	Image = GammaConvert::to_display(Image);
+	Image = LinearWorkflow::toDisplayGamma(Image);
 }
 
 /*-------------.

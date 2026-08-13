@@ -2,7 +2,7 @@
 | :: Description :: |
 '-------------------/
 
-Chromatic Aberration (Prism) PS (version 2.1.5)
+Chromatic Aberration (Prism) PS (version 2.1.6)
 
 Copyright:
 This code © 2018-2023 Jakub Maksymilian Fober
@@ -51,7 +51,7 @@ inspired by Marty McFly YACA shader
 '--------------*/
 
 #include "ReShade.fxh"
-#include "LinearGammaWorkflow.fxh"
+#include "LinearWorkflow.fxh"
 #include "BlueNoiseDither.fxh"
 
 /*-----------.
@@ -181,7 +181,7 @@ void ChromaticAberrationPS(
 		progress = lerp(progress, 0.5-abs(progress), AchromatAmount);
 		color +=
 			// Manual gamma correction
-			GammaConvert::to_linear(
+			LinearWorkflow::toLinearGamma(
 				tex2Dlod(
 					BackBuffer, // image source
 					float4(
@@ -194,7 +194,7 @@ void ChromaticAberrationPS(
 	}
 	// Preserve brightness
 	color *= 2f/evenSampleCount;
-	color = GammaConvert::to_display(color); // linear workflow
+	color = LinearWorkflow::toDisplayGamma(color); // linear workflow
 	color = BlueNoise::dither(color, uint2(pixelPos.xy)); // dither
 }
 

@@ -96,10 +96,10 @@ void InterlacedTargetPass(
 	// Get present frame
 	Target.rgb = tex2Dfetch(ReShade::BackBuffer, pixelCoord).rgb;
 	// Get noise channel offset for variability
-	uint offset = uint(4f*tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord/DITHER_TEX_SIZE%DITHER_TEX_SIZE).r);
+	uint offset = uint(4f*tex2Dfetch(BlueNoise::s_blueNoise, pixelCoord/DITHER_TEX_SIZE%DITHER_TEX_SIZE).r);
 	offset += framecount;
 	// Get blue noise alpha mask
-	Target.a = tex2Dfetch(BlueNoise::BlueNoiseTexSmp, pixelCoord%DITHER_TEX_SIZE)[offset%4u];
+	Target.a = tex2Dfetch(BlueNoise::s_blueNoise, pixelCoord%DITHER_TEX_SIZE)[offset%4u];
 }
 
 // Combine previous and current frame
