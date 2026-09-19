@@ -120,7 +120,7 @@ uniform int DebugOutput <
 #define SMAA_BRANCH [branch]
 #define SMAA_FLATTEN [flatten]
 
-#if (__RENDERER__ == 0xb000 || __RENDERER__ == 0xb100)
+#if (__RENDERER__ >= 0xb000) //If DX11 or greater (DX11, DX12, OpenGL and Vulkan) then use Gather
 	#define SMAAGather(tex, coord) tex2Dgather(tex, coord, 0)
 #endif
 

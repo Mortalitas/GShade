@@ -27,7 +27,7 @@
 //
 //	restructured final weighting, 49 -> 48 instructions
 //
-//     delayed RCP to replace SQRT with RSQRT
+//	delayed RCP to replace SQRT with RSQRT
 //
 //	removed the saturate() from the control var as it is clamped
 //	by UI manager already, 48 -> 47 instructions
@@ -99,7 +99,7 @@ float3 CASPass(float4 vpos : SV_Position, float2 texcoord : TexCoord) : SV_Targe
 	const float3 i = float3( red_efhi.y, green_efhi.y, blue_efhi.y);
 
 
-#else // If DX9
+#else // If lower than DX11 (DX9 or DX10)
 	const float3 e = tex2D(sTexCASColor, texcoord).rgb;
 	const float3 f = tex2Doffset(sTexCASColor, texcoord, int2(1, 0)).rgb;
 
